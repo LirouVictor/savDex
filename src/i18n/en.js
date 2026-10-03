@@ -312,8 +312,12 @@ export default {
   '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".':
     '- ALWAYS refer to Pokémon by the reference at the start of each line (e.g. E1, C3-12), also inside the texts, and WITHOUT writing the name next to it (the app replaces the reference with the name). Right: "C3-12 resists Ice". Wrong: "Garchomp (C3-12) resists Ice".',
   '- Ignore o nível: o jogador pode treinar qualquer Pokémon.': '- Ignore the level: the player can train any Pokémon.',
-  '- Se sugerir um golpe que o Pokémon ainda não tem, diga que é sugestão e que ele precisa aprender o golpe.':
-    '- If you suggest a move the Pokémon doesn’t have yet, say it is a suggestion and that it needs to learn the move.',
+  '- Os cálculos do app (tipos, cobertura, contagens, velocidade) são a fonte de verdade: interprete-os, não recalcule nem contradiga.':
+    '- The app’s calculations (types, coverage, counts, speed) are the source of truth: interpret them, do not recalculate or contradict them.',
+  '- Se uma conclusão depender de uma mecânica, habilidade ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.':
+    '- If a conclusion depends on a mechanic, ability or interaction that is not in the data, say it is a limitation instead of assuming how it works in this game.',
+  '- Golpe que o Pokémon ainda não tem: cite pelo nome só se estiver na lista "Aprende por nível" dele (quando enviada) e diga que ele precisa aprender. Fora dela, sugira só o tipo (ex.: "um golpe Electric, se ele aprender").':
+    '- A move the Pokémon doesn’t have yet: name it only if it is in its "Learns by level" list (when sent) and say it needs to learn it. Otherwise, suggest only the type (e.g. "an Electric move, if it can learn one").',
   '- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.':
     '- Write in English, in a direct and specific way. Use the English names of Pokémon, moves, items, abilities and types.',
   '- Frases curtas: cada item de lista com no máximo 2 frases.': '- Short sentences: each list item with at most 2 sentences.',
@@ -323,23 +327,39 @@ export default {
   'Tipos que acertam muitos membros em cheio: {list}.': 'Types that hit many members super effectively: {list}.',
   'Tipos sem nenhum golpe super efetivo da equipe: {list}.': 'Types with no super effective move from the party: {list}.',
   'Pedido do jogador:': 'Player’s request:',
-  'Avalie a EQUIPE ATUAL: sinergia, fraquezas em comum, cobertura de golpes, papéis e itens. Dê uma nota de 0 a 10.':
-    'Rate the CURRENT PARTY: synergy, shared weaknesses, move coverage, roles and items. Give a score from 0 to 10.',
-  'Sugira até 3 trocas com Pokémon do PC que melhorem a equipe (só se valer a pena) e dicas por membro.':
-    'Suggest up to 3 swaps with PC Pokémon that improve the party (only if worth it) and tips for each member.',
+  'Avalie a EQUIPE ATUAL. Dê UMA nota de 0 a 10 pesando: defesa entre os membros (25%), cobertura ofensiva (25%), papéis e sinergia (20%), ameaças comuns do jogo (20%), itens e sets (10%).':
+    'Rate the CURRENT PARTY. Give ONE score from 0 to 10 weighing: defense between members (25%), offensive coverage (25%), roles and synergy (20%), common threats in the game (20%), items and sets (10%).',
+  'Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas. Depois, dicas por membro.':
+    'Swaps with the PC: up to 3, only those that fix a clear problem (none if there is none); for each one, say what it fixes and what is lost. Keep the members that hold up the team’s strategy (weather, terrain, Trick Room…), even if they are not the strongest on their own: improve the whole, not isolated pieces. Then, tips for each member.',
   'EQUIPE ATUAL:': 'CURRENT PARTY:',
-  'Cálculo do app (só tipos, sem habilidades):': 'App calculation (types only, no abilities):',
-  'PC ({n} candidatos):': 'PC ({n} candidates):',
+  'Cálculos do app (só tipos e números, sem habilidades):': 'App calculations (types and numbers only, no abilities):',
+  'PC ({n} candidatos que mais ajudam a equipe):': 'PC ({n} candidates that help the party the most):',
+  'Outros tipos sem nenhum membro que resista: {list}.': 'Other types no member resists: {list}.',
+  'Golpes de dano: {phys} físicos, {spec} especiais; {status} de status.': 'Damaging moves: {phys} physical, {spec} special; {status} status.',
+  'Velocidade base (maior primeiro): {list}.': 'Base Speed (highest first): {list}.',
+  'Tipos repetidos: {list}.': 'Repeated types: {list}.',
+  'Megapedras: {list} (só uma megaevolução por batalha).': 'Mega Stones: {list} (only one Mega Evolution per battle).',
+  'Clima/terreno: {list}.': 'Weather/terrain: {list}.',
+  'chuva': 'rain',
+  'sol': 'sun',
+  'tempestade de areia': 'sandstorm',
+  'neve/granizo': 'snow/hail',
+  'Electric Terrain': 'Electric Terrain',
+  'Psychic Terrain': 'Psychic Terrain',
+  'Grassy Terrain': 'Grassy Terrain',
+  'Misty Terrain': 'Misty Terrain',
+  'Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):': 'Learns by level (list from the recent official games; this game may differ):',
   'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.':
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
   'Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.':
     'Aim for good type synergy, move coverage, varied roles and at most one Pokémon holding a Mega Stone.',
   'DISPONÍVEIS ({n}):': 'AVAILABLE ({n}):',
   'Equipe sugerida': 'Suggested team',
-  'Nota da equipe de 0 a 10': 'Party score from 0 to 10',
+  'Nota da equipe de 0 a 10, pelos critérios pedidos': 'Party score from 0 to 10, by the requested criteria',
   'Resumo em até 3 frases': 'Summary in up to 3 sentences',
   'Combinações boas (ou que faltam) entre membros': 'Good (or missing) combinations between members',
-  'Até 3 trocas sugeridas: sai um membro da equipe, entra um Pokémon do PC': 'Up to 3 suggested swaps: a party member goes out, a PC Pokémon comes in',
+  'Até 3 trocas, só as que resolvem um problema claro (pode ficar vazio): sai um membro da equipe, entra um Pokémon do PC': 'Up to 3 swaps, only those that fix a clear problem (may be empty): a party member goes out, a PC Pokémon comes in',
+  'Que problema resolve e o que se perde': 'What problem it fixes and what is lost',
   'referência E1..E6': 'reference E1..E6',
   'referência C<caixa>-<posição>': 'reference C<box>-<slot>',
   'Dicas por membro (golpes, item, natureza)': 'Tips per member (moves, item, nature)',
@@ -384,7 +404,9 @@ export default {
   '{n} Pokémon da equipe e {pc}.': '{n} party Pokémon and {pc}.',
   'De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).':
     'For each one: species, nickname, types, ability, item, nature, base stats, IVs and moves (type, category and power).',
-  'A análise de tipos da equipe feita pelo app.': 'The app’s type analysis of the party.',
+  'Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.': 'The app’s calculations about the party: weaknesses, coverage, physical/special moves, base Speed, Mega Stones and weather.',
+  'Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).': 'The moves each party member learns by level (public list from the official games).',
+  '(de {total}: os que mais ajudam a equipe, resistindo às fraquezas dela ou cobrindo tipos sem golpe super efetivo, depois os de maior total de stats base)': '(of {total}: the ones that help the party the most, resisting its weaknesses or covering types with no super effective move, then the highest base stat totals)',
   'Seu pedido:': 'Your request:',
   'As instruções do savDex para a IA (como responder).': 'savDex’s instructions for the AI (how to answer).',
   'Não vai': 'Not sent',

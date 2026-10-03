@@ -1,5 +1,6 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA } from '../src/ai/prompt.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC } from '../src/ai/prompt.js';
+import dex from '../src/data/dex.json';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
 import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
@@ -45,10 +46,54 @@ suite('IA: dados enviados', () => {
   it('prompts: análise separa equipe e PC; montagem inclui o pedido do jogador', () => {
     const a = analysisPrompt(all, T);
     expect(a).toMatch(/EQUIPE ATUAL:\nE1 \| Lucario/);
-    expect(a).toMatch(/PC \(3 candidatos\):\nC3-12/);
+    expect(a).toMatch(/PC \(3 candidatos que mais ajudam a equipe\):\nC3-12/);
+    expect(a).toContain('defesa entre os membros (25%)');
+    expect(a).toContain('o que resolve e o que se perde');
     const b = buildPrompt(all, T, 'quero usar o Lucario');
     expect(b).toContain('Pedido do jogador: quero usar o Lucario');
     expect(b).toContain('DISPONÍVEIS (5):');
+  });
+});
+
+suite('IA: cálculos do app e candidatos', () => {
+  const party = [
+    mon({ sp: 'Pelipper', id: 279, slot: 1, types: ['water', 'flying'], base: [60, 50, 100, 95, 70, 65], ab: 'Drizzle', moves: [['Hurricane', 'flying', 1, 110], ['Roost', 'flying', 2, 0]] }),
+    mon({ sp: 'Lucario', id: 448, slot: 2, types: ['fighting', 'steel'], base: [70, 110, 70, 115, 70, 90], item: 'Lucarionite Z', moves: [['Close Combat', 'fighting', 0, 120]] }),
+    mon({ sp: 'Gyarados', id: 130, slot: 3, types: ['water', 'flying'], base: [95, 125, 79, 60, 100, 81], item: 'Eviolite', moves: [['Waterfall', 'water', 0, 80]] }),
+  ];
+  it('fatos: fraquezas, golpes físicos/especiais, velocidade, tipos repetidos, megapedra e clima', () => {
+    const f = teamFacts(party, T);
+    expect(f).toMatch(/acertam muitos membros em cheio: .*Electric \(2 fracos/);
+    expect(f).toContain('Golpes de dano: 2 físicos, 1 especiais; 1 de status.');
+    expect(f).toContain('Velocidade base (maior primeiro): E2 90, E3 81, E1 65.');
+    expect(f).toContain('Tipos repetidos: Water ×2, Flying ×2.');
+    expect(f).toContain('Megapedras: E2 (Lucarionite Z)'); // Eviolite não é megapedra
+    expect(f).toContain('Clima/terreno: E1 Drizzle (chuva).');
+  });
+  it('PC da análise: quem resiste às fraquezas da equipe vem antes, e no máximo ANALYSIS_PC', () => {
+    const pc = [
+      mon({ sp: 'Snorlax', id: 143, box: 1, slot: 1, types: ['normal'], base: [160, 110, 65, 65, 110, 30] }),
+      mon({ sp: 'Ferrothorn', id: 598, box: 1, slot: 2, types: ['grass', 'steel'], base: [74, 94, 131, 54, 116, 20] }),
+    ];
+    const pool = analysisPool([...party, ...pc], T, 10);
+    expect(pool.map(m => m.species.name)).toEqual(['Ferrothorn', 'Snorlax']); // Ferrothorn resiste a Electric (BST menor)
+    const many = Array.from({ length: 120 }, (_, i) => mon({ sp: 'Mon' + i, id: i + 1, box: 1 + Math.floor(i / 30), slot: 1 + (i % 30), types: ['normal'], base: [50, 50, 50, 50, 50, 50] }));
+    expect(analysisPrompt([...party, ...many], T)).toContain(`PC (${ANALYSIS_PC} candidatos`);
+  });
+  it('golpes por nível só para Quetzal/Unbound, sem os que o Pokémon já tem', () => {
+    const p = [{ ...party[0], species: { ...party[0].species, dexId: 279 }, moves: [{ name: 'Hurricane' }] }];
+    const lines = learnLines(p, dex, T, { id: 'quetzal' });
+    expect(lines[1]).toMatch(/^Aprende por nível/);
+    expect(lines[2]).toMatch(/^E1: /);
+    expect(lines[2]).not.toMatch(/\bHurricane\b/);
+    expect(learnLines(p, dex, T, { id: 'emerald', gen: 3 })).toEqual([]);
+    expect(analysisPrompt(p, T, '', 250, { dex, game: { id: 'quetzal' } })).toContain('Aprende por nível');
+  });
+  it('regras: cálculos do app como fonte de verdade, limitação em vez de suposição, golpes só da lista', () => {
+    const s = systemPrompt({ id: 'quetzal' });
+    expect(s).toContain('fonte de verdade');
+    expect(s).toContain('diga que é uma limitação');
+    expect(s).toContain('"Aprende por nível"');
   });
 });
 
@@ -260,7 +305,7 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 3, pcTotal: 4 });
+    expect(prep.counts).toEqual({ party: 2, pc: 3, pcTotal: 4, learn: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
     expect(html).toContain('2 Pokémon da equipe e 3 do PC (de 4');

@@ -9,17 +9,18 @@ import { analysisView, buildView, confirmView } from './view.js';
 /**
  * Monta o pedido sem enviar nada.
  * @param {'analyze'|'build'} kind
- * @param {{ all: object[], T: object, game?: object, note?: string }} ctx
+ * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object }} ctx dex = golpes por nível (dex.json), opcional
  */
-export function prepareAi(kind, { all, T, game = null, note = '' }) {
+export function prepareAi(kind, { all, T, game = null, note = '', dex = null }) {
   const P = provider();
   const system = systemPrompt(game);
-  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates) : buildPrompt(all, T, note, P.maxCandidates);
+  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game }) : buildPrompt(all, T, note, P.maxCandidates);
   const lines = prompt.split('\n');
   const counts = {
     party: lines.filter(l => /^E\d \|/.test(l)).length,
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
+    learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
   };
   return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, note: note.trim(), counts };
 }

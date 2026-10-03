@@ -218,8 +218,11 @@ function setupAi(out) {
     $('#ai-provider').disabled = true;
     try {
       const ai = await import('./ai/index.js');
+      // Na análise do Quetzal/Unbound vão também os golpes por nível da equipe (dex.json, o mesmo do detalhe)
+      const game = state.data.game;
+      const dex = b.dataset.ai === 'analyze' && game && ['quetzal', 'unbound'].includes(game.id) ? (await loadDex()).dex : null;
       // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
-      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game: state.data.game, note: $('#ai-note').value });
+      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
       aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? t('Analisando a equipe') : t('Montando a equipe')}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
       const res = await ai.sendAi(prep);
@@ -352,15 +355,19 @@ function openDetail(m, opener) {
 
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
 let dexData = null;
+async function loadDex() {
+  if (!dexData) {
+    const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
+    dexData = { dex: data.default, ui };
+  }
+  return dexData;
+}
 async function fillDex(dlg, m) {
   const slot = dlg.querySelector('[data-dex]');
   if (!slot) return;
   try {
-    if (!dexData) {
-      slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
-      const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
-      dexData = { dex: data.default, ui };
-    }
+    if (!dexData) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
+    await loadDex();
     if (!slot.isConnected) return; // o detalhe já foi trocado
     slot.innerHTML = dexData.ui.evolutionHtml(m, dexData.dex, T) + dexData.ui.learnsetHtml(m, dexData.dex, T);
   } catch (e) {
