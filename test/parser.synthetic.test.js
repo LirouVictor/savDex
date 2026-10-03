@@ -61,6 +61,15 @@ suite('parseSave (save sintético)', () => {
     expect(raw.warnings).toEqual([]);
   });
 
+  it('HP atual: equipe em 0x23, PC nos bits 168–183', () => {
+    const r = parseSave(makeSave({ trainer: base.trainer,
+      party: [{ pid: 1, species: 94, level: 29, hp: 33, stats: [66, 40, 40, 60, 70, 40] }],
+      pc: { 0: { species: 93, exp: 20000, hp: 41 } } }));
+    expect(r.party[0].hp).toBe(33);
+    expect(r.pc.boxes[0].slots[0].hp).toBe(41);
+    expect(describe(r, T).party[0].hp).toBe(33);
+  });
+
   it('lê o número da habilidade da equipe (bits 28–29 de 0x54)', () => {
     expect(raw.party.map(p => p.abilityNum)).toEqual([0, 2]);
   });

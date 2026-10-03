@@ -80,11 +80,12 @@ export function buildDemoSave(T) {
       species, nickname: d.nick ?? '', item: d.item ? ITEMS[d.item] : 0, exp: mediumSlow(d.lvl), moves, evs, ivs,
       abilityNum: d.ability ?? 0, ball: BALL[d.ball || 'poke'], shiny: !!d.shiny,
     };
-    if (!inParty) return { ...base, nature: natureIdx, female: !!d.female };
-    // Equipe: PID = 225 + natureza (macho) ou 256 + natureza (fêmea); stats pela fórmula
+    // Stats pela fórmula (o PC guarda só o HP atual: cheio)
     const sp = R.species(species, '');
     const obj = arr => Object.fromEntries(STAT_ORDER.map((k, j) => [k, arr[j]]));
     const s = calcStats(sp.baseStats, obj(ivs), obj(evs), d.lvl, nature);
+    if (!inParty) return { ...base, nature: natureIdx, female: !!d.female, hp: s.hp };
+    // Equipe: PID = 225 + natureza (macho) ou 256 + natureza (fêmea)
     return { ...base, pid: (d.female ? 256 : 225) + natureIdx, level: d.lvl, friendship: 120, stats: STAT_ORDER.map(k => s[k]) };
   };
 

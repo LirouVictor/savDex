@@ -452,6 +452,7 @@ export default {
     'This file is a DeSmuME save state (.dst), not the game save. In DeSmuME, use the .dsv file in the Battery folder or export the save with File › Export Backup Memory.',
   'Páginas dos resultados': 'Result pages',
   'Tempo de jogo': 'Play time',
+  'HP atual / máximo': 'Current HP / max',
   'Dinheiro': 'Money',
   'Insígnias': 'Badges',
   'Pokédex (capturados)': 'Pokédex (caught)',

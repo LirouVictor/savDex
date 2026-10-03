@@ -5,7 +5,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 ## Comandos
 
 - `npm run dev` / `npm run build` (saída em `dist/`) / `npm run preview`
-- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo) e `fixtures/quetzal-60h.sav` (insígnias 6 e Pokédex 67 na tela; Haunter e Doublade recém-capturados), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H` / `QUETZAL_SAVE_60H`. **Saves reais não são versionados** (`.gitignore`).
+- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo) e `fixtures/quetzal-60h.sav` (insígnias 6 e Pokédex 67 na tela; Haunter e Doublade recém-capturados) e `fixtures/quetzal-60h-haunter.sav` (o mesmo, com o Haunter ferido levado para a equipe), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H` / `QUETZAL_SAVE_60H` / `QUETZAL_SAVE_HAUNTER`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
 - `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e em inglês e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
@@ -135,7 +135,7 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 | 0x08 | 10 bytes | apelido | confirmado |
 | 0x13 | u8 | flags: bit 3 (`0x08`) = **shiny**; bit 1 sempre 1 (desconhecido) | confirmado (3 shinys — Serperior, Tyranitar, Scorbunny, todos conferidos no jogo pelo autor — e 9 não shinys) |
 | 0x14 | 7 bytes | nome do OT | confirmado |
-| 0x23 | u16 (desalinhado) | provável **HP atual**: igual ao HP máximo em todos os Pokémon vistos (todos com HP cheio) | provável |
+| 0x23 | u16 (desalinhado) | **HP atual** | confirmado (Haunter ferido com 33 de 66, "metade" no jogo; Pelipper 243 de 324; os outros cheios) |
 | 0x28 | u16 | espécie | confirmado |
 | 0x2A | u16 | item | confirmado |
 | 0x2C | u32 | experiência | confirmado |
@@ -155,7 +155,7 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 - **Natureza = (PID & 0xFF) % 25** (o byte baixo do PID, não o PID inteiro). O jogo monta o PID como `225 + natureza` nos machos e `256 + natureza` nas fêmeas. Conferido em 12 Pokémon; explica o caso do Serperior (PID `0x1F0`: PID % 25 daria Gentle, o byte baixo dá Modest, a natureza mostrada no jogo) e do Tyranitar (`0x10F`). Por segurança o app ainda confere a natureza contra os stats salvos (`pidNature` fica `null` em todos os saves vistos).
 - **Gênero** = regra da geração 3: fêmea se `(PID & 0xFF)` for menor que o limite da espécie (taxa de fêmeas em oitavos → 31, 63, 127, 191, 223); espécies sem gênero ou de gênero fixo seguem a espécie. Conferido: Tyranitar fêmea (`0x0F` < 127) e 11 machos.
 - **Stats** = fórmula padrão das gerações 3+ com os stats base oficiais (PokeAPI): reproduz exatamente os stats salvos de todas as espécies vistas na equipe.
-- **HP atual**: provavelmente o u16 em `0x23` (ver tabela); falta um save com um Pokémon ferido para confirmar. A UI mostra só o HP máximo.
+- **HP atual**: u16 em `0x23` (ver tabela). A UI mostra "atual/máximo" no detalhe só quando o Pokémon está ferido.
 - Observação: todos os PP observados (equipe e PC) estão no máximo com 3 PP Ups (ex.: Tackle 56 = 35 × 1,6), até em Pokémon recém-capturados. Pode ser regra do Quetzal; não confirmado se o campo é o PP atual.
 
 ### Seções 5–15 (PC) — CONFIRMADO salvo indicação
@@ -188,7 +188,8 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 | 160 | 1 | **fêmea** (1) / macho (0). Ignorado em espécies sem gênero ou de gênero fixo (o Golett, sem gênero, tem 1); o app usa a taxa de gênero da espécie (PokeAPI) nesses casos | confirmado (12 Pokémon: 6 machos e 6 fêmeas) |
 | 161–165 | 5 | natureza (0–24, mesma ordem) | confirmado (8 Pokémon cruzados com a equipe, inclusive o Serperior: Modest) |
 | 166–167 | 2 | número da habilidade (0/1/2), igual a `0x54` da equipe | confirmado (6 Pokémon + sets coerentes) |
-| 168–191 | 24 | desconhecido | pendente |
+| 168–183 | 16 | **HP atual** | confirmado (igual ao HP máximo calculado em 82 de 86 Pokémon; o Haunter capturado ferido tem 33, o mesmo valor depois de ir para a equipe; o Pikachu "estilo Red" tem 68 contra 62 calculados com os stats do Pikachu: forma própria com stats próprios) |
+| 184–191 | 8 | desconhecido (0 em todos) | pendente |
 | bytes 24–27 | | PP dos 4 golpes | confirmado |
 | bytes 28–37 | | apelido (vazio = usar nome da espécie) | confirmado |
 
@@ -220,11 +221,11 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 ## Pendências de engenharia reversa
 
-Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
+Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), HP atual (equipe e PC), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
-3. PC: bits 45–47, 154–159 e 168–191. Nos 4 recém-capturados (Feebas Nv27, Froakie 23, Haunter 29, Doublade 24) só os bits 168–175 variam (50, 54, 33, 63; 45–47, 154–159 e 176–191 ficam 0): candidato a local de captura (falta saber onde cada um foi capturado).
-4. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
+3. PC: bits 45–47, 154–159 e 184–191 (0 nos recém-capturados; o PC parece não guardar local nem nível de captura).
+4. Equipe: significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

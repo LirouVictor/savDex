@@ -34,7 +34,7 @@ export const PARTY = {
   pid: 0x00, otId: 0x04, nickname: 0x08, nicknameLen: 10, otName: 0x14, otNameLen: 7,
   /** Byte de flags: bit 3 (0x08) = shiny. */
   flags: 0x13, shinyFlag: 0x08,
-  /** u16 desalinhado: provavelmente o HP atual (igual ao máximo em todos os Pokémon vistos, todos com HP cheio). */
+  /** u16 desalinhado: HP atual (Haunter ferido com 33 de 66, Pelipper com 243 de 324; os outros cheios). */
   hp: 0x23,
   species: 0x28, item: 0x2A, exp: 0x2C, friendship: 0x31, ball: 0x32,
   moves: 0x34, pp: 0x3C, evs: 0x40, ivs: 0x50, misc: 0x54, level: 0x58, stats: 0x5A,
@@ -69,6 +69,7 @@ export const PC = {
     ivs: 124, ivWidth: 5,
     nature: [161, 5],
     ability: [166, 2],
+    hp: [168, 16], // HP atual (igual ao máximo calculado em 82 de 86; o Haunter ferido tem 33, o mesmo da equipe)
   },
   pp: 24,
   nickname: 28,
@@ -231,6 +232,7 @@ export function parseSave(input) {
         femaleBit: bitField(bits, ...B.female),
         natureId: bitField(bits, ...B.nature),
         abilityNum: bitField(bits, ...B.ability),
+        hp: bitField(bits, ...B.hp),
         evs, ivs,
         moves: B.moves.map((bit, j) => ({ id: bitField(bits, bit, B.moveWidth), pp: e[PC.pp + j] })).filter(m => m.id),
         raw: hex(e),
