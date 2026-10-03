@@ -158,7 +158,7 @@ export function summaryHtml(s) {
   const icon = id => `<svg class="sum-ico" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#${id}"/></svg>`;
   const tile = (cls, ico, label, value, f, extra = '') => `<div class="sum-tile ${cls}">
     <dt>${icon(ico)}<span>${label}</span></dt>
-    <dd><b class="sum-v">${value}</b>${badge(f.confidence)}${extra}</dd>
+    <dd><b class="sum-v" style="--n:${value.replace(/<[^>]+>/g, '').length}">${value}</b>${badge(f.confidence)}${extra}</dd>
   </div>`;
   const tiles = [];
   if (s.playTime) tiles.push(tile('st-time', 'clock', t('Tempo de jogo'), `${s.playTime.h}<small>h</small> ${String(s.playTime.m).padStart(2, '0')}<small>m</small>`, s.playTime));

@@ -194,6 +194,7 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 @media (min-width: 760px) { .sum { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .sum-tile {
   --c: var(--accent);
+  container-type: inline-size;
   display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 12px 10px;
   background: var(--win-2); box-shadow: inset 0 5px 0 var(--c), inset 0 0 0 2px var(--hi);
 }
@@ -203,7 +204,8 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .sum dt { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: var(--muted); font-size: .7rem; text-transform: uppercase; }
 .sum-ico { flex: none; color: var(--c); }
 .sum dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-.sum-v { font-family: var(--pixel); font-size: 1.35rem; line-height: 1.1; color: var(--ink); white-space: nowrap; }
+/* Valor grande, mas sempre dentro do bloco: a fonte diminui conforme o número de caracteres (--n) */
+.sum-v { font-family: var(--pixel); font-size: min(1.35rem, calc(100cqi / var(--n, 6) * 1.3)); line-height: 1.1; color: var(--ink); white-space: nowrap; }
 .sum-v small { font-size: .62em; color: var(--muted); }
 .sum .badge { font-size: .62rem; }
 .pips { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
