@@ -8,7 +8,7 @@ export const NEWS = [
   {
     date: '2026-10-03',
     pt: [
-      'Resumo do save no card do treinador: tempo de jogo, dinheiro, insígnias e Pokédex nos jogos oficiais (no Quetzal e no Unbound, por enquanto só o tempo de jogo). Tempo de jogo e insígnias também aparecem na imagem da equipe.',
+      'Resumo do save no card do treinador: tempo de jogo, dinheiro, insígnias e Pokédex nos jogos oficiais (no Quetzal, tempo de jogo e dinheiro; no Unbound, por enquanto só o tempo de jogo). Tempo de jogo e insígnias também aparecem na imagem da equipe.',
       'Suporte ao Pokémon Unbound (versão 2.1 em diante): equipe e as 25 caixas do PC, com as espécies, formas, stats e itens do Unbound.',
       'Jogos de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2 (.dsv do DeSmuME e exports do Action Replay DS, .duc), com tipos, stats e golpes como eram na época.',
       'Erro ao abrir um save aparece numa janela no meio da tela, com o motivo.',
@@ -19,7 +19,7 @@ export const NEWS = [
       'Páginas de privacidade e termos de uso, e esta lista de novidades.',
     ],
     en: [
-      'Save summary in the trainer card: play time, money, badges and Pokédex in the official games (in Quetzal and Unbound, only play time for now). Play time and badges also show up in the party image.',
+      'Save summary in the trainer card: play time, money, badges and Pokédex in the official games (in Quetzal, play time and money; in Unbound, only play time for now). Play time and badges also show up in the party image.',
       'Pokémon Unbound support (version 2.1 onward): party and all 25 PC boxes, with Unbound’s species, forms, stats and items.',
       'DS games: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White and Black 2/White 2 (DeSmuME .dsv files and Action Replay DS exports, .duc), with types, stats and moves as they were back then.',
       'An error opening a save shows up in a window in the middle of the screen, with the reason.',

@@ -2,7 +2,7 @@
 // Só cria arquivos novos; o app nunca grava no save do usuário.
 import { encodeText } from '../parser/charset.js';
 import {
-  SAVE_SIZE, SECTOR_SIZE, SECTOR_DATA, SECTORS_PER_SLOT, SIGNATURE, FOOTER, TRAINER, PARTY, PC, sectorChecksum,
+  SAVE_SIZE, SECTOR_SIZE, SECTOR_DATA, SECTORS_PER_SLOT, SIGNATURE, FOOTER, TRAINER, PARTY, PC, SUMMARY, sectorChecksum,
 } from '../parser/save.js';
 
 /**
@@ -15,6 +15,7 @@ import {
  * @param {number} [o.rotate] rotação física dos setores dentro do slot
  * @param {string[]} [o.boxNames] nomes das caixas (padrão BOX1, BOX2…)
  * @param {[number, number, number]} [o.playTime] horas, minutos e segundos
+ * @param {number} [o.money] dinheiro (gravado com XOR de uma chave, como no jogo)
  */
 export function makeSave(o) {
   const u8 = new Uint8Array(SAVE_SIZE);
@@ -33,13 +34,16 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
   s0.setUint16(TRAINER.tid, o.trainer.tid, true);
   s0.setUint16(TRAINER.sid, o.trainer.sid, true);
   if (o.playTime) {
-    s0.setUint16(0x10, o.playTime[0], true);
-    sections[0][0x14] = o.playTime[1];
-    sections[0][0x15] = o.playTime[2];
+    s0.setUint16(SUMMARY.hours, o.playTime[0], true);
+    sections[0][SUMMARY.minutes] = o.playTime[1];
+    sections[0][SUMMARY.seconds] = o.playTime[2];
   }
+  const key = 0x5A3C9E17;
+  s0.setUint32(SUMMARY.key, key, true);
 
-  // Seção 1: equipe
+  // Seção 1: equipe (e o dinheiro)
   const s1 = sections[1], d1 = new DataView(s1.buffer);
+  d1.setUint32(SUMMARY.money, ((o.money ?? 0) ^ key) >>> 0, true);
   const party = o.party || [];
   s1[PARTY.count] = party.length;
   party.forEach((p, i) => {

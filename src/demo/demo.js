@@ -94,6 +94,7 @@ export function buildDemoSave(T) {
   return makeSave({
     trainer: { name: 'DEMO', tid: 12345, sid: 54321 },
     playTime: [38, 12, 5],
+    money: 124560,
     party: PARTY.map((d, i) => mon(d, i, true)),
     pc,
     boxNames: [t('FAVORITOS'), t('INICIAIS')],

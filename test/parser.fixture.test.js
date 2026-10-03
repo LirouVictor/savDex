@@ -16,8 +16,8 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(raw.trainer).toEqual({ name: 'Victor', tid: 9653, sid: 25806 });
     expect(raw.slot.saveIndex).toBe(80);
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
-    // Tempo de jogo (provável): cresce na ordem dos 3 saves (ver os testes dos outros dois)
-    expect(raw.summary).toEqual({ playTime: { h: 51, m: 55, s: 16, confidence: 'provável' } });
+    // Tempo de jogo: cresce na ordem dos 3 saves (ver os testes dos outros dois)
+    expect(raw.summary).toEqual({ playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' } });
   });
 
   it('equipe', () => {
@@ -157,6 +157,8 @@ suite.skipIf(!has3)('PC → equipe: shiny, gênero e natureza (fixtures/PokemonQ
   it('tempo de jogo cresce de um save para o outro (51h55m16s → 52h04m00s → 52h26m41s)', () => {
     expect(before.summary.playTime).toMatchObject({ h: 52, m: 4, s: 0 });
     expect(d.summary.playTime).toMatchObject({ h: 52, m: 26, s: 41 });
+    // Dinheiro: a chave muda a cada save, o valor decodificado não
+    expect([before.summary.money.value, d.summary.money.value]).toEqual([1315986, 1315986]);
   });
 
   it('shiny (byte 0x13, bit 3) e gênero (byte baixo do PID) na equipe', () => {
@@ -187,5 +189,15 @@ suite.skipIf(!has3)('PC → equipe: shiny, gênero e natureza (fixtures/PokemonQ
   it('itens 503 e 510 (faixa antes só "provável")', () => {
     expect(d.party[0].item).toMatchObject({ id: 510, name: 'Heavy-Duty Boots', confidence: 'confirmado' });
     expect(d.party[1].item).toMatchObject({ id: 503, name: 'Assault Vest', confidence: 'confirmado' });
+  });
+});
+
+// Save com o tempo e o dinheiro conferidos na tela do jogo (59:21:18 logo depois de salvar; ₽ 1 247 386)
+const FILE_59 = process.env.QUETZAL_SAVE_59H || new URL('../fixtures/quetzal-59h.sav', import.meta.url).pathname;
+suite.skipIf(!existsSync(FILE_59))('resumo conferido no jogo (fixtures/quetzal-59h.sav)', () => {
+  it('tempo de jogo e dinheiro', () => {
+    const raw = parseSave(readFileSync(FILE_59));
+    expect(raw.summary).toEqual({ playTime: { h: 59, m: 20, s: 49, confidence: 'confirmado' }, money: { value: 1247386, confidence: 'confirmado' } });
+    expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
   });
 });

@@ -16,6 +16,9 @@ export const FOOTER = { id: 0xFF4, checksum: 0xFF6, signature: 0xFF8, saveIndex:
 
 export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
 
+/** Resumo: tempo de jogo (seção 0) e dinheiro (seção 1, XOR com a chave da seção 0). */
+export const SUMMARY = { hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918 };
+
 export const PARTY = {
   count: 0x6A4,
   start: 0x6A8,
@@ -229,9 +232,14 @@ export function parseSave(input) {
     boxes.push({ index: b, name: boxNames[b], slots: slotsOut, partial: (b + 1) * PC.perBox > capacity });
   }
 
-  // Tempo de jogo: 2 bytes depois da posição da Gen 3 oficial (horas em 0x10, minutos 0x14, segundos 0x15).
-  // Provável: cresce na ordem dos 3 saves reais (51h55m16s → 52h04m → 52h26m41s), falta bater com o jogo.
-  const info = summary({ playTime: playTime(dv.getUint16(s0 + 0x10, true), u8[s0 + 0x14], u8[s0 + 0x15], 'provável') });
+  // Tempo de jogo 2 bytes depois da posição da Gen 3 oficial; dinheiro com XOR da chave, como no Emerald,
+  // mas em outras posições. Conferidos no jogo: save com 59h20m49s (a tela, aberta logo depois, mostrava
+  // 59:21:18) e ₽ 1 247 386; nos 3 saves antigos a chave muda e o dinheiro decodificado é sempre ₽ 1 315 986.
+  const key = dv.getUint32(s0 + SUMMARY.key, true);
+  const info = summary({
+    playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
+    money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
+  });
 
   return {
     slot: { index: active.slot, saveIndex: active.saveIndex },

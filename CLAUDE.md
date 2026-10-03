@@ -5,7 +5,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 ## Comandos
 
 - `npm run dev` / `npm run build` (saída em `dist/`) / `npm run preview`
-- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3`. **Saves reais não são versionados** (`.gitignore`).
+- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), e `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
 - `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e em inglês e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
@@ -110,11 +110,14 @@ Arquivo de 128 KB (0x20000) = 2 slots × 16 setores de 4 KB (0x1000).
 | 0x00 | 7 bytes texto | nome |
 | 0x0A | u16 | TID |
 | 0x0C | u16 | SID |
-| 0x10 | u16 | **tempo de jogo, horas** (provável) |
-| 0x14 | u8 | minutos (provável) |
-| 0x15 | u8 | segundos (provável); `0x16` parece o contador de quadros (< 60) |
+| 0x10 | u16 | **tempo de jogo, horas** |
+| 0x14 | u8 | minutos |
+| 0x15 | u8 | segundos; `0x16` parece o contador de quadros (< 60) |
+| 0x2C | u32 | **chave** do dinheiro (muda a cada save) |
 
-- Tempo de jogo 2 bytes depois da posição da Gen 3 oficial (`0x0E` fica 0). **Provável**: cresce na ordem dos 3 saves reais (51h55m16s → 52h04m00s → 52h26m41s) e o autor tinha 57h45m39s depois; falta um save com o tempo exato do jogo.
+- Tempo de jogo 2 bytes depois da posição da Gen 3 oficial (`0x0E` fica 0). **Confirmado**: save com 59h20m49s e a tela do jogo, aberta logo depois de salvar, com 59:21:18; nos saves antigos cresce na ordem (51h55m16s → 52h04m00s → 52h26m41s).
+- **Dinheiro** = u32 em `0x918` da **seção 1** XOR a chave (`0x2C` da seção 0), como no Emerald mas em outras posições. **Confirmado**: ₽ 1 247 386 na tela e no save; nos 3 saves antigos a chave muda e o valor é sempre ₽ 1 315 986.
+- **Insígnias** (não lidas ainda): candidato em `0x151`–`0x152` da seção 1 (bits a partir de `0x151` bit 6, como no Emerald, que começa num bit 7). Entre o save de 52h e o de 59h o byte `0x152` foi de `0x07` a `0x0F`, o que daria 5 → 6 insígnias (o cartão mostra 6). Falta confirmar com saves antes/depois de um ginásio.
 
 ### Texto
 
@@ -216,12 +219,12 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 ## Pendências de engenharia reversa
 
-Resolvidas: habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
+Resolvidas: tempo de jogo e dinheiro, habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
 3. PC: bits 45–47, 154–159 e 168–191 (candidatos: local/nível de captura; precisa de um Pokémon recém-capturado).
-4. Resumo do save: confirmar o tempo de jogo (save + tempo mostrado no jogo); achar dinheiro, insígnias e Pokédex (pares: antes/depois de comprar algo, de ganhar uma insígnia, de capturar uma espécie nova).
+4. Resumo do save: confirmar as insígnias (candidato em `0x151`–`0x152` da seção 1; save antes/depois de um ginásio) e achar a Pokédex (antes/depois de capturar uma espécie nova, com o número mostrado na Pokédex). Tempo de jogo e dinheiro: resolvidos.
 5. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.
