@@ -2,7 +2,7 @@
 
 import { esc, typeChips, monShort } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
-import { REF_RE, teamFacts } from './prompt.js';
+import { REF_RE, teamFacts, buildIssues } from './prompt.js';
 import { t, num } from '../i18n.js';
 
 const where = m => (m.hasNickname ? m.species.name + ' · ' : '')
@@ -120,7 +120,9 @@ export function buildView(r, byRef, model, T) {
     </button></li>`;
   }).join('');
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
-  const check = mons.length ? bullets(teamFacts(mons, T).split('\n'), byRef) : '';
+  const issues = mons.length ? buildIssues(mons, T) : [];
+  const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
+  const check = mons.length ? warn + bullets(teamFacts(mons, T).split('\n'), byRef) : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">

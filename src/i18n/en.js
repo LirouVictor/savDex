@@ -312,6 +312,8 @@ export default {
   '- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".':
     '- ALWAYS refer to Pokémon by the reference at the start of each line (e.g. E1, C3-12), also inside the texts, and WITHOUT writing the name next to it (the app replaces the reference with the name). Right: "C3-12 resists Ice". Wrong: "Garchomp (C3-12) resists Ice".',
   '- Ignore o nível: o jogador pode treinar qualquer Pokémon.': '- Ignore the level: the player can train any Pokémon.',
+  '- Antes de sugerir trocar um item ou criticar um set, veja se a habilidade do Pokémon já anula a desvantagem (ex.: Magic Guard anula o recuo da Life Orb).':
+    '- Before suggesting an item change or criticizing a set, check whether the Pokémon’s ability already cancels the drawback (e.g. Magic Guard cancels Life Orb recoil).',
   '- Os cálculos do app (tipos, cobertura, contagens, velocidade) são a fonte de verdade: interprete-os, não recalcule nem contradiga.':
     '- The app’s calculations (types, coverage, counts, speed) are the source of truth: interpret them, do not recalculate or contradict them.',
   '- Se uma conclusão depender de uma mecânica, habilidade ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.':
@@ -360,7 +362,12 @@ export default {
   'Pistas de estratégia (habilidades e golpes dos disponíveis):': 'Strategy hints (abilities and moves of the available ones):',
   'põem {list}': 'set by {list}',
   'aproveitam {list}': 'used by {list}',
-  'ninguém aproveita pela habilidade': 'no one benefits through their ability',
+  'ninguém aproveita (habilidade ou golpe)': 'no one benefits (ability or move)',
+  'Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.':
+    'Do not state weaknesses, resistances or counts for the final team (e.g. "no triple weaknesses"): the app calculates and shows them alongside. In strengths and weaknesses, talk about roles, strategy and sets.',
+  'megapedra': 'Mega Stone',
+  '{type} acerta {n} membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).': '{type} hits {n} members super effectively (the request was no type hitting 3 or more).',
+  '{n} Pokémon com megapedra (o pedido era no máximo um).': '{n} Pokémon holding a Mega Stone (the request was at most one).',
   'DISPONÍVEIS ({n}):': 'AVAILABLE ({n}):',
   'Equipe sugerida': 'Suggested team',
   'Nota da equipe de 0 a 10, pelos critérios pedidos': 'Party score from 0 to 10, by the requested criteria',
@@ -398,6 +405,7 @@ export default {
   'Trocas sugeridas': 'Suggested swaps',
   'Dicas por membro': 'Tips per member',
   'Conferência do app': 'App check',
+  'Fora dos critérios pedidos:': 'Outside the requested criteria:',
   'Próximos passos': 'Next steps',
   'A IA sugeriu só {n} Pokémon válidos.': 'The AI suggested only {n} valid Pokémon.',
   'escolhido automaticamente': 'chosen automatically',

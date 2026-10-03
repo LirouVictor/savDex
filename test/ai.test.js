@@ -1,5 +1,5 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines } from '../src/ai/prompt.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
@@ -35,6 +35,7 @@ suite('IA: dados enviados', () => {
     expect(line).toContain('Hab: Justified (oculta)');
     expect(line).toContain('Base 70/110/70/115/70/90 = 525');
     expect(line).toContain('Close Combat [Fighting, Físico, 120]');
+    expect(line).toContain('Item: Lucarionite Z (megapedra)');
     expect(line).not.toMatch(/Nv|nível/i);
   });
   it('candidatos: equipe sempre, PC por stats base, no máximo 2 da mesma espécie', () => {
@@ -54,6 +55,7 @@ suite('IA: dados enviados', () => {
     expect(b).toContain('DISPONÍVEIS (4):');
     expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
     expect(b).toContain('Nas dicas, só ajustes concretos');
+    expect(b).toContain('Não afirme fraquezas, resistências nem contagens da equipe final');
     expect(a).toContain('Omita quem já está bem montado');
   });
   it('montagem: uma cópia por espécie (a de melhores IVs)', () => {
@@ -104,17 +106,21 @@ suite('IA: cálculos do app e candidatos', () => {
     ];
     const lines = strategyLines(pool);
     expect(lines[1]).toMatch(/^Pistas de estratégia/);
-    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam C1-1 (Swift Swim).');
+    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam E1 (Hurricane), C1-1 (Swift Swim).');
     expect(lines).toContain('- Trick Room: C1-3.');
     expect(lines.join('\n')).not.toMatch(/sol|Chlorophyll/);
     expect(strategyLines(party.slice(1))).toEqual([]);
-    expect(buildPrompt(pool, T)).toContain('aproveitam C1-1 (Swift Swim)');
+    // golpes que aproveitam o terreno também contam (Rillaboom com Grassy Surge e Grassy Glide)
+    const rilla = mon({ sp: 'Rillaboom', id: 812, box: 2, slot: 1, types: ['grass'], ab: 'Grassy Surge', moves: [['Grassy Glide', 'grass', 0, 55]] });
+    expect(strategyLines([rilla])).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam C2-1 (Grassy Glide).');
+    expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim).');
   });
   it('regras: cálculos do app como fonte de verdade, limitação em vez de suposição, golpes só da lista', () => {
     const s = systemPrompt({ id: 'quetzal' });
     expect(s).toContain('fonte de verdade');
     expect(s).toContain('diga que é uma limitação');
     expect(s).toContain('"Aprende por nível"');
+    expect(s).toContain('Magic Guard anula o recuo da Life Orb');
   });
 });
 
@@ -164,6 +170,20 @@ suite('IA: conferência da resposta', () => {
     expect(bv).toContain('Conferência do app');
     expect(bv).toContain('Velocidade base (maior primeiro): <b>Lucario</b> 90.'); // mesmas contas da análise, com nomes
     expect(bv).toContain('Megapedras: <b>Lucario</b> (Lucarionite Z)');
+    expect(bv).not.toContain('Fora dos critérios pedidos');
+  });
+  it('montagem: o app avisa quando a equipe fura os critérios pedidos', () => {
+    const steel = (sp, slot, item) => mon({ sp, id: slot, box: 5, slot, types: ['steel'], item });
+    const team = [steel('Skarmory', 1, 'Scizorite'), steel('Klefki', 2, 'Metagrossite'), steel('Bronzong', 3)];
+    expect(buildIssues(team, T)).toEqual([
+      'Fighting acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
+      'Ground acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
+      'Fire acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
+      '2 Pokémon com megapedra (o pedido era no máximo um).',
+    ]);
+    const refs = new Map(team.map(m => [refOf(m), m]));
+    const r = checkBuild({ nome: 'T', resumo: '', pontos_fortes: [], pontos_fracos: [], dicas: [], membros: team.map(m => ({ ref: refOf(m) })) }, refs);
+    expect(buildView(r, refs, 'x', T)).toContain('Fora dos critérios pedidos:');
   });
 });
 
