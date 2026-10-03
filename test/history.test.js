@@ -1,7 +1,7 @@
 import { describe as suite, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { loadSave } from '../src/parser/load.js';
-import { diffSaves, saveKey, signature } from '../src/history/diff.js';
+import { diffSaves, saveKey, signature, orderSaves } from '../src/history/diff.js';
 import { changesWin, historyList } from '../src/history/view.js';
 import { mediumSlow } from '../src/parser/describe.js';
 import { makeSave } from './helpers/make-save.js';
@@ -35,6 +35,31 @@ const after = load({
 });
 
 suite('histórico: comparação entre versões do save', () => {
+  it('Quetzal: IVs/natureza/habilidade mudados não viram "novo" + "saiu" (vira "treinado"), nem se evoluiu no lugar', () => {
+    const b = load({ pc: {
+      0: { species: 279, exp: mediumSlow(26), ivs: ivs(6), nature: 1, abilityNum: 1, ball: 3 },
+      1: { species: 147, exp: mediumSlow(30), ivs: ivs(3), nature: 2, ball: 3 },
+    } });
+    const a = load({ pc: {
+      0: { species: 279, exp: mediumSlow(100), ivs: ivs(31), nature: 7, abilityNum: 1, ball: 3 },
+      1: { species: 148, exp: mediumSlow(40), ivs: ivs(31), nature: 9, abilityNum: 2, ball: 3 },
+    } });
+    const d = diffSaves(b, a);
+    expect([d.added, d.removed]).toEqual([[], []]);
+    expect(d.trained.map(e => [e.mon.species.name, e.what])).toEqual([['Pelipper', ['IVs', 'natureza']], ['Dragonair', ['IVs', 'natureza', 'habilidade']]]);
+    expect(d.evolved.map(e => e.to.species.name)).toEqual(['Dragonair']);
+  });
+
+  it('ordem pelo tempo de jogo: o save mais antigo aberto por último continua como "antes"', () => {
+    const older = loadSave(makeSave({ trainer, playTime: [52, 26, 41], pc: { 0: { species: 4, exp: 100 } } }), T, G).data;
+    const newer = loadSave(makeSave({ trainer, playTime: [60, 19, 24], pc: { 0: { species: 4, exp: 100 }, 1: { species: 7, exp: 100, ivs: ivs(3) } } }), T, G).data;
+    expect(orderSaves(newer, older)).toMatchObject({ older, newer, swapped: true });
+    expect(orderSaves(older, newer)).toMatchObject({ older, newer, swapped: false });
+    const d = diffSaves(...Object.values(orderSaves(newer, older)).slice(0, 2));
+    expect(d.added.map(m => m.species.name)).toEqual(['Squirtle']);
+    expect(changesWin(d, { savedAt: 0 }, 2, { swapped: true }).html).toContain('mais antigo que o comparado');
+  });
+
   it('Quetzal: novos, saíram, evoluíram, subiram de nível e golpes novos', () => {
     const d = diffSaves(before, after);
     const names = list => list.map(m => m.species.name);
@@ -90,5 +115,20 @@ suite.skipIf(!existsSync(REF) || !existsSync(PC))('histórico com os saves reais
     expect(d.added.filter(m => moved.includes(m.species.name))).toEqual([]);
     expect(d.removed.filter(m => moved.includes(m.species.name))).toEqual([]);
     expect(saveKey(a)).toBe(saveKey(b));
+  });
+});
+
+// Saves reais do Quetzal (52h e 60h), entre os quais o autor capturou 4 Pokémon e treinou 3
+const OLD = 'fixtures/quetzal-cmp-old.sav', NEW = 'fixtures/quetzal-cmp-new.sav';
+suite.skipIf(!existsSync(OLD) || !existsSync(NEW))('histórico com saves reais do Quetzal', () => {
+  it('nas duas ordens: 4 novos, 3 treinados, ninguém saiu', () => {
+    const o = loadSave(readFileSync(OLD), T, G).data, n = loadSave(readFileSync(NEW), T, G).data;
+    for (const [x, y] of [[o, n], [n, o]]) {
+      const { older, newer } = orderSaves(x, y);
+      const d = diffSaves(older, newer);
+      expect(d.added.map(m => m.species.name).sort()).toEqual(['Doublade', 'Feebas', 'Froakie', 'Haunter']);
+      expect(d.removed).toEqual([]);
+      expect(d.trained.map(e => e.mon.species.name).sort()).toEqual(['Dragonite', 'Pelipper', 'Serperior']);
+    }
   });
 });

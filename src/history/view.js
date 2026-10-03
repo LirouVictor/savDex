@@ -16,19 +16,22 @@ function chip(m, i, extra = '') {
 }
 
 /**
- * @param {object} d resultado de diffSaves
+ * @param {object} d resultado de diffSaves (sempre da versão mais antiga para a mais nova)
  * @param {{savedAt:number, saveIndex:number}} base versão comparada
+ * @param {number} versions quantas versões estão guardadas
+ * @param {{ swapped?: boolean }} [opts] swapped = o save aberto agora é o mais antigo dos dois
  * @returns {{ html: string, mons: object[] }}
  */
-export function changesWin(d, base, versions) {
+export function changesWin(d, base, versions, { swapped = false } = {}) {
   const mons = [];
   const add = m => mons.push(m) - 1;
-  const sec = (title, items) => (items.length
-    ? `<details class="fold"><summary>${title}</summary><ul class="ch-list">${items.join('')}</ul></details>` : '');
+  const sec = (title, items, note = '') => (items.length
+    ? `<details class="fold"><summary>${title}</summary>${note ? `<p class="hint">${note}</p>` : ''}<ul class="ch-list">${items.join('')}</ul></details>` : '');
   const lv = n => `${t('Nv.')} ${n}`;
   const sum = [
     [d.added.length, t('novo'), t('novos'), 'up'], [d.evolved.length, t('evoluiu'), t('evoluíram'), 'up'],
     [d.leveled.length, t('subiu de nível'), t('subiram de nível'), 'up'], [d.learned.length, t('aprendeu golpes'), t('aprenderam golpes'), 'up'],
+    [(d.trained || []).length, t('treinado'), t('treinados'), 'up'],
     [d.removed.length, t('saiu'), t('saíram'), 'down'],
   ].filter(([n]) => n).map(([n, one, many, cls]) => `<span class="ch-pill ${cls}"><b>${n}</b> ${n === 1 ? one : many}</span>`).join('');
   const body = !d.changed
@@ -38,10 +41,12 @@ export function changesWin(d, base, versions) {
     ${sec(t('Evoluíram'), d.evolved.map(e => chip(e.to, add(e.to), esc(t('era {name}', { name: e.from.species.name })))))}
     ${sec(t('Subiram de nível'), d.leveled.map(e => chip(e.mon, add(e.mon), `${lv(e.from)} → ${e.to}`)))}
     ${sec(t('Golpes novos'), d.learned.map(e => chip(e.mon, add(e.mon), esc(e.moves.map(mv => mv.name).join(', ')))))}
-    ${sec(t('Saíram'), d.removed.map(m => chip(m, add(m), m.level ? lv(m.level) : '')))}`;
+    ${sec(t('Treinados'), (d.trained || []).map(e => chip(e.mon, add(e.mon), esc(e.what.map(w => t(w)).join(', ')))), t('Mesmo Pokémon com IVs, natureza ou habilidade diferentes (itens de treino do jogo).'))}
+    ${sec(t('Saíram'), d.removed.map(m => chip(m, add(m), m.level ? lv(m.level) : '')), t('Estavam na versão mais antiga e não aparecem na mais nova: soltos, trocados ou usados no jogo. Se um deles ainda estiver com você, o app não conseguiu reconhecê-lo (mudou demais entre as versões).'))}`;
   const total = d.total.after - d.total.before;
   const html = `<section class="win changes" aria-labelledby="changes-h">
-    <div class="win-title"><h2 id="changes-h">${t('O que mudou')}</h2><small>${t('desde {when}', { when: when(base.savedAt) })}</small></div>
+    <div class="win-title"><h2 id="changes-h">${t('O que mudou')}</h2><small>${t(swapped ? 'até a versão aberta em {when}' : 'desde {when}', { when: when(base.savedAt) })}</small></div>
+    ${swapped ? `<p class="hint">${t('Este save é mais antigo que o comparado (menos tempo de jogo). A comparação vai sempre do mais antigo para o mais novo.')}</p>` : ''}
     <p class="k-line">${t('Pokémon: {before} → {after}', { before: d.total.before, after: d.total.after })}${total ? ` (${total > 0 ? '+' : ''}${total})` : ''}
       · ${t('shinies: {before} → {after}', { before: d.shinies.before, after: d.shinies.after })}</p>
     ${body}
