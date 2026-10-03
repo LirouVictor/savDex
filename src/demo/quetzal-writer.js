@@ -16,6 +16,8 @@ import {
  * @param {string[]} [o.boxNames] nomes das caixas (padrão BOX1, BOX2…)
  * @param {[number, number, number]} [o.playTime] horas, minutos e segundos
  * @param {number} [o.money] dinheiro (gravado com XOR de uma chave, como no jogo)
+ * @param {number} [o.badges] insígnias (0–8)
+ * @param {number[]} [o.dex] espécies capturadas (Dex Nacional)
  */
 export function makeSave(o) {
   const u8 = new Uint8Array(SAVE_SIZE);
@@ -44,6 +46,9 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
   // Seção 1: equipe (e o dinheiro)
   const s1 = sections[1], d1 = new DataView(s1.buffer);
   d1.setUint32(SUMMARY.money, ((o.money ?? 0) ^ key) >>> 0, true);
+  for (let i = 0; i < (o.badges ?? 0); i++) { const b = SUMMARY.badgeBit + i; s1[b >> 3] |= 1 << (b & 7); }
+  sections[4].set([0x52, 0x4F, 0x50, 0x07], SUMMARY.dexTag); // "ROP"
+  for (const n of o.dex || []) sections[4][SUMMARY.dex + ((n - 1) >> 3)] |= 1 << ((n - 1) & 7);
   const party = o.party || [];
   s1[PARTY.count] = party.length;
   party.forEach((p, i) => {

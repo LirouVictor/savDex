@@ -25,9 +25,12 @@ suite('save de demonstração', () => {
     }
   });
 
-  it('resumo: tempo de jogo e dinheiro (gravado com a chave, como no jogo)', () => {
+  it('resumo: tempo de jogo, dinheiro (gravado com a chave, como no jogo), insígnias e Pokédex', () => {
     const { data } = loadSave(buildDemoSave(T), T, G);
-    expect(data.summary).toEqual({ playTime: { h: 38, m: 12, s: 5, confidence: 'confirmado' }, money: { value: 124560, confidence: 'confirmado' } });
+    expect(data.summary).toEqual({
+      playTime: { h: 38, m: 12, s: 5, confidence: 'confirmado' }, money: { value: 124560, confidence: 'confirmado' },
+      badges: { count: 5, total: 8, confidence: 'provável' }, dex: { owned: 33, total: 1025, confidence: 'provável' },
+    });
   });
 
   it('tem shiny, fêmeas, apelidos, formas regionais e caixas com nome', () => {

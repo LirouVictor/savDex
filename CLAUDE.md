@@ -117,7 +117,8 @@ Arquivo de 128 KB (0x20000) = 2 slots × 16 setores de 4 KB (0x1000).
 
 - Tempo de jogo 2 bytes depois da posição da Gen 3 oficial (`0x0E` fica 0). **Confirmado**: save com 59h20m49s e a tela do jogo, aberta logo depois de salvar, com 59:21:18; nos saves antigos cresce na ordem (51h55m16s → 52h04m00s → 52h26m41s).
 - **Dinheiro** = u32 em `0x918` da **seção 1** XOR a chave (`0x2C` da seção 0), como no Emerald mas em outras posições. **Confirmado**: ₽ 1 247 386 na tela e no save; nos 3 saves antigos a chave muda e o valor é sempre ₽ 1 315 986.
-- **Insígnias** (não lidas ainda): candidato em `0x151`–`0x152` da seção 1 (bits a partir de `0x151` bit 6, como no Emerald, que começa num bit 7). Entre o save de 52h e o de 59h o byte `0x152` foi de `0x07` a `0x0F`, o que daria 5 → 6 insígnias (o cartão mostra 6). Falta confirmar com saves antes/depois de um ginásio.
+- **Insígnias** (provável): 8 flags na seção 1 a partir do bit 6 de `0x151` (como no Emerald, que começa num bit 7). Entre o save de 52h e o de 59h vão de 5 a 6 (o autor tinha 5 por volta de 52h; o cartão mostra 6). Falta um save antes/depois de um ginásio.
+- **Pokédex** (provável): capturados pela **Dex Nacional** (bit n−1 = espécie n, inclusive a Gen 9: Annihilape 979, Baxcalibur 998) na **seção 4**, `0x9D0`, logo depois do bloco marcado `ROP` (`0x9B4`; o app só lê se a marca estiver lá). A seção 4 tem outros blocos marcados (`ITM`, `RGN`, `RLG`, `DEX`, `HLP`, `AGR`). Entre os saves de 52h e de 59h vai de 63 a 65 com exatamente Feebas (349) e Froakie (656) a mais, os dois capturados nesse meio-tempo; os 65 são as linhas evolutivas dos Pokémon do autor. Total mostrado: 1025 (Dex Nacional do expansion), também a conferir com a tela da Pokédex. "Vistos" não foi achado (não é um superconjunto logo depois).
 
 ### Texto
 
@@ -224,7 +225,7 @@ Resolvidas: tempo de jogo e dinheiro, habilidade da equipe (`0x54`), item/exp/na
 1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
 3. PC: bits 45–47, 154–159 e 168–191 (candidatos: local/nível de captura; precisa de um Pokémon recém-capturado).
-4. Resumo do save: confirmar as insígnias (candidato em `0x151`–`0x152` da seção 1; save antes/depois de um ginásio) e achar a Pokédex (antes/depois de capturar uma espécie nova, com o número mostrado na Pokédex). Tempo de jogo e dinheiro: resolvidos.
+4. Resumo do save: confirmar insígnias e Pokédex (prováveis) com a tela do jogo (número de capturados e total da Pokédex; save antes/depois de um ginásio). Tempo de jogo e dinheiro: resolvidos.
 5. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

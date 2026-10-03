@@ -17,7 +17,10 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     expect(raw.slot.saveIndex).toBe(80);
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
     // Tempo de jogo: cresce na ordem dos 3 saves (ver os testes dos outros dois)
-    expect(raw.summary).toEqual({ playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' } });
+    expect(raw.summary).toEqual({
+      playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' },
+      badges: { count: 5, total: 8, confidence: 'provável' }, dex: { owned: 63, total: 1025, confidence: 'provável' },
+    });
   });
 
   it('equipe', () => {
@@ -195,9 +198,12 @@ suite.skipIf(!has3)('PC → equipe: shiny, gênero e natureza (fixtures/PokemonQ
 // Save com o tempo e o dinheiro conferidos na tela do jogo (59:21:18 logo depois de salvar; ₽ 1 247 386)
 const FILE_59 = process.env.QUETZAL_SAVE_59H || new URL('../fixtures/quetzal-59h.sav', import.meta.url).pathname;
 suite.skipIf(!existsSync(FILE_59))('resumo conferido no jogo (fixtures/quetzal-59h.sav)', () => {
-  it('tempo de jogo e dinheiro', () => {
+  it('tempo de jogo, dinheiro, insígnias (5 → 6) e Pokédex (63 → 65: Feebas e Froakie)', () => {
     const raw = parseSave(readFileSync(FILE_59));
-    expect(raw.summary).toEqual({ playTime: { h: 59, m: 20, s: 49, confidence: 'confirmado' }, money: { value: 1247386, confidence: 'confirmado' } });
+    expect(raw.summary).toEqual({
+      playTime: { h: 59, m: 20, s: 49, confidence: 'confirmado' }, money: { value: 1247386, confidence: 'confirmado' },
+      badges: { count: 6, total: 8, confidence: 'provável' }, dex: { owned: 65, total: 1025, confidence: 'provável' },
+    });
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
   });
 });

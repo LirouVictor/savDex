@@ -95,6 +95,9 @@ export function buildDemoSave(T) {
     trainer: { name: 'DEMO', tid: 12345, sid: 54321 },
     playTime: [38, 12, 5],
     money: 124560,
+    badges: 5,
+    // Capturados (Dex Nacional): as linhas evolutivas dos Pokémon do exemplo
+    dex: [4, 5, 6, 25, 26, 56, 57, 58, 59, 109, 110, 123, 129, 130, 212, 246, 247, 248, 255, 256, 257, 443, 444, 445, 447, 448, 495, 496, 497, 979, 996, 997, 998],
     party: PARTY.map((d, i) => mon(d, i, true)),
     pc,
     boxNames: [t('FAVORITOS'), t('INICIAIS')],
