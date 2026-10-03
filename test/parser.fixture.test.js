@@ -218,3 +218,18 @@ suite.skipIf(!existsSync(FILE_60))('resumo conferido no jogo (fixtures/quetzal-6
     expect(pc).toEqual(expect.arrayContaining(['Feebas', 'Froakie', 'Haunter', 'Doublade']));
   });
 });
+
+// Mesmo save com o Haunter (capturado com metade do HP) levado do PC para a equipe
+const FILE_H = process.env.QUETZAL_SAVE_HAUNTER || new URL('../fixtures/quetzal-60h-haunter.sav', import.meta.url).pathname;
+suite.skipIf(!existsSync(FILE_H) || !existsSync(FILE_60))('HP atual (fixtures/quetzal-60h-haunter.sav)', () => {
+  it('Haunter com 33 de 66 no PC e na equipe; no PC, os outros têm o HP máximo calculado', () => {
+    const before = describe(parseSave(readFileSync(FILE_60)), T), after = describe(parseSave(readFileSync(FILE_H)), T);
+    const inPc = before.pc.boxes.flatMap(b => b.slots).find(m => m.species.name === 'Haunter');
+    const inParty = after.party.find(m => m.species.name === 'Haunter');
+    expect([inPc.hp, inParty.hp, inParty.stats.hp]).toEqual([33, 33, 66]);
+    expect(after.party.find(m => m.species.name === 'Pelipper')).toMatchObject({ hp: 243, stats: { hp: 324 } });
+    // Exceção: o Pikachu "estilo Red" (forma própria do Quetzal, 1469) tem 68 contra 62 calculados com os stats do Pikachu
+    const others = before.pc.boxes.flatMap(b => b.slots).filter(m => m !== inPc && m.speciesId !== 1469);
+    expect(others.filter(m => m.hp !== m.stats.hp).map(m => m.species.name)).toEqual([]);
+  });
+});

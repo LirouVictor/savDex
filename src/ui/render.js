@@ -68,9 +68,12 @@ function statRows(m, { withStats }) {
     const mark = cls === 'plus' ? '+' : cls === 'minus' ? '−' : '';
     const iv = m.ivs[k];
     const value = withStats ? m.stats[k] : iv;
+    // HP atual só quando o Pokémon está ferido (HP cheio repetiria o máximo)
+    const hurt = withStats && k === 'hp' && m.hp != null && m.hp < m.stats.hp;
+    const num = hurt ? `<span title="${esc(t('HP atual / máximo'))}">${m.hp}<small>/${m.stats.hp}</small></span>` : withStats ? m.stats[k] : '';
     return `<tr>
       <th class="${cls}" scope="row">${STAT_LABEL[k]}${mark}</th>
-      ${withStats ? `<td class="num">${m.stats[k]}</td>` : ''}
+      ${withStats ? `<td class="num${hurt ? ' hurt' : ''}">${num}</td>` : ''}
       <td><div class="bar"><i style="width:${Math.round(value / max * 100)}%"></i></div></td>
       <td class="iv${iv === 31 ? ' max' : ''}">${iv}</td>
       <td class="ev">${m.evs[k]}</td>

@@ -70,7 +70,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     d1.setUint32(r + PARTY.misc, (0x40000000 | ((p.abilityNum ?? 0) << PARTY.abilityShift)) >>> 0, true);
     s1[r + PARTY.level] = p.level ?? 1;
     (p.stats || [0, 0, 0, 0, 0, 0]).forEach((v, j) => d1.setUint16(r + PARTY.stats + 2 * j, v, true));
-    d1.setUint16(r + PARTY.hp, (p.stats || [0])[0], true);
+    d1.setUint16(r + PARTY.hp, p.hp ?? (p.stats || [0])[0], true);
   });
 
   // Seções 5..15: PC (área contínua de 0xFF4 bytes por seção)
@@ -93,6 +93,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     (m.ivs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v, B.ivs + j * B.ivWidth));
     put(m.nature ?? 0, B.nature[0]);
     put(m.abilityNum ?? 0, B.ability[0]);
+    put(m.hp ?? 0, B.hp[0]);
     for (let k = 0; k < 24; k++) pc[off + k] = Number((bits >> BigInt(8 * k)) & 0xFFn);
     (m.moves || []).forEach(([, pp], j) => { pc[off + PC.pp + j] = pp; });
     pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + PC.nickname);

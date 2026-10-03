@@ -198,7 +198,7 @@ export function describe(raw, T) {
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },
       pid: p.pid,
       moves: p.moves.map(R.move),
-      stats: p.stats, statsCalculated: false, ivs: p.ivs, evs: p.evs,
+      stats: p.stats, statsCalculated: false, hp: p.hp ?? null, ivs: p.ivs, evs: p.evs,
       hiddenPower: hiddenPowerType(p.ivs),
       unknown: { misc54: '0x' + p.misc.toString(16).padStart(8, '0') },
       raw: p.raw,
@@ -237,7 +237,7 @@ export function describe(raw, T) {
         gender: R.gender(sp, s.femaleBit),
         friendship: null, ot: null, pid: null,
         moves: s.moves.map(R.move),
-        stats, statsCalculated: !!stats, ivs: s.ivs, evs: s.evs,
+        stats, statsCalculated: !!stats, hp: s.hp ?? null, ivs: s.ivs, evs: s.evs,
         hiddenPower: hiddenPowerType(s.ivs),
         raw: s.raw,
       };
