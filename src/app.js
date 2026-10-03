@@ -9,11 +9,11 @@ import { download, downloadBlob, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
 import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
-import { saveKey, signature, diffSaves } from './history/diff.js';
+import { saveKey, signature, diffSaves, orderSaves } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
 import { listHistory, addHistory, clearHistory } from './ui/store.js';
 
-const PAGE = 20; // resultados da busca por página
+const PAGE = 15; // resultados da busca por página
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
 
 let state = null;
@@ -390,7 +390,9 @@ async function showChanges(base) {
   let old;
   try { old = loadSave(base.bytes, BASE, G3, ...(await extraTables(base.bytes))).data; } catch { return; }
   if (state !== cur) return; // outro save foi aberto nesse meio-tempo
-  const { html, mons } = changesWin(diffSaves(old, cur.data), base, cur.history.list.length);
+  // Sempre do mais antigo para o mais novo (pelo tempo de jogo), mesmo se o save mais antigo foi aberto por último
+  const { older, newer, swapped } = orderSaves(old, cur.data);
+  const { html, mons } = changesWin(diffSaves(older, newer), base, cur.history.list.length, { swapped });
   cur.history.baseId = base.id;
   const slot = document.getElementById('changes-slot');
   slot.innerHTML = html;
