@@ -242,17 +242,17 @@ export function parseSave(input) {
   // Tempo de jogo 2 bytes depois da posição da Gen 3 oficial; dinheiro com XOR da chave, como no Emerald,
   // mas em outras posições. Conferidos no jogo: save com 59h20m49s (a tela, aberta logo depois, mostrava
   // 59:21:18) e ₽ 1 247 386; nos 3 saves antigos a chave muda e o dinheiro decodificado é sempre ₽ 1 315 986.
-  // Insígnias e Pokédex: prováveis. Entre os saves de 52h e de 59h, as insígnias vão de 5 a 6 (o cartão
-  // mostra 6) e os capturados de 63 a 65, com exatamente Feebas (349) e Froakie (656) a mais, os dois
-  // capturados nesse meio-tempo; a lista bate com os Pokémon do autor. Falta conferir com a tela do jogo.
+  // Insígnias e Pokédex: entre os saves de 52h e de 59h, as insígnias vão de 5 a 6 e os capturados de 63 a 65,
+  // com exatamente Feebas (349) e Froakie (656) a mais; no save de 60h, 67 (+ Haunter 93 e Doublade 680).
+  // Conferido com a tela do jogo: 6 insígnias e Pokédex 67. Total = Dex Nacional do expansion (1025).
   const key = dv.getUint32(s0 + SUMMARY.key, true);
   const s4 = S[4];
   const dexOk = String.fromCharCode(u8[s4 + SUMMARY.dexTag], u8[s4 + SUMMARY.dexTag + 1], u8[s4 + SUMMARY.dexTag + 2]) === 'ROP';
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
     money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
-    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'provável' },
-    dex: dexOk ? { owned: countBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), total: SUMMARY.dexTotal, confidence: 'provável' } : null,
+    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
+    dex: dexOk ? { owned: countBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), total: SUMMARY.dexTotal, confidence: 'confirmado' } : null,
   });
 
   return {

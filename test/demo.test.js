@@ -29,7 +29,7 @@ suite('save de demonstração', () => {
     const { data } = loadSave(buildDemoSave(T), T, G);
     expect(data.summary).toEqual({
       playTime: { h: 38, m: 12, s: 5, confidence: 'confirmado' }, money: { value: 124560, confidence: 'confirmado' },
-      badges: { count: 5, total: 8, confidence: 'provável' }, dex: { owned: 33, total: 1025, confidence: 'provável' },
+      badges: { count: 5, total: 8, confidence: 'confirmado' }, dex: { owned: 33, total: 1025, confidence: 'confirmado' },
     });
   });
 

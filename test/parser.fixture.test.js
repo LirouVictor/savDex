@@ -19,7 +19,7 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     // Tempo de jogo: cresce na ordem dos 3 saves (ver os testes dos outros dois)
     expect(raw.summary).toEqual({
       playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' },
-      badges: { count: 5, total: 8, confidence: 'provável' }, dex: { owned: 63, total: 1025, confidence: 'provável' },
+      badges: { count: 5, total: 8, confidence: 'confirmado' }, dex: { owned: 63, total: 1025, confidence: 'confirmado' },
     });
   });
 
@@ -202,8 +202,19 @@ suite.skipIf(!existsSync(FILE_59))('resumo conferido no jogo (fixtures/quetzal-5
     const raw = parseSave(readFileSync(FILE_59));
     expect(raw.summary).toEqual({
       playTime: { h: 59, m: 20, s: 49, confidence: 'confirmado' }, money: { value: 1247386, confidence: 'confirmado' },
-      badges: { count: 6, total: 8, confidence: 'provável' }, dex: { owned: 65, total: 1025, confidence: 'provável' },
+      badges: { count: 6, total: 8, confidence: 'confirmado' }, dex: { owned: 65, total: 1025, confidence: 'confirmado' },
     });
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
+  });
+});
+
+// Save seguinte: tela do jogo com 6 insígnias, Pokédex 67 e tempo 60:16 (Haunter e Doublade capturados)
+const FILE_60 = process.env.QUETZAL_SAVE_60H || new URL('../fixtures/quetzal-60h.sav', import.meta.url).pathname;
+suite.skipIf(!existsSync(FILE_60))('resumo conferido no jogo (fixtures/quetzal-60h.sav)', () => {
+  it('insígnias 6, Pokédex 67 (+ Haunter e Doublade) e tempo 60:16', () => {
+    const raw = parseSave(readFileSync(FILE_60));
+    expect(raw.summary).toMatchObject({ playTime: { h: 60, m: 16 }, badges: { count: 6, total: 8 }, dex: { owned: 67, total: 1025 } });
+    const pc = describe(raw, T).pc.boxes.flatMap(b => b.slots).map(m => m.species.name);
+    expect(pc).toEqual(expect.arrayContaining(['Feebas', 'Froakie', 'Haunter', 'Doublade']));
   });
 });

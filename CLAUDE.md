@@ -5,7 +5,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 ## Comandos
 
 - `npm run dev` / `npm run build` (saída em `dist/`) / `npm run preview`
-- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), e `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H`. **Saves reais não são versionados** (`.gitignore`).
+- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo) e `fixtures/quetzal-60h.sav` (insígnias 6 e Pokédex 67 na tela; Haunter e Doublade recém-capturados), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H` / `QUETZAL_SAVE_60H`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
 - `npm run dex`: regenera `src/data/dex.json` (linhas evolutivas com o método em português e em inglês e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o Quetzal pode ter mudado).
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
@@ -117,8 +117,8 @@ Arquivo de 128 KB (0x20000) = 2 slots × 16 setores de 4 KB (0x1000).
 
 - Tempo de jogo 2 bytes depois da posição da Gen 3 oficial (`0x0E` fica 0). **Confirmado**: save com 59h20m49s e a tela do jogo, aberta logo depois de salvar, com 59:21:18; nos saves antigos cresce na ordem (51h55m16s → 52h04m00s → 52h26m41s).
 - **Dinheiro** = u32 em `0x918` da **seção 1** XOR a chave (`0x2C` da seção 0), como no Emerald mas em outras posições. **Confirmado**: ₽ 1 247 386 na tela e no save; nos 3 saves antigos a chave muda e o valor é sempre ₽ 1 315 986.
-- **Insígnias** (provável): 8 flags na seção 1 a partir do bit 6 de `0x151` (como no Emerald, que começa num bit 7). Entre o save de 52h e o de 59h vão de 5 a 6 (o autor tinha 5 por volta de 52h; o cartão mostra 6). Falta um save antes/depois de um ginásio.
-- **Pokédex** (provável): capturados pela **Dex Nacional** (bit n−1 = espécie n, inclusive a Gen 9: Annihilape 979, Baxcalibur 998) na **seção 4**, `0x9D0`, logo depois do bloco marcado `ROP` (`0x9B4`; o app só lê se a marca estiver lá). A seção 4 tem outros blocos marcados (`ITM`, `RGN`, `RLG`, `DEX`, `HLP`, `AGR`). Entre os saves de 52h e de 59h vai de 63 a 65 com exatamente Feebas (349) e Froakie (656) a mais, os dois capturados nesse meio-tempo; os 65 são as linhas evolutivas dos Pokémon do autor. Total mostrado: 1025 (Dex Nacional do expansion), também a conferir com a tela da Pokédex. "Vistos" não foi achado (não é um superconjunto logo depois).
+- **Insígnias** (confirmado): 8 flags na seção 1 a partir do bit 6 de `0x151` (como no Emerald, que começa num bit 7). 5 no save de 52h (o autor tinha 5) e 6 nos de 59h e 60h (a tela de salvar mostra 6).
+- **Pokédex** (confirmado): capturados pela **Dex Nacional** (bit n−1 = espécie n, inclusive a Gen 9: Annihilape 979, Baxcalibur 998) na **seção 4**, `0x9D0`, logo depois do bloco marcado `ROP` (`0x9B4`; o app só lê se a marca estiver lá). A seção 4 tem outros blocos marcados (`ITM`, `RGN`, `RLG`, `DEX`, `HLP`, `AGR`). Entre os saves de 52h e de 59h vai de 63 a 65 com exatamente Feebas (349) e Froakie (656) a mais; no de 60h, 67 com Haunter (93) e Doublade (680), e a tela de salvar mostra **Pokédex 67**. Os capturados são as linhas evolutivas dos Pokémon do autor. Total mostrado: 1025 (Dex Nacional do expansion; a tela do jogo mostra só os capturados). "Vistos" não foi achado (não é um superconjunto logo depois).
 
 ### Texto
 
@@ -220,12 +220,11 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 
 ## Pendências de engenharia reversa
 
-Resolvidas: tempo de jogo e dinheiro, habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
+Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
 
 1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
 2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
-3. PC: bits 45–47, 154–159 e 168–191 (candidatos: local/nível de captura; precisa de um Pokémon recém-capturado).
-4. Resumo do save: confirmar insígnias e Pokédex (prováveis) com a tela do jogo (número de capturados e total da Pokédex; save antes/depois de um ginásio). Tempo de jogo e dinheiro: resolvidos.
-5. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
+3. PC: bits 45–47, 154–159 e 168–191. Nos 4 recém-capturados (Feebas Nv27, Froakie 23, Haunter 29, Doublade 24) só os bits 168–175 variam (50, 54, 33, 63; 45–47, 154–159 e 176–191 ficam 0): candidato a local de captura (falta saber onde cada um foi capturado).
+4. Equipe: confirmar o HP atual em `0x23` (precisa de um Pokémon ferido); significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.
