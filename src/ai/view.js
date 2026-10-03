@@ -1,9 +1,8 @@
 // Telas dos resultados da IA. Os Pokémon citados são desenhados com os dados do save (não com o texto da IA).
 
-import { esc, typeChips, typeChip, monShort } from '../ui/render.js';
+import { esc, typeChips, monShort } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
-import { analyzeTeam } from '../analysis.js';
-import { REF_RE } from './prompt.js';
+import { REF_RE, teamFacts } from './prompt.js';
 import { t, num } from '../i18n.js';
 
 const where = m => (m.hasNickname ? m.species.name + ' · ' : '')
@@ -120,11 +119,8 @@ export function buildView(r, byRef, model, T) {
       </span>
     </button></li>`;
   }).join('');
-  // Conferência do próprio app (só tipos), para não depender só do texto da IA
-  const a = analyzeTeam(mons, { types: T.types, chart: T.typechart });
-  const alerts = a.defense.filter(d => d.alert).map(d => d.type);
-  const check = `<p class="k-line">${t('Tipos que acertam vários em cheio:')} ${alerts.map(typeChip).join(' ') || t('nenhum')}</p>
-    <p class="k-line">${t('Sem golpe super efetivo contra:')} ${a.gaps.map(typeChip).join(' ') || t('nenhum')}</p>`;
+  // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
+  const check = mons.length ? bullets(teamFacts(mons, T).split('\n'), byRef) : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">
@@ -142,7 +138,7 @@ export function buildView(r, byRef, model, T) {
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
-    ${panel('Conferência do app (tipos)', 'info', check)}
+    ${panel('Conferência do app', 'info', check)}
     ${panel('Próximos passos', 'swap', dicas)}
     ${footer(model, r.dropped)}
   </div>`;
@@ -156,7 +152,7 @@ export function confirmView(prep) {
   const pc = counts.pc
     ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t(analyze
       ? '(de {total}: os que mais ajudam a equipe, resistindo às fraquezas dela ou cobrindo tipos sem golpe super efetivo, depois os de maior total de stats base)'
-      : '(de {total}: os de maior total de stats base, no máximo 2 da mesma espécie)', { total: counts.pcTotal }) : '')
+      : '(de {total}: os de maior total de stats base, um por espécie)', { total: counts.pcTotal }) : '')
     : t('nenhum do PC');
   const text = `${system}\n\n${prompt}`;
   return `<h2 class="pixel" id="ai-confirm-title">${esc(t('Enviar ao {service}?', { service: P.service }))}</h2>
@@ -166,7 +162,8 @@ export function confirmView(prep) {
       <ul class="ai-list">
         <li>${esc(t('{n} Pokémon da equipe e {pc}.', { n: counts.party, pc }))}</li>
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
-        ${kind === 'analyze' ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
+        ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
+        ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
         ${counts.learn ? `<li>${t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>

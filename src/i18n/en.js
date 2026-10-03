@@ -329,8 +329,10 @@ export default {
   'Pedido do jogador:': 'Player’s request:',
   'Avalie a EQUIPE ATUAL. Dê UMA nota de 0 a 10 pesando: defesa entre os membros (25%), cobertura ofensiva (25%), papéis e sinergia (20%), ameaças comuns do jogo (20%), itens e sets (10%).':
     'Rate the CURRENT PARTY. Give ONE score from 0 to 10 weighing: defense between members (25%), offensive coverage (25%), roles and synergy (20%), common threats in the game (20%), items and sets (10%).',
-  'Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas. Depois, dicas por membro.':
-    'Swaps with the PC: up to 3, only those that fix a clear problem (none if there is none); for each one, say what it fixes and what is lost. Keep the members that hold up the team’s strategy (weather, terrain, Trick Room…), even if they are not the strongest on their own: improve the whole, not isolated pieces. Then, tips for each member.',
+  'Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas.':
+    'Swaps with the PC: up to 3, only those that fix a clear problem (none if there is none); for each one, say what it fixes and what is lost. Keep the members that hold up the team’s strategy (weather, terrain, Trick Room…), even if they are not the strongest on their own: improve the whole, not isolated pieces.',
+  'Dicas por membro: só quando mudam algo concreto (um golpe, o item, a natureza ou os EVs), dizendo o quê e por quê. Omita quem já está bem montado; não repita o que o Pokémon já faz.':
+    'Tips per member: only when they change something concrete (a move, the item, the nature or the EVs), saying what and why. Leave out members that are already well built; do not repeat what the Pokémon already does.',
   'EQUIPE ATUAL:': 'CURRENT PARTY:',
   'Cálculos do app (só tipos e números, sem habilidades):': 'App calculations (types and numbers only, no abilities):',
   'PC ({n} candidatos que mais ajudam a equipe):': 'PC ({n} candidates that help the party the most):',
@@ -351,8 +353,14 @@ export default {
   'Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):': 'Learns by level (list from the recent official games; this game may differ):',
   'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.':
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
-  'Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.':
-    'Aim for good type synergy, move coverage, varied roles and at most one Pokémon holding a Mega Stone.',
+  'Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.':
+    'Criteria: type synergy and varied roles; balance between physical and special attackers; speed (fast members or a Trick Room plan); at most one Pokémon holding a Mega Stone; no type that hits 3 or more members super effectively; move coverage. If someone sets weather/terrain and someone benefits from it, consider building the team around that.',
+  'Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.':
+    'In the tips, only concrete adjustments (a move, the item, the nature, the EVs or who to train first), saying why.',
+  'Pistas de estratégia (habilidades e golpes dos disponíveis):': 'Strategy hints (abilities and moves of the available ones):',
+  'põem {list}': 'set by {list}',
+  'aproveitam {list}': 'used by {list}',
+  'ninguém aproveita pela habilidade': 'no one benefits through their ability',
   'DISPONÍVEIS ({n}):': 'AVAILABLE ({n}):',
   'Equipe sugerida': 'Suggested team',
   'Nota da equipe de 0 a 10, pelos critérios pedidos': 'Party score from 0 to 10, by the requested criteria',
@@ -362,12 +370,13 @@ export default {
   'Que problema resolve e o que se perde': 'What problem it fixes and what is lost',
   'referência E1..E6': 'reference E1..E6',
   'referência C<caixa>-<posição>': 'reference C<box>-<slot>',
-  'Dicas por membro (golpes, item, natureza)': 'Tips per member (moves, item, nature)',
+  'Só membros com um ajuste concreto (golpe, item, natureza ou EVs), dizendo o quê e por quê; omita quem já está bem montado': 'Only members with a concrete adjustment (move, item, nature or EVs), saying what and why; leave out those already well built',
   'Nome curto e criativo para a equipe': 'Short, creative name for the team',
   'Estratégia em até 3 frases': 'Strategy in up to 3 sentences',
   'Exatamente 6 Pokémon diferentes': 'Exactly 6 different Pokémon',
   'Papel em 1 a 3 palavras (ex.: atacante físico)': 'Role in 1 to 3 words (e.g. physical attacker)',
-  'Ajustes: golpes, itens, naturezas, quem treinar primeiro': 'Adjustments: moves, items, natures, who to train first',
+  'O que ele traz que os outros não têm (tipo, cobertura, velocidade, estratégia)': 'What it brings that the others lack (type, coverage, speed, strategy)',
+  'Ajustes concretos (golpe, item, natureza, EVs, quem treinar primeiro), cada um com o motivo': 'Concrete adjustments (move, item, nature, EVs, who to train first), each with its reason',
 
   // IA: telas do resultado e da confirmação (ai/view.js)
   'Excelente': 'Excellent',
@@ -388,14 +397,13 @@ export default {
   'Sinergia': 'Synergy',
   'Trocas sugeridas': 'Suggested swaps',
   'Dicas por membro': 'Tips per member',
-  'Conferência do app (tipos)': 'App check (types)',
+  'Conferência do app': 'App check',
   'Próximos passos': 'Next steps',
-  'Tipos que acertam vários em cheio:': 'Types that hit several members super effectively:',
-  'Sem golpe super efetivo contra:': 'No super effective move against:',
   'A IA sugeriu só {n} Pokémon válidos.': 'The AI suggested only {n} valid Pokémon.',
   'escolhido automaticamente': 'chosen automatically',
   '{n} do PC': '{n} from the PC',
-  '(de {total}: os de maior total de stats base, no máximo 2 da mesma espécie)': '(out of {total}: the ones with the highest base stat total, at most 2 of the same species)',
+  '(de {total}: os de maior total de stats base, um por espécie)': '(out of {total}: the ones with the highest base stat total, one per species)',
+  'Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.': 'Strategy hints: who sets weather or terrain, who benefits and who uses Trick Room.',
   'nenhum do PC': 'none from the PC',
   'Enviar ao {service}?': 'Send to {service}?',
   'Serviço:': 'Service:',

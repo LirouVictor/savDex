@@ -3,7 +3,7 @@
 // sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
-import { refOf, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, analysisPrompt, buildPrompt, checkAnalysis, checkBuild } from './prompt.js';
+import { refOf, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, analysisPrompt, buildPrompt, buildPool, strategyLines, checkAnalysis, checkBuild } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
 
 /**
@@ -21,6 +21,7 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null }) 
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
     learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
+    hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates)).length > 0, // clima/terreno/Trick Room
   };
   return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, note: note.trim(), counts };
 }

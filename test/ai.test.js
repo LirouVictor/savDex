@@ -1,5 +1,5 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC } from '../src/ai/prompt.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
@@ -51,7 +51,13 @@ suite('IA: dados enviados', () => {
     expect(a).toContain('o que resolve e o que se perde');
     const b = buildPrompt(all, T, 'quero usar o Lucario');
     expect(b).toContain('Pedido do jogador: quero usar o Lucario');
-    expect(b).toContain('DISPONÍVEIS (5):');
+    expect(b).toContain('DISPONÍVEIS (4):');
+    expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
+    expect(b).toContain('Nas dicas, só ajustes concretos');
+    expect(a).toContain('Omita quem já está bem montado');
+  });
+  it('montagem: uma cópia por espécie (a de melhores IVs)', () => {
+    expect(buildPool(all).map(refOf)).toEqual(['E1', 'E2', 'C3-12', 'C1-1']);
   });
 });
 
@@ -88,6 +94,21 @@ suite('IA: cálculos do app e candidatos', () => {
     expect(lines[2]).not.toMatch(/\bHurricane\b/);
     expect(learnLines(p, dex, T, { id: 'emerald', gen: 3 })).toEqual([]);
     expect(analysisPrompt(p, T, '', 250, { dex, game: { id: 'quetzal' } })).toContain('Aprende por nível');
+  });
+  it('pistas de estratégia: quem põe clima/terreno, quem aproveita e Trick Room', () => {
+    const pool = [
+      ...party,
+      mon({ sp: 'Kingdra', id: 230, box: 1, slot: 1, types: ['water', 'dragon'], ab: 'Swift Swim' }),
+      mon({ sp: 'Venusaur', id: 3, box: 1, slot: 2, types: ['grass', 'poison'], ab: 'Chlorophyll' }), // sem quem ponha sol
+      mon({ sp: 'Reuniclus', id: 579, box: 1, slot: 3, types: ['psychic'], ab: 'Magic Guard', moves: [['Trick Room', 'psychic', 2, 0], ['Rain Dance', 'water', 2, 0]] }),
+    ];
+    const lines = strategyLines(pool);
+    expect(lines[1]).toMatch(/^Pistas de estratégia/);
+    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam C1-1 (Swift Swim).');
+    expect(lines).toContain('- Trick Room: C1-3.');
+    expect(lines.join('\n')).not.toMatch(/sol|Chlorophyll/);
+    expect(strategyLines(party.slice(1))).toEqual([]);
+    expect(buildPrompt(pool, T)).toContain('aproveitam C1-1 (Swift Swim)');
   });
   it('regras: cálculos do app como fonte de verdade, limitação em vez de suposição, golpes só da lista', () => {
     const s = systemPrompt({ id: 'quetzal' });
@@ -138,7 +159,11 @@ suite('IA: conferência da resposta', () => {
     expect(html).toContain('<b>Garchomp</b> cobre <b>Pelipper</b>');
     expect(html).toContain('data-ref="C3-12"');
     const b = checkBuild({ nome: 'Time', resumo: '', pontos_fortes: [], pontos_fracos: [], dicas: [], membros: [{ ref: 'E1', papel: 'atacante', motivo: 'm' }] }, byRef);
-    expect(buildView(b, byRef, 'gemini-x', T)).toContain('A IA sugeriu só 1 Pokémon válidos.');
+    const bv = buildView(b, byRef, 'gemini-x', T);
+    expect(bv).toContain('A IA sugeriu só 1 Pokémon válidos.');
+    expect(bv).toContain('Conferência do app');
+    expect(bv).toContain('Velocidade base (maior primeiro): <b>Lucario</b> 90.'); // mesmas contas da análise, com nomes
+    expect(bv).toContain('Megapedras: <b>Lucario</b> (Lucarionite Z)');
   });
 });
 
@@ -305,10 +330,10 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 3, pcTotal: 4, learn: false });
+    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
-    expect(html).toContain('2 Pokémon da equipe e 3 do PC (de 4');
+    expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: os de maior total de stats base, um por espécie)');
     expect(html).toContain('Não vai');
     expect(html).toContain('Seu pedido: “quero o Lucario”');
     expect(html).toContain('data-send');
@@ -320,6 +345,6 @@ suite('IA: transparência antes de enviar', () => {
     const withTrainer = all.map(m => ({ ...m, level: 77, evs: { hp: 252, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, ot: { name: 'SEGREDO', tid: 4242, sid: 9999 } }));
     const { system, prompt } = prepareAi('analyze', { all: withTrainer, T });
     const text = system + prompt;
-    expect(text).not.toMatch(/SEGREDO|4242|9999|EVs|Nv\.? 77/);
+    expect(text).not.toMatch(/SEGREDO|4242|9999|252|EVs[: ]+\d|Nv\.? 77/); // "EVs" só aparece como sugestão de ajuste
   });
 });
