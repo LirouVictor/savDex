@@ -152,8 +152,11 @@ export function buildView(r, byRef, model, T) {
 export function confirmView(prep) {
   const { P, counts, note, kind, system, prompt } = prep;
   const model = P.getModel() || t('escolhido automaticamente');
+  const analyze = kind === 'analyze';
   const pc = counts.pc
-    ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t('(de {total}: os de maior total de stats base, no máximo 2 da mesma espécie)', { total: counts.pcTotal }) : '')
+    ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t(analyze
+      ? '(de {total}: os que mais ajudam a equipe, resistindo às fraquezas dela ou cobrindo tipos sem golpe super efetivo, depois os de maior total de stats base)'
+      : '(de {total}: os de maior total de stats base, no máximo 2 da mesma espécie)', { total: counts.pcTotal }) : '')
     : t('nenhum do PC');
   const text = `${system}\n\n${prompt}`;
   return `<h2 class="pixel" id="ai-confirm-title">${esc(t('Enviar ao {service}?', { service: P.service }))}</h2>
@@ -163,7 +166,8 @@ export function confirmView(prep) {
       <ul class="ai-list">
         <li>${esc(t('{n} Pokémon da equipe e {pc}.', { n: counts.party, pc }))}</li>
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
-        ${kind === 'analyze' ? `<li>${t('A análise de tipos da equipe feita pelo app.')}</li>` : ''}
+        ${kind === 'analyze' ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
+        ${counts.learn ? `<li>${t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>
       </ul>

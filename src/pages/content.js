@@ -10,6 +10,7 @@ export const NEWS = [
     pt: [
       'Resumo do save no card do treinador: tempo de jogo, dinheiro, insígnias e Pokédex nos jogos oficiais (também no Quetzal; no Unbound, por enquanto só o tempo de jogo). Tempo de jogo e insígnias também aparecem na imagem da equipe.',
       'O que mudou: a comparação vai sempre do save mais antigo para o mais novo (pelo tempo de jogo), e Pokémon com IVs, natureza ou habilidade trocados aparecem como "treinados" em vez de "novos" e "saíram". A busca mostra 15 por página.',
+      'Assistente (IA): a análise usa critérios fixos para a nota, recebe mais cálculos do app (velocidade, golpes físicos/especiais, megapedras, clima), só sugere golpes pelo nome se o Pokémon aprende (Quetzal/Unbound) e manda só os 50 Pokémon do PC que mais ajudam a equipe, gastando bem menos.',
       'Detalhe do Pokémon: HP atual quando ele está ferido (jogos oficiais, Unbound e Quetzal, inclusive no PC do Quetzal).',
       'Suporte ao Pokémon Unbound (versão 2.1 em diante): equipe e as 25 caixas do PC, com as espécies, formas, stats e itens do Unbound.',
       'Jogos de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White e Black 2/White 2 (.dsv do DeSmuME e exports do Action Replay DS, .duc), com tipos, stats e golpes como eram na época.',
@@ -23,6 +24,7 @@ export const NEWS = [
     en: [
       'Save summary in the trainer card: play time, money, badges and Pokédex in the official games (also in Quetzal; in Unbound, only play time for now). Play time and badges also show up in the party image.',
       'What changed: the comparison always goes from the older save to the newer one (by play time), and Pokémon with changed IVs, nature or ability show up as "trained" instead of "new" and "gone". Search shows 15 per page.',
+      'Assistant (AI): the analysis uses fixed criteria for the score, gets more app calculations (speed, physical/special moves, Mega Stones, weather), only names moves the Pokémon can learn (Quetzal/Unbound) and sends only the 50 PC Pokémon that help the party the most, using much less.',
       'Pokémon details: current HP when it is hurt (official games, Unbound and Quetzal, including Quetzal’s PC).',
       'Pokémon Unbound support (version 2.1 onward): party and all 25 PC boxes, with Unbound’s species, forms, stats and items.',
       'DS games: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White and Black 2/White 2 (DeSmuME .dsv files and Action Replay DS exports, .duc), with types, stats and moves as they were back then.',
@@ -94,7 +96,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hospedagem</b>: o site é servido pelo Cloudflare Pages. Como em qualquer site, o servidor recebe dados técnicos do acesso (como o endereço IP).</li>
   <li><b>Sprites</b>: as imagens dos Pokémon vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
-  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes) e o seu pedido, se houver. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
+  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), na análise do Quetzal e do Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
 </ul>
 <p>O savDex não usa ferramentas de análise de visitas. Se isso mudar, esta página será atualizada antes.</p>`,
   },
@@ -121,7 +123,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hosting</b>: the site is served by Cloudflare Pages. As with any website, the server receives technical data about the visit (such as the IP address).</li>
   <li><b>Sprites</b>: Pokémon images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
-  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves) and your request, if any. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
+  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the party (weaknesses, coverage, base Speed), in the Quetzal and Unbound analysis the public list of moves each member learns by level, and your request, if any. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
 </ul>
 <p>savDex uses no visitor analytics. If that changes, this page will be updated first.</p>`,
   },
