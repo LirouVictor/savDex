@@ -32,7 +32,7 @@ export function monLine(m) {
   const name = sp.name + (sp.form ? ` (${sp.form})` : '') + (m.hasNickname ? ` "${m.nickname}"` : '');
   const parts = [refOf(m), name, sp.types.map(cap).join('/') || t('tipo desconhecido')];
   if (m.ability) parts.push(`${t('Hab')}: ${m.ability.name}${m.ability.hidden ? ` (${t('oculta')})` : ''}`);
-  parts.push(`Item: ${m.item ? m.item.name : '—'}`);
+  parts.push(`Item: ${m.item ? m.item.name + (isMegaStone(m.item) ? ` (${t('megapedra')})` : '') : '—'}`);
   if (m.nature) parts.push(`${t('Natureza')}: ${m.nature.name}${m.nature.plus ? ` (+${STAT_LABEL[m.nature.plus]} −${STAT_LABEL[m.nature.minus]})` : ''}`);
   if (sp.baseStats) parts.push(`Base ${sp.baseStats.join('/')} = ${bst(m)}`);
   if (m.ivs) parts.push(`IVs ${SHOWDOWN_ORDER.map(k => m.ivs[k]).join('/')}`);
@@ -112,6 +112,7 @@ export function systemPrompt(game) {
     ...rules,
     t('- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".'),
     t('- Ignore o nível: o jogador pode treinar qualquer Pokémon.'),
+    t('- Antes de sugerir trocar um item ou criticar um set, veja se a habilidade do Pokémon já anula a desvantagem (ex.: Magic Guard anula o recuo da Life Orb).'),
     t('- Golpe que o Pokémon ainda não tem: cite pelo nome só se estiver na lista "Aprende por nível" dele (quando enviada) e diga que ele precisa aprender. Fora dela, sugira só o tipo (ex.: "um golpe Electric, se ele aprender").'),
     t('- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.'),
     t('- Frases curtas: cada item de lista com no máximo 2 frases.'),
@@ -213,6 +214,12 @@ const ABUSERS = {
   'Slush Rush': 'neve/granizo', 'Ice Body': 'neve/granizo', 'Snow Cloak': 'neve/granizo',
   'Surge Surfer': 'Electric Terrain', 'Quark Drive': 'Electric Terrain', 'Grass Pelt': 'Grassy Terrain',
 };
+// Golpes que ficam mais fortes (ou mais certeiros, ou ganham prioridade) com o clima/terreno
+const MOVE_ABUSERS = {
+  'Grassy Glide': ['Grassy Terrain'], 'Rising Voltage': ['Electric Terrain'], 'Expanding Force': ['Psychic Terrain'], 'Misty Explosion': ['Misty Terrain'],
+  'Solar Beam': ['sol'], 'Solar Blade': ['sol'], Thunder: ['chuva'], Hurricane: ['chuva'], Blizzard: ['neve/granizo'],
+  'Weather Ball': ['chuva', 'sol', 'tempestade de areia', 'neve/granizo'],
+};
 const FIELD_MOVES = {
   'Rain Dance': 'chuva', 'Sunny Day': 'sol', Sandstorm: 'tempestade de areia', Hail: 'neve/granizo', Snowscape: 'neve/granizo',
   'Electric Terrain': 'Electric Terrain', 'Psychic Terrain': 'Psychic Terrain', 'Grassy Terrain': 'Grassy Terrain', 'Misty Terrain': 'Misty Terrain',
@@ -246,6 +253,16 @@ export function teamFacts(party, T) {
     t('Megapedras: {list} (só uma megaevolução por batalha).', { list: megas.join(', ') || none }),
     t('Clima/terreno: {list}.', { list: field.join(', ') || none }),
   ].join('\n');
+}
+
+/** Critérios fixos da montagem que a equipe sugerida não cumpre (conferidos pelo app, não pela IA). */
+export function buildIssues(team, T) {
+  const a = analyzeTeam(team, { types: T.types, chart: T.typechart });
+  const out = a.defense.filter(r => r.weak.length >= 3)
+    .map(r => t('{type} acerta {n} membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).', { type: cap(r.type), n: r.weak.length }));
+  const megas = team.filter(m => isMegaStone(m.item)).length;
+  if (megas > 1) out.push(t('{n} Pokémon com megapedra (o pedido era no máximo um).', { n: megas }));
+  return out;
 }
 
 /**
@@ -293,7 +310,7 @@ export function learnLines(party, dex, T, game) {
 
 /**
  * Pistas de estratégia entre os disponíveis: quem põe clima/terreno (habilidade ou golpe), quem aproveita
- * e quem usa Trick Room. Só os climas/terrenos que alguém consegue pôr.
+ * (habilidade ou golpe) e quem usa Trick Room. Só os climas/terrenos que alguém consegue pôr.
  */
 export function strategyLines(pool) {
   const fields = new Map(); // clima → { set: [], use: [] }
@@ -304,12 +321,13 @@ export function strategyLines(pool) {
     if (ab && FIELD[ab]) get(FIELD[ab]).set.push(`${ref} (${ab})`);
     if (ab && ABUSERS[ab]) get(ABUSERS[ab]).use.push(`${ref} (${ab})`);
     for (const mv of m.moves) {
+      for (const f of MOVE_ABUSERS[mv.name] || []) get(f).use.push(`${ref} (${mv.name})`);
       if (FIELD_MOVES[mv.name] && !(ab && FIELD[ab] === FIELD_MOVES[mv.name])) get(FIELD_MOVES[mv.name]).set.push(`${ref} (${mv.name})`);
       if (mv.name === 'Trick Room' && !room.includes(ref)) room.push(ref);
     }
   }
   const out = [...fields].filter(([, x]) => x.set.length).map(([f, x]) => `- ${t(f)}: ${t('põem {list}', { list: x.set.join(', ') })}; `
-    + (x.use.length ? t('aproveitam {list}', { list: x.use.join(', ') }) : t('ninguém aproveita pela habilidade')) + '.');
+    + (x.use.length ? t('aproveitam {list}', { list: x.use.join(', ') }) : t('ninguém aproveita (habilidade ou golpe)')) + '.');
   if (room.length) out.push(`- Trick Room: ${room.join(', ')}.`);
   return out.length ? ['', t('Pistas de estratégia (habilidades e golpes dos disponíveis):'), ...out] : [];
 }
@@ -353,6 +371,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
     t('Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.'),
     t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.'),
+    t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
     wish(note),
     ...hints,
     ...(hints.length ? [''] : []),
