@@ -15,7 +15,7 @@ export const MAX_CANDIDATES = 250;
 export const ANALYSIS_PC = 50;
 /** Golpes por nível enviados por membro da equipe (só os que ele ainda não tem). */
 const LEARN_MAX = 20;
-/** Cópias da mesma espécie enviadas (as de melhores IVs). */
+/** Cópias da mesma espécie enviadas na análise (as de melhores IVs); na montagem, só uma. */
 const PER_SPECIES = 2;
 
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
@@ -45,7 +45,7 @@ export function monLine(m) {
 }
 
 /** Candidatos para trocas e montagem: toda a equipe + os melhores do PC, sem repetir muito a mesma espécie. */
-export function candidates(all, max = MAX_CANDIDATES) {
+export function candidates(all, max = MAX_CANDIDATES, perSpecies = PER_SPECIES) {
   const party = all.filter(m => m.location === 'party');
   const pc = all.filter(m => m.location !== 'party')
     .sort((a, b) => bst(b) - bst(a) || sum(b.ivs) - sum(a.ivs));
@@ -55,7 +55,7 @@ export function candidates(all, max = MAX_CANDIDATES) {
     if (out.length >= max) break;
     const k = speciesKey(m);
     const n = seen.get(k) || 0;
-    if (n >= PER_SPECIES) continue;
+    if (n >= perSpecies) continue;
     seen.set(k, n + 1);
     out.push(m);
   }
@@ -148,7 +148,7 @@ export const ANALYSIS_SCHEMA = {
     },
     dicas: {
       type: 'ARRAY',
-      description: 'Dicas por membro (golpes, item, natureza)',
+      description: 'Só membros com um ajuste concreto (golpe, item, natureza ou EVs), dizendo o quê e por quê; omita quem já está bem montado',
       items: { type: 'OBJECT', properties: { ref: str, texto: str }, required: ['ref', 'texto'] },
     },
   },
@@ -165,13 +165,17 @@ export const BUILD_SCHEMA = {
       description: 'Exatamente 6 Pokémon diferentes',
       items: {
         type: 'OBJECT',
-        properties: { ref: str, papel: { type: 'STRING', description: 'Papel em 1 a 3 palavras (ex.: atacante físico)' }, motivo: str },
+        properties: {
+          ref: str,
+          papel: { type: 'STRING', description: 'Papel em 1 a 3 palavras (ex.: atacante físico)' },
+          motivo: { type: 'STRING', description: 'O que ele traz que os outros não têm (tipo, cobertura, velocidade, estratégia)' },
+        },
         required: ['ref', 'papel', 'motivo'],
       },
     },
     pontos_fortes: strList,
     pontos_fracos: strList,
-    dicas: { ...strList, description: 'Ajustes: golpes, itens, naturezas, quem treinar primeiro' },
+    dicas: { ...strList, description: 'Ajustes concretos (golpe, item, natureza, EVs, quem treinar primeiro), cada um com o motivo' },
   },
   required: ['nome', 'resumo', 'membros', 'pontos_fortes', 'pontos_fracos', 'dicas'],
 };
@@ -200,6 +204,18 @@ export function schemaHint(schema) {
 const FIELD = {
   Drizzle: 'chuva', Drought: 'sol', 'Sand Stream': 'tempestade de areia', 'Snow Warning': 'neve/granizo',
   'Electric Surge': 'Electric Terrain', 'Psychic Surge': 'Psychic Terrain', 'Grassy Surge': 'Grassy Terrain', 'Misty Surge': 'Misty Terrain',
+};
+// Quem aproveita cada clima/terreno (habilidades) e os golpes que os põem
+const ABUSERS = {
+  'Swift Swim': 'chuva', 'Rain Dish': 'chuva', Hydration: 'chuva', 'Dry Skin': 'chuva',
+  Chlorophyll: 'sol', 'Solar Power': 'sol', 'Flower Gift': 'sol', Protosynthesis: 'sol',
+  'Sand Rush': 'tempestade de areia', 'Sand Force': 'tempestade de areia', 'Sand Veil': 'tempestade de areia',
+  'Slush Rush': 'neve/granizo', 'Ice Body': 'neve/granizo', 'Snow Cloak': 'neve/granizo',
+  'Surge Surfer': 'Electric Terrain', 'Quark Drive': 'Electric Terrain', 'Grass Pelt': 'Grassy Terrain',
+};
+const FIELD_MOVES = {
+  'Rain Dance': 'chuva', 'Sunny Day': 'sol', Sandstorm: 'tempestade de areia', Hail: 'neve/granizo', Snowscape: 'neve/granizo',
+  'Electric Terrain': 'Electric Terrain', 'Psychic Terrain': 'Psychic Terrain', 'Grassy Terrain': 'Grassy Terrain', 'Misty Terrain': 'Misty Terrain',
 };
 const isMegaStone = item => !!item && /ite( [XYZ])?$/.test(item.name) && !/^(Eviolite|Meteorite)$/.test(item.name);
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
@@ -275,6 +291,29 @@ export function learnLines(party, dex, T, game) {
   return out.length ? ['', t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):'), ...out] : [];
 }
 
+/**
+ * Pistas de estratégia entre os disponíveis: quem põe clima/terreno (habilidade ou golpe), quem aproveita
+ * e quem usa Trick Room. Só os climas/terrenos que alguém consegue pôr.
+ */
+export function strategyLines(pool) {
+  const fields = new Map(); // clima → { set: [], use: [] }
+  const get = f => fields.get(f) || fields.set(f, { set: [], use: [] }).get(f);
+  const room = [];
+  for (const m of pool) {
+    const ref = refOf(m), ab = m.ability && m.ability.name;
+    if (ab && FIELD[ab]) get(FIELD[ab]).set.push(`${ref} (${ab})`);
+    if (ab && ABUSERS[ab]) get(ABUSERS[ab]).use.push(`${ref} (${ab})`);
+    for (const mv of m.moves) {
+      if (FIELD_MOVES[mv.name] && !(ab && FIELD[ab] === FIELD_MOVES[mv.name])) get(FIELD_MOVES[mv.name]).set.push(`${ref} (${mv.name})`);
+      if (mv.name === 'Trick Room' && !room.includes(ref)) room.push(ref);
+    }
+  }
+  const out = [...fields].filter(([, x]) => x.set.length).map(([f, x]) => `- ${t(f)}: ${t('põem {list}', { list: x.set.join(', ') })}; `
+    + (x.use.length ? t('aproveitam {list}', { list: x.use.join(', ') }) : t('ninguém aproveita pela habilidade')) + '.');
+  if (room.length) out.push(`- Trick Room: ${room.join(', ')}.`);
+  return out.length ? ['', t('Pistas de estratégia (habilidades e golpes dos disponíveis):'), ...out] : [];
+}
+
 const wish = text => (text && text.trim() ? `\n${t('Pedido do jogador:')} ${text.trim().slice(0, 300)}\n` : '');
 
 /**
@@ -289,7 +328,8 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
   const pool = analysisPool(all, T, Math.min(ANALYSIS_PC, max - party.length));
   return [
     t('Avalie a EQUIPE ATUAL. Dê UMA nota de 0 a 10 pesando: defesa entre os membros (25%), cobertura ofensiva (25%), papéis e sinergia (20%), ameaças comuns do jogo (20%), itens e sets (10%).'),
-    t('Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas. Depois, dicas por membro.'),
+    t('Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas.'),
+    t('Dicas por membro: só quando mudam algo concreto (um golpe, o item, a natureza ou os EVs), dizendo o quê e por quê. Omita quem já está bem montado; não repita o que o Pokémon já faz.'),
     wish(note),
     t('EQUIPE ATUAL:'),
     ...party.map(monLine),
@@ -303,15 +343,22 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
   ].join('\n');
 }
 
+/** Disponíveis para a montagem: a equipe + os melhores do PC, uma cópia por espécie (a de melhores IVs). */
+export const buildPool = (all, max = MAX_CANDIDATES) => candidates(all, max, 1);
+
 export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
-  const pool = candidates(all, max);
+  const pool = buildPool(all, max);
+  const hints = strategyLines(pool);
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
-    t('Busque boa sinergia de tipos, cobertura de golpes, papéis variados e no máximo um Pokémon com megapedra.'),
+    t('Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.'),
+    t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.'),
     wish(note),
+    ...hints,
+    ...(hints.length ? [''] : []),
     t('DISPONÍVEIS ({n}):', { n: pool.length }),
     ...pool.map(monLine),
-  ].join('\n');
+  ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
 const texts = (v, max = 6) => (Array.isArray(v) ? v : []).map(x => String(x || '').trim()).filter(Boolean).slice(0, max);
