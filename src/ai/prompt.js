@@ -176,9 +176,20 @@ export const BUILD_SCHEMA = {
     },
     pontos_fortes: strList,
     pontos_fracos: strList,
-    dicas: { ...strList, description: 'Ajustes concretos (golpe, item, natureza, EVs, quem treinar primeiro), cada um com o motivo' },
+    dicas: { ...strList, description: 'Ajustes concretos (golpe, item, natureza, EVs), cada um com o motivo' },
   },
   required: ['nome', 'resumo', 'membros', 'pontos_fortes', 'pontos_fracos', 'dicas'],
+};
+
+/** Segunda etapa da montagem: pontos e dicas escritos já com as contas do app sobre a equipe escolhida. */
+export const REFINE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    pontos_fortes: strList,
+    pontos_fracos: { ...strList, description: 'Inclua os tipos que acertam muitos membros e os tipos sem golpe super efetivo, pelos cálculos do app' },
+    dicas: { ...strList, description: 'Até 5 ajustes concretos (golpe, item, natureza, EVs) que atacam os pontos fracos, cada um com o motivo' },
+  },
+  required: ['pontos_fortes', 'pontos_fracos', 'dicas'],
 };
 
 /**
@@ -299,6 +310,11 @@ export function levelMoveNames(m, dex, T) {
   return names;
 }
 
+// Golpes cujo nome também é o do efeito no campo: a IA cita "Grassy Terrain" ou "Trick Room" como estratégia,
+// não como golpe a ensinar, então a conferência não os marca
+const FIELD_CONCEPTS = new Set(['Grassy Terrain', 'Electric Terrain', 'Psychic Terrain', 'Misty Terrain', 'Trick Room',
+  'Sandstorm', 'Hail', 'Snowscape', 'Gravity', 'Wonder Room', 'Magic Room']);
+
 const moveRes = new WeakMap();
 /** Uma expressão com os nomes de todos os golpes (os mais longos primeiro: "Thunder Punch" antes de "Thunder"). */
 function moveRe(T) {
@@ -323,6 +339,7 @@ export function moveChecks(text, byRef, dex, T, owner = null) {
   const out = [], seen = new Set();
   for (const x of src.matchAll(moveRe(T))) {
     const name = x[0];
+    if (FIELD_CONCEPTS.has(name)) continue;
     if (!name.includes(' ') && /(^|[.!?:]\s*)$/.test(src.slice(0, x.index))) continue;
     const near = refs.length ? refs.reduce((a, b) => (Math.abs(b.at - x.index) < Math.abs(a.at - x.index) ? b : a)).m : owner;
     if (!near) continue;
@@ -431,7 +448,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
     t('Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.'),
-    t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.'),
+    t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.'),
     t('Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").'),
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
     wish(note),
@@ -439,6 +456,28 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
     ...(hints.length ? [''] : []),
     t('DISPONÍVEIS ({n}):', { n: pool.length }),
     ...pool.map(monLine),
+  ].join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/**
+ * Pedido da segunda etapa da montagem: só a equipe escolhida, as contas do app sobre ela e (Quetzal/Unbound)
+ * os golpes por nível de cada membro, para os pontos fracos e as dicas saírem do que a equipe tem de verdade.
+ */
+export function refinePrompt(team, T, note = '', { dex = null, game = null } = {}) {
+  const issues = buildIssues(team, T);
+  const wishLine = wish(note);
+  return [
+    t('Esta é a equipe escolhida. Não troque membros: escreva pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).'),
+    t('Os pontos fracos devem falar dos tipos que acertam muitos membros e dos tipos sem golpe super efetivo. As dicas devem atacar esses pontos: golpe, item, natureza ou EVs, dizendo o quê e por quê. Não sugira o que o Pokémon já tem; não fale de nível nem de treino.'),
+    t('Golpe novo: cite pelo nome só se estiver na lista "Aprende por nível" do Pokémon; fora dela, só o tipo (ex.: "um golpe Ground, se ele aprender").'),
+    ...(wishLine ? [wishLine] : []),
+    t('EQUIPE:'),
+    ...team.map(monLine),
+    '',
+    t('Cálculos do app (só tipos e números, sem habilidades):'),
+    teamFacts(team, T),
+    ...(issues.length ? [t('Fora dos critérios pedidos:') + ' ' + issues.join(' ')] : []),
+    ...learnLines(team, dex, T, game),
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -468,6 +507,12 @@ export function checkAnalysis(data, byRef) {
     sinergias: texts(data.sinergias),
     trocas, dicas, dropped,
   };
+}
+
+/** Confere a segunda etapa (só textos); null se veio vazia, para ficar com os da primeira. */
+export function checkRefine(data) {
+  const r = { pontos_fortes: texts(data && data.pontos_fortes), pontos_fracos: texts(data && data.pontos_fracos), dicas: texts(data && data.dicas) };
+  return r.pontos_fracos.length || r.dicas.length ? r : null;
 }
 
 /** Confere a equipe montada: só Pokémon que existem, sem repetir referência nem espécie, até 6. */

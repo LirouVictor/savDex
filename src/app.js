@@ -226,7 +226,10 @@ function setupAi(out) {
       const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
       aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? t('Analisando a equipe') : t('Montando a equipe')}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
-      const res = await ai.sendAi(prep);
+      const res = await ai.sendAi(prep, {
+        // Montagem: na segunda etapa a IA escreve os pontos e as dicas com as contas do app sobre a equipe escolhida
+        onStep: () => { const w = aiOut.querySelector('.ai-wait .pixel'); if (w) w.textContent = t('Escrevendo as dicas'); },
+      });
       state.ai = res;
       aiOut.innerHTML = res.html;
       aiOut.scrollIntoView({ block: 'start' });

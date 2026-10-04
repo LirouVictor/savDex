@@ -357,8 +357,17 @@ export default {
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
   'Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.':
     'Criteria: type synergy and varied roles; balance between physical and special attackers; speed (fast members or a Trick Room plan); at most one Pokémon holding a Mega Stone; no type that hits 3 or more members super effectively; move coverage. If someone sets weather/terrain and someone benefits from it, consider building the team around that.',
-  'Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.':
-    'In the tips, only concrete adjustments (a move, the item, the nature, the EVs or who to train first), saying why.',
+  'Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.':
+    'In the tips, only concrete adjustments (a move, the item, the nature or the EVs), saying why.',
+  'Esta é a equipe escolhida. Não troque membros: escreva pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).':
+    'This is the chosen team. Do not swap members: write strengths, weaknesses and tips for IT, using the app calculations below (source of truth).',
+  'Os pontos fracos devem falar dos tipos que acertam muitos membros e dos tipos sem golpe super efetivo. As dicas devem atacar esses pontos: golpe, item, natureza ou EVs, dizendo o quê e por quê. Não sugira o que o Pokémon já tem; não fale de nível nem de treino.':
+    'The weaknesses must cover the types that hit many members and the types with no super effective move. The tips must address those points: move, item, nature or EVs, saying what and why. Do not suggest what the Pokémon already has; do not talk about level or training.',
+  'Golpe novo: cite pelo nome só se estiver na lista "Aprende por nível" do Pokémon; fora dela, só o tipo (ex.: "um golpe Ground, se ele aprender").':
+    'New move: name it only if it is in the Pokémon’s "Learns by level" list; otherwise, only the type (e.g. "a Ground move, if it learns one").',
+  'EQUIPE:': 'TEAM:',
+  'Inclua os tipos que acertam muitos membros e os tipos sem golpe super efetivo, pelos cálculos do app': 'Include the types that hit many members and the types with no super effective move, from the app calculations',
+  'Até 5 ajustes concretos (golpe, item, natureza, EVs) que atacam os pontos fracos, cada um com o motivo': 'Up to 5 concrete adjustments (move, item, nature, EVs) that address the weaknesses, each with its reason',
   'Pistas de estratégia (habilidades e golpes dos disponíveis):': 'Strategy hints (abilities and moves of the available ones):',
   'põem {list}': 'set by {list}',
   'aproveitam {list}': 'used by {list}',
@@ -387,7 +396,7 @@ export default {
   'Exatamente 6 Pokémon diferentes': 'Exactly 6 different Pokémon',
   'Papel em 1 a 3 palavras (ex.: atacante físico)': 'Role in 1 to 3 words (e.g. physical attacker)',
   'O que ele traz que os outros não têm (tipo, cobertura, velocidade, estratégia)': 'What it brings that the others lack (type, coverage, speed, strategy)',
-  'Ajustes concretos (golpe, item, natureza, EVs, quem treinar primeiro), cada um com o motivo': 'Concrete adjustments (move, item, nature, EVs, who to train first), each with its reason',
+  'Ajustes concretos (golpe, item, natureza, EVs), cada um com o motivo': 'Concrete adjustments (move, item, nature, EVs), each with its reason',
 
   // IA: telas do resultado e da confirmação (ai/view.js)
   'Excelente': 'Excellent',
@@ -410,6 +419,12 @@ export default {
   'Dicas por membro': 'Tips per member',
   'Conferência do app': 'App check',
   'Fora dos critérios pedidos:': 'Outside the requested criteria:',
+  'O modelo escolhido estava sobrecarregado: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. Vale tentar de novo mais tarde.': 'The chosen model was overloaded: the answer came from a lighter model ({list}), which may be less accurate. Worth trying again later.',
+  'A segunda etapa (pontos e dicas com as contas do app) não respondeu; os pontos e as dicas são os da escolha da equipe.': 'The second step (points and tips with the app calculations) did not answer; the points and tips are the ones from the team choice.',
+  'Ver o texto do segundo envio ({n} caracteres)': 'See the text of the second request ({n} characters)',
+  'Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe, as contas do app sobre ela e os golpes que cada um aprende por nível, para os pontos fracos e as dicas.': 'After the AI picks the 6, a second, much smaller request: only that team, the app calculations about it and the moves each one learns by level, for the weaknesses and tips.',
+  'Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas.': 'After the AI picks the 6, a second, much smaller request: only that team and the app calculations about it, for the weaknesses and tips.',
+  'Escrevendo as dicas': 'Writing the tips',
   '{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).': '{move}: {ref} learns it by level (list from the recent official games).',
   '{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).': '{move}: not among {ref}’s level-up moves (it may come from a TM or tutor, or not be learnable).',
   'Próximos passos': 'Next steps',

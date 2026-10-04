@@ -93,12 +93,13 @@ async function request({ system, prompt, schema, key, model, fetchImpl }) {
  * Gera uma resposta em JSON seguindo `schema`.
  * Modelo inexistente (404): troca por outro "flash" e guarda a escolha.
  * Sobrecarga/erro interno (5xx): tenta de novo e depois até 3 outros modelos "flash" (sem guardar).
- * @returns {Promise<{ data: object, model: string }>}
+ * @returns {Promise<{ data: object, model: string, fallback: boolean }>} fallback = veio de outro modelo (sobrecarga)
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = (...a) => fetch(...a), sleep = wait }) {
   if (!key) throw new AiError(t('Cole sua chave do Gemini primeiro.'), 'key');
   const args = { system, prompt, schema, key, fetchImpl };
   const tried = [model];
+  let fallback = false; // a resposta veio de outro modelo, porque o escolhido estava sobrecarregado
   let r = await request({ ...args, model });
   if (r.status === 404) {
     model = await pickModel(key, fetchImpl, tried);
@@ -116,7 +117,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     for (const other of others) {
       tried.push(other);
       const r2 = await request({ ...args, model: other });
-      if (r2.ok || !transient(r2.status)) { r = r2; model = other; break; }
+      if (r2.ok || !transient(r2.status)) { r = r2; model = other; fallback = true; break; }
     }
   }
   if (!r.ok) {
@@ -132,7 +133,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     throw new AiError(t('O Gemini não devolveu uma resposta ({why}). Tente de novo.', { why }), 'empty');
   }
   try {
-    return { data: JSON.parse(text), model };
+    return { data: JSON.parse(text), model, fallback };
   } catch {
     throw new AiError(t('A resposta do Gemini veio incompleta. Tente de novo.'), 'parse');
   }

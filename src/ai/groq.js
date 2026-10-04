@@ -81,7 +81,7 @@ const missingModel = r => r.status === 404 || (r.body && r.body.error && /model_
 /**
  * Gera uma resposta em JSON. Sem modelo escolhido (ou com modelo que deixou de existir),
  * pega o melhor da lista e guarda. Sobrecarga (5xx): tenta de novo e depois até 2 outros modelos.
- * @returns {Promise<{ data: object, model: string }>}
+ * @returns {Promise<{ data: object, model: string, fallback: boolean }>} fallback = veio de outro modelo (sobrecarga)
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = defaultFetch, sleep = wait }) {
   if (!key) throw new AiError(t('Cole sua chave do Groq primeiro.'), 'key');
@@ -94,6 +94,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     setModel(model);
   }
   const tried = [model];
+  let fallback = false; // a resposta veio de outro modelo, porque o escolhido estava sobrecarregado
   let r = await request({ ...args, model });
   if (missingModel(r)) {
     model = (await list()).find(n => !tried.includes(n));
@@ -112,7 +113,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     for (const other of others) {
       tried.push(other);
       const r2 = await request({ ...args, model: other });
-      if (r2.ok || !transient(r2.status)) { r = r2; model = other; break; }
+      if (r2.ok || !transient(r2.status)) { r = r2; model = other; fallback = true; break; }
     }
   }
   if (!r.ok) {
@@ -124,7 +125,7 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
   const text = choice && choice.message && choice.message.content;
   if (!text) throw new AiError(t('O Groq não devolveu uma resposta ({why}). Tente de novo.', { why: (choice && choice.finish_reason) || t('resposta vazia') }), 'empty');
   try {
-    return { data: JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '')), model };
+    return { data: JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '')), model, fallback };
   } catch {
     throw new AiError(t('A resposta do Groq veio incompleta. Tente de novo.'), 'parse');
   }
