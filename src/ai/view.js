@@ -77,11 +77,19 @@ function checksHtml(text, byRef, opts, owner = null) {
     : t('{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).', c), byRef)}</small>`).join('');
 }
 
-function footer(model, dropped) {
+function footer(model, dropped, opts = null) {
   const lost = dropped.length
     ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
     : '';
-  return `${lost}<p class="hint ai-foot">${esc(t('Gerado pelo {model}. A IA pode errar: confira golpes e habilidades antes de seguir a sugestão.', { model }))}</p>`;
+  const lite = opts && opts.lite && opts.lite.length
+    ? `<p class="hint">${esc(t('O modelo escolhido estava sobrecarregado: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. Vale tentar de novo mais tarde.', { list: opts.lite.join(', ') }))}</p>`
+    : '';
+  const ref = opts && opts.refine;
+  const second = ref
+    ? (ref.ok ? '' : `<p class="hint">${t('A segunda etapa (pontos e dicas com as contas do app) não respondeu; os pontos e as dicas são os da escolha da equipe.')}</p>`)
+      + `<details class="ai-raw fold"><summary>${t('Ver o texto do segundo envio ({n} caracteres)', { n: num(ref.prompt.length) })}</summary><pre>${esc(ref.prompt)}</pre></details>`
+    : '';
+  return `${lost}${lite}${second}<p class="hint ai-foot">${esc(t('Gerado pelo {model}. A IA pode errar: confira golpes e habilidades antes de seguir a sugestão.', { model }))}</p>`;
 }
 
 export function analysisView(r, byRef, model, opts = null) {
@@ -108,7 +116,7 @@ export function analysisView(r, byRef, model, opts = null) {
     ${panel('Sinergia', 'info', bullets(r.sinergias, byRef))}
     ${panel('Trocas sugeridas', 'swap', trocas && `<ul class="ai-swaps">${trocas}</ul>`)}
     ${panel('Dicas por membro', 'info', dicas && `<ul class="ai-tips">${dicas}</ul>`)}
-    ${footer(model, r.dropped)}
+    ${footer(model, r.dropped, opts)}
   </div>`;
 }
 
@@ -151,7 +159,7 @@ export function buildView(r, byRef, model, T, opts = null) {
     </div>
     ${panel('Conferência do app', 'info', check)}
     ${panel('Próximos passos', 'swap', dicas)}
-    ${footer(model, r.dropped)}
+    ${footer(model, r.dropped, opts)}
   </div>`;
 }
 
@@ -175,6 +183,9 @@ export function confirmView(prep) {
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
         ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
         ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
+        ${analyze ? '' : `<li>${counts.learn2
+          ? t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe, as contas do app sobre ela e os golpes que cada um aprende por nível, para os pontos fracos e as dicas.')
+          : t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas.')}</li>`}
         ${counts.learn ? `<li>${t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>

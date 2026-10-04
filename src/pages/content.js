@@ -1,7 +1,7 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-03';
+export const UPDATED = '2026-10-04';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
@@ -9,9 +9,11 @@ export const NEWS = [
     date: '2026-10-04',
     pt: [
       'Assistente (IA), Quetzal e Unbound: o app confere os golpes que a IA sugere com a lista de golpes por nível de cada Pokémon e marca "aprende por nível" ou avisa quando não está na lista. A equipe montada também avisa quem está com o nível bem abaixo do resto, e a IA deixa de sugerir o que o Pokémon já tem.',
+      'Assistente (IA): “Montar equipe” agora tem duas etapas. Depois de escolher os 6, um segundo envio bem menor, só com essa equipe e as contas do app sobre ela (e os golpes por nível no Quetzal/Unbound), escreve os pontos fracos e as dicas, que passam a atacar os buracos que a conferência mostra. O resultado avisa quando veio de um modelo mais leve por sobrecarga, e nomes de terreno (Grassy Terrain, Trick Room…) não são mais conferidos como golpe.',
     ],
     en: [
       'Assistant (AI), Quetzal and Unbound: the app checks the moves the AI suggests against each Pokémon’s level-up list and marks "learns by level" or warns when it is not on the list. The built team also flags members whose level is well below the rest, and the AI no longer suggests what the Pokémon already has.',
+      'Assistant (AI): “Build a team” now has two steps. After picking the 6, a much smaller second request, with only that team and the app’s calculations about it (plus the level-up moves in Quetzal/Unbound), writes the weaknesses and tips, which now address the gaps the check shows. The result says when it came from a lighter model due to overload, and terrain names (Grassy Terrain, Trick Room…) are no longer checked as moves.',
     ],
   },
   {
@@ -109,7 +111,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hospedagem</b>: o site é servido pelo Cloudflare Pages. Como em qualquer site, o servidor recebe dados técnicos do acesso (como o endereço IP).</li>
   <li><b>Sprites</b>: as imagens dos Pokémon vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
-  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), na análise do Quetzal e do Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
+  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), no Quetzal e no Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. <b>Montar equipe</b> faz dois envios: o primeiro escolhe os 6; o segundo, menor, leva só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato do primeiro envio; o do segundo aparece junto com o resultado. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
 </ul>
 <p>O savDex não usa ferramentas de análise de visitas. Se isso mudar, esta página será atualizada antes.</p>`,
   },
@@ -136,7 +138,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hosting</b>: the site is served by Cloudflare Pages. As with any website, the server receives technical data about the visit (such as the IP address).</li>
   <li><b>Sprites</b>: Pokémon images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
-  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the party (weaknesses, coverage, base Speed), in the Quetzal and Unbound analysis the public list of moves each member learns by level, and your request, if any. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
+  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the party (weaknesses, coverage, base Speed), in Quetzal and Unbound the public list of moves each member learns by level, and your request, if any. <b>Build a team</b> sends two requests: the first picks the 6; the second, smaller, carries only that team and the app’s calculations about it, for the weaknesses and tips. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text of the first request; the second one is shown with the result. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
 </ul>
 <p>savDex uses no visitor analytics. If that changes, this page will be updated first.</p>`,
   },

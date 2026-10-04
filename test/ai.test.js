@@ -1,5 +1,5 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap } from '../src/ai/prompt.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap, refinePrompt, checkRefine } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
@@ -205,6 +205,8 @@ suite('IA: conferência dos golpes citados e do nível', () => {
     expect(moveChecks('Use Fire Punch.', refs, dex, T, team[1])).toEqual([{ ref: 'C1-3', move: 'Fire Punch', learns: true }]); // dono da dica; não confunde com Fire/Punch
     expect(moveChecks('Substitute Flamethrower with Hurricane on C1-3.', refs, dex, T).map(c => c.move)).toEqual(['Hurricane']); // palavra no começo da frase
     expect(moveChecks('Hurricane em C1-3', refs, null, T)).toEqual([]);
+    // nome do efeito no campo (estratégia), não golpe a ensinar
+    expect(moveChecks('Use o Grassy Terrain de C1-3 e monte um time de Trick Room.', refs, dex, T)).toEqual([]);
   });
   it('nível bem abaixo do resto (só o app; o nível não vai para a IA)', () => {
     expect(levelGap(team)).toBe('Nível bem abaixo do resto: C1-5 (59), C1-4 (82); os outros estão no nível 100. Vale treinar antes.');
@@ -224,6 +226,62 @@ suite('IA: conferência dos golpes citados e do nível', () => {
   });
 });
 
+suite('IA: montagem em duas etapas', () => {
+  const withDex = (o, dexId, level) => ({ ...mon(o), level, species: { ...mon(o).species, dexId } });
+  const pool = [
+    withDex({ sp: 'Pelipper', id: 279, slot: 1, types: ['water', 'flying'], ab: 'Drizzle', moves: [['Hurricane', 'flying', 1, 110]] }, 279, 100),
+    withDex({ sp: 'Swampert', id: 260, box: 1, slot: 4, types: ['water', 'ground'], moves: [['Liquidation', 'water', 0, 85]] }, 260, 82),
+    withDex({ sp: 'Rattata', id: 19, box: 2, slot: 1, types: ['normal'] }, 19, 5),
+  ];
+  const team = pool.slice(0, 2);
+  it('segundo pedido: só a equipe escolhida, as contas do app e os golpes por nível dela', () => {
+    const p = refinePrompt(team, T, 'quero chuva', { dex, game: { id: 'quetzal' } });
+    expect(p).toContain('Esta é a equipe escolhida. Não troque membros');
+    expect(p).toMatch(/EQUIPE:\nE1 \| Pelipper[^\n]*\nC1-4 \| Swampert/);
+    expect(p).toContain('Tipos sem nenhum golpe super efetivo da equipe:');
+    expect(p).toMatch(/\nC1-4: [^\n]*Hydro Pump/); // golpes por nível do Swampert
+    expect(p).toContain('Pedido do jogador: quero chuva');
+    expect(p).not.toContain('Rattata');
+    expect(p).not.toMatch(/Nv|nível 82/);
+    expect(refinePrompt(team, T)).not.toContain('Aprende por nível (lista'); // sem dex (jogos oficiais antigos)
+    expect(checkRefine({ pontos_fortes: [], pontos_fracos: [], dicas: [] })).toBe(null);
+    expect(buildPrompt(pool, T)).not.toContain('quem treinar primeiro');
+  });
+  const prep = (P) => ({ kind: 'build', P, system: 's', prompt: 'p1', schema: {}, all: pool, T, dex, game: { id: 'quetzal' }, note: '', counts: {} });
+  const first = { nome: 'Chuva', resumo: '', pontos_fortes: ['a'], pontos_fracos: ['b'], dicas: ['dica da primeira'], membros: [{ ref: 'E1' }, { ref: 'C1-4' }] };
+  it('a tela usa os pontos e as dicas da segunda etapa, com o texto dela à vista', async () => {
+    const { sendAi } = await import('../src/ai/index.js');
+    const sent = [];
+    const P = { service: 'Gemini', generateJSON: async ({ prompt }) => {
+      sent.push(prompt);
+      return sent.length === 1 ? { data: first, model: 'gemini-x', fallback: false }
+        : { data: { pontos_fortes: ['forte'], pontos_fracos: ['Electric acerta E1'], dicas: ['Ensine Hydro Pump a C1-4.'] }, model: 'gemini-x-lite', fallback: true };
+    } };
+    const steps = [];
+    const res = await sendAi(prep(P), { onStep: n => steps.push(n) });
+    expect(steps).toEqual([2]);
+    expect(sent[1]).toContain('Esta é a equipe escolhida');
+    expect(res.html).toContain('Ensine Hydro Pump a <b>Swampert</b>.');
+    expect(res.html).toContain('✓ Hydro Pump: <b>Swampert</b> aprende por nível');
+    expect(res.html).not.toContain('dica da primeira');
+    expect(res.html).toContain('Ver o texto do segundo envio');
+    expect(res.html).toContain('veio de um modelo mais leve (gemini-x-lite)');
+    expect(res.html).toContain('Gemini (gemini-x + gemini-x-lite)');
+    expect(res.team.map(refOf)).toEqual(['E1', 'C1-4']);
+  });
+  it('se a segunda etapa falhar, ficam os pontos e as dicas da primeira', async () => {
+    const { sendAi } = await import('../src/ai/index.js');
+    let n = 0;
+    const P = { service: 'Groq', generateJSON: async () => { if (++n === 2) throw new Error('503'); return { data: first, model: 'm', fallback: false }; } };
+    const warn = console.warn; console.warn = () => {};
+    const res = await sendAi(prep(P));
+    console.warn = warn;
+    expect(res.html).toContain('dica da primeira');
+    expect(res.html).toContain('A segunda etapa (pontos e dicas com as contas do app) não respondeu');
+    expect(res.html).not.toContain('modelo mais leve');
+  });
+});
+
 suite('IA: cliente do Gemini', () => {
   const store = new Map();
   beforeEach(() => {
@@ -237,7 +295,7 @@ suite('IA: cliente do Gemini', () => {
     let req;
     const fetchImpl = (url, init) => { req = { url, init }; return ok({ nota: 8 }); };
     const r = await generateJSON({ system: 's', prompt: 'p', schema: { type: 'OBJECT' }, key: 'K', model: 'm1', fetchImpl });
-    expect(r).toEqual({ data: { nota: 8 }, model: 'm1' });
+    expect(r).toEqual({ data: { nota: 8 }, model: 'm1', fallback: false });
     expect(req.url).toBe('https://generativelanguage.googleapis.com/v1beta/models/m1:generateContent');
     expect(req.init.headers['x-goog-api-key']).toBe('K');
     const body = JSON.parse(req.init.body);
@@ -281,6 +339,7 @@ suite('IA: cliente do Gemini', () => {
     };
     const r = await generateJSON({ system: 's', prompt: 'p', schema: {}, key: 'K', model: 'gemini-flash-latest', fetchImpl, sleep: () => Promise.resolve() });
     expect(r.model).toBe('gemini-2.5-flash');
+    expect(r.fallback).toBe(true); // a tela avisa quando a resposta veio de um modelo lite por sobrecarga
     expect(calls).toEqual(['models/gemini-flash-latest:generateContent', 'models/gemini-flash-latest:generateContent', 'models?pageSize=200', 'models/gemini-2.5-flash:generateContent']);
     expect(getModel()).toBe('gemini-flash-latest');
   });
@@ -335,7 +394,7 @@ suite('IA: Groq e formato da resposta em texto', () => {
       return answer({ nota: 7 });
     };
     const r = await groq.generateJSON({ system: 'S', prompt: 'P', schema: ANALYSIS_SCHEMA, key: 'gsk_x', model: '', fetchImpl });
-    expect(r).toEqual({ data: { nota: 7 }, model: 'openai/gpt-oss-120b' });
+    expect(r).toEqual({ data: { nota: 7 }, model: 'openai/gpt-oss-120b', fallback: false });
     expect(groq.getModel()).toBe('openai/gpt-oss-120b');
     expect(req.url).toBe('https://api.groq.com/openai/v1/chat/completions');
     expect(req.init.headers.authorization).toBe('Bearer gsk_x');
@@ -353,7 +412,7 @@ suite('IA: Groq e formato da resposta em texto', () => {
       return answer({ ok: m });
     };
     const r = await groq.generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'velho', fetchImpl });
-    expect(r).toEqual({ data: { ok: 'llama-3.3-70b-versatile' }, model: 'llama-3.3-70b-versatile' });
+    expect(r).toEqual({ data: { ok: 'llama-3.3-70b-versatile' }, model: 'llama-3.3-70b-versatile', fallback: false });
   });
   it('erros do Groq', () => {
     expect(groq.errorMessage(401, { error: { code: 'invalid_api_key' } }).code).toBe('key');
@@ -387,7 +446,7 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false });
+    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
     expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: os de maior total de stats base, um por espécie)');
