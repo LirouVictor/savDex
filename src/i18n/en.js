@@ -366,6 +366,10 @@ export default {
   'Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.':
     'Do not state weaknesses, resistances or counts for the final team (e.g. "no triple weaknesses"): the app calculates and shows them alongside. In strengths and weaknesses, talk about roles, strategy and sets.',
   'megapedra': 'Mega Stone',
+  'Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").':
+    'In the tips, do not suggest what the Pokémon already has (item or move). The level-up move list is not sent here: for a new move, name only its type (e.g. "a Flying move, if it learns one").',
+  'Nível bem abaixo do resto: {list}; os outros estão no nível {max}. Vale treinar antes.': 'Level well below the rest: {list}; the others are level {max}. Worth training first.',
+  'Nível bem abaixo do resto: {list}; os outros, do {min} ao {max}. Vale treinar antes.': 'Level well below the rest: {list}; the others, from {min} to {max}. Worth training first.',
   '{type} acerta {n} membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).': '{type} hits {n} members super effectively (the request was no type hitting 3 or more).',
   '{n} Pokémon com megapedra (o pedido era no máximo um).': '{n} Pokémon holding a Mega Stone (the request was at most one).',
   'DISPONÍVEIS ({n}):': 'AVAILABLE ({n}):',
@@ -406,6 +410,8 @@ export default {
   'Dicas por membro': 'Tips per member',
   'Conferência do app': 'App check',
   'Fora dos critérios pedidos:': 'Outside the requested criteria:',
+  '{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).': '{move}: {ref} learns it by level (list from the recent official games).',
+  '{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).': '{move}: not among {ref}’s level-up moves (it may come from a TM or tutor, or not be learnable).',
   'Próximos passos': 'Next steps',
   'A IA sugeriu só {n} Pokémon válidos.': 'The AI suggested only {n} valid Pokémon.',
   'escolhido automaticamente': 'chosen automatically',

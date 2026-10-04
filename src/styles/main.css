@@ -514,6 +514,9 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .ai-list li { position: relative; padding-left: 16px; line-height: 1.45; }
 .ai-list li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 6px; height: 6px; background: var(--c); }
 .ai-warn { padding: 8px 10px; line-height: 1.45; background: color-mix(in srgb, var(--accent-2) 16%, var(--win)); box-shadow: inset 4px 0 0 var(--accent-2); }
+.ai-movecheck { display: block; margin-top: 4px; font-size: .82rem; line-height: 1.4; color: var(--muted); }
+.ai-movecheck.ok { color: var(--accent); }
+.ai-movecheck.no { color: var(--accent-2); }
 .ai-steps-list { padding-left: 22px; display: grid; gap: 8px; line-height: 1.45; }
 .ai-steps-list li::marker { font-family: var(--pixel); color: var(--c); }
 .ai-swaps, .ai-tips { list-style: none; padding: 0; display: grid; gap: 10px; }

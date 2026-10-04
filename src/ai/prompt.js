@@ -285,6 +285,73 @@ export function analysisPool(all, T, limit) {
     .map(m => [m, score(m)]).sort((x, y) => y[1] - x[1]).slice(0, Math.max(0, limit)).map(([m]) => m);
 }
 
+/** Nomes dos golpes por nível da espécie (dex.json, jogos oficiais recentes), sem repetir; null se não houver lista. */
+export function levelMoveNames(m, dex, T) {
+  const pid = m.species.dexId;
+  const raw = pid && dex ? dex.learn[pid] : null;
+  if (!raw) return null;
+  const names = [];
+  for (let i = 2; i < raw.length; i += 2) {
+    const id = raw[i];
+    const name = typeof id === 'number' ? (T.moves[id] ? T.moves[id][0] : null) : String(id);
+    if (name && !names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
+const moveRes = new WeakMap();
+/** Uma expressão com os nomes de todos os golpes (os mais longos primeiro: "Thunder Punch" antes de "Thunder"). */
+function moveRe(T) {
+  if (!moveRes.has(T)) {
+    const names = [...new Set(T.moves.map(r => r && r[0]).filter(n => n && n.length > 2))]
+      .sort((a, b) => b.length - a.length).map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    moveRes.set(T, new RegExp(`(?<![\\p{L}\\p{N}-])(?:${names.join('|')})(?![\\p{L}\\p{N}-])`, 'gu'));
+  }
+  return moveRes.get(T);
+}
+
+/**
+ * Golpes que a IA citou num texto e que o Pokémon ainda não tem, conferidos pelo app com a lista de golpes por
+ * nível (dex.json). O Pokémon é o citado mais perto do golpe (ou `owner`, o dono da dica). Uma palavra no começo
+ * de frase não conta como golpe se for uma palavra só (ex.: "Substitute", "Rest" em inglês).
+ * @returns {{ ref: string, move: string, learns: boolean }[]}
+ */
+export function moveChecks(text, byRef, dex, T, owner = null) {
+  if (!dex) return [];
+  const src = String(text ?? '');
+  const refs = [...src.matchAll(REF_RE)].filter(x => byRef.has(x[0])).map(x => ({ m: byRef.get(x[0]), at: x.index }));
+  const out = [], seen = new Set();
+  for (const x of src.matchAll(moveRe(T))) {
+    const name = x[0];
+    if (!name.includes(' ') && /(^|[.!?:]\s*)$/.test(src.slice(0, x.index))) continue;
+    const near = refs.length ? refs.reduce((a, b) => (Math.abs(b.at - x.index) < Math.abs(a.at - x.index) ? b : a)).m : owner;
+    if (!near) continue;
+    const key = `${refOf(near)}|${name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (near.moves.some(mv => mv.name === name)) continue; // já tem (ex.: o golpe que sai)
+    const list = levelMoveNames(near, dex, T);
+    if (list) out.push({ ref: refOf(near), move: name, learns: list.includes(name) });
+  }
+  return out;
+}
+
+/** Nível bem abaixo do resto da equipe (o nível não vai para a IA; só o app mostra). */
+export const LEVEL_GAP = 15;
+export function levelGap(team) {
+  const lv = team.filter(m => m.level);
+  if (lv.length < 2) return null;
+  const top = Math.max(...lv.map(m => m.level));
+  const low = lv.filter(m => m.level <= top - LEVEL_GAP);
+  if (!low.length) return null;
+  const rest = lv.filter(m => !low.includes(m)).map(m => m.level);
+  const min = Math.min(...rest);
+  const list = low.sort((a, b) => a.level - b.level).map(m => `${refOf(m)} (${m.level})`).join(', ');
+  return min === top
+    ? t('Nível bem abaixo do resto: {list}; os outros estão no nível {max}. Vale treinar antes.', { list, max: top })
+    : t('Nível bem abaixo do resto: {list}; os outros, do {min} ao {max}. Vale treinar antes.', { list, min, max: top });
+}
+
 /**
  * Golpes por nível dos membros da equipe que eles ainda não têm (lista dos jogos oficiais recentes, src/data/dex.json).
  * Só faz sentido em jogos com os golpes atuais (Quetzal, Unbound); nos oficiais antigos, nada.
@@ -293,16 +360,10 @@ export function learnLines(party, dex, T, game) {
   if (!dex || !game || !['quetzal', 'unbound'].includes(game.id)) return [];
   const out = [];
   for (const m of party) {
-    const pid = m.species.dexId;
-    const raw = pid ? dex.learn[pid] : null;
-    if (!raw) continue;
+    const all = levelMoveNames(m, dex, T);
+    if (!all) continue;
     const known = new Set(m.moves.map(mv => mv.name));
-    const names = [];
-    for (let i = 2; i < raw.length; i += 2) {
-      const id = raw[i];
-      const name = typeof id === 'number' ? (T.moves[id] ? T.moves[id][0] : null) : String(id);
-      if (name && !known.has(name) && !names.includes(name)) names.push(name);
-    }
+    const names = all.filter(n => !known.has(n));
     if (names.length) out.push(`${refOf(m)}: ${names.slice(-LEARN_MAX).join(', ')}`);
   }
   return out.length ? ['', t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):'), ...out] : [];
@@ -371,6 +432,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
     t('Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.'),
     t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza, os EVs ou quem treinar primeiro), dizendo por quê.'),
+    t('Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").'),
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
     wish(note),
     ...hints,
