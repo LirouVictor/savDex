@@ -2,7 +2,7 @@
 
 import { esc, typeChips, monShort } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
-import { REF_RE, teamFacts, buildIssues } from './prompt.js';
+import { REF_RE, teamFacts, buildIssues, moveChecks, levelGap } from './prompt.js';
 import { t, num } from '../i18n.js';
 
 const where = m => (m.hasNickname ? m.species.name + ' · ' : '')
@@ -69,6 +69,14 @@ function panel(title, kind, inner) {
 
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');
 
+/** Conferência do app dos golpes novos citados (Quetzal/Unbound: lista de golpes por nível dos jogos oficiais). */
+function checksHtml(text, byRef, opts, owner = null) {
+  const list = opts && opts.dex ? moveChecks(text, byRef, opts.dex, opts.T, owner) : [];
+  return list.map(c => `<small class="ai-movecheck ${c.learns ? 'ok' : 'no'}">${c.learns ? '✓' : '⚠'} ${rich(c.learns
+    ? t('{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).', c)
+    : t('{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).', c), byRef)}</small>`).join('');
+}
+
 function footer(model, dropped) {
   const lost = dropped.length
     ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
@@ -76,13 +84,13 @@ function footer(model, dropped) {
   return `${lost}<p class="hint ai-foot">${esc(t('Gerado pelo {model}. A IA pode errar: confira golpes e habilidades antes de seguir a sugestão.', { model }))}</p>`;
 }
 
-export function analysisView(r, byRef, model) {
+export function analysisView(r, byRef, model, opts = null) {
   const pips = Array.from({ length: 10 }, (_, i) => `<i class="${i < r.nota ? 'on' : ''}"></i>`).join('');
   const trocas = r.trocas.map(x => `<li class="ai-swap">
       <div class="ai-pair">${mini(byRef.get(x.sai), x.sai, 'Sai')}<span class="ai-arrow" aria-label="${t('troca por')}"></span>${mini(byRef.get(x.entra), x.entra, 'Entra')}</div>
       <p>${rich(x.motivo, byRef)}</p>
     </li>`).join('');
-  const dicas = r.dicas.map(d => `<li class="ai-tip">${mini(byRef.get(d.ref), d.ref)}<p>${rich(d.texto, byRef)}</p></li>`).join('');
+  const dicas = r.dicas.map(d => `<li class="ai-tip">${mini(byRef.get(d.ref), d.ref)}<p>${rich(d.texto, byRef)}</p>${checksHtml(d.texto, byRef, opts, byRef.get(d.ref))}</li>`).join('');
   return `<div class="ai-result">
     <div class="ai-hero">
       <div class="ai-medal" role="img" aria-label="${t('Nota {n} de 10', { n: r.nota })}"><b>${r.nota}</b><small>/10</small></div>
@@ -104,7 +112,7 @@ export function analysisView(r, byRef, model) {
   </div>`;
 }
 
-export function buildView(r, byRef, model, T) {
+export function buildView(r, byRef, model, T, opts = null) {
   const mons = r.membros.map(x => byRef.get(x.ref));
   const cards = r.membros.map((x, i) => {
     const m = mons[i];
@@ -122,9 +130,10 @@ export function buildView(r, byRef, model, T) {
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
   const issues = mons.length ? buildIssues(mons, T) : [];
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
-  const check = mons.length ? warn + bullets(teamFacts(mons, T).split('\n'), byRef) : '';
+  const gap = levelGap(mons);
+  const check = mons.length ? warn + bullets([...teamFacts(mons, T).split('\n'), ...(gap ? [gap] : [])], byRef) : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
-  const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ol>` : '';
+  const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}${checksHtml(x, byRef, opts && { ...opts, T })}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">
     <div class="ai-hero build">
       <div class="ai-hero-text">

@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-03';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-04',
+    pt: [
+      'Assistente (IA), Quetzal e Unbound: o app confere os golpes que a IA sugere com a lista de golpes por nível de cada Pokémon e marca "aprende por nível" ou avisa quando não está na lista. A equipe montada também avisa quem está com o nível bem abaixo do resto, e a IA deixa de sugerir o que o Pokémon já tem.',
+    ],
+    en: [
+      'Assistant (AI), Quetzal and Unbound: the app checks the moves the AI suggests against each Pokémon’s level-up list and marks "learns by level" or warns when it is not on the list. The built team also flags members whose level is well below the rest, and the AI no longer suggests what the Pokémon already has.',
+    ],
+  },
+  {
     date: '2026-10-03',
     pt: [
       'Resumo do save no card do treinador: tempo de jogo, dinheiro, insígnias e Pokédex nos jogos oficiais (também no Quetzal; no Unbound, por enquanto só o tempo de jogo). Tempo de jogo e insígnias também aparecem na imagem da equipe.',

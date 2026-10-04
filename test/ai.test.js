@@ -1,5 +1,5 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
-import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues } from '../src/ai/prompt.js';
+import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
@@ -56,6 +56,7 @@ suite('IA: dados enviados', () => {
     expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
     expect(b).toContain('Nas dicas, só ajustes concretos');
     expect(b).toContain('Não afirme fraquezas, resistências nem contagens da equipe final');
+    expect(b).toContain('não sugira o que o Pokémon já tem');
     expect(a).toContain('Omita quem já está bem montado');
   });
   it('montagem: uma cópia por espécie (a de melhores IVs)', () => {
@@ -184,6 +185,42 @@ suite('IA: conferência da resposta', () => {
     const refs = new Map(team.map(m => [refOf(m), m]));
     const r = checkBuild({ nome: 'T', resumo: '', pontos_fortes: [], pontos_fracos: [], dicas: [], membros: team.map(m => ({ ref: refOf(m) })) }, refs);
     expect(buildView(r, refs, 'x', T)).toContain('Fora dos critérios pedidos:');
+  });
+});
+
+suite('IA: conferência dos golpes citados e do nível', () => {
+  const withDex = (o, dexId, level) => ({ ...mon(o), level, species: { ...mon(o).species, dexId } });
+  const team = [
+    withDex({ sp: 'Pelipper', id: 279, box: 1, slot: 1, types: ['water', 'flying'], moves: [['Hurricane', 'flying', 1, 110]] }, 279, 100),
+    withDex({ sp: 'Dragonite', id: 149, box: 1, slot: 3, types: ['dragon', 'flying'], moves: [['Thunder', 'electric', 1, 110], ['Flamethrower', 'fire', 1, 90]] }, 149, 100),
+    withDex({ sp: 'Swampert', id: 260, box: 1, slot: 4, types: ['water', 'ground'], moves: [['Liquidation', 'water', 0, 85]] }, 260, 82),
+    withDex({ sp: 'Scizor', id: 212, box: 1, slot: 5, types: ['bug', 'steel'], item: 'Scizorite' }, 212, 59),
+  ];
+  const refs = new Map(team.map(m => [refOf(m), m]));
+  it('golpe novo: confere com os golpes por nível do Pokémon citado mais perto', () => {
+    expect(moveChecks('Substitua Flamethrower por Hurricane em C1-3. Sob a chuva, Hurricane ganha precisão.', refs, dex, T))
+      .toEqual([{ ref: 'C1-3', move: 'Hurricane', learns: true }]); // Flamethrower ele já tem
+    expect(moveChecks('Ensine Rain Dance para C1-4 caso C1-1 seja nocauteado.', refs, dex, T))
+      .toEqual([{ ref: 'C1-4', move: 'Rain Dance', learns: false }]); // Swampert não aprende por nível
+    expect(moveChecks('Use Fire Punch.', refs, dex, T, team[1])).toEqual([{ ref: 'C1-3', move: 'Fire Punch', learns: true }]); // dono da dica; não confunde com Fire/Punch
+    expect(moveChecks('Substitute Flamethrower with Hurricane on C1-3.', refs, dex, T).map(c => c.move)).toEqual(['Hurricane']); // palavra no começo da frase
+    expect(moveChecks('Hurricane em C1-3', refs, null, T)).toEqual([]);
+  });
+  it('nível bem abaixo do resto (só o app; o nível não vai para a IA)', () => {
+    expect(levelGap(team)).toBe('Nível bem abaixo do resto: C1-5 (59), C1-4 (82); os outros estão no nível 100. Vale treinar antes.');
+    expect(levelGap(team.filter(m => m.level !== 82).concat([{ ...team[2], level: 90 }]))).toBe('Nível bem abaixo do resto: C1-5 (59); os outros, do 90 ao 100. Vale treinar antes.');
+    expect(levelGap(team.slice(0, 2))).toBe(null);
+  });
+  it('telas: marcas de "aprende por nível" e o aviso de nível', () => {
+    const b = checkBuild({ nome: 'Chuva', resumo: '', pontos_fortes: [], pontos_fracos: [], membros: team.map(m => ({ ref: refOf(m) })),
+      dicas: ['Substitua Flamethrower por Hurricane em C1-3.', 'Ensine Rain Dance para C1-4.'] }, refs);
+    const html = buildView(b, refs, 'x', T, { dex });
+    expect(html).toContain('✓ Hurricane: <b>Dragonite</b> aprende por nível');
+    expect(html).toContain('⚠ Rain Dance: não está nos golpes por nível de <b>Swampert</b>');
+    expect(html).toContain('Nível bem abaixo do resto: <b>Scizor</b> (59)');
+    expect(buildView(b, refs, 'x', T)).not.toContain('aprende por nível'); // sem dex (jogos oficiais antigos): sem marcas
+    const a = checkAnalysis({ nota: 6, resumo: '', pontos_fortes: [], pontos_fracos: [], sinergias: [], trocas: [], dicas: [{ ref: 'C1-4', texto: 'Troque Liquidation por Hydro Pump.' }] }, refs);
+    expect(analysisView(a, refs, 'x', { dex, T })).toContain('✓ Hydro Pump: <b>Swampert</b> aprende por nível');
   });
 });
 

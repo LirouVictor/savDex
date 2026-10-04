@@ -218,9 +218,10 @@ function setupAi(out) {
     $('#ai-provider').disabled = true;
     try {
       const ai = await import('./ai/index.js');
-      // Na análise do Quetzal/Unbound vão também os golpes por nível da equipe (dex.json, o mesmo do detalhe)
+      // Quetzal/Unbound: golpes por nível (dex.json, o mesmo do detalhe). Na análise vão no pedido; nas duas,
+      // o app confere com eles os golpes que a IA citar
       const game = state.data.game;
-      const dex = b.dataset.ai === 'analyze' && game && ['quetzal', 'unbound'].includes(game.id) ? (await loadDex()).dex : null;
+      const dex = game && ['quetzal', 'unbound'].includes(game.id) ? (await loadDex()).dex : null;
       // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
       const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;

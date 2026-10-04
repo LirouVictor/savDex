@@ -23,7 +23,8 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null }) 
     learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
     hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates)).length > 0, // clima/terreno/Trick Room
   };
-  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, note: note.trim(), counts };
+  // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
+  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, dex, note: note.trim(), counts };
 }
 
 /** HTML da janela de confirmação ("o que vai ser enviado"). */
@@ -33,15 +34,15 @@ export function confirmHtml(prep) {
 
 /** Envia o pedido preparado e devolve a tela do resultado. */
 export async function sendAi(prep) {
-  const { kind, P, system, prompt, schema, all, T } = prep;
+  const { kind, P, system, prompt, schema, all, T, dex } = prep;
   const byRef = new Map(all.map(m => [refOf(m), m]));
   const label = model => `${P.service} (${model})`;
   const { data, model } = await P.generateJSON({ system, prompt, schema });
   if (kind === 'analyze') {
-    return { html: analysisView(checkAnalysis(data, byRef), byRef, label(model)), byRef, team: null };
+    return { html: analysisView(checkAnalysis(data, byRef), byRef, label(model), dex && { dex, T }), byRef, team: null };
   }
   const r = checkBuild(data, byRef);
-  return { html: buildView(r, byRef, label(model), T), byRef, team: r.membros.map(x => byRef.get(x.ref)) };
+  return { html: buildView(r, byRef, label(model), T, dex && { dex }), byRef, team: r.membros.map(x => byRef.get(x.ref)) };
 }
 
 /** Prepara e envia direto (sem confirmação). */
