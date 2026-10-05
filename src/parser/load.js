@@ -76,9 +76,10 @@ function checkQuetzal(data) {
  * @param {object} G tabelas da Gen 3 (src/data/gen3.json)
  * @param {object} [U] tabelas do Unbound (src/data/unbound.json), só para saves do Unbound
  * @param {object} [N] tabelas dos jogos de DS (src/data/nds.json), só para saves de DS
+ * @param {object} [Q] tabelas da ROM do Quetzal (src/data/quetzal.json): itens, golpes e espécies > 898
  * @returns {{ data: object, T: object }} dados descritos e as tabelas que valem para esse jogo
  */
-export function loadSave(input, T, G, U = null, N = null) {
+export function loadSave(input, T, G, U = null, N = null, Q = null) {
   const box = unwrap(input);
   const { bytes } = box;
   if (isSaveState(bytes)) throw new SaveError(t('Este arquivo é um save state do DeSmuME (.dst), não o save do jogo. No DeSmuME, use o arquivo .dsv da pasta Battery ou exporte o save em Arquivo › Export Backup Memory.'));
@@ -93,10 +94,11 @@ export function loadSave(input, T, G, U = null, N = null) {
     throw new SaveError(t('O arquivo tem {n} bytes; um save de Pokémon de GBA tem {size} (128 KB).', { n: bytes.length, size: SAVE_SIZE }));
   }
   if (isQuetzalLayout(bytes)) {
-    const data = describe(parseSave(bytes), T);
+    const TQ = Q ? { ...T, quetzal: Q } : T;
+    const data = describe(parseSave(bytes), TQ);
     checkQuetzal(data);
     data.game = QUETZAL;
-    return { data, T };
+    return { data, T: TQ };
   }
   if (unboundSignature(bytes) !== null) {
     if (!U) throw new Error('Tabelas do Unbound não carregadas');

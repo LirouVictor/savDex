@@ -3,7 +3,12 @@
 import { describe as suite, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { parseSave, describe } from '../src/parser/index.js';
-import T from '../src/data/tables.js';
+import { calcStats } from '../src/parser/stats.js';
+import BASE from '../src/data/tables.js';
+import Q from '../src/data/quetzal.json';
+
+// Como no app: saves do Quetzal usam as tabelas tiradas da ROM (src/data/quetzal.json)
+const T = { ...BASE, quetzal: Q };
 
 const FILE = process.env.QUETZAL_SAVE || new URL('../fixtures/PokemonQuetzalPtBrAlpha9v0.sav', import.meta.url).pathname;
 const has = existsSync(FILE);
@@ -228,8 +233,29 @@ suite.skipIf(!existsSync(FILE_H) || !existsSync(FILE_60))('HP atual (fixtures/qu
     const inParty = after.party.find(m => m.species.name === 'Haunter');
     expect([inPc.hp, inParty.hp, inParty.stats.hp]).toEqual([33, 33, 66]);
     expect(after.party.find(m => m.species.name === 'Pelipper')).toMatchObject({ hp: 243, stats: { hp: 324 } });
-    // Exceção: o Pikachu "estilo Red" (forma própria do Quetzal, 1469) tem 68 contra 62 calculados com os stats do Pikachu
-    const others = before.pc.boxes.flatMap(b => b.slots).filter(m => m !== inPc && m.speciesId !== 1469);
+    // Inclusive o Pikachu "estilo Red" (1469): pela ROM, tem os stats do Pikachu Partner (HP 68)
+    const others = before.pc.boxes.flatMap(b => b.slots).filter(m => m !== inPc);
+    expect(before.pc.boxes.flatMap(b => b.slots).find(m => m.speciesId === 1469).hp).toBe(68);
     expect(others.filter(m => m.hp !== m.stats.hp).map(m => m.species.name)).toEqual([]);
+  });
+});
+
+// Com as tabelas da ROM, nada dos saves reais fica como "provável" ou "não mapeado"
+const ROM_CHECK = ['PokemonQuetzalPtBrAlpha9v0.sav', 'PokemonQuetzalPtBrAlpha9v0-pc.sav', 'PokemonQuetzalPtBrAlpha9v0-3.sav',
+  'quetzal-59h.sav', 'quetzal-60h.sav', 'quetzal-60h-haunter.sav', 'quetzal-cmp-old.sav', 'quetzal-cmp-new.sav']
+  .map(f => new URL('../fixtures/' + f, import.meta.url).pathname).filter(f => existsSync(f));
+suite.skipIf(!ROM_CHECK.length)('tabelas da ROM contra os saves reais', () => {
+  it('espécies, itens e golpes confirmados; stats da equipe = fórmula com os stats base da ROM', () => {
+    for (const f of ROM_CHECK) {
+      const d = describe(parseSave(readFileSync(f)), T);
+      const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+      expect(all.filter(m => m.species.confidence !== 'confirmado').map(m => m.speciesId)).toEqual([]);
+      expect(all.filter(m => m.item && m.item.confidence !== 'confirmado').map(m => m.item.id)).toEqual([]);
+      expect(all.flatMap(m => m.moves).filter(mv => !mv.type).map(mv => mv.id)).toEqual([]);
+      for (const m of d.party) {
+        const calc = calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature);
+        expect(Object.keys(calc).filter(k => calc[k] !== m.stats[k]), `${f} ${m.species.name}`).toEqual([]);
+      }
+    }
   });
 });

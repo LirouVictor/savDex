@@ -82,10 +82,13 @@ export default {
   'ID próprio do Quetzal ainda não mapeado.': 'Quetzal-specific ID not mapped yet.',
   'Confirmado no jogo pelo autor (o save tem Raichu de Alola e Raichu comum, ID 26).': 'Confirmed in game by the author (the save has an Alolan Raichu and a regular Raichu, ID 26).',
   'Confirmado no jogo pelo autor.': 'Confirmed in game by the author.',
-  'Confirmado no jogo pelo autor (habilidade Adaptability). Macho/fêmea não determinado; sprite do macho.':
-    'Confirmed in game by the author (Adaptability ability). Male/female not determined; male sprite.',
-  'Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta).':
-    'Checked in game: white/red cap with a red symbol and a red jacket, like trainer Red. A Quetzal-specific form with no matching sprite on PokeAPI (the official cap forms have no jacket).',
+  'Confirmado no jogo pelo autor (habilidade Adaptability). Pela ROM, o 1210 é o macho (a fêmea é o 1240).':
+    'Confirmed in game by the author (Adaptability ability). From the ROM, 1210 is the male (the female is 1240).',
+  'Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Pela ROM, tem os stats do Pikachu Partner (Let\'s Go); o visual é próprio do Quetzal, sem sprite correspondente na PokeAPI.':
+    'Checked in game: white/red cap with a red symbol and a red jacket, like trainer Red. From the ROM, it has the stats of Partner Pikachu (Let\'s Go); the look is Quetzal-specific, with no matching sprite on PokeAPI.',
+  'Forma de aparência (os dados são os da forma padrão); sprite da forma padrão.': 'Cosmetic form (same data as the default form); default form sprite.',
+  'Sem sprite correspondente na PokeAPI.': 'No matching sprite on PokeAPI.',
+  'ID sem item na tabela do Quetzal.': 'ID with no item in the Quetzal table.',
 
   // Telas (render.js)
   'Identificação provável, ainda não confirmada': 'Probable identification, not confirmed yet',

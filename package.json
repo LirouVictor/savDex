@@ -14,6 +14,7 @@
     "gen3": "node tools/build-gen3.mjs",
     "unbound": "node tools/build-unbound.mjs",
     "nds": "node tools/build-nds.mjs",
+    "quetzal": "node tools/build-quetzal.mjs",
     "diff-saves": "node tools/diff-saves.mjs"
   },
   "devDependencies": {

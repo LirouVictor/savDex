@@ -39,17 +39,19 @@ export async function openSave(buffer, fileName, opts = {}) {
 }
 
 /** Tabelas de jogos que só alguns saves usam, carregadas sob demanda: [Unbound, DS]. */
-let unboundTables = null, ndsTables = null;
+let unboundTables = null, ndsTables = null, quetzalTables = null;
 async function extraTables(buffer) {
   if (isUnbound(buffer)) {
     if (!unboundTables) unboundTables = (await import('./data/unbound.json')).default;
-    return [unboundTables, null];
+    return [unboundTables, null, null];
   }
   if (isNds(buffer)) {
     if (!ndsTables) ndsTables = (await import('./data/nds.json')).default;
-    return [null, ndsTables];
+    return [null, ndsTables, null];
   }
-  return [null, null];
+  // Quetzal (e Gen 3 oficial, que não usa): itens, golpes e espécies > 898 tirados da ROM do jogo
+  if (!quetzalTables) quetzalTables = (await import('./data/quetzal.json')).default;
+  return [null, null, quetzalTables];
 }
 
 /** Bytes do save de demonstração (montado na hora, num pacote carregado só quando pedido). */
