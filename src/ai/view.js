@@ -72,8 +72,9 @@ const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.m
 /** Conferência do app dos golpes novos citados (Quetzal/Unbound: lista de golpes por nível dos jogos oficiais). */
 function checksHtml(text, byRef, opts, owner = null) {
   const list = opts && opts.dex ? moveChecks(text, byRef, opts.dex, opts.T, owner) : [];
+  const rom = !!(opts && opts.dex && opts.dex.quetzal);
   return list.map(c => `<small class="ai-movecheck ${c.learns ? 'ok' : 'no'}">${c.learns ? '✓' : '⚠'} ${rich(c.learns
-    ? t('{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).', c)
+    ? (rom ? t('{move}: {ref} aprende por nível (tabela do jogo).', c) : t('{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).', c))
     : t('{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).', c), byRef)}</small>`).join('');
 }
 
@@ -186,7 +187,9 @@ export function confirmView(prep) {
         ${analyze ? '' : `<li>${counts.learn2
           ? t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe, as contas do app sobre ela e os golpes que cada um aprende por nível, para os pontos fracos e as dicas.')
           : t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas.')}</li>`}
-        ${counts.learn ? `<li>${t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
+        ${counts.learn ? `<li>${prep.game && prep.game.id === 'quetzal'
+          ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio Quetzal).')
+          : t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>
       </ul>

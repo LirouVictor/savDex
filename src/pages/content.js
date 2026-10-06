@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-04';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-06',
+    pt: [
+      'Quetzal: os golpes por nível no detalhe de cada Pokémon (e os usados pelo assistente de IA) agora são os do próprio jogo, sem o “provável”. O detalhe também ficou mais leve de carregar.',
+    ],
+    en: [
+      'Quetzal: the level-up moves in each Pokémon’s details (and the ones the AI assistant uses) now come from the game itself, without the “probable” tag. The details also load lighter.',
+    ],
+  },
+  {
     date: '2026-10-05',
     pt: [
       'Quetzal: itens, golpes e Pokémon com ID próprio agora vêm das tabelas do próprio jogo. Todos os itens aparecem com o nome certo (antes, do 511 em diante eram “prováveis” ou “não mapeados”), mais de 600 formas regionais, megas e Pokémon da Gen 9 são reconhecidos com os tipos, stats e habilidades do Quetzal, a Basculegion fêmea é identificada e o Pikachu “estilo Red” tem os stats certos.',

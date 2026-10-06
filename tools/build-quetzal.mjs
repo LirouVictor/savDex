@@ -11,7 +11,8 @@
 // Fontes:
 //   - ROM do Quetzal (argumento ou fixtures/rom/*.gba): itens (nome de 20 bytes), golpes (17), habilidades
 //     (17), nomes das espécies (13), dados das espécies (36 bytes: stats, tipos, gênero, curva, habilidades) e
-//     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo).
+//     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo) e golpes por nível (ponteiro por
+//     espécie para uma lista de golpe + nível) → src/data/quetzal-learn.json.
 //   - PokeAPI (CSV): forma correspondente de cada espécie > 898 (sprite, nome no Showdown, linha evolutiva),
 //     pelo nome da espécie + tipos + stats base.
 //
@@ -25,6 +26,7 @@ import { decodeText, encodeText } from '../src/parser/charset.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'src/data/quetzal.json');
+const OUT_LEARN = path.join(ROOT, 'src/data/quetzal-learn.json');
 const PAPI = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv';
 const SPRITES = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 const ENGLISH = 9;
@@ -171,7 +173,47 @@ function tables(rom) {
   if (!(evolutions[25] || []).some(([m, p, t]) => m === 7 && p === thunder && t === 26)) fail('Evoluções: Pikachu → Raichu não confere.');
   if (!(evolutions[4] || []).some(([m, p, t]) => m === 4 && p === 16 && t === 5)) fail('Evoluções: Charmander → Charmeleon não confere.');
 
-  return { items, moves, abilities, count: names.length - 1, info, evolutions };
+  // Golpes por nível: tabela de ponteiros (u32 por espécie) para listas de (golpe u16, nível u16) que acabam
+  // em golpe 0xFFFF; nível 0 = aprende ao evoluir. Achada pela lista do Bulbasaur (Tackle 1, Growl 1, Vine Whip 3).
+  const learnSig = Buffer.from([33, 0, 1, 0, 45, 0, 1, 0, 22, 0, 3, 0]);
+  const readSet = o => {
+    const r = [];
+    for (let k = 0; k < 200; k++) {
+      const mv = rom.readUInt16LE(o + 4 * k), lv = rom.readUInt16LE(o + 4 * k + 2);
+      if (mv === 0xffff) return r;
+      if (mv >= moves.length || lv > 100) return null;
+      r.push(lv, mv);
+    }
+    return null;
+  };
+  const ptrAt = o => { const v = rom.readUInt32LE(o); return v >>> 24 === 8 ? v - 0x08000000 : -1; };
+  let learnBase = -1;
+  for (let set = rom.indexOf(learnSig); set >= 0 && learnBase < 0; set = rom.indexOf(learnSig, set + 1)) {
+    const p = Buffer.alloc(4); p.writeUInt32LE(0x08000000 + set);
+    for (let i = rom.indexOf(p); i >= 0; i = rom.indexOf(p, i + 1)) {
+      // posição da espécie 1: a da 2 (Ivysaur) aponta para outra lista válida, e todas as espécies também
+      const base = i - 4, two = ptrAt(base + 8);
+      if (i % 4 || two < 0 || two === set) continue;
+      let ok = true;
+      for (let id = 1; id < names.length && ok; id++) { const o = ptrAt(base + id * 4); ok = o >= 0 && readSet(o) !== null; }
+      if (ok) { learnBase = base; break; }
+    }
+  }
+  if (learnBase < 0) fail('Tabela de golpes por nível não encontrada.');
+  const setIndex = new Map(), learnSets = [], learnOf = [0];
+  for (let id = 1; id < names.length; id++) {
+    const o = ptrAt(learnBase + id * 4);
+    if (!setIndex.has(o)) { setIndex.set(o, learnSets.length); learnSets.push(readSet(o)); }
+    learnOf.push(setIndex.get(o));
+  }
+  // Conferência: o Primeape aprende Rage Fist, o golpe que a evolução para Annihilape pede (método 23)
+  const rageFist = moves.indexOf('Rage Fist');
+  const primeape = learnSets[learnOf[57]];
+  if (!primeape.some((v, i) => i % 2 === 1 && v === rageFist) || !(evolutions[57] || []).some(([m, p]) => m === 23 && p === rageFist)) {
+    fail('Golpes por nível: Primeape/Rage Fist não confere.');
+  }
+
+  return { items, moves, abilities, count: names.length - 1, info, evolutions, learnSets, learnOf };
 }
 
 // Taxa de gênero da ROM (0 só macho, 254 só fêmea, 255 sem gênero, senão limite) → escala da PokeAPI (−1, 0..8)
@@ -282,6 +324,10 @@ async function main() {
     if (norm(app) !== norm(T.moves[i]) && !abbrev(norm(app), norm(T.moves[i]))) out.moveNames[i] = T.moves[i];
   }
   await writeFile(OUT, JSON.stringify(out) + '\n');
+  // Golpes por nível num arquivo à parte, carregado só ao abrir o detalhe de um Pokémon (no lugar do dex.json)
+  // sets: listas [nível, golpe, nível, golpe, …] sem repetir; species[id] = índice da lista daquela espécie
+  await writeFile(OUT_LEARN, JSON.stringify({ meta: { source: meta.source, sha1, generatedAt: meta.generatedAt }, sets: T.learnSets, species: T.learnOf }) + '\n');
+  console.log(`golpes por nível: ${T.learnSets.length} listas, ${T.learnSets.reduce((a, s) => a + s.length / 2, 0)} golpes`);
   console.log(`evoluções: ${Object.keys(T.evolutions).length} espécies`);
   console.log(`itens ${meta.items}, golpes ${meta.moves} (${Object.keys(out.moveNames).length} com nome próprio), espécies ${T.count}` +
     ` (> ${NATIONAL_UP_TO}: ${stat.unica} com forma, ${stat.aparencia} de aparência, ${stat.sem} sem correspondência)`);

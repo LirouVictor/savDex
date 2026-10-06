@@ -298,7 +298,8 @@ export function analysisPool(all, T, limit) {
 
 /** Nomes dos golpes por nível da espécie (dex.json, jogos oficiais recentes), sem repetir; null se não houver lista. */
 export function levelMoveNames(m, dex, T) {
-  const pid = m.species.dexId;
+  // Quetzal: tabela da ROM, pelo ID do save; demais jogos: dex.json, pelo ID da PokeAPI
+  const pid = dex && dex.quetzal ? m.speciesId : m.species.dexId;
   const raw = pid && dex ? dex.learn[pid] : null;
   if (!raw) return null;
   const names = [];
@@ -383,7 +384,8 @@ export function learnLines(party, dex, T, game) {
     const names = all.filter(n => !known.has(n));
     if (names.length) out.push(`${refOf(m)}: ${names.slice(-LEARN_MAX).join(', ')}`);
   }
-  return out.length ? ['', t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):'), ...out] : [];
+  const head = dex.quetzal ? t('Aprende por nível (tabela do próprio jogo):') : t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):');
+  return out.length ? ['', head, ...out] : [];
 }
 
 /**
