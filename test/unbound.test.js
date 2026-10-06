@@ -1,4 +1,4 @@
-import { describe as suite, it, expect } from 'vitest';
+import { describe as suite, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { loadSave, isUnbound } from '../src/parser/load.js';
 import { calcStats } from '../src/parser/stats.js';
@@ -113,7 +113,8 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
 // Save real de outro jogador (Unbound 2.1.0, 11h48m de jogo, sem insígnias; lendários no PC)
 const SAVE_C = 'fixtures/unbound-c.sav';
 suite.skipIf(!existsSync(SAVE_C))('Pokémon Unbound: save real com 11h de jogo', () => {
-  const d = loadSave(readFileSync(SAVE_C), T, G, U).data;
+  let d;
+  beforeAll(() => { d = loadSave(readFileSync(SAVE_C), T, G, U).data; });
   it('resumo: tempo, dinheiro, insígnias e Pokédex do DPE (capturados ⊇ todas as espécies do save)', () => {
     expect(d.trainer).toMatchObject({ tid: 8044, sid: 21042 });
     expect(d.summary).toMatchObject({
