@@ -169,32 +169,46 @@ function concat(list) {
 
 const SHOWDOWN_FORMS = { Alola: 'Alola', Galar: 'Galar', Hisui: 'Hisui', Mega: 'Mega', 'Mega X': 'Mega-X', 'Mega Y': 'Mega-Y', Gigantamax: 'Gmax', Primal: 'Primal' };
 
+/** Espécie do Unbound pelo ID do save (unbound.json; tipos, stats, habilidades e gênero conferidos com a ROM). */
+export function unboundSpecies(id, U, T, isEgg = false) {
+  const row = U.species[id];
+  if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
+  const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
+  return {
+    name, form: isEgg ? 'ovo' : form, showdown: form && SHOWDOWN_FORMS[form] ? `${name}-${SHOWDOWN_FORMS[form]}` : name,
+    confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
+    types: [t1, t2].filter(Boolean).map(i => T.types[i] || null),
+    abilities: [U.abilities[a1] || null, U.abilities[a2] || null, U.abilities[ha] || null],
+    baseStats: base, growth, genderByte,
+  };
+}
+
+const fromApp = new WeakMap();
+/**
+ * ID do golpe no Unbound a partir do ID usado no app: os golpes com par no app usam o ID do app; os próprios do
+ * Unbound (Leech Fang…), o ID do Unbound negativo.
+ */
+export function unboundMoveId(id, U) {
+  if (id < 0) return -id;
+  if (!fromApp.has(U)) { const m = []; U.moves.forEach((ref, i) => { if (typeof ref === 'number' && m[ref] === undefined) m[ref] = i; }); fromApp.set(U, m); }
+  return fromApp.get(U)[id] ?? null;
+}
+
 /** Converte a leitura crua no mesmo formato de describe() do Quetzal. */
 export function describeUnbound(raw, T, U) {
-  const typeName = i => T.types[i] || null;
   const shiny = (pid, otId) => (((otId & 0xFFFF) ^ (otId >>> 16) ^ (pid & 0xFFFF) ^ (pid >>> 16)) >>> 0) < 16; // 1/4096, como no Unbound
-
-  function species(id, isEgg) {
-    const row = U.species[id];
-    if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
-    const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
-    return {
-      name, form: isEgg ? 'ovo' : form, showdown: form && SHOWDOWN_FORMS[form] ? `${name}-${SHOWDOWN_FORMS[form]}` : name,
-      confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
-      types: [t1, t2].filter(Boolean).map(typeName),
-      abilities: [U.abilities[a1] || null, U.abilities[a2] || null, U.abilities[ha] || null],
-      baseStats: base, growth, genderByte,
-    };
-  }
+  const species = (id, isEgg) => unboundSpecies(id, U, T, isEgg);
+  // Tipo, poder, precisão, PP e categoria da ROM do Unbound (moveData); o nome, do app
   const move = m => {
     const ref = U.moves[m.id];
     const appId = typeof ref === 'number' ? ref : null;
-    const row = appId ? T.moves[appId] : null, det = appId ? T.moveDetails[appId] : null;
-    const basePP = U.movePP[m.id] || (det && det[2]) || 0;
-    const pp = m.pp ?? (basePP ? Math.floor((basePP * (5 + (m.ppUps || 0))) / 5) : null);
+    const row = appId ? T.moves[appId] : null;
+    const md = U.moveData[m.id] || null;
+    const pp = m.pp ?? (md && md[3] ? Math.floor((md[3] * (5 + (m.ppUps || 0))) / 5) : null);
     return {
-      id: appId ?? -m.id, name: row ? row[0] : typeof ref === 'string' ? ref : t('Golpe {n}', { n: m.id }), type: row ? typeName(row[1]) : null,
-      pp, power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null,
+      id: appId ?? -m.id, name: row ? row[0] : typeof ref === 'string' ? ref : t('Golpe {n}', { n: m.id }),
+      type: md && md[0] !== null ? T.types[md[0]] || null : row ? T.types[row[1]] || null : null,
+      pp, power: md ? md[1] : null, accuracy: md ? md[2] : null, category: md ? md[4] : null,
     };
   };
   const item = id => (id ? { id, name: U.items[id] || `Item ${id}`, confidence: U.items[id] ? 'confirmado' : 'desconhecido', evidence: null } : null);

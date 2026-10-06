@@ -11,16 +11,24 @@
 //     (Skeli789/Unbound-Cloud, server/src/data/unbound_2_1/Items.json), do mesmo autor do Unbound.
 //   - PokeAPI (CSV): identificadores das formas (para sprites e nomes no Showdown). Nomes em inglês de
 //     golpes, itens e habilidades vêm das tabelas do app (src/data/*.json); golpes ficam ligados aos IDs
-//     do app para reaproveitar tipo, poder, precisão e descrição.
+//     do app para reaproveitar o nome e a descrição.
+//   - ROM do Unbound 2.1.1.1 do jogador (tools/unbound-rom.mjs; fica em fixtures/rom/, NUNCA no git): confere
+//     stats base, gênero, curva e habilidades das espécies (iguais às do DPE), dá os tipos, os nomes dos itens
+//     (o Unbound reaproveita posições de itens-chave do FireRed: Wailmer Pail → Dynamax Band…), os dados dos
+//     golpes (tipo, poder, precisão, PP, categoria: o Unbound mudou vários), as evoluções e os golpes por nível
+//     (src/data/unbound-learn.json).
 //
-// Uso: npm run unbound   (precisa de rede; o resultado é versionado no git)
+// Uso: npm run unbound [-- rom.gba]   (precisa de rede e da ROM; o resultado é versionado no git)
 
 import { writeFile, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { findUnboundRom, readUnboundRom } from './unbound-rom.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'src/data');
+const fail = msg => { throw new Error(msg); };
 const DPE = 'https://raw.githubusercontent.com/Skeli789/Dynamic-Pokemon-Expansion/Unbound';
 const CFRU = 'https://raw.githubusercontent.com/Skeli789/Complete-Fire-Red-Upgrade/master';
 const PAPI = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv';
@@ -54,7 +62,21 @@ const MOVE_ALIASES = {
   DRAGONBREATH: 'Dragon Breath', SONICBOOM: 'Sonic Boom', ANCIENTPOWER: 'Ancient Power', DYNAMICPUNCH: 'Dynamic Punch',
   GRASSWHISTLE: 'Grass Whistle', POISONPOWDER: 'Poison Powder', SANDATTACK: 'Sand Attack', EXTREMESPEED: 'Extreme Speed',
 };
-const ABILITY_ALIASES = { COMPOUNDEYES: 'Compound Eyes', LIGHTNINGROD: 'Lightning Rod' };
+const ABILITY_ALIASES = { COMPOUNDEYES: 'Compound Eyes', LIGHTNINGROD: 'Lightning Rod', ASONE_CHILLING: 'As One', ASONE_GRIM: 'As One', PORTALPOWER: 'Portal Power' };
+// Nomes curtos da ROM que não são abreviação letra a letra do nome oficial (mesmo item/habilidade)
+const ROM_SHORT = { 'neutralizegas': 'Neutralizing Gas', 'valiantshield': 'Dauntless Shield', 'oddmedicine': 'Curious Medicine',
+  'wanderingsoul': 'Wandering Spirit', 'seasalt': 'Shoal Salt', 'seashell': 'Shoal Shell', 'fistmemory': 'Fighting Memory',
+  'skymemory': 'Flying Memory', 'toxicmemory': 'Poison Memory', 'earthmemory': 'Ground Memory', 'zapmemory': 'Electric Memory',
+  'psychmemory': 'Psychic Memory', 'dracomemory': 'Dragon Memory', 'ylwnectar': 'Yellow Nectar', 'utilityparasol': 'Utility Umbrella' };
+/** O nome curto da ROM é o mesmo nome oficial (igual, abreviado letra a letra, sem prefixo ou da lista acima)? */
+const sameName = (official, short) => {
+  const f = norm(official), s = norm(short);
+  if (!s || f === s || f.includes(s) || (ROM_SHORT[s] && norm(ROM_SHORT[s]) === f)) return true;
+  if (f.slice(0, 3) !== s.slice(0, 3)) return false;
+  let k = 0;
+  for (const c of f) if (c === s[k]) k++;
+  return k === s.length;
+};
 const GROWTH = { MEDIUM_FAST: 0, ERRATIC: 1, FLUCTUATING: 2, MEDIUM_SLOW: 3, FAST: 4, SLOW: 5 };
 const FORM_LABEL = { A: 'Alola', G: 'Galar', H: 'Hisui', MEGA: 'Mega', MEGA_X: 'Mega X', MEGA_Y: 'Mega Y', GIGA: 'Gigantamax', PRIMAL: 'Primal' };
 const FORM_PAPI = { A: 'alola', G: 'galar', H: 'hisui', GIGA: 'gmax' };
@@ -93,11 +115,16 @@ function csv(text) {
 }
 
 async function main() {
+  const romFile = await findUnboundRom(ROOT, process.argv[2]);
+  const R = await readUnboundRom(romFile);
+  const sha1 = createHash('sha1').update(R.rom).digest('hex');
+  console.log(`ROM: ${path.basename(romFile)} (sha1 ${sha1.slice(0, 12)})`);
+  const problems = [];
   console.log('Baixando fontes…');
-  const [speciesH, pokedexH, toDex, baseStatsC, itemsH, movesH, catching, pokemonCsv, movesCsv] = await Promise.all([
+  const [speciesH, pokedexH, toDex, baseStatsC, itemsH, movesH, catching, pokemonCsv] = await Promise.all([
     get(`${DPE}/include/species.h`), get(`${DPE}/include/pokedex.h`), get(`${DPE}/src/Species_To_Pokdex_Table.c`),
     get(`${DPE}/src/Base_Stats.c`), get(`${DPE}/include/items.h`), get(`${DPE}/include/moves.h`),
-    get(`${CFRU}/include/new/catching.h`), get(`${PAPI}/pokemon.csv`), get(`${PAPI}/moves.csv`),
+    get(`${CFRU}/include/new/catching.h`), get(`${PAPI}/pokemon.csv`),
   ].map(p => p.then(text => text.replace(/\r\n/g, '\n'))));
   const read = f => readFile(path.join(DATA, f), 'utf8').then(JSON.parse);
   const [appSpecies, appMoves, appItems, appTypes] = await Promise.all([read('species.json'), read('moves.json'), read('items.json'), read('types.json')]);
@@ -192,49 +219,133 @@ async function main() {
     }
     const type = t => typeIndex.get(String(t).replace(/^TYPE_/, '')) ?? 0;
     const t1 = type(b.type1), t2 = type(b.type2);
-    species[id] = [
+    const row = [
       appSpecies.species[national][0], form, national, spriteId, icon ? 1 : 0, t1, t2 === t1 ? 0 : t2,
       ability(b.ability1), ability(b.ability2), ability(b.hiddenAbility), gender(b.genderRatio || ''),
       GROWTH[String(b.growthRate).replace(/^GROWTH_/, '')] ?? 0,
       ...['baseHP', 'baseAttack', 'baseDefense', 'baseSpAttack', 'baseSpDefense', 'baseSpeed'].map(k => Number(b[k])),
     ];
+    // Confere com a ROM: nome, stats, gênero, curva e habilidades iguais; os tipos (e a ordem deles) vêm da ROM
+    const r = R.species(id);
+    const label = `${id} ${row[0]}${form ? ` (${form})` : ''}`;
+    if (!sameName(row[0], r.name) && !norm(r.name).startsWith(norm(row[0]))) problems.push(`${label}: nome na ROM "${r.name}"`);
+    if (r.stats.join() !== row.slice(12).join()) problems.push(`${label}: stats ${r.stats} na ROM, ${row.slice(12)} no DPE`);
+    if (r.gender !== row[10] || r.growth !== row[11]) problems.push(`${label}: gênero/curva ${r.gender}/${r.growth} na ROM`);
+    r.abilities.forEach((a, k) => {
+      const app = abilities[row[7 + k]] || null, rom = a ? R.abilityName(a) : null;
+      if (!app !== !rom || (app && !sameName(app, rom))) problems.push(`${label}: habilidade ${k + 1} "${rom}" na ROM, "${app}" no DPE`);
+    });
+    const rt = r.types.map(x => (x ? typeIndex.get(x.toUpperCase()) : undefined));
+    if (rt.some(x => x === undefined)) problems.push(`${label}: tipo desconhecido na ROM`);
+    else { row[5] = rt[0]; row[6] = rt[1] === rt[0] ? 0 : rt[1]; }
+    species[id] = row;
   }
 
   const skipped = [...speciesId].filter(([id, c]) => !species[id] && base.get(c) && Number(base.get(c).baseHP)).map(([id, c]) => `${id}:${c}`);
   if (skipped.length) console.log(`espécies sem par: ${skipped.length}: ${skipped.join(', ')}`);
 
-  // Golpes: ID do app (número) ou, sem par, o nome (texto). PP oficial (PokeAPI) à parte: o PC não guarda
-  // o PP, e a tabela do app (expansion) difere em alguns golpes (Night Slash: 15 no Unbound, 20 no expansion).
-  const officialPP = new Map(csv(movesCsv).map(r => [norm(r.identifier), Number(r.pp) || 0]));
-  const moves = [], movePP = [];
+  // Golpes: ID do app (número) ou, sem par, o nome (texto). Tipo, poder, precisão, PP e categoria vêm da ROM
+  // (moveData): o Unbound mudou vários (Flamethrower 95, Leech Life 20, Recover 10 PP…), e o PC não guarda o PP.
+  const moves = [];
   for (const [id, c] of defines(movesH, 'MOVE_')) {
     if (!id || c === 'NONE' || /^\d|NAME_LENGTH|^COUNT$/.test(c)) continue;
     const name = MOVE_ALIASES[c];
     const appId = moveByName.get(norm(name || c));
     if (appId !== undefined) moves[id] = appId;
     else { moves[id] = name || title(c); missing.moves.push(c); }
-    const pp = officialPP.get(norm(name || (appId !== undefined ? appMoves.moves[appId][0] : c)));
-    if (pp) movePP[id] = pp;
   }
-  if (!moves[12]) { moves[12] = moveByName.get('guillotine'); movePP[12] = 5; } // o cabeçalho usa 12 também para NAME_LENGTH
+  if (!moves[12]) moves[12] = moveByName.get('guillotine'); // o cabeçalho usa 12 também para NAME_LENGTH
 
-  // Itens: nomes do cabeçalho + os que o cabeçalho público deixa sem nome
+  // Dados dos golpes (ROM), na numeração do Unbound: [tipo do app, poder (0 = variável ou status), precisão
+  // (0 = não erra), PP, categoria 0/1/2]. Struggle não tem tipo na ROM (fica o do app).
+  const moveData = [];
+  for (let id = 1; id < moves.length; id++) {
+    if (moves[id] === undefined) continue;
+    const d = R.move(id);
+    moveData[id] = [d.type ? typeIndex.get(d.type.toUpperCase()) : null, d.power === 1 ? 0 : d.power, d.accuracy, d.pp, d.category];
+  }
+  const appMove = id => (typeof moves[id] === 'number' ? appMoves.moves[moves[id]][0] : moves[id]);
+  const check = (ok, msg) => { if (!ok) problems.push(msg); };
+  const md = name => moveData[moves.findIndex((m, i) => i && appMove(i) === name)] || [];
+  check(md('Pound').join() === [typeIndex.get('NORMAL'), 40, 100, 35, 0].join(), 'Pound: dados da ROM diferentes de Normal 40/100/35 físico');
+  check(md('Thunderbolt')[0] === typeIndex.get('ELECTRIC') && md('Thunderbolt')[4] === 1, 'Thunderbolt: não é Electric especial na ROM');
+  check(md('Swords Dance')[4] === 2, 'Swords Dance: não é status na ROM');
+  const nameDiff = [];
+  for (let id = 1; id < moves.length; id++) {
+    if (moves[id] !== undefined && !sameName(appMove(id), R.moveName(id)) && !/^Z-Move \d+$/.test(R.moveName(id))) nameDiff.push(`${id} ${appMove(id)} / ${R.moveName(id)}`);
+  }
+  // Golpes próprios do Unbound (sem par no app): o nome da ROM (os Z-Moves aparecem lá só como "Z-Move n"
+  // (e os Max Moves só sem o "Max "): só os de antes do primeiro Z-Move
+  const firstZ = moves.findIndex((m, i) => i && /^Z-Move \d+$/.test(R.moveName(i)));
+  for (let id = 1; id < firstZ; id++) if (typeof moves[id] === 'string' && R.moveName(id)) moves[id] = R.moveName(id);
+  if (nameDiff.length) console.log(`golpes com nome curto diferente na ROM (fica o nome oficial): ${nameDiff.join(', ')}`);
+
+  // Itens: nomes da ROM (o Unbound reaproveita posições do FireRed para os próprios itens-chave e TMs); quando o
+  // nome da ROM é só a forma curta do nome oficial (Parlyz Heal, Heavy Boots…), fica o oficial. EXTRA_ITEMS e o
+  // cabeçalho público continuam valendo para conferir.
   const items = [];
   const itemConsts = defines(itemsH, 'ITEM_');
   for (const [id, n] of Object.entries(EXTRA_ITEMS)) itemConsts.set(Number(id), n);
+  const official = new Map();
   for (const [id, c] of itemConsts) {
     if (!id || c === 'NONE' || /^[0-9A-F]{3}$/.test(c)) continue;
-    items[id] = itemNames.get(norm(c)) || (missing.items.push(c), title(c));
+    official.set(id, itemNames.get(norm(c)) || title(c));
   }
+  const renamed = [];
+  for (let id = 1, empty = 0; empty < 20; id++) {
+    const rom = R.item(id);
+    if (!rom || /^\?+$/.test(rom)) { empty++; continue; }
+    empty = 0;
+    const app = official.get(id);
+    if (app && sameName(app, rom)) items[id] = app;
+    else {
+      items[id] = itemNames.get(norm(rom)) || rom;
+      if (app) renamed.push(`${id} ${app} → ${items[id]}`);
+    }
+  }
+  if (renamed.length) console.log(`itens com outro nome no Unbound: ${renamed.length}: ${renamed.join(', ')}`);
+  for (const k of ['Life Orb', 'Choice Specs', 'Absolite', 'Venusaurite', 'Leftovers']) check(items.includes(k), `item ${k} não achado na ROM`);
+
+  // Evoluções (ROM): { espécie: [[método, parâmetro, alvo, extra], …] } e os nomes dos locais citados (EVO_MAP)
+  const evolutions = {}, places = {};
+  for (let id = 1; id < species.length; id++) {
+    const list = R.evolutions(id).filter(([, , to]) => species[to]);
+    if (list.length) evolutions[id] = list;
+    for (const [m, p] of list) if (m === 19) places[p] = R.place(p) || fail(`local ${p} sem nome`);
+  }
+  const sp = (name, form = null) => species.findIndex(r => r && r[0] === name && r[1] === form);
+  const evo = (from, to) => (evolutions[sp(...[from].flat())] || []).find(e => e[2] === sp(...[to].flat()));
+  check(String(evo('Bulbasaur', 'Ivysaur')) === '4,16,2,0', 'evolução Bulbasaur → Ivysaur diferente de Nv. 16');
+  check(items[(evo('Pikachu', 'Raichu') || [])[1]] === 'Thunder Stone', 'evolução Pikachu → Raichu sem Thunder Stone');
+  check(items[(evo('Sneasel', 'Weavile') || [])[1]] === 'Razor Claw', 'evolução Sneasel → Weavile sem Razor Claw');
+  check(String(evo('Kirlia', 'Gallade')).endsWith(',0') && items[(evo('Kirlia', 'Gallade') || [])[1]] === 'Dawn Stone', 'Kirlia → Gallade: Dawn Stone (macho)');
+  check(places[(evo('Magneton', 'Magnezone') || [])[1]] === 'Thundercap Mt.', 'Magneton → Magnezone fora de Thundercap Mt.');
+
+  // Golpes por nível (ROM): listas [nível, golpe, …] na numeração do Unbound, sem repetir; species[id] = índice
+  const learnSets = [], learnOf = [0], seen = new Map();
+  for (let id = 1; id < species.length; id++) {
+    const l = species[id] ? R.learnset(id) : null;
+    if (!l || !l.length) { learnOf[id] = 0; continue; }
+    if (l.some(([, mv]) => moves[mv] === undefined)) problems.push(`${id}: golpe por nível desconhecido`);
+    const flat = l.flat(), key = flat.join();
+    if (!seen.has(key)) { seen.set(key, learnSets.length + 1); learnSets.push(flat); }
+    learnOf[id] = seen.get(key);
+  }
+  learnSets.unshift(null); // índice 0 = sem lista
+  check(String(learnSets[learnOf[1]].slice(0, 4)) === '1,33,1,45', 'Bulbasaur não começa com Tackle e Growl no Nv. 1');
+
+  if (problems.length) fail(`a ROM não bate com o esperado (nada foi gravado):\n  ${problems.slice(0, 40).join('\n  ')}`);
 
   // Poké Balls (0 = Master Ball)
   const balls = [...stripComments(catching).matchAll(/^\s*BALL_TYPE_(\w+)_BALL\s*,/gm)].map(m => itemNames.get(norm(m[1] + 'BALL')) || title(m[1]) + ' Ball');
 
   const data = {
-    meta: { generatedAt: new Date().toISOString().slice(0, 10), version: 'Unbound 2.1', sources: [DPE, CFRU, PAPI] },
-    species, abilities, moves, movePP, items, balls,
+    meta: { generatedAt: new Date().toISOString().slice(0, 10), version: 'Unbound 2.1', rom: { file: path.basename(romFile), sha1 }, sources: [DPE, CFRU, PAPI] },
+    species, abilities, moves, moveData, items, balls, evolutions, places,
   };
   await writeFile(path.join(DATA, 'unbound.json'), JSON.stringify(data) + '\n');
+  await writeFile(path.join(DATA, 'unbound-learn.json'), JSON.stringify({ meta: { rom: data.meta.rom, generatedAt: data.meta.generatedAt }, sets: learnSets, species: learnOf }) + '\n');
+  console.log(`golpes por nível: ${learnSets.length - 1} listas; evoluções: ${Object.keys(evolutions).length} espécies; locais: ${Object.values(places).join(', ')}`);
   console.log(`espécies ${species.filter(Boolean).length}, golpes ${moves.filter(x => x !== undefined).length}, itens ${items.filter(Boolean).length}, habilidades ${abilities.length - 1}, bolas ${balls.length}`);
   for (const [k, v] of Object.entries(missing)) if (v.length) console.log(`sem par no app (${k}): ${v.length}: ${v.slice(0, 40).join(', ')}`);
 }

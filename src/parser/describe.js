@@ -6,6 +6,7 @@ import { STAT_ORDER } from './save.js';
 
 import { NATURES, natureFromPid, natureFromId } from './natures.js';
 import { calcStats, naturesMatchingStats, hiddenPowerType } from './stats.js';
+import { unboundMoveId } from './unbound.js';
 
 export { NATURES, natureFromPid, natureFromId };
 
@@ -22,20 +23,30 @@ const QUETZAL_NATIONAL = 898;
 export const mediumSlow = n => (n <= 1 ? 0 : Math.floor((6 * n ** 3) / 5) - 15 * n * n + 100 * n - 140);
 
 /**
- * Nome, tipo, poder, precisão e categoria de um golpe. No Quetzal, os da ROM do jogo (T.quetzal.moveData);
- * nos demais, os da tabela do app (expansion: geração mais nova; 0 = variável ou não se aplica).
+ * Nome, tipo, poder, precisão e categoria de um golpe. No Quetzal e no Unbound, os da ROM do jogo
+ * (T.quetzal.moveData / T.unbound.moveData); nos demais, os da tabela do app (expansion: geração mais nova;
+ * 0 = variável ou não se aplica). `known` = o golpe tem nome conhecido.
  */
 export function moveInfo(id, T) {
-  const Q = T.quetzal;
-  const md = Q && Q.moveData ? Q.moveData[id] : null;
-  const row = T.moves[id];
-  const name = (Q && Q.moveNames[id]) || (row ? row[0] : null);
-  if (md) return { name: name || `#${id}`, type: T.types[md[0]] || null, power: md[1], accuracy: md[2], category: md[4] };
-  if (Q && Q.moveNames[id]) return { name, type: null, power: null, accuracy: null, category: null };
+  const Q = T.quetzal, Ub = T.unbound;
+  let md = null, own = null;
+  if (Q) { md = Q.moveData ? Q.moveData[id] : null; own = Q.moveNames[id] || null; }
+  else if (Ub) {
+    const u = unboundMoveId(id, Ub);
+    md = u ? Ub.moveData[u] || null : null;
+    own = u && typeof Ub.moves[u] === 'string' ? Ub.moves[u] : null;
+  }
+  const row = id > 0 ? T.moves[id] : null;
+  const name = own || (row ? row[0] : null);
+  if (md) {
+    const type = md[0] !== null ? T.types[md[0]] : row ? T.types[row[1]] : null;
+    return { name: name || `#${id}`, type: type || null, power: md[1], accuracy: md[2], category: md[4], known: !!name };
+  }
+  if (own) return { name, type: null, power: null, accuracy: null, category: null, known: true };
   const det = T.moveDetails[id];
   return {
     name: name || `#${id}`, type: row ? T.types[row[1]] || null : null,
-    power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null,
+    power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null, known: !!name,
   };
 }
 

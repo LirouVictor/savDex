@@ -108,7 +108,8 @@ export function loadSave(input, T, G, U = null, N = null, Q = null) {
   }
   if (unboundSignature(bytes) !== null) {
     if (!U) throw new Error('Tabelas do Unbound não carregadas');
-    return { data: describeUnbound(parseUnbound(bytes), T, U), T };
+    const TU = { ...T, unbound: U }; // evolução, golpes por nível e dados dos golpes da ROM (ui/dex.js, moveInfo)
+    return { data: describeUnbound(parseUnbound(bytes), TU, U), T: TU };
   }
   const g3 = detectGen3(bytes);
   if (g3) {

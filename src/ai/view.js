@@ -69,10 +69,10 @@ function panel(title, kind, inner) {
 
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');
 
-/** Conferência do app dos golpes novos citados (Quetzal/Unbound: lista de golpes por nível dos jogos oficiais). */
+/** Conferência do app dos golpes novos citados (Quetzal/Unbound: golpes por nível da ROM do jogo). */
 function checksHtml(text, byRef, opts, owner = null) {
   const list = opts && opts.dex ? moveChecks(text, byRef, opts.dex, opts.T, owner) : [];
-  const rom = !!(opts && opts.dex && opts.dex.quetzal);
+  const rom = !!(opts && opts.dex && opts.dex.rom);
   return list.map(c => `<small class="ai-movecheck ${c.learns ? 'ok' : 'no'}">${c.learns ? '✓' : '⚠'} ${rich(c.learns
     ? (rom ? t('{move}: {ref} aprende por nível (tabela do jogo).', c) : t('{move}: {ref} aprende por nível (lista dos jogos oficiais recentes).', c))
     : t('{move}: não está nos golpes por nível de {ref} (pode ser por TM ou tutor, ou não aprender).', c), byRef)}</small>`).join('');
@@ -189,7 +189,9 @@ export function confirmView(prep) {
           : t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas.')}</li>`}
         ${counts.learn ? `<li>${prep.game && prep.game.id === 'quetzal'
           ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio Quetzal).')
-          : t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
+          : prep.game && prep.game.id === 'unbound'
+            ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio Unbound).')
+            : t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>
       </ul>

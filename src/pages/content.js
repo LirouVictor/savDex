@@ -8,12 +8,18 @@ export const NEWS = [
   {
     date: '2026-10-06',
     pt: [
+      'Unbound: a evolução e os golpes por nível no detalhe de cada Pokémon agora vêm do próprio jogo, com os métodos do Unbound (ex.: Gallade com Dawn Stone só para macho, Magnezone subindo de nível em Thundercap Mt., Lycanroc Dusk das 17h às 20h), sem o “provável”. O assistente de IA também usa essa lista.',
+      'Unbound: tipo, poder, precisão, PP e categoria dos golpes agora são os do próprio jogo, que mudou vários (ex.: Flamethrower 95, Leech Life 20, Recover com 10 PP).',
+      'Unbound: itens-chave e TMs com os nomes do próprio jogo (ex.: Dynamax Band, Mega Ring), Ursaluna com os tipos na ordem certa (Ground/Normal) e o nome da habilidade As One do Calyrex corrigido.',
       'Quetzal: tipo, poder, precisão e categoria dos golpes agora vêm do próprio jogo (ex.: no Quetzal, Growth é Grass e Nihil Light é Dragon especial de poder 200).',
       'Golpes por nível com visual novo: o título virou um botão que mostra quantos golpes há, cada golpe aparece como um cartão com o tipo, a categoria e o poder, e uma linha marca o nível atual do Pokémon.',
       'Mais leve: na primeira visita (e a cada atualização) o app baixa só o essencial para funcionar offline, cerca de um terço do que baixava antes. As tabelas de cada jogo, o assistente de IA e os textos em inglês só são baixados e guardados quando você usa.',
       'Quetzal: os golpes por nível no detalhe de cada Pokémon (e os usados pelo assistente de IA) agora são os do próprio jogo, sem o “provável”. O detalhe também ficou mais leve de carregar.',
     ],
     en: [
+      'Unbound: the evolution and level-up moves in each Pokémon’s details now come from the game itself, with Unbound’s methods (e.g. Gallade with a Dawn Stone only for males, Magnezone leveling up at Thundercap Mt., Dusk Lycanroc from 17:00 to 20:00), without the “probable” tag. The AI assistant uses this list too.',
+      'Unbound: move type, power, accuracy, PP and category now are the game’s own, and it changed several (e.g. Flamethrower 95, Leech Life 20, Recover with 10 PP).',
+      'Unbound: key items and TMs with the game’s own names (e.g. Dynamax Band, Mega Ring), Ursaluna with its types in the right order (Ground/Normal) and the name of Calyrex’s As One ability fixed.',
       'Quetzal: move type, power, accuracy and category now come from the game itself (e.g. in Quetzal, Growth is Grass and Nihil Light is a special Dragon move with 200 power).',
       'Level-up moves have a new look: the title became a button that shows how many moves there are, each move is a card with its type, category and power, and a line marks the Pokémon’s current level.',
       'Lighter: on the first visit (and on each update) the app downloads only the essentials to work offline, about a third of what it downloaded before. Each game’s tables, the AI assistant and the English texts are only downloaded and stored when you use them.',
