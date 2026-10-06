@@ -77,7 +77,11 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
       expect(d.trainer).toMatchObject({ name: 'Kadhem', tid: 48855, sid: 16608 });
       expect(d.party.map(m => m.species.name).sort()).toEqual(['Absol', 'Gallade', 'Greninja', 'Tapu Lele']);
       for (const m of d.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
-      expect(d.summary).toEqual({ playTime: { h: 999, m: 59, s: 59, confidence: 'provável' } });
+      const [money, dex] = f === SAVES[0] ? [998404199, 872] : [999997299, 905];
+      expect(d.summary).toEqual({
+        playTime: { h: 999, m: 59, s: 59, confidence: 'provável' }, money: { value: money, confidence: 'provável' },
+        badges: { count: 8, total: 8, confidence: 'provável' }, dex: { owned: dex, total: 905, confidence: 'provável' },
+      });
     }
   });
 
@@ -103,5 +107,22 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
     expect(d.pc.boxes[24].slots.map(s => s.species.name)).toEqual(['Eternatus', 'Eternatus', 'Eternatus']);
     expect(pc.filter(m => m.species.confidence !== 'confirmado')).toEqual([]);
     expect(load(SAVES[1]).pc.boxes.flatMap(b => b.slots)).toHaveLength(114);
+  });
+});
+
+// Save real de outro jogador (Unbound 2.1.0, 11h48m de jogo, sem insígnias; lendários no PC)
+const SAVE_C = 'fixtures/unbound-c.sav';
+suite.skipIf(!existsSync(SAVE_C))('Pokémon Unbound: save real com 11h de jogo', () => {
+  const d = loadSave(readFileSync(SAVE_C), T, G, U).data;
+  it('resumo: tempo, dinheiro, insígnias e Pokédex do DPE (capturados ⊇ todas as espécies do save)', () => {
+    expect(d.trainer).toMatchObject({ tid: 8044, sid: 21042 });
+    expect(d.summary).toMatchObject({
+      playTime: { h: 11, m: 48, s: 56 }, money: { value: 4040 }, badges: { count: 0, total: 8 }, dex: { owned: 210, total: 905 },
+    });
+  });
+  it('equipe com stats = fórmula', () => {
+    expect(d.party.map(m => `${m.species.name}${m.species.form ? `-${m.species.form}` : ''}`)).toEqual(['Greninja-Ash', 'Hoopa-Unbound', 'Shaymin-Sky']);
+    for (const m of d.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
+    expect(d.pc.boxes.flatMap(b => b.slots).filter(m => m.species.confidence !== 'confirmado')).toEqual([]);
   });
 });

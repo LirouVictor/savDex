@@ -28,7 +28,7 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 - **Pokémon Unbound** (versão 2.1 em diante; conferido com saves reais da 2.1.1). Versões mais novas abrem com um aviso, e a 2.0 ainda não é suportada.
 - Hacks que mantêm o formato de um desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou.
 
-No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, por enquanto só o tempo de jogo (provável).
+No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, os mesmos quatro (prováveis: ainda falta conferir com a tela do jogo).
 
 O app identifica o formato antes de ler. Um save que não bate com nenhum formato conhecido mostra um aviso ("não é de um jogo suportado"), em vez de dados parecidos com os certos.
 

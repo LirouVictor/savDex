@@ -8,6 +8,7 @@ export const NEWS = [
   {
     date: '2026-10-06',
     pt: [
+      'Unbound: o resumo do save agora mostra também dinheiro, insígnias e Pokédex (capturados), marcados como “provável” até serem conferidos com a tela do jogo.',
       'Unbound: a evolução e os golpes por nível no detalhe de cada Pokémon agora vêm do próprio jogo, com os métodos do Unbound (ex.: Gallade com Dawn Stone só para macho, Magnezone subindo de nível em Thundercap Mt., Lycanroc Dusk das 17h às 20h), sem o “provável”. O assistente de IA também usa essa lista.',
       'Unbound: tipo, poder, precisão, PP e categoria dos golpes agora são os do próprio jogo, que mudou vários (ex.: Flamethrower 95, Leech Life 20, Recover com 10 PP).',
       'Unbound: itens-chave e TMs com os nomes do próprio jogo (ex.: Dynamax Band, Mega Ring), Ursaluna com os tipos na ordem certa (Ground/Normal) e o nome da habilidade As One do Calyrex corrigido.',
@@ -17,6 +18,7 @@ export const NEWS = [
       'Quetzal: os golpes por nível no detalhe de cada Pokémon (e os usados pelo assistente de IA) agora são os do próprio jogo, sem o “provável”. O detalhe também ficou mais leve de carregar.',
     ],
     en: [
+      'Unbound: the save summary now also shows money, badges and Pokédex (caught), marked as “probable” until checked against the game screen.',
       'Unbound: the evolution and level-up moves in each Pokémon’s details now come from the game itself, with Unbound’s methods (e.g. Gallade with a Dawn Stone only for males, Magnezone leveling up at Thundercap Mt., Dusk Lycanroc from 17:00 to 20:00), without the “probable” tag. The AI assistant uses this list too.',
       'Unbound: move type, power, accuracy, PP and category now are the game’s own, and it changed several (e.g. Flamethrower 95, Leech Life 20, Recover with 10 PP).',
       'Unbound: key items and TMs with the game’s own names (e.g. Dynamax Band, Mega Ring), Ursaluna with its types in the right order (Ground/Normal) and the name of Calyrex’s As One ability fixed.',
