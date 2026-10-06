@@ -26,6 +26,12 @@ export const SUPPORTED = [
   'Pokémon Black 2 / White 2',
 ];
 
+/** O save é do Quetzal? (as tabelas da ROM são carregadas à parte, só quando precisa) */
+export function isQuetzal(input) {
+  const { bytes } = unwrap(input);
+  return bytes.length >= SAVE_SIZE && isQuetzalLayout(bytes);
+}
+
 /** O save é do Unbound? (as tabelas dele são carregadas à parte, só quando precisa) */
 export function isUnbound(input) {
   return unboundSignature(unwrap(input).bytes) !== null;

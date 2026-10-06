@@ -66,3 +66,26 @@ suite('Quetzal: evoluções da ROM', () => {
     expect(quetzalChain(128, TQ)).toBe(null); // Tauros não evolui
   });
 });
+
+suite('Quetzal: golpes por nível da ROM', () => {
+  const TQ = { ...BASE, quetzal: Q };
+  it('lista própria do Quetzal pelo ID do save, sem o "provável"', async () => {
+    const L = (await import('../src/data/quetzal-learn.json')).default;
+    const { quetzalLearnDex, learnsetHtml } = await import('../src/ui/dex.js');
+    const { levelMoveNames, learnLines } = await import('../src/ai/prompt.js');
+    const dex = quetzalLearnDex(L);
+    const mon = (speciesId, moves = []) => ({ speciesId, level: 50, species: R.species(speciesId), moves: moves.map(name => ({ name })) });
+    // Bulbasaur: Magical Leaf e Sludge Wave são do Quetzal (não estão na lista oficial)
+    expect(levelMoveNames(mon(1), dex, TQ)).toEqual(expect.arrayContaining(['Magical Leaf', 'Sludge Wave']));
+    // Annihilape (ID próprio 1308): golpes de evolução (nível 0) e Rage Fist
+    expect(levelMoveNames(mon(1308), dex, TQ)).toEqual(expect.arrayContaining(['Shadow Punch', 'Rage Fist']));
+    const html = learnsetHtml(mon(1), dex, TQ);
+    expect(html).toContain('Magical Leaf');
+    expect(html).toContain('Lista de Pokémon Quetzal');
+    expect(html).not.toContain('provável');
+    const lines = learnLines([{ ...mon(1308, ['Rage Fist']), location: 'party', slot: 1 }], dex, TQ, { id: 'quetzal' });
+    expect(lines[1]).toBe('Aprende por nível (tabela do próprio jogo):');
+    expect(lines[2]).toMatch(/^E1: /);
+    expect(lines[2]).not.toMatch(/Rage Fist/); // já conhece
+  });
+});

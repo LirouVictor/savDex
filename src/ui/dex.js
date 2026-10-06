@@ -53,8 +53,18 @@ export function evolutionHtml(m, dex, T) {
     <div class="evo">${cols}</div></section>`;
 }
 
+/**
+ * Golpes por nível do Quetzal (src/data/quetzal-learn.json, tirados da ROM) no mesmo formato do dex.json:
+ * learn[ID do Quetzal] = [versão, nível, golpe, …]. `quetzal: true` faz as funções usarem o ID do save.
+ */
+export function quetzalLearnDex(L) {
+  const learn = {};
+  L.species.forEach((set, id) => { if (id && L.sets[set]) learn[id] = [0, ...L.sets[set]]; });
+  return { quetzal: true, versions: ['Pokémon Quetzal'], learn };
+}
+
 export function learnsetHtml(m, dex, T) {
-  const { pid } = dexIds(m, dex);
+  const pid = dex.quetzal ? m.speciesId : dexIds(m, dex).pid;
   const raw = pid ? dex.learn[pid] : null;
   if (!raw) return '';
   const [vi, ...flat] = raw;
@@ -76,7 +86,7 @@ export function learnsetHtml(m, dex, T) {
       <td class="k">${esc(cat)}${det && det[0] ? ' · ' + det[0] : ''}</td>
     </tr>`);
   }
-  return `<details class="dsec learn"><summary>${t('Golpes por nível')} ${probable()}</summary>
+  return `<details class="dsec learn"><summary>${t('Golpes por nível')}${dex.quetzal ? '' : ' ' + probable()}</summary>
     <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir. Em cinza, níveis acima do atual.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
     <table class="learn-tab"><tbody>${rows.join('')}</tbody></table>
   </details>`;

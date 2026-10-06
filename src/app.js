@@ -1,6 +1,6 @@
 // Carregado sob demanda quando o usuário abre um save (parser + tabelas + renderização).
 
-import { loadSave, isUnbound, isNds } from './parser/index.js';
+import { loadSave, isQuetzal, isUnbound, isNds } from './parser/index.js';
 import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
 import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
@@ -49,9 +49,12 @@ async function extraTables(buffer) {
     if (!ndsTables) ndsTables = (await import('./data/nds.json')).default;
     return [null, ndsTables, null];
   }
-  // Quetzal (e Gen 3 oficial, que não usa): itens, golpes e espécies > 898 tirados da ROM do jogo
-  if (!quetzalTables) quetzalTables = (await import('./data/quetzal.json')).default;
-  return [null, null, quetzalTables];
+  // Quetzal: itens, golpes, espécies > 898 e evoluções tirados da ROM do jogo
+  if (isQuetzal(buffer)) {
+    if (!quetzalTables) quetzalTables = (await import('./data/quetzal.json')).default;
+    return [null, null, quetzalTables];
+  }
+  return [null, null, null];
 }
 
 /** Bytes do save de demonstração (montado na hora, num pacote carregado só quando pedido). */
@@ -360,8 +363,16 @@ function openDetail(m, opener) {
 }
 
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
-let dexData = null;
+// Quetzal: golpes por nível da ROM (quetzal-learn.json) no lugar do dex.json; a evolução vem de T.quetzal
+let dexData = null, quetzalDexData = null;
 async function loadDex() {
+  if (T.quetzal) {
+    if (!quetzalDexData) {
+      const [data, ui] = await Promise.all([import('./data/quetzal-learn.json'), import('./ui/dex.js')]);
+      quetzalDexData = { dex: ui.quetzalLearnDex(data.default), ui };
+    }
+    return quetzalDexData;
+  }
   if (!dexData) {
     const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
     dexData = { dex: data.default, ui };
@@ -372,10 +383,10 @@ async function fillDex(dlg, m) {
   const slot = dlg.querySelector('[data-dex]');
   if (!slot) return;
   try {
-    if (!dexData) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
-    await loadDex();
+    if (!(T.quetzal ? quetzalDexData : dexData)) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
+    const D = await loadDex();
     if (!slot.isConnected) return; // o detalhe já foi trocado
-    slot.innerHTML = dexData.ui.evolutionHtml(m, dexData.dex, T) + dexData.ui.learnsetHtml(m, dexData.dex, T);
+    slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
   } catch (e) {
     console.error(e);
     slot.innerHTML = '';
