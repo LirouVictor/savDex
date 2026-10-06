@@ -1,16 +1,18 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-04';
+export const UPDATED = '2026-10-06';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
     date: '2026-10-06',
     pt: [
+      'Mais leve: na primeira visita (e a cada atualização) o app baixa só o essencial para funcionar offline, cerca de um terço do que baixava antes. As tabelas de cada jogo, o assistente de IA e os textos em inglês só são baixados e guardados quando você usa.',
       'Quetzal: os golpes por nível no detalhe de cada Pokémon (e os usados pelo assistente de IA) agora são os do próprio jogo, sem o “provável”. O detalhe também ficou mais leve de carregar.',
     ],
     en: [
+      'Lighter: on the first visit (and on each update) the app downloads only the essentials to work offline, about a third of what it downloaded before. Each game’s tables, the AI assistant and the English texts are only downloaded and stored when you use them.',
       'Quetzal: the level-up moves in each Pokémon’s details (and the ones the AI assistant uses) now come from the game itself, without the “probable” tag. The details also load lighter.',
     ],
   },
@@ -124,7 +126,7 @@ const PRIVACY = {
 <ul>
   <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas e as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado).</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
-  <li>Os arquivos do app e os sprites já vistos (cache), para funcionar offline.</li>
+  <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
 <p>Limpar os dados do site no navegador apaga tudo isso.</p>
 <h3>Conexões que o app faz</h3>
@@ -151,7 +153,7 @@ const PRIVACY = {
 <ul>
   <li>Preferences: theme, language, which panels (Assistant, Search) stay open and the assistant settings (service, model and whether to show what will be sent).</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
-  <li>The app files and the sprites you have already seen (cache), so it works offline.</li>
+  <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>
 <p>Clearing the site data in your browser erases all of this.</p>
 <h3>Connections the app makes</h3>

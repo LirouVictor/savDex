@@ -1,11 +1,15 @@
 // Service worker (gerado no build a partir de src/sw-template.js).
-// - App: precache de todos os arquivos do build; navegação responde do cache e atualiza em segundo plano.
+// - App: na instalação, só o essencial (PRECACHE); navegação responde do cache e atualiza em segundo plano.
+// - Pacotes sob demanda (LAZY: tabelas de cada jogo, IA, inglês…): guardados na primeira vez que forem usados,
+//   num cache que passa de uma versão para a outra (os nomes têm hash) e perde o que saiu do build.
 // - Sprites (PokeAPI/sprites): cache-first, guardando os que já foram vistos para uso offline.
 // - Compartilhar (share_target do manifest): recebe o .sav enviado por outro app, guarda e abre a página.
 
 const VERSION = '__VERSION__';
 const PRECACHE = __PRECACHE__;
+const LAZY = __LAZY__;
 const APP_CACHE = 'qsv-app-' + VERSION;
+const LAZY_CACHE = 'qsv-lazy-v1';
 const SPRITE_CACHE = 'qsv-sprites-v1';
 const MAX_SPRITES = 1500;
 const SPRITE_PREFIX = 'https://raw.githubusercontent.com/PokeAPI/sprites/';
@@ -22,6 +26,10 @@ self.addEventListener('activate', event => {
     for (const key of await caches.keys()) {
       if (key.startsWith('qsv-app-') && key !== APP_CACHE) await caches.delete(key);
     }
+    // Pacotes sob demanda que não existem mais nesta versão
+    const lazy = await caches.open(LAZY_CACHE);
+    const keep = new Set(LAZY.map(f => new URL(f, self.registration.scope).href));
+    for (const req of await lazy.keys()) if (!keep.has(req.url)) await lazy.delete(req);
     await self.clients.claim();
   })());
 });
@@ -47,9 +55,11 @@ async function appFirst(request, event) {
   const cache = await caches.open(APP_CACHE);
   const isNav = request.mode === 'navigate';
   const key = isNav ? './' : request;
-  const hit = await cache.match(key, { ignoreSearch: isNav });
+  const hit = await cache.match(key, { ignoreSearch: isNav }) || (isNav ? null : await caches.match(request, { cacheName: LAZY_CACHE }));
+  // Fora do essencial (pacotes sob demanda): guardado no cache que passa de uma versão para a outra
+  const target = isNav || PRECACHE.some(f => new URL(f, self.registration.scope).href === request.url) ? cache : await caches.open(LAZY_CACHE);
   const update = () => fetch(request).then(res => {
-    if (res.ok) cache.put(key, res.clone());
+    if (res.ok) target.put(key, res.clone());
     return res;
   });
   if (hit) {

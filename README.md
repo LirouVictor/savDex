@@ -4,7 +4,7 @@ Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** e **Pokémon Unbo
 
 - **100% local:** o save é lido no navegador e não é enviado a nenhum servidor. A única exceção é opcional: o **Assistente (IA)** manda a lista dos Pokémon (nunca o `.sav`) ao serviço de IA escolhido (Gemini ou Groq) quando você toca num dos botões dele.
 - **Leve:** sem framework. A página inicial pesa uns 8 KB comprimidos (sem as fontes). O parser e as tabelas (~29 KB comprimidos) só carregam quando você abre um save.
-- **Offline (PWA):** depois da primeira visita, o app funciona sem internet. Os sprites já vistos ficam guardados.
+- **Offline (PWA):** depois da primeira visita, o app funciona sem internet. Na instalação ele guarda só o essencial; as tabelas de cada jogo, a IA e os textos ficam guardados na primeira vez que são usados. Os sprites já vistos também ficam guardados.
 - **Português e inglês:** o idioma segue o do navegador (português para `pt-*`, inglês para os demais) e pode ser trocado no botão **EN/PT** da barra superior. A escolha fica salva no aparelho. *English available: the app follows your browser language, or use the EN/PT button.*
 
 > Projeto de fã, sem vínculo com Nintendo, Game Freak, The Pokémon Company ou com os autores do Quetzal. Privacidade, termos de uso e novidades: links no rodapé do app. Sprites carregados do repositório [PokeAPI/sprites](https://github.com/PokeAPI/sprites).
@@ -154,7 +154,7 @@ Funciona sem mudar nada, porque os caminhos são relativos. Publique o conteúdo
 ## PWA e APK
 
 - `public/manifest.webmanifest` tem nome, ícones 192/512 (inclusive *maskable*), `display: standalone` e `start_url`/`scope` relativos.
-- O service worker (`src/sw-template.js`, gerado como `dist/sw.js` no build) faz o precache do app inteiro e guarda até 1500 sprites já vistos.
+- O service worker (`src/sw-template.js`, gerado como `dist/sw.js` no build) guarda na instalação só o essencial (~112 KB compactados), guarda os pacotes sob demanda na primeira vez que são usados e guarda até 1500 sprites já vistos.
 - `share_target` no manifest: o app instalado aparece no menu **Compartilhar** do Android. O service worker recebe o arquivo (POST em `./share`), guarda num cache temporário e redireciona para `./?shared=1`, onde `src/main.js` abre o save.
 - Para gerar o APK: publique o site, abra <https://www.pwabuilder.com>, informe a URL e escolha **Android**. Para o app abrir sem a barra de endereço (TWA), publique o `assetlinks.json` que o PWABuilder gerar em `public/.well-known/assetlinks.json` e faça o deploy de novo.
 
