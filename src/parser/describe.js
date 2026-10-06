@@ -15,6 +15,8 @@ export const UNKNOWN = 'desconhecido';
 
 const MAX_DEX = 905;
 const LAST_GEN8_ICON = 898;
+/** Com as tabelas da ROM (src/data/quetzal.json): até aqui a numeração do Quetzal é a Dex Nacional. */
+const QUETZAL_NATIONAL = 898;
 
 /** Curva Medium Slow: no Quetzal vale para todas as espécies (níveis do PC conferidos no jogo). */
 export const mediumSlow = n => (n <= 1 ? 0 : Math.floor((6 * n ** 3) / 5) - 15 * n * n + 100 * n - 140);
@@ -31,9 +33,41 @@ export function levelFromExp(exp) {
 export function makeResolver(T) {
   const typeName = i => T.types[i] || null;
   const abilityName = i => (i ? T.abilityNames[i] : null);
+  const Q = T.quetzal || null;
+  const maxDex = Q ? QUETZAL_NATIONAL : MAX_DEX;
+
+  /**
+   * Espécie com ID próprio do Quetzal (> 898), pela tabela da ROM: nome, tipos, stats, habilidades e gênero
+   * do próprio jogo. A forma da PokeAPI (sprite, Showdown) foi achada pelo nome + tipos + stats; a tabela
+   * manual (quetzal-overrides.json) ainda vale para nome, forma e sprite (ex.: Pikachu "estilo Red").
+   */
+  function romSpecies(id, row, ov) {
+    const [name, types, stats, abilities, genderRate, national, pokeapi, spriteId, icon, form, showdown, cosmetic] = row;
+    const ovForm = ov && ov.pokeapi ? T.forms[ov.pokeapi] : null;
+    const noSprite = ov && 'pokeapi' in ov && !ov.pokeapi;
+    const sprite = noSprite ? null : ovForm ? ovForm.id : spriteId || (cosmetic ? national : null);
+    return {
+      name: ov ? ov.name : name,
+      form: ov ? ov.form || null : form,
+      showdown: (ov && ov.showdown) || showdown || name,
+      confidence: CONFIRMED,
+      evidence: ov ? ov.evidence || null
+        : cosmetic ? 'Forma de aparência (os dados são os da forma padrão); sprite da forma padrão.'
+        : spriteId ? null : 'Sem sprite correspondente na PokeAPI.',
+      spriteId: sprite,
+      // ID da PokeAPI para evoluções e golpes por nível: a forma, se o app tiver os dados dela; senão, a espécie
+      dexId: ovForm ? ovForm.id : national,
+      hasIcon: noSprite ? false : ovForm ? ovForm.icon : spriteId ? !!icon : cosmetic && national <= LAST_GEN8_ICON,
+      types: types.map(typeName).filter(Boolean),
+      abilities,
+      genderRate,
+      baseStats: stats,
+    };
+  }
 
   function species(id, nickname) {
     const ov = T.overrides.species[id];
+    if (Q && id > QUETZAL_NATIONAL && Q.species[id]) return romSpecies(id, Q.species[id], ov);
     if (ov) {
       const form = ov.pokeapi ? T.forms[ov.pokeapi] : null;
       // Forma sem correspondência: tipos e habilidades da espécie base, como "provável".
@@ -57,7 +91,7 @@ export function makeResolver(T) {
         traitsFromBase: !!base,
       };
     }
-    if (id >= 1 && id <= MAX_DEX && T.species[id]) {
+    if (id >= 1 && id <= maxDex && T.species[id]) {
       const [name, ...types] = T.species[id];
       return {
         name, form: null, showdown: showdownSpecies(name), confidence: CONFIRMED, evidence: null,
@@ -87,6 +121,9 @@ export function makeResolver(T) {
   }
 
   function move(m) {
+    // Golpe com outro nome na ROM do Quetzal (ex.: 848 Nihil Light): só o nome é conhecido
+    const own = Q && Q.moveNames[m.id];
+    if (own) return { id: m.id, name: own, type: null, pp: m.pp, power: null, accuracy: null, category: null };
     const row = T.moves[m.id];
     const det = T.moveDetails[m.id];
     return {
@@ -100,6 +137,12 @@ export function makeResolver(T) {
     if (!id) return null;
     const ov = T.overrides.items[id];
     if (ov) return { id, name: ov.name, confidence: ov.confidence, evidence: ov.evidence || null };
+    // Tabela da ROM do Quetzal: nome do próprio jogo para todos os IDs
+    if (Q) {
+      const name = Q.items[id];
+      return name ? { id, name, confidence: CONFIRMED, evidence: null }
+        : { id, name: `Item ${id}`, confidence: UNKNOWN, evidence: 'ID sem item na tabela do Quetzal.' };
+    }
     if (id >= T.overrides.itemsDivergeFrom) {
       return { id, name: `Item ${id}`, confidence: UNKNOWN, evidence: 'Nesta faixa de IDs a tabela de itens do Quetzal diverge do pokeemerald-expansion.' };
     }

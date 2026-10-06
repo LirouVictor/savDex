@@ -11,6 +11,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
 - Saves reais da Gen 3 para os testes (opcionais, não versionados): `fixtures/emerald.sav` e `fixtures/firered.sav`.
 - `npm run nds`: regenera `src/data/nds.json` (itens da Gen 4 e da Gen 5, habilidades, tipos/stats e golpes como eram na época, formas; tudo da PokeAPI). Saves reais para os testes (opcionais): `fixtures/hgss.duc`, `fixtures/bw.duc`, `fixtures/dp.duc` (Diamond/Pearl), `fixtures/dppt.duc` (Platinum) e `fixtures/b2w2.duc` (Black 2).
+- `npm run quetzal -- rom.gba`: regenera `src/data/quetzal.json` (itens, golpes, espécies > 898 e evoluções do Quetzal) a partir da ROM do jogador (padrão: o `.gba` em `fixtures/rom/`; **a ROM nunca é versionada**) e da PokeAPI (precisa de rede). Ver a seção IDs.
 - `npm run unbound`: regenera `src/data/unbound.json` (tabelas do Unbound 2.1; ver a seção do Unbound). Saves reais para os testes (opcionais): `fixtures/unbound-a.sav` e `fixtures/unbound-b.sav`. Tudo em `fixtures/` fica fora do git.
 - `npm run diff-saves -- a.sav b.sav`: compara dois saves para engenharia reversa (ver `tools/`).
 
@@ -34,7 +35,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 - `src/history/`: **O que mudou / Histórico**. Ao abrir um save (não o de exemplo), `app.js` guarda a versão no IndexedDB (`ui/store.js`, store `history`, até 30 por save, só se o conteúdo mudou: `signature()`) e compara com a versão anterior diferente (`diffSaves`: novos, saíram, evoluíram, subiram de nível, golpes novos). Cada save é identificado por jogo + TID + SID + nome (`saveKey`). O mesmo Pokémon é achado pelo PID + OT na Gen 3; no Quetzal (o PC não tem PID) pela assinatura IVs + natureza + nº da habilidade + bola + shiny + gênero, que não muda ao evoluir nem ao trocar de lugar (conferido com os saves reais: os Pokémon levados da equipe para o PC não aparecem como novos). Como IVs, natureza e habilidade podem mudar no jogo (itens de treino), quem sobra é pareado de novo por espécie + bola + shiny + gênero (ou pela mesma posição, se evoluiu) com a exp sem diminuir, e aparece como "treinado". A comparação vai sempre da versão mais antiga para a mais nova pelo tempo de jogo (ou pelo contador de saves), mesmo que a mais antiga tenha sido aberta por último (`orderSaves`). Saves reais para o teste (opcionais): `fixtures/quetzal-cmp-old.sav` e `fixtures/quetzal-cmp-new.sav`.
 - `src/ui/team-image.js`: **Imagem da equipe** (PNG 1080 px num canvas, carregada sob demanda): sprites do PokeAPI (CORS liberado), fonte Silkscreen, cores de tipo lidas do CSS. Compartilhar pelo `navigator.share` (Android) ou baixar. A CSP libera `blob:` em `img-src` para a prévia.
 - `src/pages/`: janelas **Privacidade**, **Termos de uso** e **Novidades** (links do rodapé `#privacidade`, `#termos`, `#novidades`; o endereço com `#` abre a janela). Textos nos dois idiomas em `content.js`, carregado só ao abrir. São janelas e não páginas `.html` porque o service worker serve a página inicial em toda navegação e o Cloudflare Pages redireciona `.html`. **Ao mudar o que o app guarda no aparelho ou envia para fora, atualizar a Privacidade** (e `UPDATED`). Cada mudança visível ganha um item em `NEWS` (pt e en); a data da mais nova também vai em `latest.js` (o rodapé marca "Novidades" até o usuário abrir).
-- `src/data/`: tabelas geradas + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.
+- `src/data/`: tabelas geradas + `quetzal.json` (tabelas da ROM do Quetzal, carregadas só para saves do Quetzal) + `quetzal-overrides.json` (manual: IDs próprios do Quetzal e exceções de item). `move-text.json` (descrições dos golpes) é carregado sob demanda, num pacote separado.
 - `src/ui/`, `src/main.js`, `src/styles/`: interface. `src/ui/store.js` guarda uma cópia do último save no IndexedDB (só local) para abrir sozinha na próxima visita.
 - `src/sw-template.js` vira `dist/sw.js` no build (plugin em `vite.config.js` injeta a lista de precache). Ele também recebe o `.sav` do menu Compartilhar do Android (`share_target` no manifest → POST `./share` → cache `qsv-share` → `./?shared=1`, lido em `src/main.js`). `public/_headers` tem cache e CSP para o Cloudflare Pages (hash do script inline calculado no build).
 - `reference/quetzal-viewer.html`: protótipo original (só referência; não é usado no build).
@@ -199,33 +200,33 @@ Registro de 38 bytes. Bits contados em little-endian a partir do byte 0 (bit *n*
 - EVs ÷ 4: o PC só guarda múltiplos de 4.
 - Com 11 bits, o PC só representa espécies até 2047.
 
-### IDs
+### IDs — CONFIRMADO pela ROM do jogo
 
-- **Espécies 1–905** = Dex Nacional (nomes e tipos da PokeAPI).
-- **Espécies > 905** = numeração própria do Quetzal (formas regionais, Gen 9). Mapeadas à mão em `src/data/quetzal-overrides.json`, todas como "provável" por enquanto:
+Tabelas lidas da ROM do Quetzal Alpha 9 PT-BR (`npm run quetzal`, `tools/build-quetzal.mjs`; a ROM fica em `fixtures/rom/`, **nunca versionada**) e gravadas em `src/data/quetzal.json` (só nomes e números; carregado sob demanda para saves do Quetzal: `extraTables` em `app.js` → `loadSave(..., Q)` → `T.quetzal` em `describe.js`). O script acha as tabelas por assinatura e só grava se bater com tudo o que já tinha sido confirmado nos saves. Com elas, os 8 saves reais ficam com todas as espécies, itens e golpes confirmados, os stats salvos da equipe batem com a fórmula e o HP do PC bate com o calculado (teste `tabelas da ROM contra os saves reais`).
+
+- **Espécies 1–898** = Dex Nacional: na ROM, nomes, tipos, stats base e habilidades iguais aos da PokeAPI (as que o app já usa) e curva **Medium Slow em todas** (byte 21 = 3). Nomes de 13 bytes; dados de 36 bytes por espécie (0–5 stats HP/Atk/Def/Spe/SpA/SpD, 6–7 tipos no enum com Mystery = 9, 18 gênero, 21 curva, 24–29 habilidades em u16 pela numeração nacional).
+- **Espécies 899–1528** = numeração própria: 899–948 megas e primais, 949–985 formas regionais, 986–1206 formas (Pikachu, Unown, Rotom, Arceus…), 1207–1213 Hisui (Wyrdeer–Enamorus), 1214–1222 iniciais da Gen 9, 1223–1243 formas de Hisui e de origem, 1244–1339 Gen 9, 1340–1434 formas (Gen 9, Paldea, Alcremie), 1435–1468 Gigantamax, 1469 Pikachu "estilo Red", 1470 Eevee Partner, 1471–1519 megas novas (Z-A), 1520–1528 Pokémon próprios do Quetzal (Browt, Pombon e Gecqua, com evoluções "2" e "3"). Nome, tipos, stats, habilidades e gênero vêm da ROM; a forma da PokeAPI (sprite, nome no Showdown) é achada pelo nome + tipos + stats: 425 com forma única, 162 só de aparência (Vivillon, Alcremie, Gigantamax…: sprite da forma padrão) e 43 sem correspondência (Arceus/Silvally por tipo e os próprios do Quetzal: silhueta). `quetzal-overrides.json` ainda vale por cima da ROM para nome, forma e sprite conferidos no jogo:
 
   | ID | Espécie | Evidência |
   |---|---|---|
-  | 951 | Raichu (Alola) | **confirmado no jogo** (o save também tem Raichu comum, 26) |
-  | 973 | Weezing (Galar) | **confirmado no jogo** |
-  | 1210 | Basculegion | **confirmado no jogo** (macho/fêmea não determinado) |
-  | 1224 | Arcanine (Hisui) | **confirmado no jogo** |
-  | 1308 | Annihilape | **confirmado pelo autor** |
-  | 1327 | Baxcalibur | **confirmado pelo autor** |
-  | 1469 | Pikachu "estilo Red" (boné branco/vermelho e jaqueta vermelha) | confirmado no jogo; forma própria do Quetzal, sem sprite na PokeAPI (silhueta) |
-
-  **Hipótese a testar**: Annihilape (Nacional 979) = 1308 e Baxcalibur (998) = 1327 (ambos confirmados) → a Gen 9 pode estar em `Nacional + 329`. Falta um terceiro Pokémon da Gen 9 para testar; não aplicada no código.
-- **Golpes e itens** = enums do `rh-hideout/pokeemerald-expansion` (master). Golpes validados pelo autor. Itens **conferidos até 510** (Pretty Feather 156, Charizardite Y 294, Scizorite 309, Blazikenite 314, Aloraichium Z 389, Miracle Seed 429, Choice Band 442, Leftovers 472, Life Orb 479, Assault Vest 503, Heavy-Duty Boots 510 — os dois últimos dados no jogo de propósito pelo autor). Entre 511 e 828 o nome do master é usado como "provável" (`itemsVerifiedUpTo` = 510).
-- **Itens ≥ 829 divergem do master** (confirmado no jogo): Raichunite Y = 860 (master 859), Lucarionite Z = 865 (master 864), Golisopite = 871 (master 868), Baxcalibrite = 877 (master 871). O deslocamento é −1 até pelo menos o 865 e depois cresce (o Quetzal tem itens extras entre Lucarionite Z e Golisopite, e entre Golisopite e Baxcalibrite). Como Raichunite Y já está deslocada, o deslocamento começa em algum ponto entre **511 e 860**, possivelmente antes de 829; por isso a faixa 511–828 fica como "provável". A partir de `itemsDivergeFrom` (829), itens sem override aparecem como não mapeados. Para fechar: conferir no jogo um item entre 511 e 828 (ex.: uma berry como Lum 522/Sitrus 523, ou Tera Shards ~780).
-- **Habilidades**: o save guarda só o número (1ª/2ª/oculta). O nome vem da tabela da espécie (PokeAPI, `pokemon_abilities.csv`). Se o slot estiver vazio, vale a primeira habilidade existente (como no expansion). Conferido com as 6 habilidades da equipe informadas pelo autor.
+  | 951 | Raichu (Alola) | confirmado no jogo e na ROM |
+  | 973 | Weezing (Galar) | confirmado no jogo e na ROM |
+  | 1210 | Basculegion (macho; a fêmea é 1240) | confirmado no jogo; gênero pela ROM |
+  | 1224 | Arcanine (Hisui) | confirmado no jogo e na ROM |
+  | 1308 | Annihilape | confirmado pelo autor e na ROM |
+  | 1327 | Baxcalibur | confirmado pelo autor e na ROM |
+  | 1469 | Pikachu "estilo Red" (boné branco/vermelho e jaqueta vermelha) | confirmado no jogo; na ROM, stats do Pikachu Partner (por isso o HP 68); visual próprio, silhueta |
+- **Itens** (ROM, nomes de 20 bytes; 1–889, depois começa a tabela em espanhol): os 15 confirmados no jogo batem. Diferenças para o expansion master: 25 Radiant Ball, 71/72 **IV Up / IV Max** (no master, PP Up/PP Max), 108 Giga Candy, TM51–TM100 não existem (632–681 vazios) e o **deslocamento começa no 758** (Adamant Crystal e Lustrous Globe em outra posição, Prop Case, Pastry Bag, Reset Tera Shard, Gender Pill, Max Candy, megapedras do Z-A…). Sem a ROM, o app volta à regra antiga (`itemsVerifiedUpTo`/`itemsDivergeFrom`).
+- **Golpes**: a numeração da ROM é a do expansion master de 1 a 847 (três nomes vêm abreviados na ROM, ex.: "Floral Healng"); o 848 é **Nihil Light** (só o nome é conhecido; tipo e poder ficam "?"). Golpes > 848 não existem no Quetzal.
+- **Evoluções** (ROM, 88 bytes por espécie = 11 × método u16, parâmetro u16, espécie alvo u16, vazio u16; 504 espécies evoluem): no detalhe, para saves do Quetzal, a linha evolutiva e os métodos vêm daqui (`src/ui/evo-quetzal.js`), não do `dex.json`. Métodos 1–42 = enum `EVO_*` do pokeemerald-expansion (igual nas versões 1.6–1.9; conferido com os exemplos da ROM: 4 nível, 5 troca, 6 troca com item, 7 item, 16/17 fêmea/macho, 23 sabendo um golpe, 29 Pokémon na equipe, 41 subir de nível segurando item, 42 neblina…); **43–46 são próprios do Quetzal** (Tandemaus, Dunsparce, Frogadier → Greninja 1085, Flabébé → Floette Eternal) e aparecem como "método próprio" com o valor. Mudanças do Quetzal vistas na tabela: nenhuma evolução por amizade (viraram nível: Golbat → Crobat 36, Pichu → Pikachu 16, Riolu → Lucario 28…), Eevee só por pedras, Pikachu → Raichu de Alola sabendo Surf, Wurmple/Burmy pelo gênero, trocas com alternativa de subir de nível segurando o item (e Kadabra/Machoke… com Linking Cord). Os golpes por nível ainda vêm do `dex.json` (provável).
+- **Habilidades**: o save guarda só o número (1ª/2ª/oculta); o nome vem da espécie (ROM para > 898, PokeAPI para ≤ 898, iguais na ROM). Se o slot estiver vazio, vale a primeira habilidade existente (como no expansion). Conferido com as 6 habilidades da equipe informadas pelo autor.
 
 ## Pendências de engenharia reversa
 
-Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), HP atual (equipe e PC), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), Annihilape e Baxcalibur.
+Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), HP atual (equipe e PC), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), tabela de itens e de espécies > 898 (pela ROM).
 
-1. Tabela de itens: achar onde começa o deslocamento (faixa 511–860) e mapear os itens ≥ 829.
-2. Tabela de espécies > 905 (hipótese Gen 9 = Nacional + 329: precisa de um terceiro Pokémon da Gen 9).
-3. PC: bits 45–47, 154–159 e 184–191 (0 nos recém-capturados; o PC parece não guardar local nem nível de captura).
-4. Equipe: significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
+1. PC: bits 45–47, 154–159 e 184–191 (0 nos recém-capturados; o PC parece não guardar local nem nível de captura).
+2. Equipe: significado de `0x59`, `0x66`, do bit 1 de `0x13` e do bit 30 de `0x54`.
+3. ROM (próximos passos possíveis): golpes por nível do próprio Quetzal (hoje vêm dos jogos oficiais, como "provável"), tipo/poder dos golpes, os nomes das bolas e o significado dos métodos de evolução 43–46.
 
 Método: saves pareados com uma única mudança no jogo + `tools/diff-saves.mjs`.

@@ -4,6 +4,7 @@
 import { esc, typeChip, categoryName } from './render.js';
 import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
+import { quetzalEvolutionHtml } from './evo-quetzal.js';
 
 const LAST_GEN8_ICON = 898;
 const probable = () => `<span class="badge" title="${t('Dos jogos oficiais mais recentes; o jogo do save pode ser diferente')}">${t('provável')}</span>`;
@@ -31,6 +32,8 @@ export function stages(chain) {
 }
 
 export function evolutionHtml(m, dex, T) {
+  // Quetzal: linha evolutiva e métodos do próprio jogo (tabela da ROM)
+  if (T.quetzal && m.speciesId) return quetzalEvolutionHtml(m, T, stages);
   const { pid, sid } = dexIds(m, dex);
   if (!pid) return '';
   const ci = dex.speciesChain[sid];

@@ -56,7 +56,7 @@ Também tem:
 - **Imagem da equipe**: um PNG com sprites, tipos, item, habilidade, natureza e golpes, para compartilhar ou baixar.
 - **Assistente (IA, opcional)**: com uma chave grátis do Gemini ou do Groq, avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
-Espécies com ID acima de 905 usam numeração própria do Quetzal. Elas são identificadas por uma tabela manual, e as que ainda não foram conferidas no jogo aparecem como **provável**. Itens com ID acima de 510 ainda não foram todos conferidos e aparecem como **provável**; a partir do 829 (megapedras novas) a numeração do Quetzal é diferente da tabela de referência, e só os itens já conferidos têm nome. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+Itens, golpes e espécies com ID próprio do Quetzal (acima de 898: formas regionais, megas, Gen 9 e os Pokémon próprios do jogo) vêm de tabelas lidas da ROM do jogo e conferidas com saves reais. A ROM não faz parte do repositório: o arquivo gerado tem só nomes e números. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
 ## Assistente (IA)
 

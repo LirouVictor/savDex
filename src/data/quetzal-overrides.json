@@ -1,5 +1,5 @@
 {
-  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Espécies com ID > 905 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados. 'baseDex': espécie base (Dex Nacional) cujos tipos e habilidades são usados como 'provável' quando a forma não tem correspondência na PokeAPI. Poké Balls: IDs em 'ballsVerified' foram conferidos no jogo; os demais usam o nome do expansion como 'provável'; 'balls' tem as bolas próprias do Quetzal.",
+  "_doc": "Tabela manual do que difere entre o Quetzal e as fontes geradas. Com src/data/quetzal.json (tabelas lidas da ROM, carregadas para saves do Quetzal), itens e espécies > 898 vêm da ROM; aqui ficam só nome/forma/sprite conferidos no jogo (valem por cima da ROM) e o que se usa sem a ROM. Espécies com ID > 898 têm numeração própria do Quetzal. 'confidence' é 'confirmado' ou 'provável'; 'evidence' diz de onde veio. 'pokeapi' é o identificador da forma na PokeAPI (para sprite e tipos); null = sem correspondência (silhueta). Itens: até 'itemsVerifiedUpTo' a tabela do expansion master foi conferida; entre esse valor e 'itemsDivergeFrom' o nome do master é usado como 'provável'; a partir de 'itemsDivergeFrom' a numeração diverge e itens sem override aparecem como não mapeados. 'baseDex': espécie base (Dex Nacional) cujos tipos e habilidades são usados como 'provável' quando a forma não tem correspondência na PokeAPI. Poké Balls: IDs em 'ballsVerified' foram conferidos no jogo; os demais usam o nome do expansion como 'provável'; 'balls' tem as bolas próprias do Quetzal.",
   "species": {
     "951": {
       "name": "Raichu",
@@ -23,7 +23,7 @@
       "showdown": "Basculegion",
       "pokeapi": "basculegion-male",
       "confidence": "confirmado",
-      "evidence": "Confirmado no jogo pelo autor (habilidade Adaptability). Macho/fêmea não determinado; sprite do macho."
+      "evidence": "Confirmado no jogo pelo autor (habilidade Adaptability). Pela ROM, o 1210 é o macho (a fêmea é o 1240)."
     },
     "1224": {
       "name": "Arcanine",
@@ -55,7 +55,7 @@
       "showdown": "Pikachu",
       "pokeapi": null,
       "confidence": "confirmado",
-      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Forma própria do Quetzal, sem sprite correspondente na PokeAPI (os bonés oficiais não têm jaqueta).",
+      "evidence": "Conferido no jogo: boné branco/vermelho com símbolo vermelho e jaqueta vermelha, lembrando o treinador Red. Pela ROM, tem os stats do Pikachu Partner (Let's Go); o visual é próprio do Quetzal, sem sprite correspondente na PokeAPI.",
       "baseDex": 25
     }
   },
