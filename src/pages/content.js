@@ -9,9 +9,11 @@ export const NEWS = [
     date: '2026-10-05',
     pt: [
       'Quetzal: itens, golpes e Pokémon com ID próprio agora vêm das tabelas do próprio jogo. Todos os itens aparecem com o nome certo (antes, do 511 em diante eram “prováveis” ou “não mapeados”), mais de 600 formas regionais, megas e Pokémon da Gen 9 são reconhecidos com os tipos, stats e habilidades do Quetzal, a Basculegion fêmea é identificada e o Pikachu “estilo Red” tem os stats certos.',
+      'Quetzal: a linha evolutiva no detalhe de cada Pokémon agora mostra os métodos do próprio jogo, que mudou várias evoluções (sem evolução por amizade, Eevee só por pedras, Raichu de Alola para o Pikachu que sabe Surf, trocas com alternativa de subir de nível segurando o item…).',
     ],
     en: [
       'Quetzal: items, moves and Pokémon with Quetzal-specific IDs now come from the game’s own tables. Every item shows its correct name (before, from 511 on they were “probable” or “not mapped”), over 600 regional forms, Megas and Gen 9 Pokémon are recognized with Quetzal’s types, stats and abilities, the female Basculegion is identified and the “Red style” Pikachu has the right stats.',
+      'Quetzal: the evolution line in each Pokémon’s details now shows the game’s own methods, which changed many evolutions (no friendship evolutions, Eevee only by stones, Alolan Raichu for a Pikachu that knows Surf, trades with a level-up-holding-the-item alternative…).',
     ],
   },
   {

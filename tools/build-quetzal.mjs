@@ -10,7 +10,8 @@
 //
 // Fontes:
 //   - ROM do Quetzal (argumento ou fixtures/rom/*.gba): itens (nome de 20 bytes), golpes (17), habilidades
-//     (17), nomes das espécies (13) e dados das espécies (36 bytes: stats, tipos, gênero, curva, habilidades).
+//     (17), nomes das espécies (13), dados das espécies (36 bytes: stats, tipos, gênero, curva, habilidades) e
+//     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo).
 //   - PokeAPI (CSV): forma correspondente de cada espécie > 898 (sprite, nome no Showdown, linha evolutiva),
 //     pelo nome da espécie + tipos + stats base.
 //
@@ -147,7 +148,30 @@ function tables(rom) {
     const s = info(+id);
     if (s.name !== n || s.types[0] !== t1 || s.types[1] !== t2) fail(`Espécie ${id}: ROM ${s.name} ${s.types}, esperado ${n} ${t1}/${t2}.`);
   }
-  return { items, moves, abilities, count: names.length - 1, info };
+  // Evoluções: 88 bytes por espécie = 11 × (método u16, parâmetro u16, espécie alvo u16, vazio u16).
+  // Achadas pela linha do Bulbasaur (nível 16 → 2) seguida da do Ivysaur (nível 32 → 3).
+  const evoSig = Buffer.from([4, 0, 16, 0, 2, 0, 0, 0]), evoSig2 = Buffer.from([4, 0, 32, 0, 3, 0, 0, 0]);
+  let evoBase = -1;
+  for (let i = rom.indexOf(evoSig); i >= 0; i = rom.indexOf(evoSig, i + 1)) if (rom.subarray(i + 88, i + 96).equals(evoSig2)) { evoBase = i - 88; break; }
+  if (evoBase < 0) fail('Tabela de evoluções não encontrada.');
+  const evolutions = {};
+  for (let id = 1; id < names.length; id++) {
+    const list = [];
+    for (let k = 0; k < 11; k++) {
+      const o = evoBase + id * 88 + k * 8;
+      const method = rom.readUInt16LE(o), param = rom.readUInt16LE(o + 2), target = rom.readUInt16LE(o + 4);
+      if (!method && !target) continue;
+      if (!target || target >= names.length) fail(`Evolução inválida na espécie ${id}: alvo ${target}.`);
+      list.push([method, param, target]);
+    }
+    if (list.length) evolutions[id] = list;
+  }
+  // Conferência: Pikachu → Raichu com Thunder Stone; Charmander → Charmeleon no nível 16
+  const thunder = items.indexOf('Thunder Stone');
+  if (!(evolutions[25] || []).some(([m, p, t]) => m === 7 && p === thunder && t === 26)) fail('Evoluções: Pikachu → Raichu não confere.');
+  if (!(evolutions[4] || []).some(([m, p, t]) => m === 4 && p === 16 && t === 5)) fail('Evoluções: Charmander → Charmeleon não confere.');
+
+  return { items, moves, abilities, count: names.length - 1, info, evolutions };
 }
 
 // Taxa de gênero da ROM (0 só macho, 254 só fêmea, 255 sem gênero, senão limite) → escala da PokeAPI (−1, 0..8)
@@ -249,7 +273,8 @@ async function main() {
     fields: ['nome', 'tipos', 'stats HP/Atk/Def/SpA/SpD/Spe', 'habilidades 1/2/oculta', 'taxa de gênero (PokeAPI)', 'Dex Nacional',
       'forma na PokeAPI', 'sprite', 'ícone', 'forma', 'Showdown', 'forma de aparência'],
   };
-  const out = { meta, items: T.items, movesUpTo: T.moves.length - 1, moveNames: {}, species: Object.fromEntries(Object.entries(species).map(([k, v]) => [k, pack(v)])) };
+  // evolutions: { espécie: [[método, parâmetro, espécie alvo], …] } (métodos do enum EVO_* do pokeemerald-expansion; 43–46 são próprios do Quetzal)
+  const out = { meta, items: T.items, movesUpTo: T.moves.length - 1, moveNames: {}, species: Object.fromEntries(Object.entries(species).map(([k, v]) => [k, pack(v)])), evolutions: T.evolutions };
   // Golpes: a numeração bate com a do app; só guarda os nomes que diferem (sem contar abreviações)
   const appMoves = JSON.parse(await readFile(path.join(ROOT, 'src/data/moves.json'), 'utf8')).moves;
   for (let i = 1; i < T.moves.length; i++) {
@@ -257,6 +282,7 @@ async function main() {
     if (norm(app) !== norm(T.moves[i]) && !abbrev(norm(app), norm(T.moves[i]))) out.moveNames[i] = T.moves[i];
   }
   await writeFile(OUT, JSON.stringify(out) + '\n');
+  console.log(`evoluções: ${Object.keys(T.evolutions).length} espécies`);
   console.log(`itens ${meta.items}, golpes ${meta.moves} (${Object.keys(out.moveNames).length} com nome próprio), espécies ${T.count}` +
     ` (> ${NATIONAL_UP_TO}: ${stat.unica} com forma, ${stat.aparencia} de aparência, ${stat.sem} sem correspondência)`);
 }

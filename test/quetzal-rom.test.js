@@ -4,6 +4,7 @@ import { describe as suite, it, expect } from 'vitest';
 import BASE from '../src/data/tables.js';
 import Q from '../src/data/quetzal.json';
 import { makeResolver } from '../src/parser/describe.js';
+import { quetzalChain, evoMethod } from '../src/ui/evo-quetzal.js';
 
 const R = makeResolver({ ...BASE, quetzal: Q });
 
@@ -38,5 +39,30 @@ suite('Quetzal: tabelas da ROM', () => {
   it('formas de aparência usam o sprite da forma padrão; sem correspondência, silhueta', () => {
     expect(R.species(1087)).toMatchObject({ name: 'Vivillon', spriteId: 666, form: null });
     expect(R.species(1520)).toMatchObject({ name: 'Browt', spriteId: null, dexId: null, types: ['grass'] });
+  });
+});
+
+suite('Quetzal: evoluções da ROM', () => {
+  const TQ = { ...BASE, quetzal: Q };
+  const how = (id, to) => quetzalChain(id, TQ).find(n => n[0] === to)[2];
+  it('métodos do enum do expansion e as mudanças do Quetzal', () => {
+    expect(how(4, 5)).toBe('Nv. 16');
+    expect(how(25, 26)).toBe('Thunder Stone');
+    expect(how(25, 951)).toBe('Subir de nível sabendo Surf'); // Raichu de Alola: Pikachu que sabe Surf
+    expect(how(42, 169)).toBe('Nv. 36'); // Golbat → Crobat: sem amizade no Quetzal
+    expect(how(133, 196)).toBe('Shiny Stone ou Sun Stone'); // Espeon só por pedra
+    expect(how(265, 266)).toBe('Nv. 7, fêmea'); // Wurmple pelo gênero
+    expect(how(61, 186)).toBe("Troca segurando King's Rock ou Subir de nível segurando King's Rock");
+    expect(how(64, 65)).toBe('Troca ou Linking Cord');
+    expect(evoMethod(45, 36, TQ, null)).toBe('Método próprio do Quetzal (nº 45, valor 36)');
+  });
+  it('linha completa a partir de qualquer estágio; variações de mesmo nome viram um nó', () => {
+    expect(quetzalChain(5, TQ).map(n => n[0])).toEqual([4, 5, 6]);
+    const milcery = quetzalChain(868, TQ);
+    expect(milcery.filter(n => n[1] === 868)).toHaveLength(1); // as Alcremie juntas
+    expect(milcery[1][2]).toMatch(/e outros$/);
+    expect(quetzalChain(1308, TQ).map(n => n[0])).toEqual([56, 57, 1308]); // Mankey → Primeape → Annihilape
+    expect(quetzalChain(1520, TQ).map(n => n[0])).toEqual([1520, 1521, 1522]);
+    expect(quetzalChain(128, TQ)).toBe(null); // Tauros não evolui
   });
 });
