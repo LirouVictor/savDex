@@ -5,6 +5,7 @@ import { esc, typeChip, categoryName } from './render.js';
 import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
 import { quetzalEvolutionHtml } from './evo-quetzal.js';
+import { moveInfo } from '../parser/describe.js';
 
 const LAST_GEN8_ICON = 898;
 const probable = () => `<span class="badge" title="${t('Dos jogos oficiais mais recentes; o jogo do save pode ser diferente')}">${t('provável')}</span>`;
@@ -69,25 +70,29 @@ export function learnsetHtml(m, dex, T) {
   if (!raw) return '';
   const [vi, ...flat] = raw;
   const known = new Set(m.moves.map(mv => mv.id));
-  const rows = [];
+  const items = [];
+  let count = 0, divided = false;
   for (let i = 0; i < flat.length; i += 2) {
     const lv = flat[i], mv = flat[i + 1];
-    const row = typeof mv === 'number' ? T.moves[mv] : null;
-    const det = typeof mv === 'number' ? T.moveDetails[mv] : null;
-    const name = row ? row[0] : String(mv);
-    const type = row ? T.types[row[1]] : null;
-    const cat = det ? categoryName(det[3]) : '';
+    const info = typeof mv === 'number' ? moveInfo(mv, T) : null;
+    const name = info ? info.name : String(mv);
+    const type = info ? info.type : null;
+    const cat = info ? categoryName(info.category) : '';
     const has = typeof mv === 'number' && known.has(mv);
-    const future = m.level && lv > m.level;
-    rows.push(`<tr class="${has ? 'has' : ''}${future ? ' future' : ''}">
-      <td class="lv-col">${lv === 0 ? t('Evo.') : lv}</td>
-      <td>${esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</td>
-      <td>${type ? typeChip(type) : ''}</td>
-      <td class="k">${esc(cat)}${det && det[0] ? ' · ' + det[0] : ''}</td>
-    </tr>`);
+    const future = !!m.level && lv > m.level;
+    // Divisória no nível atual: acima dela, o que o Pokémon ainda vai aprender
+    if (future && !divided && count) items.push(`<li class="lm-now"><span>${esc(t('Nível atual: {n}', { n: m.level }))}</span></li>`);
+    if (future) divided = true;
+    count++;
+    const meta = [cat, info && info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
+    items.push(`<li class="lm${type ? ` t-${esc(type)}` : ''}${has ? ' has' : ''}${future ? ' future' : ''}">
+      <span class="lm-lv">${lv === 0 ? t('Evo.') : `<small>${t('Nv.')}</small>${lv}`}</span>
+      <span class="lm-main"><b>${esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
+      ${type ? typeChip(type) : ''}
+    </li>`);
   }
-  return `<details class="dsec learn"><summary>${t('Golpes por nível')}${dex.quetzal ? '' : ' ' + probable()}</summary>
-    <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir. Em cinza, níveis acima do atual.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
-    <table class="learn-tab"><tbody>${rows.join('')}</tbody></table>
+  return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.quetzal ? '' : probable()}<span class="learn-count">${count}</span></summary>
+    <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
+    <ul class="learn-list">${items.join('')}</ul>
   </details>`;
 }

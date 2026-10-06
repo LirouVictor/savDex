@@ -204,6 +204,8 @@ export default {
   'Evolução': 'Evolution',
   'Não evolui (nos jogos oficiais).': 'Doesn’t evolve (in the official games).',
   'Não evolui no Quetzal.': 'Doesn’t evolve in Quetzal.',
+  'Nível atual: {n}': 'Current level: {n}',
+  'Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.': 'List from {game}. ✓ = already knows it. Evo. = learned on evolving.',
   'Métodos do próprio Quetzal (tabela do jogo).': 'Quetzal’s own methods (from the game’s table).',
   'Aprende por nível (tabela do próprio jogo):': 'Learns by level (the game’s own table):',
   '{move}: {ref} aprende por nível (tabela do jogo).': '{move}: {ref} learns it by level (game table).',
@@ -249,8 +251,6 @@ export default {
   'Evo.': 'Evo.',
   'Já conhece': 'Already known',
   'Golpes por nível': 'Level-up moves',
-  'Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir. Em cinza, níveis acima do atual.':
-    'List from {game}. ✓ = already known. Evo. = learned on evolution. Grayed out: levels above the current one.',
   'jogo oficial': 'the official game',
 
   // app.js

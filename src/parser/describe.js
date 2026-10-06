@@ -21,6 +21,24 @@ const QUETZAL_NATIONAL = 898;
 /** Curva Medium Slow: no Quetzal vale para todas as espécies (níveis do PC conferidos no jogo). */
 export const mediumSlow = n => (n <= 1 ? 0 : Math.floor((6 * n ** 3) / 5) - 15 * n * n + 100 * n - 140);
 
+/**
+ * Nome, tipo, poder, precisão e categoria de um golpe. No Quetzal, os da ROM do jogo (T.quetzal.moveData);
+ * nos demais, os da tabela do app (expansion: geração mais nova; 0 = variável ou não se aplica).
+ */
+export function moveInfo(id, T) {
+  const Q = T.quetzal;
+  const md = Q && Q.moveData ? Q.moveData[id] : null;
+  const row = T.moves[id];
+  const name = (Q && Q.moveNames[id]) || (row ? row[0] : null);
+  if (md) return { name: name || `#${id}`, type: T.types[md[0]] || null, power: md[1], accuracy: md[2], category: md[4] };
+  if (Q && Q.moveNames[id]) return { name, type: null, power: null, accuracy: null, category: null };
+  const det = T.moveDetails[id];
+  return {
+    name: name || `#${id}`, type: row ? T.types[row[1]] || null : null,
+    power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null,
+  };
+}
+
 export function levelFromExp(exp) {
   let level = 1;
   while (level < 100 && mediumSlow(level + 1) <= exp) level++;
@@ -121,16 +139,9 @@ export function makeResolver(T) {
   }
 
   function move(m) {
-    // Golpe com outro nome na ROM do Quetzal (ex.: 848 Nihil Light): só o nome é conhecido
-    const own = Q && Q.moveNames[m.id];
-    if (own) return { id: m.id, name: own, type: null, pp: m.pp, power: null, accuracy: null, category: null };
-    const row = T.moves[m.id];
-    const det = T.moveDetails[m.id];
-    return {
-      id: m.id, name: row ? row[0] : `Golpe ${m.id}`, type: row ? typeName(row[1]) : null, pp: m.pp,
-      // Dados do expansion (geração mais nova): poder/precisão 0 = variável ou não se aplica
-      power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null,
-    };
+    const known = T.moves[m.id] || (Q && Q.moveNames[m.id]);
+    if (!known) return { id: m.id, name: `Golpe ${m.id}`, type: null, pp: m.pp, power: null, accuracy: null, category: null };
+    return { id: m.id, pp: m.pp, ...moveInfo(m.id, T) };
   }
 
   function item(id) {

@@ -8,10 +8,14 @@ export const NEWS = [
   {
     date: '2026-10-06',
     pt: [
+      'Quetzal: tipo, poder, precisão e categoria dos golpes agora vêm do próprio jogo (ex.: no Quetzal, Growth é Grass e Nihil Light é Dragon especial de poder 200).',
+      'Golpes por nível com visual novo: o título virou um botão que mostra quantos golpes há, cada golpe aparece como um cartão com o tipo, a categoria e o poder, e uma linha marca o nível atual do Pokémon.',
       'Mais leve: na primeira visita (e a cada atualização) o app baixa só o essencial para funcionar offline, cerca de um terço do que baixava antes. As tabelas de cada jogo, o assistente de IA e os textos em inglês só são baixados e guardados quando você usa.',
       'Quetzal: os golpes por nível no detalhe de cada Pokémon (e os usados pelo assistente de IA) agora são os do próprio jogo, sem o “provável”. O detalhe também ficou mais leve de carregar.',
     ],
     en: [
+      'Quetzal: move type, power, accuracy and category now come from the game itself (e.g. in Quetzal, Growth is Grass and Nihil Light is a special Dragon move with 200 power).',
+      'Level-up moves have a new look: the title became a button that shows how many moves there are, each move is a card with its type, category and power, and a line marks the Pokémon’s current level.',
       'Lighter: on the first visit (and on each update) the app downloads only the essentials to work offline, about a third of what it downloaded before. Each game’s tables, the AI assistant and the English texts are only downloaded and stored when you use them.',
       'Quetzal: the level-up moves in each Pokémon’s details (and the ones the AI assistant uses) now come from the game itself, without the “probable” tag. The details also load lighter.',
     ],
