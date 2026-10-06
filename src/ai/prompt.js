@@ -3,6 +3,7 @@
 
 import { STAT_LABEL, SHOWDOWN_ORDER } from '../export.js';
 import { analyzeTeam } from '../analysis.js';
+import { moveInfo } from '../parser/describe.js';
 import { t } from '../i18n.js';
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
@@ -305,7 +306,7 @@ export function levelMoveNames(m, dex, T) {
   const names = [];
   for (let i = 2; i < raw.length; i += 2) {
     const id = raw[i];
-    const name = typeof id === 'number' ? (T.moves[id] ? T.moves[id][0] : null) : String(id);
+    const name = typeof id === 'number' ? (T.moves[id] || (T.quetzal && T.quetzal.moveNames[id]) ? moveInfo(id, T).name : null) : String(id);
     if (name && !names.includes(name)) names.push(name);
   }
   return names;

@@ -11,7 +11,8 @@
 // Fontes:
 //   - ROM do Quetzal (argumento ou fixtures/rom/*.gba): itens (nome de 20 bytes), golpes (17), habilidades
 //     (17), nomes das espécies (13), dados das espécies (36 bytes: stats, tipos, gênero, curva, habilidades) e
-//     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo) e golpes por nível (ponteiro por
+//     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo), dados dos golpes (24 bytes:
+//     tipo, poder, precisão, PP, categoria) e golpes por nível (ponteiro por
 //     espécie para uma lista de golpe + nível) → src/data/quetzal-learn.json.
 //   - PokeAPI (CSV): forma correspondente de cada espécie > 898 (sprite, nome no Showdown, linha evolutiva),
 //     pelo nome da espécie + tipos + stats base.
@@ -173,6 +174,22 @@ function tables(rom) {
   if (!(evolutions[25] || []).some(([m, p, t]) => m === 7 && p === thunder && t === 26)) fail('Evoluções: Pikachu → Raichu não confere.');
   if (!(evolutions[4] || []).some(([m, p, t]) => m === 4 && p === 16 && t === 5)) fail('Evoluções: Charmander → Charmeleon não confere.');
 
+  // Dados dos golpes: 24 bytes por golpe (0–1 efeito, 2 poder, 3 tipo, 4 precisão, 5 PP, 11 categoria 0 físico /
+  // 1 especial / 2 status). Achados pelo Pound (40, Normal, 100%, 35 PP) seguido do Karate Chop (50, Fighting, 100%, 25).
+  const mvSig = Buffer.from([40, 0, 100, 35]), mvSig2 = Buffer.from([50, 1, 100, 25]);
+  let mvBase = -1;
+  for (let i = rom.indexOf(mvSig); i >= 0; i = rom.indexOf(mvSig, i + 1)) if (rom.subarray(i + 24, i + 28).equals(mvSig2)) { mvBase = i - 2 - 24; break; }
+  if (mvBase < 0) fail('Tabela de dados dos golpes não encontrada.');
+  // [tipo (nome), poder (0 = variável ou não se aplica; a ROM usa 1 para variável), precisão, PP, categoria]
+  const moveData = [null];
+  for (let id = 1; id < moves.length; id++) {
+    const o = mvBase + id * 24;
+    const power = rom[o + 2];
+    moveData.push([ROM_TYPES[rom[o + 3]], power === 1 ? 0 : power, rom[o + 4], rom[o + 5], rom[o + 11]]);
+  }
+  const tackle = moveData[moves.indexOf('Tackle')];
+  if (!tackle || tackle[0] !== 'normal' || tackle[4] !== 0 || moveData[moves.indexOf('Thunderbolt')][4] !== 1) fail('Dados dos golpes não conferem.');
+
   // Golpes por nível: tabela de ponteiros (u32 por espécie) para listas de (golpe u16, nível u16) que acabam
   // em golpe 0xFFFF; nível 0 = aprende ao evoluir. Achada pela lista do Bulbasaur (Tackle 1, Growl 1, Vine Whip 3).
   const learnSig = Buffer.from([33, 0, 1, 0, 45, 0, 1, 0, 22, 0, 3, 0]);
@@ -213,7 +230,7 @@ function tables(rom) {
     fail('Golpes por nível: Primeape/Rage Fist não confere.');
   }
 
-  return { items, moves, abilities, count: names.length - 1, info, evolutions, learnSets, learnOf };
+  return { items, moves, abilities, count: names.length - 1, info, evolutions, learnSets, learnOf, moveData };
 }
 
 // Taxa de gênero da ROM (0 só macho, 254 só fêmea, 255 sem gênero, senão limite) → escala da PokeAPI (−1, 0..8)
@@ -316,7 +333,9 @@ async function main() {
       'forma na PokeAPI', 'sprite', 'ícone', 'forma', 'Showdown', 'forma de aparência'],
   };
   // evolutions: { espécie: [[método, parâmetro, espécie alvo], …] } (métodos do enum EVO_* do pokeemerald-expansion; 43–46 são próprios do Quetzal)
-  const out = { meta, items: T.items, movesUpTo: T.moves.length - 1, moveNames: {}, species: Object.fromEntries(Object.entries(species).map(([k, v]) => [k, pack(v)])), evolutions: T.evolutions };
+  const out = { meta, items: T.items, movesUpTo: T.moves.length - 1, moveNames: {}, species: Object.fromEntries(Object.entries(species).map(([k, v]) => [k, pack(v)])), evolutions: T.evolutions,
+    // moveData[golpe] = [tipo (índice em types.json), poder (0 = variável/não se aplica), precisão (0 = não erra/não se aplica), PP, categoria]
+    moveData: T.moveData.map(d => (d ? [appType(d[0]), d[1], d[2], d[3], d[4]] : null)) };
   // Golpes: a numeração bate com a do app; só guarda os nomes que diferem (sem contar abreviações)
   const appMoves = JSON.parse(await readFile(path.join(ROOT, 'src/data/moves.json'), 'utf8')).moves;
   for (let i = 1; i < T.moves.length; i++) {

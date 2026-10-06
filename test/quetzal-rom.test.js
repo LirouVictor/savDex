@@ -19,10 +19,17 @@ suite('Quetzal: tabelas da ROM', () => {
     expect(R.item(640)).toMatchObject({ name: 'Item 640', confidence: 'desconhecido' }); // TM51–TM100 não existem no Quetzal
     expect(R.item(900)).toMatchObject({ confidence: 'desconhecido' });
   });
-  it('golpes: só o 848 tem nome próprio (Nihil Light)', () => {
+  it('golpes: só o 848 tem nome próprio (Nihil Light); tipo, poder e categoria da ROM', () => {
     expect(Q.moveNames).toEqual({ 848: 'Nihil Light' });
-    expect(R.move({ id: 848, pp: 5 })).toMatchObject({ name: 'Nihil Light', type: null });
-    expect(R.move({ id: 33, pp: 35 }).name).toBe('Tackle');
+    const mv = name => R.move({ id: BASE.moves.findIndex(r => r && r[0] === name), pp: 1 });
+    expect(R.move({ id: 848, pp: 5 })).toMatchObject({ name: 'Nihil Light', type: 'dragon', power: 200, category: 1 });
+    expect(R.move({ id: 33, pp: 35 })).toMatchObject({ name: 'Tackle', type: 'normal', power: 40, accuracy: 100, category: 0 });
+    // Mudanças do Quetzal em relação à tabela do expansion
+    expect(mv('Growth').type).toBe('grass');
+    expect(mv('Dragon Hammer').power).toBe(90);
+    expect(mv('Blood Moon').power).toBe(140);
+    expect(mv('Water Shuriken').category).toBe(1);
+    expect(mv('Wring Out').power).toBe(0); // 1 na ROM = poder variável
   });
   it('espécies: até 898 é a Dex Nacional; depois, formas e Gen 9 pela ROM', () => {
     expect(R.species(898).name).toBe('Calyrex');

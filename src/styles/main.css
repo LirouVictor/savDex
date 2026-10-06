@@ -441,13 +441,22 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .evo-node b { font-size: .85rem; }
 .evo-node small { color: var(--muted); font-size: .72rem; line-height: 1.25; }
 .evo-arrow { width: 0; height: 0; border: 7px solid transparent; border-left: 9px solid var(--accent-2); border-right: 0; }
-.learn > summary { min-height: 44px; }
-.learn-tab { width: 100%; border-collapse: collapse; font-size: .88rem; }
-.learn-tab td { padding: 4px 6px; border-bottom: 2px solid var(--hi); vertical-align: middle; }
-.learn-tab .lv-col { width: 3.2em; font: .72rem var(--pixel); color: var(--accent); }
-.learn-tab td.k { color: var(--muted); font-size: .78rem; white-space: nowrap; }
-.learn-tab tr.has td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.learn-tab tr.future { opacity: .6; }
+/* Golpes por nível: botão que abre a lista (estilo .fold) e cartões no estilo dos golpes do Pokémon */
+.dsec.fold > summary { margin: 10px 3px 3px; font: .78rem var(--pixel); text-transform: uppercase; }
+.dsec.fold[open] > summary { margin-bottom: 10px; }
+.learn-count { margin-left: auto; min-width: 2.2em; padding: 3px 6px 2px; text-align: center; font: .7rem/1 var(--pixel); background: var(--win); color: var(--ink); box-shadow: inset 0 0 0 2px var(--hi); }
+.learn-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lm { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 4px 8px 4px 12px; background: var(--win-2); box-shadow: inset 4px 0 0 var(--t, var(--hi)); }
+.lm-lv { display: grid; justify-items: center; font: .8rem/1 var(--pixel); color: var(--accent); }
+.lm-lv small { font-size: .55rem; color: var(--muted); }
+.lm-main { display: grid; min-width: 0; }
+.lm-main b { font-size: .9rem; overflow-wrap: anywhere; }
+.lm-main small { color: var(--muted); font-size: .76rem; }
+.lm .type { font-size: .62rem; }
+.lm.has { background: color-mix(in srgb, var(--accent) 14%, var(--win-2)); }
+.lm.future { opacity: .55; }
+.lm-now { display: flex; align-items: center; gap: 8px; margin: 4px 0; font: .62rem var(--pixel); text-transform: uppercase; color: var(--accent-2); }
+.lm-now::before, .lm-now::after { content: ""; flex: 1; border-top: 2px dashed var(--accent-2); }
 .known { color: var(--accent); font-weight: 700; }
 
 /* Assistente (IA) */
