@@ -81,6 +81,14 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
     }
   });
 
+  it('PP salvos da equipe batem com o PP da ROM (com 0 a 3 PP Ups)', () => {
+    for (const f of SAVES) for (const m of load(f).party) for (const mv of m.moves) {
+      const ub = mv.id < 0 ? -mv.id : U.moves.indexOf(mv.id);
+      const base = U.moveData[ub][3];
+      expect([0, 1, 2, 3].map(up => Math.floor((base * (5 + up)) / 5))).toContain(mv.pp);
+    }
+  });
+
   it('itens, golpes e bolas coerentes; caixa 25 lida', () => {
     const d = load(SAVES[0]);
     const absol = d.party.find(m => m.species.name === 'Absol');

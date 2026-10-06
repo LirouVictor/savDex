@@ -1,10 +1,11 @@
-// Detalhe do Pokémon: linha evolutiva e golpes por nível (dados dos jogos oficiais, src/data/dex.json,
-// carregado sob demanda). O Quetzal pode ter mudado evoluções e golpes: tudo aparece como "provável".
+// Detalhe do Pokémon: linha evolutiva e golpes por nível. Quetzal e Unbound: tabelas da ROM do jogo
+// (evo-rom.js, quetzal-learn.json / unbound-learn.json). Demais jogos: dados dos jogos oficiais
+// (src/data/dex.json, carregado sob demanda), marcados como "provável".
 
 import { esc, typeChip, categoryName } from './render.js';
 import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
-import { quetzalEvolutionHtml } from './evo-quetzal.js';
+import { quetzalEvolutionHtml, unboundEvolutionHtml } from './evo-rom.js';
 import { moveInfo } from '../parser/describe.js';
 
 const LAST_GEN8_ICON = 898;
@@ -35,6 +36,7 @@ export function stages(chain) {
 export function evolutionHtml(m, dex, T) {
   // Quetzal: linha evolutiva e métodos do próprio jogo (tabela da ROM)
   if (T.quetzal && m.speciesId) return quetzalEvolutionHtml(m, T, stages);
+  if (T.unbound && m.speciesId) return unboundEvolutionHtml(m, T, stages);
   const { pid, sid } = dexIds(m, dex);
   if (!pid) return '';
   const ci = dex.speciesChain[sid];
@@ -56,16 +58,27 @@ export function evolutionHtml(m, dex, T) {
 
 /**
  * Golpes por nível do Quetzal (src/data/quetzal-learn.json, tirados da ROM) no mesmo formato do dex.json:
- * learn[ID do Quetzal] = [versão, nível, golpe, …]. `quetzal: true` faz as funções usarem o ID do save.
+ * learn[ID do Quetzal] = [versão, nível, golpe, …]. `rom: true` faz as funções usarem o ID do save.
  */
 export function quetzalLearnDex(L) {
   const learn = {};
   L.species.forEach((set, id) => { if (id && L.sets[set]) learn[id] = [0, ...L.sets[set]]; });
-  return { quetzal: true, versions: ['Pokémon Quetzal'], learn };
+  return { rom: true, versions: ['Pokémon Quetzal'], learn };
+}
+
+/**
+ * O mesmo para o Unbound (src/data/unbound-learn.json): os golpes vêm na numeração do Unbound e viram os IDs
+ * usados nos Pokémon do save (o do app, ou o do Unbound negativo nos golpes próprios).
+ */
+export function unboundLearnDex(L, U) {
+  const sets = L.sets.map(set => set && set.map((v, i) => (i % 2 ? (typeof U.moves[v] === 'number' ? U.moves[v] : -v) : v)));
+  const learn = {};
+  L.species.forEach((set, id) => { if (id && sets[set]) learn[id] = [0, ...sets[set]]; });
+  return { rom: true, versions: ['Pokémon Unbound'], learn };
 }
 
 export function learnsetHtml(m, dex, T) {
-  const pid = dex.quetzal ? m.speciesId : dexIds(m, dex).pid;
+  const pid = dex.rom ? m.speciesId : dexIds(m, dex).pid;
   const raw = pid ? dex.learn[pid] : null;
   if (!raw) return '';
   const [vi, ...flat] = raw;
@@ -91,7 +104,7 @@ export function learnsetHtml(m, dex, T) {
       ${type ? typeChip(type) : ''}
     </li>`);
   }
-  return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.quetzal ? '' : probable()}<span class="learn-count">${count}</span></summary>
+  return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.rom ? '' : probable()}<span class="learn-count">${count}</span></summary>
     <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
     <ul class="learn-list">${items.join('')}</ul>
   </details>`;

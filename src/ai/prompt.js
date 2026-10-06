@@ -74,7 +74,7 @@ const GAME_CONTEXT = {
   unbound: [
     'Pokémon Unbound, uma ROM hack de Pokémon FireRed com o motor CFRU',
     '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 8 e formas regionais).',
-    '- O Unbound mudou stats e habilidades de algumas espécies; confie nos dados enviados, não na sua memória.',
+    '- O Unbound mudou stats e habilidades de algumas espécies e o poder/PP de vários golpes; confie nos dados enviados, não na sua memória.',
     '- Só uma megaevolução pode ser usada por batalha.',
   ],
   gen4: [
@@ -297,16 +297,17 @@ export function analysisPool(all, T, limit) {
     .map(m => [m, score(m)]).sort((x, y) => y[1] - x[1]).slice(0, Math.max(0, limit)).map(([m]) => m);
 }
 
-/** Nomes dos golpes por nível da espécie (dex.json, jogos oficiais recentes), sem repetir; null se não houver lista. */
+/** Nomes dos golpes por nível da espécie, sem repetir; null se não houver lista. */
 export function levelMoveNames(m, dex, T) {
-  // Quetzal: tabela da ROM, pelo ID do save; demais jogos: dex.json, pelo ID da PokeAPI
-  const pid = dex && dex.quetzal ? m.speciesId : m.species.dexId;
+  // Quetzal/Unbound: tabela da ROM, pelo ID do save; demais jogos: dex.json (jogos oficiais), pelo ID da PokeAPI
+  const pid = dex && dex.rom ? m.speciesId : m.species.dexId;
   const raw = pid && dex ? dex.learn[pid] : null;
   if (!raw) return null;
   const names = [];
   for (let i = 2; i < raw.length; i += 2) {
     const id = raw[i];
-    const name = typeof id === 'number' ? (T.moves[id] || (T.quetzal && T.quetzal.moveNames[id]) ? moveInfo(id, T).name : null) : String(id);
+    const info = typeof id === 'number' ? moveInfo(id, T) : null;
+    const name = info ? (info.known ? info.name : null) : String(id);
     if (name && !names.includes(name)) names.push(name);
   }
   return names;
@@ -385,7 +386,7 @@ export function learnLines(party, dex, T, game) {
     const names = all.filter(n => !known.has(n));
     if (names.length) out.push(`${refOf(m)}: ${names.slice(-LEARN_MAX).join(', ')}`);
   }
-  const head = dex.quetzal ? t('Aprende por nível (tabela do próprio jogo):') : t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):');
+  const head = dex.rom ? t('Aprende por nível (tabela do próprio jogo):') : t('Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):');
   return out.length ? ['', head, ...out] : [];
 }
 

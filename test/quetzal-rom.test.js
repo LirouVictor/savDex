@@ -4,7 +4,7 @@ import { describe as suite, it, expect } from 'vitest';
 import BASE from '../src/data/tables.js';
 import Q from '../src/data/quetzal.json';
 import { makeResolver } from '../src/parser/describe.js';
-import { quetzalChain, evoMethod } from '../src/ui/evo-quetzal.js';
+import { quetzalChain, evoMethod } from '../src/ui/evo-rom.js';
 
 const R = makeResolver({ ...BASE, quetzal: Q });
 

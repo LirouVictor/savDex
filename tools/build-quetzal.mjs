@@ -50,8 +50,8 @@ const fail = msg => { throw new Error(msg); };
 async function findRom() {
   if (process.argv[2]) return process.argv[2];
   const dir = path.join(ROOT, 'fixtures/rom');
-  const gba = (await readdir(dir).catch(() => [])).find(f => f.endsWith('.gba'));
-  return gba ? path.join(dir, gba) : fail('Passe o caminho da ROM: npm run quetzal -- caminho/da/rom.gba');
+  const gba = (await readdir(dir).catch(() => [])).find(f => /quetzal/i.test(f) && f.endsWith('.gba'));
+  return gba ? path.join(dir, gba) : fail('Coloque o .gba em fixtures/rom/ (nome com "quetzal") ou passe o caminho: npm run quetzal -- caminho/da/rom.gba');
 }
 
 async function get(url) {

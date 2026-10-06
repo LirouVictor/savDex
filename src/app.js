@@ -363,28 +363,29 @@ function openDetail(m, opener) {
 }
 
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
-// Quetzal: golpes por nível da ROM (quetzal-learn.json) no lugar do dex.json; a evolução vem de T.quetzal
-let dexData = null, quetzalDexData = null;
-async function loadDex() {
-  if (T.quetzal) {
-    if (!quetzalDexData) {
-      const [data, ui] = await Promise.all([import('./data/quetzal-learn.json'), import('./ui/dex.js')]);
-      quetzalDexData = { dex: ui.quetzalLearnDex(data.default), ui };
-    }
-    return quetzalDexData;
+// Quetzal e Unbound: golpes por nível da ROM (quetzal-learn.json / unbound-learn.json) no lugar do dex.json;
+// a evolução vem de T.quetzal / T.unbound
+const dexCache = {}, dexLoaded = new Set();
+const dexKey = () => (T.quetzal ? 'quetzal' : T.unbound ? 'unbound' : 'dex');
+function loadDex() {
+  const key = dexKey();
+  if (!dexCache[key]) {
+    const data = key === 'quetzal' ? import('./data/quetzal-learn.json') : key === 'unbound' ? import('./data/unbound-learn.json') : import('./data/dex.json');
+    dexCache[key] = Promise.all([data, import('./ui/dex.js')]).then(([d, ui]) => ({
+      dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound) : d.default,
+      ui,
+    })).catch(e => { delete dexCache[key]; throw e; });
   }
-  if (!dexData) {
-    const [data, ui] = await Promise.all([import('./data/dex.json'), import('./ui/dex.js')]);
-    dexData = { dex: data.default, ui };
-  }
-  return dexData;
+  return dexCache[key];
 }
 async function fillDex(dlg, m) {
   const slot = dlg.querySelector('[data-dex]');
   if (!slot) return;
   try {
-    if (!(T.quetzal ? quetzalDexData : dexData)) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
+    const key = dexKey();
+    if (!dexLoaded.has(key)) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
     const D = await loadDex();
+    dexLoaded.add(key);
     if (!slot.isConnected) return; // o detalhe já foi trocado
     slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
   } catch (e) {
