@@ -17,7 +17,16 @@
 //   - Itens: 44 bytes (preço u32, id secundário u16 em 6 = nº da Poké Ball nas bolas, ponteiro do nome em 20).
 //   - Habilidades: 32 bytes, nome no começo.
 //   - Pokédex de Johto: lista de espécies (u16) que acaba em 0; achada pelos números vistos no jogo.
+//   - Golpes por nível: ponteiro em 0xA8 da espécie para uma lista de golpe u16 + nível u16 que acaba em 0xFFFF
+//     (struct LevelUpMove do expansion; os campos seguintes são TM/tutor 0xAC, ovo 0xB0 e evoluções 0xB4).
+//   - Evoluções: ponteiro em 0xB4 para entradas de 12 bytes (método u16, parâmetro u16, espécie alvo u16,
+//     ponteiro das condições), até o método 0xFFFF; condições de 8 bytes (condição u16 + 3 valores u16) até a
+//     39 (CONDITIONS_END). Métodos e condições = enums EvolutionMethods/EvolutionConditions do expansion atual.
+//   - Nomes dos lugares (região do mapa: ponteiro do nome + posição, 8 bytes), para a condição "num lugar";
+//     achados pelo "Route 29" seguido do "Route 30" e conferidos com o local de captura dos Pokémon do save.
 // Formas: a da PokeAPI (sprite, nome no Showdown) pela Dex Nacional + tipos + stats.
+//
+// Gera também src/data/soulgold-learn.json (golpes por nível, carregado só ao abrir o detalhe).
 //
 // Uso: npm run soulgold [-- rom.gba]   (precisa de rede para a PokeAPI)
 
@@ -25,10 +34,11 @@ import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { decodeText } from '../src/parser/charset.js';
+import { decodeText, encodeText } from '../src/parser/charset.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'src/data/soulgold.json');
+const LEARN_OUT = path.join(ROOT, 'src/data/soulgold-learn.json');
 const PAPI = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv';
 const SPRITES = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 const ROM_BASE = 0x08000000;
@@ -36,7 +46,8 @@ const SPECIES_SIZE = 288, MOVE_SIZE = 72, ITEM_SIZE = 44, ABILITY_SIZE = 32;
 // Enum de tipos do expansion recente (NONE = 0, Mystery = 10, Stellar = 20)
 const ROM_TYPES = [null, 'normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', null,
   'fire', 'water', 'grass', 'electric', 'psychic', 'ice', 'dragon', 'dark', 'fairy', null];
-const LAST_ICON = 898; // ícones de menu da PokeAPI (geração VIII) só até aqui sem conferir
+const LAST_ICON = 898;
+const CONDITIONS_END = 39, IF_IN_MAPSEC = 18; // ícones de menu da PokeAPI (geração VIII) só até aqui sem conferir
 
 const fail = msg => { throw new Error(`SoulGold: ${msg}`); };
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
@@ -144,7 +155,56 @@ function tables(rom) {
     johtoList.push(id);
   }
 
-  return { H, info, count, move, moves, item, items, ability, abilities, abil, johto, johtoList };
+  // Golpes por nível e evoluções (ponteiros na espécie)
+  const learnset = id => {
+    const p = ptr(H.species + id * SPECIES_SIZE + 0xA8);
+    if (p < 0) return null;
+    const out = [];
+    for (let k = 0; k < 200; k++) {
+      const mv = rom.readUInt16LE(p + 4 * k), lv = rom.readUInt16LE(p + 4 * k + 2);
+      if (mv === 0xFFFF) return out;
+      out.push(lv, mv);
+    }
+    return fail(`golpes por nível da espécie ${id} sem fim`);
+  };
+  const evolutions = id => {
+    const p = ptr(H.species + id * SPECIES_SIZE + 0xB4);
+    if (p < 0) return null;
+    const out = [];
+    for (let k = 0; k < 32; k++) {
+      const o = p + 12 * k, method = rom.readUInt16LE(o);
+      if (method === 0xFFFF) return out;
+      const evo = [method, rom.readUInt16LE(o + 2), rom.readUInt16LE(o + 4)];
+      const c = ptr(o + 8);
+      if (c >= 0) {
+        const conds = [];
+        for (let j = 0; ; j++) {
+          const cond = rom.readUInt16LE(c + 8 * j);
+          if (cond === CONDITIONS_END) break;
+          if (cond > CONDITIONS_END || j > 8) fail(`condição de evolução estranha na espécie ${id}`);
+          conds.push([cond, rom.readUInt16LE(c + 8 * j + 2), rom.readUInt16LE(c + 8 * j + 4)]);
+        }
+        if (conds.length) evo.push(conds);
+      }
+      out.push(evo);
+    }
+    return fail(`evoluções da espécie ${id} sem fim`);
+  };
+
+  // Lugares: tabela de [ponteiro do nome, x, y, largura, altura]
+  let places = -1;
+  const route = n => { const e = Buffer.from([...encodeText(`Route ${n}`, 8), 0xFF]); const hits = []; for (let i = rom.indexOf(e); i >= 0; i = rom.indexOf(e, i + 1)) if (rom[i - 1] === 0 || rom[i - 1] === 0xFF) hits.push(i); return hits; };
+  const r30 = new Set(route(30).map(i => i + ROM_BASE));
+  for (const i of route(29)) {
+    const b = Buffer.alloc(4); b.writeUInt32LE(i + ROM_BASE);
+    for (let r = rom.indexOf(b); r >= 0 && places < 0; r = rom.indexOf(b, r + 1)) if (r % 4 === 0 && r30.has(rom.readUInt32LE(r + 8))) places = r;
+  }
+  if (places < 0) fail('nomes dos lugares não encontrados');
+  while (ptr(places - 8) >= 0) places -= 8; // há lugares sem nome no meio
+  const placeList = [];
+  for (let k = 0; ptr(places + 8 * k) >= 0; k++) placeList.push(text(ptr(places + 8 * k), 30));
+
+  return { H, info, count, move, moves, item, items, ability, abilities, abil, johto, johtoList, learnset, evolutions, places, placeList };
 }
 
 // Nome no Showdown e rótulo da forma a partir do identificador da PokeAPI (raichu-alola → Raichu-Alola)
@@ -228,10 +288,29 @@ async function main() {
   const abilities = [null]; for (let id = 1; id <= T.abilities; id++) abilities[id] = T.ability(id);
   const johto = T.johtoList.map(id => T.info(id).national);
 
+  // Golpes por nível (listas iguais guardadas uma vez) e evoluções, na numeração do SoulGold
+  const learnSets = [null], setIndex = new Map(), learnOf = [];
+  const evolutions = {};
+  species.forEach((r, id) => {
+    if (!r) return;
+    const ls = T.learnset(id);
+    if (ls && ls.length) {
+      const key = ls.join();
+      if (!setIndex.has(key)) { setIndex.set(key, learnSets.length); learnSets.push(ls); }
+      learnOf[id] = setIndex.get(key);
+    }
+    const evo = (T.evolutions(id) || []).filter(e => e[0] && species[e[2]]);
+    if (evo.length) evolutions[id] = evo;
+  });
+  // Só os nomes dos lugares usados nas evoluções
+  const places = {};
+  for (const list of Object.values(evolutions)) for (const e of list) for (const [c, a] of e[3] || []) if (c === IF_IN_MAPSEC) places[a] = T.placeList[a];
+
   // Conferências com o que o jogo mostra (emulador)
   const problems = [];
   const check = (ok, msg) => { if (!ok) problems.push(msg); };
   const froakie = species[656] || [];
+  const sid = name => species.findIndex(r => r && r[0] === name && !r[1]);
   check(froakie[0] === 'Froakie' && froakie[2] === 656 && appTypes[froakie[5]] === 'water' && froakie.slice(12).join() === '41,56,40,62,44,71', 'Froakie (656) diferente do jogo');
   check(abilities[froakie[7]] === 'Torrent', 'habilidade do Froakie não é Torrent');
   check(['Pound', 'Growl', 'Bubble', 'Water Gun'].every(n => moves.some((m, i) => i && (typeof m === 'number' ? appMoves.moves[m][0] : m) === n)), 'golpes do Froakie não achados');
@@ -241,17 +320,28 @@ async function main() {
   check(md('Thunderbolt')[0] === typeIdx('electric') && md('Thunderbolt')[4] === 1, 'Thunderbolt não é Electric especial');
   check(balls[1] === 'Poké Ball' && balls[4] === 'Master Ball', 'Poké Balls fora de ordem');
   check(johto[472] === 656 && johto.length > 600, 'Pokédex de Johto: Froakie não é o 473');
+  // Golpes por nível do Froakie: o do save (Nv. 9) tem Pound, Quick Attack, Bubble e Water Gun (Growl esquecido)
+  const learned = id => { const ls = learnSets[learnOf[id]] || []; return ls.map((v, i) => (i % 2 ? (typeof moves[v] === 'number' ? appMoves.moves[moves[v]][0] : moves[v]) : v)); };
+  check(learned(656).slice(0, 10).join() === '1,Pound,1,Growl,5,Bubble,7,Water Gun,9,Quick Attack', 'golpes por nível do Froakie diferentes do jogo');
+  // Evoluções: Froakie Nv. 16 → Frogadier; Tyrogue pelo Ataque × Defesa (condições 4–6)
+  const evoTo = (id, name) => (evolutions[id] || []).find(e => species[e[2]][0] === name);
+  check(evoTo(656, 'Frogadier')?.slice(0, 2).join() === '1,16', 'Froakie não evolui no Nv. 16');
+  check(['Hitmonlee:4', 'Hitmontop:5', 'Hitmonchan:6'].every(x => { const [n, c] = x.split(':'); return evoTo(sid('Tyrogue'), n)?.[3]?.[0]?.[0] === +c; }), 'condições do Tyrogue fora do enum esperado');
+  // Lugares: o local de captura dos Pokémon do save, como o jogo mostra no resumo
+  check(T.placeList[232] === 'New Bark Town' && T.placeList[210] === 'Route 29' && T.placeList[211] === 'Route 30', 'nomes dos lugares fora de ordem');
   if (problems.length) fail(`a ROM não bate com o esperado (nada foi gravado):\n  ${problems.join('\n  ')}`);
 
   const showdown = {};
   species.forEach((r, id) => { if (r && r.showdown !== r[0]) showdown[id] = r.showdown; });
   const data = {
     meta: { generatedAt: new Date().toISOString().slice(0, 10), rom: { file: path.basename(romPath), sha1 }, source: 'ROM do Pokémon SoulGold (tools/build-soulgold.mjs; a ROM não é versionada) + PokeAPI' },
-    species: species.map(r => (r ? [...r] : null)), showdown, abilities, moves, moveData, items, balls, johto,
+    species: species.map(r => (r ? [...r] : null)), showdown, abilities, moves, moveData, items, balls, johto, evolutions, places,
   };
   await writeFile(OUT, JSON.stringify(data) + '\n');
+  await writeFile(LEARN_OUT, JSON.stringify({ meta: { rom: data.meta.rom, generatedAt: data.meta.generatedAt }, sets: learnSets, species: learnOf }) + '\n');
+  console.log(`golpes por nível: ${learnOf.filter(Boolean).length} espécies, ${learnSets.length - 1} listas; evoluções: ${Object.keys(evolutions).length} espécies; lugares ${T.placeList.length}`);
   console.log(`espécies ${species.filter(Boolean).length} (até ${T.count}; formas: ${JSON.stringify(stat)}), golpes ${T.moves}, itens ${items.filter(Boolean).length}, habilidades ${T.abilities}, bolas ${balls.filter(Boolean).length}, Johto ${johto.length}`);
-  console.log(`posições: espécies ${T.H.species.toString(16)}, golpes ${T.H.moves.toString(16)}, itens ${T.H.items.toString(16)}, habilidades ${T.abil.toString(16)}, Johto ${T.johto.toString(16)}`);
+  console.log(`posições: lugares ${T.places.toString(16)}, espécies ${T.H.species.toString(16)}, golpes ${T.H.moves.toString(16)}, itens ${T.H.items.toString(16)}, habilidades ${T.abil.toString(16)}, Johto ${T.johto.toString(16)}`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });

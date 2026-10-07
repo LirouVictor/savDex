@@ -380,10 +380,10 @@ export function levelGap(team) {
 
 /**
  * Golpes por nível dos membros da equipe que eles ainda não têm (lista dos jogos oficiais recentes, src/data/dex.json).
- * Só faz sentido em jogos com os golpes atuais (Quetzal, Unbound); nos oficiais antigos, nada.
+ * Só faz sentido em jogos com os golpes atuais (Quetzal, Unbound, SoulGold); nos oficiais antigos, nada.
  */
 export function learnLines(party, dex, T, game) {
-  if (!dex || !game || !['quetzal', 'unbound'].includes(game.id)) return [];
+  if (!dex || !game || !['quetzal', 'unbound', 'soulgold'].includes(game.id)) return [];
   const out = [];
   for (const m of party) {
     const all = levelMoveNames(m, dex, T);

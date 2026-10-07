@@ -20,7 +20,7 @@ export const SUPPORTED = [
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
   'Pokémon Unbound (2.1)',
-  'Pokémon SoulGold (hack de Emerald; testado no começo do jogo)',
+  'Pokémon SoulGold (hack de Emerald; conferido no próprio jogo)',
   'Pokémon Diamond / Pearl',
   'Pokémon Platinum',
   'Pokémon HeartGold / SoulSilver',

@@ -7,9 +7,11 @@
 //   tem 0xB30 bytes (o checksum da seção 0 só bate com esse tamanho); o resto da seção 0 tem outros dados.
 // - Treinador no SaveBlock2 (nome 0x00, TID 0x0A, SID 0x0C, tempo 0x0E/0x10/0x11, chave do dinheiro 0xB4).
 // - SaveBlock1 nas seções 1–4: dinheiro 0x478 (XOR a chave), flags 0x1898 (insígnias 0x993–0x99A), Pokédex pela
-//   Dex Nacional (vistos 0x31F8, capturados 0x3279, 1025 bits), equipe: contagem 0x234, Pokémon de 100 bytes em 0x238.
+//   Dex Nacional (vistos 0x31F8, capturados 0x3279, 1025 bits), equipe: contagem 0x234, Pokémon de 96 bytes em 0x238.
 // - Pokémon SEM criptografia e sem checksum, num layout próprio (ver readMon). O PC (seções 5–13) guarda os
 //   primeiros 76 bytes do mesmo registro: caixa atual (u32), 15 caixas × 30, nomes em 0x859C (9 bytes cada).
+//   Conferido no jogo com um save com 6 Pokémon na equipe e um no PC (o registro do PC copiado para a equipe
+//   numa cópia do save aparece igual no resumo do jogo).
 
 import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
@@ -25,7 +27,7 @@ const SIGNATURE = 0x08012025;
 const DATA = 0xF80;
 const SB2_SIZE = 0xB30;
 const SECTION_SIZE = { 0: SB2_SIZE, 4: 0x3C54 - 3 * DATA }; // demais: os dados vão até o fim usado (o resto é zero)
-const PARTY_COUNT = 0x234, PARTY = 0x238, MON = 100, BOX_MON = 76;
+const PARTY_COUNT = 0x234, PARTY = 0x238, MON = 96, BOX_MON = 76; // equipe: os 76 do PC + 20 (6 × 96 acaba no dinheiro, 0x478)
 const MONEY = 0x478, MONEY_KEY = 0xB4;
 const FLAGS = 0x1898, BADGE_FLAG = 0x993;
 const DEX_SEEN = 0x31F8, DEX_CAUGHT = 0x3279, DEX_BITS = 1025;
@@ -57,7 +59,7 @@ function slots(u8) {
   }).filter(Boolean).sort((a, b) => (a.bad.length - b.bad.length) || (b.index - a.index));
 }
 
-/** Pokémon de 76 bytes (PC) ou 100 (equipe), sem criptografia. */
+/** Pokémon de 76 bytes (PC) ou 96 (equipe), sem criptografia. */
 function readMon(u8, o, party) {
   const dv = new DataView(u8.buffer, u8.byteOffset + o, party ? MON : BOX_MON);
   const sp = dv.getUint16(0x20, true);
@@ -72,7 +74,9 @@ function readMon(u8, o, party) {
     hiddenNature: u8[o + 0x14] >> 3,
     speciesId: species, itemId: itemBall & 0x3FF, ballId: itemBall >> 10,
     exp: dv.getUint32(0x24, true) & 0x1FFFFF, friendship: u8[o + 0x2B],
-    moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(0x2C + 2 * j, true), pp: u8[o + 0x34 + j] })).filter(m => m.id),
+    // Golpes de 11 bits (como no expansion); bits 12–13 do 4º = número da habilidade (conferido no jogo)
+    moves: [0, 1, 2, 3].map(j => ({ id: dv.getUint16(0x2C + 2 * j, true) & 0x7FF, pp: u8[o + 0x34 + j] })).filter(m => m.id),
+    abilityNum: (dv.getUint16(0x32, true) >> 12) & 3,
     evs: Object.fromEntries(STAT_ORDER.map((k, j) => [k, u8[o + 0x38 + j]])),
     ivs: Object.fromEntries(STAT_ORDER.map((k, j) => [k, (ivWord >>> (5 * j)) & 31])),
     isEgg: !!((ivWord >>> 30) & 1),
@@ -139,7 +143,6 @@ export function parseSoulGold(u8) {
     }
     boxes.push({ index: b, name: decodeText(pc, BOX_NAMES + b * 9, 9) || `Box${b + 1}`, slots: list, partial: false });
   }
-  if (boxes.some(b => b.slots.length)) warnings.push(t('PC do SoulGold lido pelo formato provável (ainda não conferido com um save que tenha Pokémon no PC).'));
 
   const key = dv.getUint32(s0 + MONEY_KEY, true);
   const flags = sb1Bytes(FLAGS + (BADGE_FLAG >> 3), 2);
@@ -156,24 +159,27 @@ export function parseSoulGold(u8) {
   };
 }
 
+/** Espécie pela numeração do SoulGold (src/data/soulgold.json), no formato do app. */
+export function soulgoldSpecies(id, SG, T, isEgg = false) {
+  const row = SG.species[id];
+  if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
+  const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
+  return {
+    name, form: isEgg ? 'ovo' : form, showdown: SG.showdown[id] || name,
+    confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
+    types: [t1, t2].filter(Boolean).map(i => T.types[i] || null),
+    abilities: [SG.abilities[a1] || null, SG.abilities[a2] || null, SG.abilities[ha] || null],
+    baseStats: base, growth, genderByte,
+  };
+}
+
 /** Converte a leitura crua no mesmo formato de describe() do Quetzal. */
 export function describeSoulGold(raw, T, SG) {
   const typeName = i => T.types[i] || null;
   // Shiny: fórmula das gerações 6+ (1/4096, como no expansion) ou a marca do registro
   const shiny = (p) => p.shinyFlag || (((p.otId & 0xFFFF) ^ (p.otId >>> 16) ^ (p.pid & 0xFFFF) ^ (p.pid >>> 16)) >>> 0) < 16;
 
-  function species(id, isEgg) {
-    const row = SG.species[id];
-    if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
-    const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
-    return {
-      name, form: isEgg ? 'ovo' : form, showdown: SG.showdown[id] || name,
-      confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
-      types: [t1, t2].filter(Boolean).map(typeName),
-      abilities: [SG.abilities[a1] || null, SG.abilities[a2] || null, SG.abilities[ha] || null],
-      baseStats: base, growth, genderByte,
-    };
-  }
+  const species = (id, isEgg) => soulgoldSpecies(id, SG, T, isEgg);
   // Golpes: ID do app quando há par (nome, descrição, golpes por nível); tipo, poder, PP… da ROM
   const move = m => {
     const ref = SG.moves[m.id];
@@ -188,8 +194,12 @@ export function describeSoulGold(raw, T, SG) {
   };
   const item = id => (id ? { id, name: SG.items[id] || `Item ${id}`, confidence: SG.items[id] ? 'confirmado' : 'desconhecido', evidence: null } : null);
   const ball = id => ({ id, name: SG.balls[id] || t('Bola {id}', { id }), confidence: SG.balls[id] ? 'confirmado' : 'desconhecido', evidence: null });
-  // O número da habilidade não foi achado no registro: o jogo mostrou a 1ª habilidade em todos os testes
-  const ability = sp => ({ num: 0, name: sp.abilities[0] || t('Habilidade {n}', { n: 1 }), hidden: false, confidence: sp.abilities[0] ? 'provável' : 'desconhecido' });
+  // Número da habilidade (0 = 1ª, 1 = 2ª, 2 ou 3 = oculta, como o jogo mostra); slot vazio = a 1ª, como no expansion
+  const ability = (sp, n) => {
+    const num = Math.min(n, 2);
+    const name = sp.abilities[num] || sp.abilities[0];
+    return { num, name: name || t('Habilidade {n}', { n: num + 1 }), hidden: num === 2 && !!sp.abilities[2], confidence: name ? 'confirmado' : 'desconhecido' };
+  };
   const gender = (sp, pid) => {
     const g = sp.genderByte;
     if (g === 255) return { symbol: null, name: 'sem gênero', confidence: 'confirmado' };
@@ -211,7 +221,7 @@ export function describeSoulGold(raw, T, SG) {
       complete: true,
       level, levelFromExp: !p.stats, exp: p.exp,
       nature, pidNature: null,
-      item: item(p.itemId), ability: ability(sp), ball: ball(p.ballId),
+      item: item(p.itemId), ability: ability(sp, p.abilityNum), ball: ball(p.ballId),
       shiny: shiny(p), gender: gender(sp, p.pid),
       friendship: p.friendship,
       ot: { name: p.otName, tid: p.otId & 0xFFFF, sid: p.otId >>> 16 },

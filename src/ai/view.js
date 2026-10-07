@@ -191,6 +191,8 @@ export function confirmView(prep) {
           ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio Quetzal).')
           : prep.game && prep.game.id === 'unbound'
             ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio Unbound).')
+            : prep.game && prep.game.id === 'soulgold'
+              ? t('Os golpes que cada membro da equipe aprende por nível (tabela do próprio SoulGold).')
             : t('Os golpes que cada membro da equipe aprende por nível (lista pública dos jogos oficiais).')}</li>` : ''}
         ${note ? `<li>${t('Seu pedido:')} “${esc(note)}”.</li>` : ''}
         <li>${t('As instruções do savDex para a IA (como responder).')}</li>

@@ -5,13 +5,13 @@ import { encodeText } from '../../src/parser/charset.js';
 const SIZES = [0xB30, 0xF80, 0xF80, 0xF80, 0xDD4, 0xF80, 0xF80, 0xF80, 0xF80, 0xF80, 0xF80, 0xF80, 0xF80, 0xF80];
 
 /**
- * Pokémon de 76 bytes (PC) ou 100 (equipe).
+ * Pokémon de 76 bytes (PC) ou 96 (equipe).
  * @param {{pid:number, otId:number, species:number, item?:number, ball?:number, exp?:number, friendship?:number,
  *   moves?:Array<[number,number]>, evs?:number[], ivs?:number[], egg?:boolean, nickname?:string, otName?:string,
- *   level?:number, hp?:number, stats?:number[]}} m
+ *   abilityNum?:number, level?:number, hp?:number, stats?:number[]}} m
  */
 export function encodeMon(m, party = false) {
-  const out = new Uint8Array(party ? 100 : 76);
+  const out = new Uint8Array(party ? 96 : 76);
   const dv = new DataView(out.buffer);
   dv.setUint32(0, m.pid >>> 0, true);
   dv.setUint32(4, m.otId >>> 0, true);
@@ -26,6 +26,7 @@ export function encodeMon(m, party = false) {
   dv.setUint32(0x24, m.exp ?? 0, true);
   out[0x2B] = m.friendship ?? 70;
   (m.moves || []).forEach(([id, pp], j) => { dv.setUint16(0x2C + 2 * j, id, true); out[0x34 + j] = pp; });
+  dv.setUint16(0x32, dv.getUint16(0x32, true) | ((m.abilityNum ?? 0) << 12), true); // número da habilidade
   (m.evs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => { out[0x38 + j] = v; });
   const ivs = m.ivs || [0, 0, 0, 0, 0, 0];
   dv.setUint32(0x48, (ivs.reduce((w, v, j) => w | (v << (5 * j)), 0) | (m.egg ? 1 << 30 : 0)) >>> 0, true);
@@ -52,7 +53,7 @@ export function makeSoulGoldSave(o) {
   const sb1 = (off, fn) => fn(sections[1 + Math.floor(off / 0xF80)], off % 0xF80);
   const party = o.party || [];
   new DataView(sections[1].buffer).setUint32(0x234, party.length, true);
-  party.forEach((m, i) => sections[1].set(encodeMon(m, true), 0x238 + i * 100));
+  party.forEach((m, i) => sections[1].set(encodeMon(m, true), 0x238 + i * 96));
   const S = o.summary || { hours: 1, minutes: 2, seconds: 3, money: 3000, badges: 0, caught: [] };
   s0.setUint16(0x0E, S.hours, true);
   sections[0][0x10] = S.minutes;

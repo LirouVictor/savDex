@@ -1,11 +1,11 @@
-// Detalhe do Pokémon: linha evolutiva e golpes por nível. Quetzal e Unbound: tabelas da ROM do jogo
-// (evo-rom.js, quetzal-learn.json / unbound-learn.json). Demais jogos: dados dos jogos oficiais
+// Detalhe do Pokémon: linha evolutiva e golpes por nível. Quetzal, Unbound e SoulGold: tabelas da ROM do jogo
+// (evo-rom.js, quetzal-learn.json / unbound-learn.json / soulgold-learn.json). Demais jogos: dados dos jogos oficiais
 // (src/data/dex.json, carregado sob demanda), marcados como "provável".
 
 import { esc, typeChip, categoryName } from './render.js';
 import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
-import { quetzalEvolutionHtml, unboundEvolutionHtml } from './evo-rom.js';
+import { quetzalEvolutionHtml, unboundEvolutionHtml, soulgoldEvolutionHtml } from './evo-rom.js';
 import { moveInfo } from '../parser/describe.js';
 
 const LAST_GEN8_ICON = 898;
@@ -37,6 +37,7 @@ export function evolutionHtml(m, dex, T) {
   // Quetzal: linha evolutiva e métodos do próprio jogo (tabela da ROM)
   if (T.quetzal && m.speciesId) return quetzalEvolutionHtml(m, T, stages);
   if (T.unbound && m.speciesId) return unboundEvolutionHtml(m, T, stages);
+  if (T.soulgold && m.speciesId) return soulgoldEvolutionHtml(m, T, stages);
   const { pid, sid } = dexIds(m, dex);
   if (!pid) return '';
   const ci = dex.speciesChain[sid];
@@ -70,12 +71,15 @@ export function quetzalLearnDex(L) {
  * O mesmo para o Unbound (src/data/unbound-learn.json): os golpes vêm na numeração do Unbound e viram os IDs
  * usados nos Pokémon do save (o do app, ou o do Unbound negativo nos golpes próprios).
  */
-export function unboundLearnDex(L, U) {
+export function unboundLearnDex(L, U, version = 'Pokémon Unbound') {
   const sets = L.sets.map(set => set && set.map((v, i) => (i % 2 ? (typeof U.moves[v] === 'number' ? U.moves[v] : -v) : v)));
   const learn = {};
   L.species.forEach((set, id) => { if (id && sets[set]) learn[id] = [0, ...sets[set]]; });
-  return { rom: true, versions: ['Pokémon Unbound'], learn };
+  return { rom: true, versions: [version], learn };
 }
+
+/** O mesmo para o SoulGold (src/data/soulgold-learn.json, mesmo formato e mesma tabela de golpes do Unbound). */
+export const soulgoldLearnDex = (L, SG) => unboundLearnDex(L, SG, 'Pokémon SoulGold');
 
 export function learnsetHtml(m, dex, T) {
   const pid = dex.rom ? m.speciesId : dexIds(m, dex).pid;
