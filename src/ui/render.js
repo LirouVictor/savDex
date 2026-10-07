@@ -48,13 +48,12 @@ function movesList(moves) {
     const power = mv.power ? mv.power : '—';
     const acc = mv.accuracy ? mv.accuracy + '%' : '—';
     const cat = categoryName(mv.category) || '—';
-    // Golpe de status: só a precisão (quando tem); os de dano: poder · precisão
-    const pa = mv.category === 2 ? (mv.accuracy ? acc : '') : `${power} · ${acc}`;
-    // Poder e precisão já na linha do golpe; tocar mostra a descrição
+    // Poder, precisão e PP em colunas com rótulo (alinhadas entre os golpes); tocar mostra a descrição
+    const val = (k, v) => `<span class="mv-n"><small>${k}</small>${v}</span>`;
     return `<li><details class="move t-${esc(mv.type || 'none')}">
-      <summary><span>${esc(mv.name)}</span><span class="pp">${mv.pp} PP</span>
+      <summary><span class="mv-name">${esc(mv.name)}</span>
         <span class="mt">${esc(mv.type || '—')} · ${esc(cat)}</span>
-        ${pa ? `<span class="mpa" title="${esc(t('Poder'))} · ${esc(t('Precisão'))}">${pa}</span>` : ''}</summary>
+        <span class="mv-nums">${val(t('Poder'), power)}${val(t('Precisão'), acc)}${val('PP', mv.pp)}</span></summary>
       <div class="move-info"><p class="move-desc" data-move="${mv.id}"></p></div>
     </details></li>`;
   }).join('')}</ul>`;

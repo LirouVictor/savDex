@@ -328,18 +328,22 @@ main > *, #out > * { min-width: 0; }
 .moves { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
 .move { background: var(--win-2); box-shadow: inset 5px 0 0 var(--t); font-size: .9rem; line-height: 1.2; }
 .move summary {
-  display: grid; grid-template-columns: 1fr auto; gap: 0 6px; align-items: center;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center;
   padding: 6px 8px 6px 12px; min-height: 44px; cursor: pointer; list-style: none;
 }
+.mv-name { grid-column: 1; overflow-wrap: anywhere; }
+.move .mt { grid-column: 1; }
+/* Poder · Precisão · PP: três colunas de largura fixa, com o rótulo em cima */
+.mv-nums { grid-column: 2; grid-row: 1 / 3; display: grid; grid-template-columns: 34px 52px 26px; gap: 4px; text-align: right; }
+.mv-n { display: grid; font: .72rem/1.25 var(--pixel); color: var(--ink); white-space: nowrap; }
+.mv-n small { font-size: .46rem; color: var(--muted); text-transform: uppercase; }
 .move summary::-webkit-details-marker { display: none; }
 .move[open] summary { box-shadow: inset 0 -2px 0 var(--hi); }
 .move-info { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 8px 8px 12px; font-size: .82rem; }
 .move-info .k { color: var(--muted); font-size: .75rem; }
 .move-desc { flex-basis: 100%; margin: 0; color: var(--muted); }
 .move-desc:empty { display: none; }
-.move .pp { font: .7rem var(--pixel); color: var(--muted); white-space: nowrap; }
 .move .mt { font: .6rem var(--pixel); color: var(--muted); text-transform: uppercase; }
-.move .mpa { font: .66rem var(--pixel); color: var(--ink); white-space: nowrap; text-align: right; }
 .move-info:has(.move-desc:empty) { display: none; }
 
 .stats { width: 100%; border-collapse: collapse; font-size: .85rem; }
