@@ -308,7 +308,7 @@ main > *, #out > * { min-width: 0; }
 }
 .portrait img { width: 96px; height: 96px; }
 .mon-name { font: 700 1.15rem/1.2 var(--pixel); letter-spacing: 0; overflow-wrap: anywhere; }
-.sheet .mon-head { padding-right: 48px; }
+.sheet .mon-head { padding-right: 0; }
 .mon-sub { color: var(--muted); font-size: .9rem; margin-top: 2px; overflow-wrap: anywhere; }
 .lv { font-family: var(--pixel); font-size: .95rem; color: var(--accent); }
 .types { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
@@ -338,7 +338,9 @@ main > *, #out > * { min-width: 0; }
 .move-desc { flex-basis: 100%; margin: 0; color: var(--muted); }
 .move-desc:empty { display: none; }
 .move .pp { font: .7rem var(--pixel); color: var(--muted); white-space: nowrap; }
-.move .mt { grid-column: 1 / -1; font: .6rem var(--pixel); color: var(--muted); text-transform: uppercase; }
+.move .mt { font: .6rem var(--pixel); color: var(--muted); text-transform: uppercase; }
+.move .mpa { font: .66rem var(--pixel); color: var(--ink); white-space: nowrap; text-align: right; }
+.move-info:has(.move-desc:empty) { display: none; }
 
 .stats { width: 100%; border-collapse: collapse; font-size: .85rem; }
 .stats th { text-align: left; font: .72rem var(--pixel); width: 40px; padding: 3px 0; }
@@ -348,6 +350,10 @@ main > *, #out > * { min-width: 0; }
 .stats .num { width: 40px; text-align: right; padding-right: 8px; font-size: .78rem; }
 .stats .bar { height: 8px; background: var(--bar); }
 .stats .bar i { display: block; height: 100%; background: var(--accent); }
+/* Cor pela proporção do maior stat: vermelho (fraco) → amarelo → verde (forte) */
+.stats .bar i[style*="--h"] { background: hsl(var(--h) 55% 42%); }
+:root[data-theme="dark"] .stats .bar i[style*="--h"] { background: hsl(var(--h) 55% 52%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stats .bar i[style*="--h"] { background: hsl(var(--h) 55% 52%); } }
 .stats .iv, .stats .ev { width: 40px; text-align: right; font: .72rem var(--pixel); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .stats thead th { padding: 0 0 2px; color: var(--muted); }
 .stats td.iv { padding-left: 8px; }
@@ -396,6 +402,30 @@ main > *, #out > * { min-width: 0; }
 }
 .sheet::backdrop { background: rgba(10, 12, 20, .6); }
 .sheet .close { position: absolute; right: 10px; top: 10px; }
+/* Detalhe do Pokémon: barra fixa no topo, cabeçalho com a cor do tipo */
+.sheet-bar {
+  position: sticky; top: -16px; z-index: 2; margin: -16px -16px 0; padding: 8px 10px 4px 16px;
+  display: flex; align-items: center; gap: 4px;
+  background: color-mix(in srgb, var(--t, var(--bar)) 26%, var(--win));
+}
+.sheet-bar .close { position: static; }
+.sheet-bar-name { flex: 1; min-width: 0; font: 700 .95rem var(--pixel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; visibility: hidden; }
+.sheet-bar.stuck { box-shadow: 0 3px 0 var(--t, var(--hi)); }
+.sheet-bar.stuck .sheet-bar-name { visibility: visible; }
+.mon-hero {
+  margin: 0 -16px; padding: 0 16px 12px;
+  background: linear-gradient(color-mix(in srgb, var(--t, var(--bar)) 26%, var(--win)), var(--win));
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--t, var(--hi)) 60%, var(--win));
+}
+.mon-hero .mon-head { padding-right: 0; }
+.mon-hero .portrait { background-color: var(--win); }
+/* Natureza, item, habilidade, bola e Hidden Power em duas colunas */
+.facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.facts-grid > div { min-width: 0; padding: 5px 10px 6px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.facts-grid dt { color: var(--muted); font-size: .68rem; text-transform: uppercase; }
+.facts-grid dd { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.facts-grid dd .k { color: var(--muted); font-size: .78rem; }
+.facts-grid .unread dd { color: var(--muted); }
 .sheet .mon { padding: 0; }
 .unread-list { margin: 0; padding: 10px 12px; background: var(--win-2); color: var(--muted); font-size: .88rem; }
 .evidence { color: var(--muted); font-size: .85rem; margin: 0; }
@@ -435,10 +465,13 @@ button.cnt:focus-visible { outline-offset: 1px; }
 .tt-grp > b { font: .62rem/1.3 var(--pixel); text-transform: uppercase; padding: 4px 0; }
 .tt-grp.weak > b { color: var(--accent-2); }
 .tt-grp.resist > b { color: var(--accent); }
-.tt-grp ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
-.tt-grp li { display: inline-flex; align-items: center; gap: 2px; padding: 0 8px 0 0; font-size: .82rem; background: var(--win); box-shadow: inset 0 0 0 2px var(--hi); }
-.tt-grp li img { width: 40px; height: 30px; object-fit: contain; }
-.tt-grp li i { margin-left: 4px; font: normal .7rem var(--pixel); color: var(--muted); }
+/* Ícones de menu (68×56) têm o Pokémon embaixo e o topo vazio: o recorte tira o vazio e alinha com o texto */
+img.ico { object-view-box: inset(12px 4px 0 4px); }
+.tt-grp ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 4px; }
+.tt-grp li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; font-size: .82rem; background: var(--win); box-shadow: inset 0 0 0 2px var(--hi); }
+.tt-grp li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt-grp li img { width: 44px; height: 32px; object-fit: contain; }
+.tt-grp li i { font: normal .7rem var(--pixel); color: var(--muted); }
 .tt-grp.weak li i { color: var(--accent-2); }
 .cnt.weak { background: var(--accent-2); color: var(--top-ink-on-gold); }
 .cnt.resist { background: var(--accent); color: var(--accent-ink); }
