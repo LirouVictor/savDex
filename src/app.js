@@ -70,18 +70,29 @@ export async function demoBytes() {
 function render() {
   const { data, fileName } = state;
   const out = document.getElementById('out');
+  // Quatro blocos (a barra de baixo leva a cada um; no computador, Equipe e PC ficam lado a lado)
   out.innerHTML = `
-    ${R.trainerWin(data, fileName)}
-    ${R.warningsWin(data.warnings)}
-    <div id="changes-slot"></div>
-    ${R.partyWin(data)}
-    ${R.aiWin(data, Object.values(PROVIDERS))}
-    ${R.analysisWin(data, T)}
-    ${R.pcWin(data)}
-    ${R.searchWin(data, T)}
-    ${R.exportWin()}`;
+    <div class="grp" id="grp-summary">
+      ${R.trainerWin(data, fileName)}
+      ${R.warningsWin(data.warnings)}
+      <div id="changes-slot"></div>
+    </div>
+    <div class="grp" id="grp-party">
+      ${R.partyWin(data)}
+      ${R.analysisWin(data, T)}
+    </div>
+    <div class="grp" id="grp-pc">
+      ${R.pcWin(data)}
+      ${R.searchWin(data, T)}
+    </div>
+    <div class="grp" id="grp-tools">
+      ${R.aiWin(data, Object.values(PROVIDERS))}
+      ${R.exportWin()}
+    </div>
+    ${R.navBar()}`;
   out.classList.remove('hidden');
   renderBox();
+  setupNav(out);
 
   out.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => exportAs(b.dataset.exp)));
   out.querySelector('[data-copy="party"]').addEventListener('click', async () => {
@@ -157,6 +168,25 @@ function render() {
     });
     if (foldOpen(id)) det.open = true;
   }
+}
+
+// Barra de navegação: rola até o bloco e marca o que está no meio da tela
+let navObserver = null;
+function setupNav(out) {
+  const nav = out.querySelector('.nav');
+  nav.addEventListener('click', e => {
+    const b = e.target.closest('[data-go]');
+    if (b) document.getElementById(b.dataset.go).scrollIntoView({ block: 'start' });
+  });
+  if (navObserver) navObserver.disconnect();
+  if (!('IntersectionObserver' in window)) return;
+  navObserver = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      nav.querySelectorAll('[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === e.target.id));
+    }
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  out.querySelectorAll('.grp').forEach(g => navObserver.observe(g));
 }
 
 // Janelas abertas/fechadas: preferência deste aparelho

@@ -8,12 +8,18 @@ export const NEWS = [
   {
     date: '2026-10-07',
     pt: [
+      'Visual novo: o texto corrido agora usa a fonte do aparelho, bem mais fácil de ler; a fonte pixel fica nos títulos, botões e números.',
+      'Barra embaixo para ir direto ao Resumo, à Equipe, ao PC ou às Ferramentas (Assistente e Exportar). No computador, Equipe e PC ficam lado a lado.',
+      'Cartões da equipe com os tipos e uma barra de HP quando o Pokémon está ferido; card do treinador mais limpo; os detalhes técnicos de cada Pokémon foram para "Avançado"; a lista de jogos da tela inicial ficou compacta.',
       'SoulGold: a evolução e os golpes por nível no detalhe de cada Pokémon agora vêm do próprio jogo, sem o “provável”, com as condições do SoulGold (ex.: Magnezone subindo de nível em Railway Cave ou com Thunder Stone).',
       'SoulGold: corrigida a leitura de equipes com mais de um Pokémon (o save não abria). A habilidade agora vem do save (2ª e oculta também), e o PC foi conferido no próprio jogo, sem o aviso de “provável”.',
       'Novo jogo: Pokémon SoulGold (hack de Emerald ambientado em Johto). Mostra treinador, equipe, PC e o resumo (tempo de jogo, dinheiro, insígnias e a Pokédex de Johto), conferidos no próprio jogo. O PC ainda não foi conferido com Pokémon dentro, e a habilidade aparece como “provável”.',
       'Unbound: dinheiro, insígnias, tempo de jogo e Pokédex do resumo do save agora estão conferidos no próprio jogo, sem o “provável”. A Pokédex conta como a do jogo: a Nacional vai até o Melmetal (809).',
     ],
     en: [
+      'New look: body text now uses your device’s font, much easier to read; the pixel font stays on titles, buttons and numbers.',
+      'A bottom bar jumps straight to Summary, Party, PC or Tools (Assistant and Export). On a computer, Party and PC sit side by side.',
+      'Party cards show types and an HP bar when the Pokémon is hurt; a cleaner trainer card; each Pokémon’s technical details moved to "Advanced"; the game list on the home screen is now compact.',
       'SoulGold: the evolution and level-up moves in each Pokémon’s details now come from the game itself, without the “probable” tag, with SoulGold’s conditions (e.g. Magnezone leveling up in Railway Cave or with a Thunder Stone).',
       'SoulGold: fixed reading parties with more than one Pokémon (the save would not open). The ability now comes from the save (2nd and hidden too), and the PC was checked against the game itself, without the “probable” warning.',
       'New game: Pokémon SoulGold (an Emerald hack set in Johto). Shows trainer, party, PC and the summary (play time, money, badges and the Johto Pokédex), checked against the game itself. The PC has not been checked with Pokémon in it yet, and the ability shows as “probable”.',
