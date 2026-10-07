@@ -251,6 +251,13 @@ Tabelas lidas da ROM do Quetzal Alpha 9 PT-BR (`npm run quetzal`, `tools/build-q
 - **Golpes por nível** (ROM: ponteiro u32 por espécie para uma lista de golpe u16 + nível u16 que acaba em `0xFFFF`; nível 0 = ao evoluir; 1125 listas, 16 101 golpes): vão em `src/data/quetzal-learn.json` (`sets` + `species[id]` = índice), carregado só ao abrir o detalhe de um Pokémon do Quetzal, **no lugar do `dex.json`** (`loadDex` em `app.js`, `quetzalLearnDex` em `ui/dex.js`: o mesmo formato do `dex.json`, com `quetzal: true` para usar o ID do save). Sem o "provável"; também usados pela IA (`learnLines`, `moveChecks`). Diferem dos oficiais (ex.: Bulbasaur aprende Magical Leaf 30 e Sludge Wave 42; Ivysaur tem a mesma lista).
 - **Habilidades**: o save guarda só o número (1ª/2ª/oculta); o nome vem da espécie (ROM para > 898, PokeAPI para ≤ 898, iguais na ROM). Se o slot estiver vazio, vale a primeira habilidade existente (como no expansion). Conferido com as 6 habilidades da equipe informadas pelo autor.
 
+## Ideias guardadas (decisão do autor: não fazer agora)
+
+- **Monetização**: o risco principal é jurídico (marca e sprites da Nintendo/TPC, ROM hacks). Se um dia for adiante, a ordem pensada é: doações → pacotes de créditos de IA paga (precisa de servidor, ex.: Cloudflare Worker com a chave e a cota) → "sem anúncios" com pagamento único → anúncios por último. A chave do próprio usuário (Gemini/Groq) continua grátis.
+- **Edição de save**: tecnicamente viável (nos hacks sem criptografia basta mudar o valor e recalcular o checksum do setor; Gen 3 e DS têm formato público). Cuidados: só campos confirmados, recalcular o que depende do campo (exp × nível, stats e HP da equipe, PP), gravar no slot mais recente, gerar um arquivo novo para baixar (nunca sobrescrever) e conferir cada edição no emulador (`tools/gbarun.c`). Começar pequeno: IVs, EVs, natureza e habilidade da equipe num jogo só.
+- **Backup na nuvem / sincronizar entre aparelhos**: precisa de servidor e login (e cuidado com a LGPD).
+- **Adiados para o fim do plano**: Cloudflare Web Analytics, botão de feedback, doações. **Radical Red**: precisa de um save e da ROM.
+
 ## Pendências de engenharia reversa
 
 Resolvidas: resumo do save (tempo de jogo, dinheiro, insígnias, Pokédex), HP atual (equipe e PC), habilidade da equipe (`0x54`), item/exp/natureza/IVs/EVs/habilidade no PC, número de caixas (37), curva de nível (Medium Slow para todas as espécies), Poké Ball (equipe e PC), shiny e gênero (PC e equipe), natureza da equipe pelo byte baixo do PID (fim da "natureza trocada"), tabela de itens e de espécies > 898 (pela ROM).
