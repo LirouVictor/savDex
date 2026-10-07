@@ -71,6 +71,12 @@ const GAME_CONTEXT = {
     '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
     '- Só uma megaevolução pode ser usada por batalha.',
   ],
+  soulgold: [
+    'Pokémon SoulGold, uma ROM hack de Pokémon Emerald com engine expandida, ambientada em Johto',
+    '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 9 e formas regionais).',
+    '- O SoulGold pode ter mudado espécies, habilidades e golpes; confie nos tipos e dados enviados, não na sua memória.',
+    '- Só uma megaevolução pode ser usada por batalha.',
+  ],
   unbound: [
     'Pokémon Unbound, uma ROM hack de Pokémon FireRed com o motor CFRU',
     '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, Pokémon até a geração 8 e formas regionais).',

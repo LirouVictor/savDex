@@ -1,6 +1,6 @@
 # savDex
 
-Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal** e **Pokémon Unbound** (ROM hacks) e os jogos oficiais da Gen 3 (**Emerald**, **FireRed/LeafGreen**, **Ruby/Sapphire**). Também lê saves de DS (**Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White**, **Black 2/White 2**). Abra o `.sav` do emulador (ou o `.dsv` do DeSmuME, o `.sps` do GameShark/SharkPort ou o `.duc` do Action Replay DS) e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
+Visualizador de saves de Pokémon de GBA: **Pokémon Quetzal**, **Pokémon Unbound** e **Pokémon SoulGold** (ROM hacks) e os jogos oficiais da Gen 3 (**Emerald**, **FireRed/LeafGreen**, **Ruby/Sapphire**). Também lê saves de DS (**Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White**, **Black 2/White 2**). Abra o `.sav` do emulador (ou o `.dsv` do DeSmuME, o `.sps` do GameShark/SharkPort ou o `.duc` do Action Replay DS) e veja treinador, equipe e PC. Dá para exportar tudo em planilha (CSV), texto do Pokémon Showdown ou JSON.
 
 - **100% local:** o save é lido no navegador e não é enviado a nenhum servidor. A única exceção é opcional: o **Assistente (IA)** manda a lista dos Pokémon (nunca o `.sav`) ao serviço de IA escolhido (Gemini ou Groq) quando você toca num dos botões dele.
 - **Leve:** sem framework. A página inicial pesa uns 8 KB comprimidos (sem as fontes). O parser e as tabelas (~29 KB comprimidos) só carregam quando você abre um save.
@@ -26,9 +26,10 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 - **Pokémon Ruby/Sapphire** (mesmo formato do Emerald; ainda sem save real para testar).
 - **Pokémon Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White** e **Black 2/White 2** (DS; conferidos com saves reais). Save state do emulador (`.dst`) não é o save do jogo e mostra um aviso.
 - **Pokémon Unbound** (versão 2.1 em diante; conferido com saves reais da 2.1.0 e da 2.1.1). Versões mais novas abrem com um aviso, e a 2.0 ainda não é suportada.
+- **Pokémon SoulGold** (hack de Emerald ambientado em Johto; conferido no próprio jogo com um save do começo. O PC ainda não foi conferido com Pokémon dentro).
 - Hacks que mantêm o formato de um desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou.
 
-No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, os mesmos quatro (a Pokédex Nacional do jogo vai até o 809).
+No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, os mesmos quatro (a Pokédex Nacional do jogo vai até o 809); no SoulGold, os mesmos quatro (Pokédex de Johto, 702).
 
 O app identifica o formato antes de ler. Um save que não bate com nenhum formato conhecido mostra um aviso ("não é de um jogo suportado"), em vez de dados parecidos com os certos.
 
@@ -102,6 +103,7 @@ npm run tables     # baixa do pokeemerald-expansion e da PokeAPI e regenera src/
 npm run dex        # evoluções e golpes por nível (PokeAPI) → src/data/dex.json
 npm run quetzal    # tabelas do Quetzal a partir da ROM em fixtures/rom/ → src/data/quetzal*.json
 npm run unbound    # tabelas do Unbound (código público + ROM em fixtures/rom/) → src/data/unbound*.json
+npm run soulgold   # tabelas do SoulGold a partir da ROM em fixtures/rom/ → src/data/soulgold.json
 ```
 
 `src/data/quetzal-overrides.json` é mantido à mão: tem as espécies com ID próprio do Quetzal e as exceções de item.

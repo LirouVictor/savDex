@@ -9,6 +9,7 @@ import { unwrap } from './container.js';
 import { detectGen3, parseGen3, describeGen3, gen3Tables } from './gen3.js';
 import { unboundSignature, parseUnbound, describeUnbound } from './unbound.js';
 import { detectNds, parseNds, describeNds, ndsTables } from './nds.js';
+import { isSoulGoldSave, parseSoulGold, describeSoulGold } from './soulgold.js';
 
 export const QUETZAL = { id: 'quetzal', name: 'Pokémon Quetzal', short: 'Quetzal', note: 'testado na Alpha 9 (PT-BR)' };
 
@@ -19,6 +20,7 @@ export const SUPPORTED = [
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
   'Pokémon Unbound (2.1)',
+  'Pokémon SoulGold (hack de Emerald; testado no começo do jogo)',
   'Pokémon Diamond / Pearl',
   'Pokémon Platinum',
   'Pokémon HeartGold / SoulSilver',
@@ -30,6 +32,12 @@ export const SUPPORTED = [
 export function isQuetzal(input) {
   const { bytes } = unwrap(input);
   return bytes.length >= SAVE_SIZE && isQuetzalLayout(bytes);
+}
+
+/** O save é do SoulGold? (as tabelas dele são carregadas à parte, só quando precisa) */
+export function isSoulGold(input) {
+  const { bytes } = unwrap(input);
+  return bytes.length >= SAVE_SIZE && !isQuetzalLayout(bytes) && unboundSignature(bytes) === null && !detectGen3(bytes) && isSoulGoldSave(bytes);
 }
 
 /** O save é do Unbound? (as tabelas dele são carregadas à parte, só quando precisa) */
@@ -83,9 +91,10 @@ function checkQuetzal(data) {
  * @param {object} [U] tabelas do Unbound (src/data/unbound.json), só para saves do Unbound
  * @param {object} [N] tabelas dos jogos de DS (src/data/nds.json), só para saves de DS
  * @param {object} [Q] tabelas da ROM do Quetzal (src/data/quetzal.json): itens, golpes e espécies > 898
+ * @param {object} [SG] tabelas da ROM do SoulGold (src/data/soulgold.json), só para saves do SoulGold
  * @returns {{ data: object, T: object }} dados descritos e as tabelas que valem para esse jogo
  */
-export function loadSave(input, T, G, U = null, N = null, Q = null) {
+export function loadSave(input, T, G, U = null, N = null, Q = null, SG = null) {
   const box = unwrap(input);
   const { bytes } = box;
   if (isSaveState(bytes)) throw new SaveError(t('Este arquivo é um save state do DeSmuME (.dst), não o save do jogo. No DeSmuME, use o arquivo .dsv da pasta Battery ou exporte o save em Arquivo › Export Backup Memory.'));
@@ -115,6 +124,11 @@ export function loadSave(input, T, G, U = null, N = null, Q = null) {
   if (g3) {
     const T3 = gen3Tables(T, G);
     return { data: describeGen3(parseGen3(bytes, g3), T3, g3.game), T: T3 };
+  }
+  if (isSoulGoldSave(bytes)) {
+    if (!SG) throw new Error('Tabelas do SoulGold não carregadas');
+    const TS = { ...T, soulgold: SG }; // dados dos golpes da ROM (moveInfo)
+    return { data: describeSoulGold(parseSoulGold(bytes), TS, SG), T: TS };
   }
   throw new SaveError(unsupported());
 }
