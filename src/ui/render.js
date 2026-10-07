@@ -320,29 +320,35 @@ export const monShort = m => esc(m.hasNickname ? m.nickname : m.species.name);
 export function analysisWin(d, T) {
   if (!d.party.length) return '';
   const a = analyzeTeam(d.party, { types: T.types, chart: T.typechart });
-  const rows = a.defense.map(r => {
-    const names = list => list.map(m => (m.hasNickname ? m.nickname : m.species.name)).join(', ');
-    const p = list => ({ type: r.type, names: names(list) });
-    const cell = (list, cls, label, info) => list.length
-      ? `<button type="button" class="cnt ${cls}" data-info="${esc(info)}" aria-label="${list.length} ${esc(label.toLowerCase())}">${list.length}</button>`
+  const X = { 4: '4×', 2: '2×', 0.5: '½', 0.25: '¼', 0: '0' };
+  // Quem é afetado por cada tipo de ataque: abre logo abaixo da linha tocada, com ícone, nome e multiplicador
+  const who = (r, list, cls, label) => (list.length ? `<div class="tt-grp ${cls}"><b>${label}</b><ul>${list.map(m => {
+    const sp = m.species;
+    return `<li><img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" width="40" height="30" loading="lazy" decoding="async" crossorigin="anonymous"><span>${monShort(m)}</span><i>${X[r.mult.get(m)] ?? ''}</i></li>`;
+  }).join('')}</ul></div>` : '');
+  const rows = a.defense.map((r, i) => {
+    const cell = (list, cls, label) => list.length
+      ? `<button type="button" class="cnt ${cls}" data-tt="${i}" aria-expanded="false" aria-controls="tt-${i}" aria-label="${list.length} ${esc(label.toLowerCase())}">${list.length}</button>`
       : '<span class="cnt zero">·</span>';
+    const any = r.weak.length + r.resist.length + r.immune.length;
     return `<tr class="${r.alert ? 'alert' : ''}">
-      <th scope="row">${typeChip(r.type)}</th>
-      <td>${cell(r.weak, 'weak', t('Fracos'), t('Fracos a {type}: {names}', p(r.weak)))}</td>
-      <td>${cell(r.resist, 'resist', t('Resistem'), t('Resistem a {type}: {names}', p(r.resist)))}</td>
-      <td>${cell(r.immune, 'immune', t('Imunes'), t('Imunes a {type}: {names}', p(r.immune)))}</td>
-    </tr>`;
+      <th scope="row">${any ? `<button type="button" class="tt-type" data-tt="${i}" aria-expanded="false" aria-controls="tt-${i}">${typeChip(r.type)}</button>` : typeChip(r.type)}</th>
+      <td>${cell(r.weak, 'weak', t('Fracos'))}</td>
+      <td>${cell(r.resist, 'resist', t('Resistem'))}</td>
+      <td>${cell(r.immune, 'immune', t('Imunes'))}</td>
+    </tr>${any ? `<tr class="tt-more" id="tt-${i}" hidden><td colspan="4">
+      ${who(r, r.weak, 'weak', t('Fracos'))}${who(r, r.resist, 'resist', t('Resistem'))}${who(r, r.immune, 'immune', t('Imunes'))}
+    </td></tr>` : ''}`;
   }).join('');
   return `<section class="win" aria-labelledby="analysis-h">
     <div class="win-title"><h2 id="analysis-h">${t('Análise da equipe')}</h2><small>${t('tipos')}</small></div>
     <details class="analysis fold">
       <summary>${t('Fraquezas e resistências')}</summary>
+      <p class="hint">${t('Toque num tipo ou num número para ver quem. Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.')}</p>
       <table class="typetab">
         <thead><tr><th scope="col">${t('Ataque')}</th><th scope="col">${t('Fracos')}</th><th scope="col">${t('Resistem')}</th><th scope="col">${t('Imunes')}</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="type-info" id="type-info" role="status">${t('Toque num número para ver quem.')}</p>
-      <p class="hint">${t('Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.')}</p>
     </details>
     <details class="analysis fold">
       <summary>${t('Cobertura dos golpes')}</summary>
