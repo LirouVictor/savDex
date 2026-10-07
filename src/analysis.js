@@ -12,9 +12,10 @@ export function analyzeTeam(party, T) {
 
   const members = party.filter(m => m.species.types.length);
   const defense = attackTypes.map(([t]) => {
-    const row = { type: t, weak: [], resist: [], immune: [] };
+    const row = { type: t, weak: [], resist: [], immune: [], mult: new Map() }; // mult: multiplicador de cada membro
     for (const m of members) {
       const x = mult(t, m.species.types);
+      row.mult.set(m, x);
       if (x === 0) row.immune.push(m);
       else if (x > 1) row.weak.push(m);
       else if (x < 1) row.resist.push(m);

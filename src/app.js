@@ -120,11 +120,17 @@ function render() {
     if (m) openDetail(m, btn);
   });
 
-  // Análise: tocar no número mostra quem é fraco/resiste/imune
+  // Análise: tocar num tipo ou número abre, logo abaixo da linha, quem é fraco/resiste/imune (um tipo por vez)
   const typetab = out.querySelector('.typetab');
   if (typetab) typetab.addEventListener('click', e => {
-    const b = e.target.closest('.cnt[data-info]');
-    if (b) document.getElementById('type-info').textContent = b.dataset.info;
+    const b = e.target.closest('[data-tt]');
+    if (!b) return;
+    const more = typetab.querySelector('#tt-' + b.dataset.tt);
+    const open = more.hidden;
+    typetab.querySelectorAll('.tt-more').forEach(r => { r.hidden = true; });
+    typetab.querySelectorAll('[data-tt]').forEach(x => x.setAttribute('aria-expanded', 'false'));
+    more.hidden = !open;
+    if (open) typetab.querySelectorAll(`[data-tt="${b.dataset.tt}"]`).forEach(x => x.setAttribute('aria-expanded', 'true'));
   });
 
   setupAi(out);
