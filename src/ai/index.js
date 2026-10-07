@@ -25,7 +25,7 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null }) 
   };
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
   // Montagem do Quetzal/Unbound: a segunda etapa leva os golpes por nível dos 6 escolhidos
-  counts.learn2 = kind === 'build' && !!dex && !!game && ['quetzal', 'unbound'].includes(game.id);
+  counts.learn2 = kind === 'build' && !!dex && !!game && ['quetzal', 'unbound', 'soulgold'].includes(game.id);
   return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, dex, game, note: note.trim(), counts };
 }
 

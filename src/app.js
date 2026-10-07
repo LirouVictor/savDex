@@ -230,7 +230,7 @@ function setupAi(out) {
       // Quetzal/Unbound: golpes por nível (dex.json, o mesmo do detalhe). Na análise vão no pedido; nas duas,
       // o app confere com eles os golpes que a IA citar
       const game = state.data.game;
-      const dex = game && ['quetzal', 'unbound'].includes(game.id) ? (await loadDex()).dex : null;
+      const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
       const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
@@ -367,16 +367,19 @@ function openDetail(m, opener) {
 }
 
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
-// Quetzal e Unbound: golpes por nível da ROM (quetzal-learn.json / unbound-learn.json) no lugar do dex.json;
-// a evolução vem de T.quetzal / T.unbound
+// Quetzal, Unbound e SoulGold: golpes por nível da ROM (quetzal-learn.json / unbound-learn.json /
+// soulgold-learn.json) no lugar do dex.json; a evolução vem de T.quetzal / T.unbound / T.soulgold
 const dexCache = {}, dexLoaded = new Set();
-const dexKey = () => (T.quetzal ? 'quetzal' : T.unbound ? 'unbound' : 'dex');
+const ROM_LEARN = ['quetzal', 'unbound', 'soulgold']; // jogos com golpes por nível da ROM (também usados pela IA)
+const dexKey = () => (T.quetzal ? 'quetzal' : T.unbound ? 'unbound' : T.soulgold ? 'soulgold' : 'dex');
 function loadDex() {
   const key = dexKey();
   if (!dexCache[key]) {
-    const data = key === 'quetzal' ? import('./data/quetzal-learn.json') : key === 'unbound' ? import('./data/unbound-learn.json') : import('./data/dex.json');
+    const data = key === 'quetzal' ? import('./data/quetzal-learn.json') : key === 'unbound' ? import('./data/unbound-learn.json')
+      : key === 'soulgold' ? import('./data/soulgold-learn.json') : import('./data/dex.json');
     dexCache[key] = Promise.all([data, import('./ui/dex.js')]).then(([d, ui]) => ({
-      dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound) : d.default,
+      dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound)
+        : key === 'soulgold' ? ui.soulgoldLearnDex(d.default, T.soulgold) : d.default,
       ui,
     })).catch(e => { delete dexCache[key]; throw e; });
   }

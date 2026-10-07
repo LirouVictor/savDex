@@ -8,6 +8,11 @@ import { makeGen3Save } from './helpers/make-gen3.js';
 import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import SG from '../src/data/soulgold.json';
+import SGL from '../src/data/soulgold-learn.json';
+import { soulgoldChain, soulgoldEvoMethod } from '../src/ui/evo-rom.js';
+import { soulgoldLearnDex, learnsetHtml, evolutionHtml } from '../src/ui/dex.js';
+import { learnLines, levelMoveNames } from '../src/ai/prompt.js';
+import { soulgoldSpecies } from '../src/parser/soulgold.js';
 
 const load = bytes => loadSave(bytes, T, G, null, null, null, SG);
 const sid = name => SG.species.findIndex(r => r && r[0] === name && !r[1]);
@@ -33,6 +38,40 @@ suite('SoulGold: tabelas da ROM', () => {
     expect(SG.johto).toHaveLength(702);
     expect(SG.johto[472]).toBe(656);
     expect(SG.johto[15]).toBe(16); // Pidgey
+  });
+});
+
+// Conferido no jogo: a aba EVO da Pokédex (Pidgey Nv. 18/32, Hoppip 18/27, Ralts 20/30 e Gallade com Dawn Stone
+// macho, Froakie 16/36) e o "Relearn" do resumo de um Froakie levado ao Nv. 100 numa cópia do save (os golpes por
+// nível da tabela, menos os 4 que ele já sabe).
+suite('SoulGold: evoluções e golpes por nível da ROM', () => {
+  const TS = { ...T, soulgold: SG };
+  const how = (from, to) => soulgoldChain(sid(from), TS).filter(n => soulgoldSpecies(n[0], SG, TS).name === to).map(n => n[2]).join(' | ');
+  it('linha evolutiva com os métodos e as condições do jogo', () => {
+    expect(soulgoldChain(sid('Pidgey'), TS).map(n => SG.species[n[0]][0])).toEqual(['Pidgey', 'Pidgeotto', 'Pidgeot']);
+    expect(how('Pidgey', 'Pidgeot')).toBe('Nv. 32');
+    expect(how('Hoppip', 'Jumpluff')).toBe('Nv. 27');
+    expect(how('Froakie', 'Greninja')).toBe('Nv. 36');
+    expect(how('Ralts', 'Gallade')).toBe('Dawn Stone, macho');
+    expect(how('Tyrogue', 'Hitmonlee')).toBe('Nv. 20, Ataque > Defesa');
+    expect(how('Eevee', 'Umbreon')).toBe('Subir de nível, amizade 160+, à noite');
+    expect(how('Magneton', 'Magnezone')).toBe('Subir de nível, em Railway Cave ou Thunder Stone');
+    expect(how('Onix', 'Steelix')).toBe('Troca, segurando Metal Coat ou Metal Coat'); // ou usando o item
+  });
+  it('espécie que o hack tirou aparece pelo número, sem inventar o nome', () => {
+    const [evo] = SG.evolutions[sid('Mantyke')];
+    expect(soulgoldEvoMethod(evo, TS)).toBe('Subir de nível, com uma espécie que não existe no SoulGold (nº 223) na equipe');
+  });
+  it('no detalhe: evolução e golpes do jogo, sem o "provável"', () => {
+    const dex = soulgoldLearnDex(SGL, SG);
+    const m = { speciesId: sid('Froakie'), level: 9, species: soulgoldSpecies(sid('Froakie'), SG, TS), moves: [] };
+    expect(levelMoveNames(m, dex, TS).slice(0, 7)).toEqual(['Pound', 'Growl', 'Bubble', 'Water Gun', 'Quick Attack', 'Lick', 'Water Pulse']);
+    const html = evolutionHtml(m, dex, TS) + learnsetHtml(m, dex, TS);
+    expect(html).toContain('Métodos do próprio SoulGold');
+    expect(html).toContain('Pokémon SoulGold');
+    expect(html).not.toContain('provável');
+    const lines = learnLines([{ ...m, location: 'party', slot: 1 }], dex, TS, { id: 'soulgold' });
+    expect(lines[1]).toBe('Aprende por nível (tabela do próprio jogo):');
   });
 });
 

@@ -51,13 +51,13 @@ Também tem:
 - **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;
 - **Análise da equipe**: fraquezas, resistências e imunidades por tipo, e cobertura dos golpes;
 - **Detalhes dos golpes** (poder, precisão, categoria, descrição) ao tocar no golpe;
-- No detalhe de cada Pokémon: **dano recebido** por tipo (4×, 2×, ½, ¼, imune), **linha evolutiva** com o método de cada evolução e **golpes por nível** (no Quetzal e no Unbound, as tabelas do próprio jogo; nos demais, as dos jogos oficiais, marcadas como "provável");
+- No detalhe de cada Pokémon: **dano recebido** por tipo (4×, 2×, ½, ¼, imune), **linha evolutiva** com o método de cada evolução e **golpes por nível** (no Quetzal, no Unbound e no SoulGold, as tabelas do próprio jogo; nos demais, as dos jogos oficiais, marcadas como "provável");
 - **Hidden Power** de cada Pokémon.
 - **O que mudou**: ao abrir o save de novo depois de jogar, mostra quem chegou, evoluiu, subiu de nível, aprendeu golpes ou saiu desde a versão anterior (histórico de até 30 versões, só neste aparelho).
 - **Imagem da equipe**: um PNG com sprites, tipos, item, habilidade, natureza e golpes, para compartilhar ou baixar.
 - **Assistente (IA, opcional)**: com uma chave grátis do Gemini ou do Groq, avalia a equipe (nota, pontos fortes e fracos, sinergia, trocas com o PC, dicas) ou monta uma equipe com os Pokémon da equipe e do PC. Veja a seção abaixo.
 
-Itens, golpes e espécies com ID próprio do Quetzal (acima de 898: formas regionais, megas, Gen 9 e os Pokémon próprios do jogo) vêm de tabelas lidas da ROM do jogo e conferidas com saves reais. No Unbound, as tabelas montadas a partir do código público do jogo foram conferidas com a ROM, que também dá os nomes dos itens, os dados dos golpes, as evoluções e os golpes por nível. As ROMs não fazem parte do repositório: os arquivos gerados têm só nomes e números. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
+Itens, golpes e espécies com ID próprio do Quetzal (acima de 898: formas regionais, megas, Gen 9 e os Pokémon próprios do jogo) vêm de tabelas lidas da ROM do jogo e conferidas com saves reais. No Unbound, as tabelas montadas a partir do código público do jogo foram conferidas com a ROM, que também dá os nomes dos itens, os dados dos golpes, as evoluções e os golpes por nível. No SoulGold, tudo vem da ROM (espécies, golpes, itens, evoluções e golpes por nível). As ROMs não fazem parte do repositório: os arquivos gerados têm só nomes e números. Os detalhes técnicos estão em [`CLAUDE.md`](CLAUDE.md).
 
 ## Assistente (IA)
 
@@ -103,7 +103,7 @@ npm run tables     # baixa do pokeemerald-expansion e da PokeAPI e regenera src/
 npm run dex        # evoluções e golpes por nível (PokeAPI) → src/data/dex.json
 npm run quetzal    # tabelas do Quetzal a partir da ROM em fixtures/rom/ → src/data/quetzal*.json
 npm run unbound    # tabelas do Unbound (código público + ROM em fixtures/rom/) → src/data/unbound*.json
-npm run soulgold   # tabelas do SoulGold a partir da ROM em fixtures/rom/ → src/data/soulgold.json
+npm run soulgold   # tabelas do SoulGold a partir da ROM em fixtures/rom/ → src/data/soulgold*.json
 ```
 
 `src/data/quetzal-overrides.json` é mantido à mão: tem as espécies com ID próprio do Quetzal e as exceções de item.

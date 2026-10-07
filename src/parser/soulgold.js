@@ -159,24 +159,27 @@ export function parseSoulGold(u8) {
   };
 }
 
+/** Espécie pela numeração do SoulGold (src/data/soulgold.json), no formato do app. */
+export function soulgoldSpecies(id, SG, T, isEgg = false) {
+  const row = SG.species[id];
+  if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
+  const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
+  return {
+    name, form: isEgg ? 'ovo' : form, showdown: SG.showdown[id] || name,
+    confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
+    types: [t1, t2].filter(Boolean).map(i => T.types[i] || null),
+    abilities: [SG.abilities[a1] || null, SG.abilities[a2] || null, SG.abilities[ha] || null],
+    baseStats: base, growth, genderByte,
+  };
+}
+
 /** Converte a leitura crua no mesmo formato de describe() do Quetzal. */
 export function describeSoulGold(raw, T, SG) {
   const typeName = i => T.types[i] || null;
   // Shiny: fórmula das gerações 6+ (1/4096, como no expansion) ou a marca do registro
   const shiny = (p) => p.shinyFlag || (((p.otId & 0xFFFF) ^ (p.otId >>> 16) ^ (p.pid & 0xFFFF) ^ (p.pid >>> 16)) >>> 0) < 16;
 
-  function species(id, isEgg) {
-    const row = SG.species[id];
-    if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 3, genderByte: 255 };
-    const [name, form, national, spriteId, icon, t1, t2, a1, a2, ha, genderByte, growth, ...base] = row;
-    return {
-      name, form: isEgg ? 'ovo' : form, showdown: SG.showdown[id] || name,
-      confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, nationalDex: national, hasIcon: !!icon,
-      types: [t1, t2].filter(Boolean).map(typeName),
-      abilities: [SG.abilities[a1] || null, SG.abilities[a2] || null, SG.abilities[ha] || null],
-      baseStats: base, growth, genderByte,
-    };
-  }
+  const species = (id, isEgg) => soulgoldSpecies(id, SG, T, isEgg);
   // Golpes: ID do app quando há par (nome, descrição, golpes por nível); tipo, poder, PP… da ROM
   const move = m => {
     const ref = SG.moves[m.id];
