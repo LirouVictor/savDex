@@ -57,10 +57,11 @@ export function changesWin(d, base, versions, { swapped = false } = {}) {
 
 /** Primeira vez que o save é aberto: o histórico começa agora. */
 export function historyStartWin() {
-  return `<section class="win changes" aria-labelledby="changes-h">
-    <div class="win-title"><h2 id="changes-h">${t('O que mudou')}</h2></div>
+  // Primeira versão guardada: ainda não há o que comparar, então só uma linha (o resto num toque)
+  return `<details class="win win-fold changes changes-first">
+    <summary class="win-title"><h2 id="changes-h">${t('O que mudou')}</h2><small>${t('versão guardada')}</small></summary>
     <p class="hint">${t('Esta versão do save ficou guardada neste aparelho. Da próxima vez que você abrir o save depois de jogar, o app mostra aqui quem chegou, evoluiu, subiu de nível ou aprendeu golpes.')}</p>
-  </section>`;
+  </details>`;
 }
 
 /** Lista de versões guardadas (janela "Histórico"). */

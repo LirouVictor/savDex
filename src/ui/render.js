@@ -137,17 +137,16 @@ function monHeader(m, headingTag = 'h3', idAttr = '') {
 export function trainerWin(d, fileName) {
   const tr = d.trainer;
   const pcTotal = d.pc.boxes.reduce((a, b) => a + b.slots.length, 0);
-  const kv = (k, v, cls = '') => `<div><dt>${k}</dt><dd${cls ? ` class="${cls}"` : ''}>${v}</dd></div>`;
+  // Números de consulta numa linha discreta; o destaque fica para o nome, o jogo e o resumo
+  const kv = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   const game = d.game ? d.game.name : '';
   return `<section class="win trainer" aria-labelledby="trainer-h">
     <div class="win-title"><h2 id="trainer-h">${t('Treinador')}</h2><small class="file" title="${esc(fileName)}">${esc(fileName)}</small></div>
-    ${game ? `<p class="game-chip"><span class="k">${t('Jogo')}</span> <b>${esc(game)}</b></p>` : ''}
-    <div class="trainer-row">
-      <p class="trainer-name pixel">${esc(tr.name || '—')}</p>
-      <dl class="kv">
-        ${kv('ID', pad5(tr.tid))}${kv('SID', pad5(tr.sid))}${kv(t('Equipe'), `${d.party.length}/6`)}${kv('PC', pcTotal)}${tr.saveIndex != null ? kv(t('Save nº'), tr.saveIndex) : ''}
-      </dl>
-    </div>
+    <p class="trainer-name pixel">${esc(tr.name || '—')}</p>
+    ${game ? `<p class="game-chip"><span class="sr">${t('Jogo')}: </span><b>${esc(game)}</b></p>` : ''}
+    <dl class="kv">
+      ${kv('ID', pad5(tr.tid))}${kv('SID', pad5(tr.sid))}${kv(t('Equipe'), `${d.party.length}/6`)}${kv('PC', pcTotal)}${tr.saveIndex != null ? kv(t('Save nº'), tr.saveIndex) : ''}
+    </dl>
     ${summaryHtml(d.summary)}
   </section>`;
 }
@@ -189,18 +188,41 @@ export function exportWin() {
   </section>`;
 }
 
+// Tipos abreviados como nas telas dos jogos (cabem dois no cartão da equipe)
+const TYPE_ABBR = { normal: 'NOR', fighting: 'FIG', flying: 'FLY', poison: 'POI', ground: 'GRO', rock: 'ROC', bug: 'BUG', ghost: 'GHO',
+  steel: 'STE', fire: 'FIR', water: 'WAT', grass: 'GRA', electric: 'ELE', psychic: 'PSY', ice: 'ICE', dragon: 'DRA', dark: 'DAR', fairy: 'FAI', stellar: 'STL' };
+
+/** Barra de HP só quando o Pokémon está ferido (verde, amarela abaixo da metade, vermelha abaixo de 1/5). */
+function hpBar(m) {
+  const max = m.stats && m.stats.hp;
+  if (!max || m.hp == null || m.hp >= max) return '';
+  const r = Math.max(0, m.hp) / max;
+  return `<span class="ptile-hp${r < 0.2 ? ' low' : r < 0.5 ? ' mid' : ''}" title="${esc(t('HP atual / máximo'))}: ${m.hp}/${max}"><i style="width:${Math.round(r * 100)}%"></i></span>`;
+}
+
 /** Bloco de Pokémon com sprite grande (equipe e equipes da IA). */
 export function monTile(m, attrs = '') {
   const sp = m.species;
   const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
-  const label = `${m.hasNickname ? m.nickname + ' (' + sp.name + ')' : sp.name}${m.shiny ? ', shiny' : ''}${m.level ? ', ' + t('nível {n}', { n: m.level }) : ''}`;
+  const hurt = m.stats && m.hp != null && m.hp < m.stats.hp ? `, HP ${m.hp}/${m.stats.hp}` : '';
+  const label = `${m.hasNickname ? m.nickname + ' (' + sp.name + ')' : sp.name}${m.shiny ? ', shiny' : ''}${m.level ? ', ' + t('nível {n}', { n: m.level }) : ''}${sp.types.length ? ', ' + sp.types.join('/') : ''}${hurt}`;
   const next = m.shiny && sp.spriteId ? ` data-next="${esc(spriteSrc(sp))}"` : '';
   return `<button class="ptile${tc}" type="button" ${attrs} aria-label="${esc(label)}">
     <img data-sprite="1"${next} src="${esc(spriteSrc(sp, m.shiny))}" width="96" height="96" alt="" decoding="async" loading="lazy" crossorigin="anonymous">
     <span class="ptile-marks">${m.shiny ? '<span class="shiny" aria-hidden="true">★</span>' : ''}${genderIcon(m.gender)}</span>
     <span class="ptile-name">${monShort(m)}</span>
     ${m.level ? `<span class="ptile-lv">${t('Nv.')} ${m.level}</span>` : ''}
+    ${sp.types.length ? `<span class="ptile-types" aria-hidden="true">${sp.types.map(ty => `<i class="t-${esc(ty)}" title="${esc(ty)}">${TYPE_ABBR[ty] || esc(ty.slice(0, 3))}</i>`).join('')}</span>` : ''}
+    ${hpBar(m)}
   </button>`;
+}
+
+/** Barra fixa embaixo com os quatro blocos da página. */
+export function navBar() {
+  const item = (id, ico, label) => `<button type="button" data-go="${id}"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg><span>${label}</span></button>`;
+  return `<nav class="nav" aria-label="${t('Seções')}">
+    ${item('grp-summary', 'card', t('Resumo'))}${item('grp-party', 'party', t('Equipe'))}${item('grp-pc', 'box', 'PC')}${item('grp-tools', 'tools', t('Ferramentas'))}
+  </nav>`;
 }
 
 export function warningsWin(warnings) {
@@ -277,7 +299,6 @@ export function monDetail(m, T) {
   <div class="mon">
     ${monHeader(m, 'h2', ' id="detail-title"')}
     <p class="mon-sub">${esc(where)}</p>
-    ${sp.evidence ? `<p class="evidence">${esc(t(sp.evidence))}</p>` : ''}
     <div class="facts">${natureChip(m.nature, m.pidNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
     ${movesList(m.moves)}
     ${m.stats ? statsTable(m) : ivEvTable(m)}
@@ -285,7 +306,10 @@ export function monDetail(m, T) {
     ${T ? matchupTable(m, T) : ''}
     <div class="dex-slot" data-dex></div>
     <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">${t('Copiar (Showdown)')}</button></div>
-    <details class="fold"><summary>${t('Bytes do registro')}</summary><p class="raw">${esc(m.raw)}</p></details>
+    <details class="fold adv"><summary>${t('Avançado')}</summary>
+      ${sp.evidence ? `<p class="evidence"><span class="k">${t('Como a espécie foi identificada')}</span> ${esc(t(sp.evidence))}</p>` : ''}
+      <p class="raw"><span class="k">${t('Bytes do registro')}</span> ${esc(m.raw)}</p>
+    </details>
   </div>`;
 }
 
