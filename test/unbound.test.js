@@ -77,10 +77,10 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
       expect(d.trainer).toMatchObject({ name: 'Kadhem', tid: 48855, sid: 16608 });
       expect(d.party.map(m => m.species.name).sort()).toEqual(['Absol', 'Gallade', 'Greninja', 'Tapu Lele']);
       for (const m of d.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
-      const [money, dex] = f === SAVES[0] ? [998404199, 872] : [999997299, 905];
+      const money = f === SAVES[0] ? 998404199 : 999997299;
       expect(d.summary).toEqual({
-        playTime: { h: 999, m: 59, s: 59, confidence: 'provável' }, money: { value: money, confidence: 'provável' },
-        badges: { count: 8, total: 8, confidence: 'provável' }, dex: { owned: dex, total: 905, confidence: 'provável' },
+        playTime: { h: 999, m: 59, s: 59, confidence: 'confirmado' }, money: { value: money, confidence: 'confirmado' },
+        badges: { count: 8, total: 8, confidence: 'confirmado' }, dex: { owned: 809, total: 809, confidence: 'confirmado' },
       });
     }
   });
@@ -110,15 +110,17 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
   });
 });
 
-// Save real de outro jogador (Unbound 2.1.0, 11h48m de jogo, sem insígnias; lendários no PC)
+// Save real de outro jogador (Unbound 2.1.0, 11h48m de jogo, sem insígnias; lendários no PC). Os valores do resumo
+// foram conferidos no jogo (emulador): cartão do treinador com ₽4040, 11:48, nenhuma insígnia e Pokédex 151;
+// tela da Pokédex com Nacional 153 vistos / 151 capturados.
 const SAVE_C = 'fixtures/unbound-c.sav';
 suite.skipIf(!existsSync(SAVE_C))('Pokémon Unbound: save real com 11h de jogo', () => {
   let d;
   beforeAll(() => { d = loadSave(readFileSync(SAVE_C), T, G, U).data; });
-  it('resumo: tempo, dinheiro, insígnias e Pokédex do DPE (capturados ⊇ todas as espécies do save)', () => {
+  it('resumo igual ao do jogo: tempo, dinheiro, insígnias e Pokédex Nacional (até 809)', () => {
     expect(d.trainer).toMatchObject({ tid: 8044, sid: 21042 });
     expect(d.summary).toMatchObject({
-      playTime: { h: 11, m: 48, s: 56 }, money: { value: 4040 }, badges: { count: 0, total: 8 }, dex: { owned: 210, total: 905 },
+      playTime: { h: 11, m: 48, s: 56 }, money: { value: 4040 }, badges: { count: 0, total: 8 }, dex: { owned: 151, total: 809 },
     });
   });
   it('equipe com stats = fórmula', () => {
