@@ -45,7 +45,8 @@ suite('SoulGold: leitura', () => {
     party: [{ pid: 0xC5C928CA, otId, species: froakie, exp: 331, level: 8, ball: 1, nickname: 'Froakie', otName: 'GOLD',
       moves: [[sgMove('Pound'), 32], [sgMove('Water Gun'), 25]], ivs: [20, 1, 31, 10, 27, 24], evs: [1, 0, 0, 9, 0, 3],
       stats: [26, 12, 14, 17, 17, 13], hp: 13 }],
-    pc: { 0: { pid: 0x10, otId, species: pidgey, exp: 1000, ball: 2, item: 1, moves: [[sgMove('Tackle'), 35]], ivs: [31, 31, 31, 31, 31, 31] } },
+    pc: { 0: { pid: 0x10, otId, species: pidgey, exp: 1000, ball: 2, item: 1, abilityNum: 1, moves: [[sgMove('Tackle'), 35]], ivs: [31, 31, 31, 31, 31, 31] },
+      31: { pid: 0x20, otId, species: froakie, exp: 50, abilityNum: 2, moves: [[sgMove('Pound'), 35]] } },
     summary: { hours: 3, minutes: 4, seconds: 5, money: 12345, badges: 2, caught: [656, 16, 906] },
   });
 
@@ -66,11 +67,11 @@ suite('SoulGold: leitura', () => {
     expect(m.gender.symbol).toBe('♂');
     expect(m.ball.name).toBe('Poké Ball');
     expect(m.moves.map(x => [x.name, x.pp, x.type])).toEqual([['Pound', 32, 'normal'], ['Water Gun', 25, 'water']]);
-    expect(m.ability).toMatchObject({ name: 'Torrent', confidence: 'provável' });
+    expect(m.ability).toMatchObject({ name: 'Torrent', num: 0, confidence: 'confirmado' });
     expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
   });
 
-  it('PC: 15 caixas de Pokémon de 76 bytes, com aviso de formato provável', () => {
+  it('PC: 15 caixas de Pokémon de 76 bytes; número da habilidade nos bits 12–13 do 4º golpe', () => {
     const { data } = load(save);
     expect(data.pc.boxes).toHaveLength(15);
     const [p] = data.pc.boxes[0].slots;
@@ -78,7 +79,11 @@ suite('SoulGold: leitura', () => {
     expect(p.item.name).toBe('Poké Ball');
     expect(p.ball.name).toBe('Great Ball');
     expect(p.levelFromExp).toBe(true);
-    expect(data.warnings.join(' ')).toMatch(/PC do SoulGold/);
+    expect(p.ability).toMatchObject({ name: 'Tangled Feet', num: 1 });
+    expect(p.moves.map(x => x.name)).toEqual(['Tackle']); // os bits da habilidade não viram golpe
+    const [f] = data.pc.boxes[1].slots;
+    expect(f.ability).toMatchObject({ name: 'Protean', num: 2, hidden: true });
+    expect(data.warnings).toEqual([]);
   });
 
   it('dados dos golpes da ROM também no moveInfo', () => {
@@ -90,7 +95,7 @@ suite('SoulGold: leitura', () => {
 // Save real (começo do jogo, versão 1.0.5), conferido no próprio jogo com a ROM 1.2 no emulador (tools/gbarun.c):
 // cartão do treinador Victor / ID 21893 / ₽3000 / 0:28 / nenhuma insígnia; Froakie Nv. 8 Bold, HP 13/26,
 // stats 12/14/17/17/13, golpes Pound 32, Growl 40, Bubble 15, Water Gun 25; Pokédex de Johto 6 vistos, 1 capturado.
-const REAL = 'fixtures/soulgold-a.sav';
+const REAL = 'fixtures/soulgold-a.sav', REAL_B = 'fixtures/soulgold-b.sav';
 suite.skipIf(!existsSync(REAL))('SoulGold: save real', () => {
   let d;
   beforeAll(() => { d = load(readFileSync(REAL)).data; });
@@ -105,5 +110,37 @@ suite.skipIf(!existsSync(REAL))('SoulGold: save real', () => {
     expect(m.stats).toEqual({ hp: 26, atk: 12, def: 14, spe: 17, spa: 17, spd: 13 });
     expect(m.moves.map(x => [x.name, x.pp])).toEqual([['Pound', 32], ['Growl', 40], ['Bubble', 15], ['Water Gun', 25]]);
     expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
+  });
+});
+
+// Save real com 6 Pokémon na equipe e um no PC (0:51), conferido no jogo: cartão (₽3300, Pokédex 7, 0:51), Pokédex
+// de Johto (13 vistos, 7 capturados), as 4 páginas do resumo de cada Pokémon e o Ralts do PC (copiado para a
+// equipe numa cópia do save). Pidgey e Spinarak têm a 2ª habilidade (Tangled Feet, Insomnia).
+suite.skipIf(!existsSync(REAL_B))('SoulGold: save real com equipe cheia e PC', () => {
+  let d;
+  beforeAll(() => { d = load(readFileSync(REAL_B)).data; });
+  it('resumo igual ao do jogo', () => {
+    expect(d.summary).toMatchObject({ playTime: { h: 0, m: 51 }, money: { value: 3300 }, badges: { count: 0 }, dex: { owned: 7, total: 702 } });
+    expect(d.warnings).toEqual([]);
+  });
+  it('equipe igual à do jogo (Pokémon de 96 bytes)', () => {
+    const row = m => [m.species.name, m.level, m.nature.name, m.gender.symbol, m.ability.name, m.item?.name ?? null, m.friendship, m.exp, m.hp];
+    expect(d.party.map(row)).toEqual([
+      ['Froakie', 9, 'Bold', '♂', 'Torrent', null, 84, 526, 21],
+      ['Rattata', 2, 'Quirky', '♀', 'Run Away', null, 55, 8, 5],
+      ['Zigzagoon', 2, 'Brave', '♂', 'Pickup', 'Potion', 52, 8, 4],
+      ['Hoppip', 2, 'Quirky', '♂', 'Chlorophyll', null, 52, 9, 5],
+      ['Pidgey', 2, 'Serious', '♂', 'Tangled Feet', null, 51, 9, 4],
+      ['Spinarak', 4, 'Serious', '♂', 'Insomnia', null, 52, 51, 3],
+    ]);
+    expect(d.party[0].stats).toEqual({ hp: 28, atk: 13, def: 15, spe: 18, spa: 18, spd: 15 });
+    expect(d.party[5].moves.map(x => [x.name, x.pp])).toEqual([['Poison Sting', 34], ['String Shot', 40], ['Constrict', 34]]);
+    for (const m of d.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
+  });
+  it('PC igual ao do jogo', () => {
+    const [r] = d.pc.boxes[0].slots;
+    expect([r.species.name, r.level, r.nature.name, r.gender.symbol, r.ability.name, r.friendship, r.exp]).toEqual(['Ralts', 3, 'Hardy', '♂', 'Synchronize', 35, 33]);
+    expect(r.stats).toEqual({ hp: 15, atk: 6, def: 6, spe: 7, spa: 8, spd: 7 });
+    expect(r.moves.map(x => [x.name, x.pp])).toEqual([['Growl', 40], ['Disarming Voice', 15], ['Double Team', 15]]);
   });
 });

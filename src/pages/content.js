@@ -8,10 +8,12 @@ export const NEWS = [
   {
     date: '2026-10-07',
     pt: [
+      'SoulGold: corrigida a leitura de equipes com mais de um Pokémon (o save não abria). A habilidade agora vem do save (2ª e oculta também), e o PC foi conferido no próprio jogo, sem o aviso de “provável”.',
       'Novo jogo: Pokémon SoulGold (hack de Emerald ambientado em Johto). Mostra treinador, equipe, PC e o resumo (tempo de jogo, dinheiro, insígnias e a Pokédex de Johto), conferidos no próprio jogo. O PC ainda não foi conferido com Pokémon dentro, e a habilidade aparece como “provável”.',
       'Unbound: dinheiro, insígnias, tempo de jogo e Pokédex do resumo do save agora estão conferidos no próprio jogo, sem o “provável”. A Pokédex conta como a do jogo: a Nacional vai até o Melmetal (809).',
     ],
     en: [
+      'SoulGold: fixed reading parties with more than one Pokémon (the save would not open). The ability now comes from the save (2nd and hidden too), and the PC was checked against the game itself, without the “probable” warning.',
       'New game: Pokémon SoulGold (an Emerald hack set in Johto). Shows trainer, party, PC and the summary (play time, money, badges and the Johto Pokédex), checked against the game itself. The PC has not been checked with Pokémon in it yet, and the ability shows as “probable”.',
       'Unbound: money, badges, play time and Pokédex in the save summary are now checked against the game itself, without the “probable” tag. The Pokédex counts like the game’s: the National Dex goes up to Melmetal (809).',
     ],
