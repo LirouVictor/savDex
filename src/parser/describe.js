@@ -28,7 +28,7 @@ export const mediumSlow = n => (n <= 1 ? 0 : Math.floor((6 * n ** 3) / 5) - 15 *
  * 0 = variável ou não se aplica). `known` = o golpe tem nome conhecido.
  */
 export function moveInfo(id, T) {
-  const Q = T.quetzal, Ub = T.unbound;
+  const Q = T.quetzal, Ub = T.unbound || T.soulgold; // SoulGold: mesmo formato de tabela de golpes do Unbound
   let md = null, own = null;
   if (Q) { md = Q.moveData ? Q.moveData[id] : null; own = Q.moveNames[id] || null; }
   else if (Ub) {

@@ -15,6 +15,7 @@
     "unbound": "node tools/build-unbound.mjs",
     "nds": "node tools/build-nds.mjs",
     "quetzal": "node tools/build-quetzal.mjs",
+    "soulgold": "node tools/build-soulgold.mjs",
     "diff-saves": "node tools/diff-saves.mjs"
   },
   "devDependencies": {

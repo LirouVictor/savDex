@@ -1,6 +1,6 @@
 // Carregado sob demanda quando o usuário abre um save (parser + tabelas + renderização).
 
-import { loadSave, isQuetzal, isUnbound, isNds } from './parser/index.js';
+import { loadSave, isQuetzal, isUnbound, isNds, isSoulGold } from './parser/index.js';
 import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
 import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
@@ -38,8 +38,8 @@ export async function openSave(buffer, fileName, opts = {}) {
   return data;
 }
 
-/** Tabelas de jogos que só alguns saves usam, carregadas sob demanda: [Unbound, DS]. */
-let unboundTables = null, ndsTables = null, quetzalTables = null;
+/** Tabelas de jogos que só alguns saves usam, carregadas sob demanda: [Unbound, DS, Quetzal, SoulGold]. */
+let unboundTables = null, ndsTables = null, quetzalTables = null, soulgoldTables = null;
 async function extraTables(buffer) {
   if (isUnbound(buffer)) {
     if (!unboundTables) unboundTables = (await import('./data/unbound.json')).default;
@@ -53,6 +53,10 @@ async function extraTables(buffer) {
   if (isQuetzal(buffer)) {
     if (!quetzalTables) quetzalTables = (await import('./data/quetzal.json')).default;
     return [null, null, quetzalTables];
+  }
+  if (isSoulGold(buffer)) {
+    if (!soulgoldTables) soulgoldTables = (await import('./data/soulgold.json')).default;
+    return [null, null, null, soulgoldTables];
   }
   return [null, null, null];
 }
