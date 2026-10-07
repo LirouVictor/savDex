@@ -22,12 +22,12 @@ export const UNBOUND_SIGNATURES = { 0x01121999: '2.1', 0x01122000: '2.1.1.2+' };
 const OLD_SIGNATURE = 0x01121998; // Unbound 2.0
 const SECTION_SIZE = { 0: 0xF24, 4: 0xD98, 13: 0x450 };
 const DATA = 0xFF0;
-// Resumo (provável: conferido só pela coerência dos 3 saves reais, sem a tela do jogo). O SaveBlock1 do CFRU
-// ocupa as seções 1–4 em blocos de 0xFF0 bytes (não 0xF80 como no FireRed).
+// Resumo, conferido no próprio jogo (save real de 11h48m aberto no emulador: cartão do treinador e Pokédex).
+// O SaveBlock1 do CFRU ocupa as seções 1–4 em blocos de 0xFF0 bytes (não 0xF80 como no FireRed).
 const MONEY = 0x290; // u32 sem chave (a chave do FireRed, 0xF20 da seção 0, é 0 nos saves)
 const FLAGS = 0xEE0, BADGE_FLAG = 0x820; // insígnias = flags 0x820–0x827, como no FireRed (os scripts dos ginásios usam essas)
 const CAUGHT = 0x38D; // Pokédex do DPE: capturados na RAM 0x020258B9 = SaveBlock1 (0x0202552C) + 0x38D; vistos em + 0x310
-const DEX_TOTAL = 905; // Dex Nacional do Unbound (Gen 1–8 + Hisui)
+const DEX_TOTAL = 809; // a Pokédex Nacional do jogo vai até o Melmetal (a Gen 8 tem marca no save, mas não entra na lista nem na contagem)
 const MON = 58;
 const PER_BOX = 30;
 export const UNBOUND = { id: 'unbound', name: 'Pokémon Unbound', short: 'Unbound' };
@@ -96,17 +96,17 @@ function compressed(u8, o) {
   };
 }
 
-/** Tempo de jogo, dinheiro, insígnias e Pokédex (todos prováveis; ver as constantes). */
+/** Tempo de jogo, dinheiro, insígnias e Pokédex (capturados), como no cartão do treinador do jogo. */
 function unboundSummary(s0, s0v, sec) {
   const sb1 = [1, 2, 3, 4].map(sec);
   const at = o => sb1[Math.floor(o / DATA)][o % DATA];
   const block = (o, n) => Uint8Array.from({ length: n }, (_, i) => at(o + i));
   const flags = block(FLAGS + (BADGE_FLAG >> 3), 2);
   return summary({
-    playTime: playTime(s0v.getUint16(0x0E, true), s0[0x10], s0[0x11], 'provável'),
-    money: { value: new DataView(block(MONEY, 4).buffer).getUint32(0, true), confidence: 'provável' },
-    badges: { count: countBits(flags, 0, 8, BADGE_FLAG & 7), total: 8, confidence: 'provável' },
-    dex: { owned: countBits(block(CAUGHT, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL), total: DEX_TOTAL, confidence: 'provável' },
+    playTime: playTime(s0v.getUint16(0x0E, true), s0[0x10], s0[0x11], 'confirmado'),
+    money: { value: new DataView(block(MONEY, 4).buffer).getUint32(0, true), confidence: 'confirmado' },
+    badges: { count: countBits(flags, 0, 8, BADGE_FLAG & 7), total: 8, confidence: 'confirmado' },
+    dex: { owned: countBits(block(CAUGHT, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL), total: DEX_TOTAL, confidence: 'confirmado' },
   });
 }
 

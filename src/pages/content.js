@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-06';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-07',
+    pt: [
+      'Unbound: dinheiro, insígnias, tempo de jogo e Pokédex do resumo do save agora estão conferidos no próprio jogo, sem o “provável”. A Pokédex conta como a do jogo: a Nacional vai até o Melmetal (809).',
+    ],
+    en: [
+      'Unbound: money, badges, play time and Pokédex in the save summary are now checked against the game itself, without the “probable” tag. The Pokédex counts like the game’s: the National Dex goes up to Melmetal (809).',
+    ],
+  },
+  {
     date: '2026-10-06',
     pt: [
       'Unbound: o resumo do save agora mostra também dinheiro, insígnias e Pokédex (capturados), marcados como “provável” até serem conferidos com a tela do jogo.',
