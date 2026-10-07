@@ -148,7 +148,7 @@ export function summaryHtml(s) {
 
 /** Exportar: no fim da página, compacto. */
 export function exportWin() {
-  return `<section class="win export" aria-labelledby="export-h">
+  return `<section class="win export" id="export-win" aria-labelledby="export-h">
     <div class="win-title"><h2 id="export-h">${t('Exportar')}</h2><small>${t('equipe + PC')}</small></div>
     <div class="export-btns">
       <button class="btn btn-small" type="button" data-exp="csv">${t('Planilha (CSV)')}</button>
@@ -208,7 +208,7 @@ export function warningsWin(warnings) {
 export function partyWin(d) {
   const tiles = d.party.map((m, i) => `<li>${monTile(m, `data-party="${i}"`)}</li>`).join('');
   const empty = Array.from({ length: Math.max(0, 6 - d.party.length) }, () => '<li class="ptile-empty" aria-hidden="true"></li>').join('');
-  return `<section class="win" aria-labelledby="party-h">
+  return `<section class="win" id="party-win" aria-labelledby="party-h">
     <div class="win-title"><h2 id="party-h">${t('Equipe')}</h2><small>${t('{n} de 6 · toque para ver detalhes', { n: d.party.length })}</small></div>
     ${d.party.length ? `<ul class="party-grid">${tiles}${empty}</ul>` : `<p class="hint">${t('Nenhum Pokémon na equipe.')}</p>`}
     ${d.party.length ? `<div class="export-btns party-actions"><button class="btn btn-ghost btn-small" type="button" data-team-image>${t('Imagem da equipe')}</button></div>` : ''}
@@ -217,7 +217,7 @@ export function partyWin(d) {
 
 export function pcWin(d) {
   const options = d.pc.boxes.map(b => `<option value="${b.index}">${esc(b.name)} · ${b.slots.length ? b.slots.length + '/30' : t('vazia')}${b.partial ? ` (${t('parcial')})` : ''}</option>`).join('');
-  return `<section class="win" aria-labelledby="pc-h">
+  return `<section class="win" id="pc-win" aria-labelledby="pc-h">
     <div class="win-title"><h2 id="pc-h">PC</h2><small id="pc-count"></small></div>
     <div class="box-nav">
       <button class="btn btn-ghost btn-icon" type="button" data-box-step="-1" aria-label="${t('Caixa anterior')}">◀</button>
@@ -336,7 +336,7 @@ export function analysisWin(d, T) {
       ${who(r, r.weak, 'weak', t('Fracos'))}${who(r, r.resist, 'resist', t('Resistem'))}${who(r, r.immune, 'immune', t('Imunes'))}
     </td></tr>` : ''}`;
   }).join('');
-  return `<section class="win" aria-labelledby="analysis-h">
+  return `<section class="win" id="analysis-win" aria-labelledby="analysis-h">
     <div class="win-title"><h2 id="analysis-h">${t('Análise da equipe')}</h2><small>${t('tipos')}</small></div>
     <details class="analysis fold">
       <summary>${t('Fraquezas e resistências')}</summary>

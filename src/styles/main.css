@@ -254,8 +254,19 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
 /* No computador: Resumo em cima, Equipe e PC lado a lado, Ferramentas embaixo; cabe quase tudo na tela, sem a barra */
 @media (min-width: 1000px) {
   main { max-width: 1200px; }
-  #out { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-  #grp-summary, #grp-tools { grid-column: 1 / -1; }
+  /* Cada janela no seu lugar da grade: Equipe + Análise ao lado do PC, Buscar e Assistente (as duas janelas
+     que abrem e fecham) lado a lado, e Exportar embaixo */
+  #out {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start;
+    grid-template-areas: "sum sum" "party pc" "search ai" "export export";
+  }
+  #grp-pc, #grp-tools { display: contents; }
+  #grp-summary { grid-area: sum; }
+  #grp-party { grid-area: party; }
+  #pc-win { grid-area: pc; }
+  #search-win { grid-area: search; }
+  #ai-win { grid-area: ai; }
+  #export-win { grid-area: export; }
   .nav { display: none; }
   body:has(#out:not(.hidden)) { padding-bottom: 0; }
 }
