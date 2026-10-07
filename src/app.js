@@ -389,10 +389,21 @@ function openDetail(m, opener) {
   dlg.innerHTML = R.monDetail(m, T);
   fillDex(dlg, m);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
-  dlg.querySelector('[data-copy="mon"]').addEventListener('click', async e => {
+  const copy = dlg.querySelector('[data-copy="mon"]');
+  copy.addEventListener('click', async () => {
     const ok = await copyText(showdownTeam([m]));
-    e.target.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
+    const msg = t(ok ? 'Copiado!' : 'Não foi possível copiar');
+    copy.textContent = ok ? '✓' : '!';
+    copy.title = msg;
+    copy.setAttribute('aria-label', msg);
   });
+  // O nome aparece na barra de cima quando o cabeçalho sai da tela
+  const hero = dlg.querySelector('.mon-hero'), bar = dlg.querySelector('.sheet-bar');
+  if (hero && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: dlg, rootMargin: '-56px 0px 0px 0px' });
+    io.observe(hero);
+    dlg.addEventListener('close', () => io.disconnect(), { once: true });
+  }
   // Ao fechar, volta exatamente para onde a página estava.
   const scroll = window.scrollY;
   dlg.addEventListener('close', () => {

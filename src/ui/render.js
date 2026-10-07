@@ -48,13 +48,14 @@ function movesList(moves) {
     const power = mv.power ? mv.power : '—';
     const acc = mv.accuracy ? mv.accuracy + '%' : '—';
     const cat = categoryName(mv.category) || '—';
+    // Golpe de status: só a precisão (quando tem); os de dano: poder · precisão
+    const pa = mv.category === 2 ? (mv.accuracy ? acc : '') : `${power} · ${acc}`;
+    // Poder e precisão já na linha do golpe; tocar mostra a descrição
     return `<li><details class="move t-${esc(mv.type || 'none')}">
       <summary><span>${esc(mv.name)}</span><span class="pp">${mv.pp} PP</span>
-        <span class="mt">${esc(mv.type || '—')} · ${esc(cat)}</span></summary>
-      <div class="move-info">
-        <span><span class="k">${t('Poder')}</span> ${power}</span><span><span class="k">${t('Precisão')}</span> ${acc}</span>
-        <p class="move-desc" data-move="${mv.id}"></p>
-      </div>
+        <span class="mt">${esc(mv.type || '—')} · ${esc(cat)}</span>
+        ${pa ? `<span class="mpa" title="${esc(t('Poder'))} · ${esc(t('Precisão'))}">${pa}</span>` : ''}</summary>
+      <div class="move-info"><p class="move-desc" data-move="${mv.id}"></p></div>
     </details></li>`;
   }).join('')}</ul>`;
 }
@@ -74,7 +75,7 @@ function statRows(m, { withStats }) {
     return `<tr>
       <th class="${cls}" scope="row">${STAT_LABEL[k]}${mark}</th>
       ${withStats ? `<td class="num${hurt ? ' hurt' : ''}">${num}</td>` : ''}
-      <td><div class="bar"><i style="width:${Math.round(value / max * 100)}%"></i></div></td>
+      <td><div class="bar"><i style="width:${Math.round(value / max * 100)}%;--h:${Math.round(Math.min(1, value / max) * 120)}"></i></div></td>
       <td class="iv${iv === 31 ? ' max' : ''}">${iv}</td>
       <td class="ev">${m.evs[k]}</td>
     </tr>`;
@@ -88,34 +89,6 @@ function statRows(m, { withStats }) {
 
 const ivEvTable = m => statRows(m, { withStats: false });
 const statsTable = m => statRows(m, { withStats: true });
-
-function ballChip(b) {
-  if (!b) return `<span class="chip unread"><span class="k">${t('Bola')}</span> ${t('não lida')}</span>`;
-  return `<span class="chip"><span class="k">${t('Bola')}</span><b>${esc(b.name)}</b>${badge(b.confidence)}</span>`;
-}
-
-function natureChip(n, pidNature = null) {
-  if (!n) return `<span class="chip unread"><span class="k">${t('Natureza')}</span> ${t('não lida')}</span>`;
-  const eff = n.plus ? `+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}` : t('neutra');
-  const title = pidNature ? ` title="${esc(t('Natureza tirada dos stats salvos (o PID indica {name}).', { name: pidNature.name }))}"` : '';
-  return `<span class="chip"${title}><span class="k">${t('Natureza')}</span><b>${esc(n.name)}</b> <span class="k">${eff}</span></span>`;
-}
-
-function hiddenPowerChip(type) {
-  if (!type) return '';
-  return `<span class="chip"><span class="k">Hidden Power</span>${typeChip(type)}</span>`;
-}
-
-function itemChip(item, complete) {
-  if (!complete) return `<span class="chip unread"><span class="k">Item</span> ${t('não lido')}</span>`;
-  if (!item) return `<span class="chip"><span class="k">Item</span> ${t('nenhum')}</span>`;
-  return `<span class="chip"><span class="k">Item</span><b>${esc(item.name)}</b>${badge(item.confidence)}</span>`;
-}
-
-function abilityChip(ab) {
-  if (!ab) return `<span class="chip unread"><span class="k">${t('Habilidade')}</span> ${t('não lida')}</span>`;
-  return `<span class="chip"><span class="k">${t('Habilidade')}</span><b>${esc(ab.name)}</b>${ab.hidden ? ` <span class="k">${t('oculta')}</span>` : ''}${badge(ab.confidence)}</span>`;
-}
 
 function monHeader(m, headingTag = 'h3', idAttr = '') {
   const sp = m.species;
@@ -288,6 +261,23 @@ function matchupTable(m, T) {
   return `<section class="dsec"><h3>${t('Dano recebido')}</h3>${rows}<p class="hint">${t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.')}</p></section>`;
 }
 
+/** Natureza, item, habilidade, bola e Hidden Power numa grade de duas colunas. */
+function factsGrid(m) {
+  const row = (k, v, cls = '') => `<div${cls ? ` class="${cls}"` : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
+  const unread = t('não lida');
+  const n = m.nature;
+  const nat = n ? `<b>${esc(n.name)}</b> <span class="k">${n.plus ? `+${STAT_LABEL[n.plus]} −${STAT_LABEL[n.minus]}` : t('neutra')}</span>` : unread;
+  const natTitle = m.pidNature ? ` title="${esc(t('Natureza tirada dos stats salvos (o PID indica {name}).', { name: m.pidNature.name }))}"` : '';
+  const ab = m.ability;
+  return `<dl class="facts-grid">
+    <div${natTitle}><dt>${t('Natureza')}</dt><dd>${nat}</dd></div>
+    ${row('Item', m.item ? `<b>${esc(m.item.name)}</b>${badge(m.item.confidence)}` : t('nenhum'))}
+    ${row(t('Habilidade'), ab ? `<b>${esc(ab.name)}</b>${ab.hidden ? ` <span class="k">${t('oculta')}</span>` : ''}${badge(ab.confidence)}` : unread, ab ? '' : 'unread')}
+    ${row(t('Bola'), m.ball ? `<b>${esc(m.ball.name)}</b>${badge(m.ball.confidence)}` : unread, m.ball ? '' : 'unread')}
+    ${m.hiddenPower ? row('Hidden Power', typeChip(m.hiddenPower)) : ''}
+  </dl>`;
+}
+
 export function monDetail(m, T) {
   const sp = m.species;
   const where = `${m.location === 'party' ? t('Equipe') : m.where}, ${t('posição {n}', { n: m.slot })}`;
@@ -295,17 +285,24 @@ export function monDetail(m, T) {
     : `<p class="unread-list">${t(m.complete
       ? 'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados.'
       : 'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.', { exp: num(m.exp) })}</p>`;
-  return `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+  const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
+  // Barra fixa no topo (copiar e fechar sempre à mão; o nome aparece nela quando o cabeçalho sai da tela)
+  return `<div class="sheet-bar${tc}">
+    <b class="sheet-bar-name" aria-hidden="true">${m.hasNickname ? esc(m.nickname) : esc(sp.name)}</b>
+    <button class="btn btn-ghost btn-icon" type="button" data-copy="mon" aria-label="${t('Copiar (Showdown)')}" title="${t('Copiar (Showdown)')}"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges"><use href="#copy"/></svg></button>
+    <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+  </div>
   <div class="mon">
-    ${monHeader(m, 'h2', ' id="detail-title"')}
-    <p class="mon-sub">${esc(where)}</p>
-    <div class="facts">${natureChip(m.nature, m.pidNature)}${itemChip(m.item, true)}${abilityChip(m.ability)}${ballChip(m.ball)}${hiddenPowerChip(m.hiddenPower)}</div>
+    <div class="mon-hero${tc}">
+      ${monHeader(m, 'h2', ' id="detail-title"')}
+      <p class="mon-sub">${esc(where)}</p>
+    </div>
+    ${factsGrid(m)}
     ${movesList(m.moves)}
     ${m.stats ? statsTable(m) : ivEvTable(m)}
     ${note}
     ${T ? matchupTable(m, T) : ''}
     <div class="dex-slot" data-dex></div>
-    <div class="export-btns"><button class="btn btn-ghost" type="button" data-copy="mon">${t('Copiar (Showdown)')}</button></div>
     <details class="fold adv"><summary>${t('Avançado')}</summary>
       ${sp.evidence ? `<p class="evidence"><span class="k">${t('Como a espécie foi identificada')}</span> ${esc(t(sp.evidence))}</p>` : ''}
       <p class="raw"><span class="k">${t('Bytes do registro')}</span> ${esc(m.raw)}</p>

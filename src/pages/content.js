@@ -8,6 +8,8 @@ export const NEWS = [
   {
     date: '2026-10-07',
     pt: [
+      'Detalhe do Pokémon renovado: cabeçalho com a cor do tipo, barra no topo com copiar e fechar sempre à mão, natureza/item/habilidade/bola em duas colunas, poder e precisão já na linha de cada golpe e barras de stats coloridas (do mais fraco ao mais forte).',
+      'Fraquezas e resistências: tocar num tipo mostra, logo abaixo, quem é fraco, resiste ou é imune, com o multiplicador de cada um.',
       'Visual novo: o texto corrido agora usa a fonte do aparelho, bem mais fácil de ler; a fonte pixel fica nos títulos, botões e números.',
       'Barra embaixo para ir direto ao Resumo, à Equipe, ao PC ou às Ferramentas (Assistente e Exportar). No computador, Equipe e PC ficam lado a lado.',
       'Cartões da equipe com os tipos e uma barra de HP quando o Pokémon está ferido; card do treinador mais limpo; os detalhes técnicos de cada Pokémon foram para "Avançado"; a lista de jogos da tela inicial ficou compacta.',
@@ -17,6 +19,8 @@ export const NEWS = [
       'Unbound: dinheiro, insígnias, tempo de jogo e Pokédex do resumo do save agora estão conferidos no próprio jogo, sem o “provável”. A Pokédex conta como a do jogo: a Nacional vai até o Melmetal (809).',
     ],
     en: [
+      'Refreshed Pokémon details: header in the type’s color, a top bar with copy and close always at hand, nature/item/ability/ball in two columns, power and accuracy right on each move and colored stat bars (weakest to strongest).',
+      'Weaknesses and resistances: tapping a type shows, right below it, who is weak, resists or is immune, with each one’s multiplier.',
       'New look: body text now uses your device’s font, much easier to read; the pixel font stays on titles, buttons and numbers.',
       'A bottom bar jumps straight to Summary, Party, PC or Tools (Assistant and Export). On a computer, Party and PC sit side by side.',
       'Party cards show types and an HP bar when the Pokémon is hurt; a cleaner trainer card; each Pokémon’s technical details moved to "Advanced"; the game list on the home screen is now compact.',
