@@ -1,6 +1,6 @@
 import { describe as suite, it, expect } from 'vitest';
 import { parseSave, SaveError, describe, natureFromPid, levelFromExp, mediumSlow } from '../src/parser/index.js';
-import { sectorChecksum, SECTOR_SIZE, FOOTER } from '../src/parser/save.js';
+import { sectorChecksum, SECTOR_SIZE, FOOTER, SUMMARY } from '../src/parser/save.js';
 import T from '../src/data/tables.js';
 import { makeSave } from './helpers/make-save.js';
 
@@ -99,6 +99,35 @@ suite('parseSave (save sintético)', () => {
     expect(all[2]).toMatchObject({ exp: 15000, natureId: 5, abilityNum: 2, hp: null, ivs: { hp: 1, atk: 2, def: 3, spe: 4, spa: 5, spd: 6 } });
     expect(all[2].moves).toEqual([{ id: 33, pp: null }]);
     expect(r.warnings).toEqual([]);
+  });
+
+  it('resumo de Johto e de Kanto pela região do mapa atual (seção 1, 0x474) e o bloco REG', () => {
+    // Monta um save e grava, no slot ativo, o bloco REG, o grupo do mapa e os dados de cada região na seção 4
+    const withRegion = group => {
+      const u8 = new Uint8Array(makeSave({ trainer: base.trainer, saveIndex: 10 }));
+      const dv = new DataView(u8.buffer);
+      for (let i = 0; i < 32; i++) {
+        const o = i * 0x1000;
+        if (dv.getUint32(o + 0xFFC, true) !== 10) continue;
+        const id = dv.getUint16(o + 0xFF4, true);
+        if (id === 1) u8[o + SUMMARY.mapGroup] = group;
+        if (id === 4) {
+          u8.set([0x52, 0x45, 0x47, 0x01], o + SUMMARY.regTag);
+          u8[o + 0xE2] = 0xFC; u8[o + 0xE3] = 0x03; // Johto: 8 insígnias a partir do bit 2 de 0xE2
+          u8[o + 0x2CC] = 0x0F; // Kanto: 4 insígnias
+          u8[o + 0x1CC] = 0x07; u8[o + 0x24D] = 0x02; // Johto: Bulbasaur–Venusaur e 1 espécie própria (bit 1033)
+          u8[o + 0x3D4] = 0x01; // Kanto: Bulbasaur
+        }
+        if (id === 1 || id === 4) dv.setUint16(o + 0xFF6, sectorChecksum(dv, o), true);
+      }
+      return parseSave(u8).summary;
+    };
+    const johto = withRegion(34);
+    expect([johto.badges.count, johto.dex.owned, johto.dex.caught]).toEqual([8, 4, [1, 2, 3]]);
+    const kanto = withRegion(37);
+    expect([kanto.badges.count, kanto.dex.owned, kanto.dex.caught]).toEqual([4, 1, [1]]);
+    const hoenn = withRegion(26);
+    expect([hoenn.badges.count, hoenn.dex.owned]).toEqual([0, 0]);
   });
 
   it('HP atual: equipe em 0x23, PC nos bits 168–183', () => {

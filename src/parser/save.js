@@ -19,17 +19,22 @@ export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
 /**
  * Resumo: tempo de jogo (seção 0), dinheiro (seção 1, XOR com a chave da seção 0), insígnias (8 flags na
  * seção 1 a partir do bit `badgeBit`) e Pokédex (capturados pela Dex Nacional na seção 4, logo depois do
- * bloco marcado "ROP"). Com o jogador em **Kanto** (grupo do mapa atual, `0x474` da seção 1, entre 36 e 39, e o
- * bloco "REG" na seção 4), o jogo mostra a Pokédex e as insígnias de Kanto, guardadas na seção 4: capturados em
- * `kanto.dex` e insígnias nos 8 bits de `kanto.badges`. Conferido no jogo (tela de continuar e menu) com um save
- * em inglês aberto com a ROM PT-BR: Pokédex 702, 8 insígnias e ₽ 29 785 679; zerar esses bytes numa cópia zera
- * os números na tela, e o grupo do mapa só mostra os dados de Kanto com 36–39.
- * O jogo conta todos os bits do bloco da Pokédex (129 bytes; os acima do 1025 são espécies próprias do Quetzal).
+ * bloco marcado "ROP"). O Quetzal tem também campanhas em **Johto** e **Kanto**, com Pokédex e insígnias próprias na
+ * seção 4; o jogo mostra as da região do mapa atual (grupo do mapa em `0x474` da seção 1, com o bloco "REG" na
+ * seção 4): Johto 34–35, Kanto 36–39, Hoenn os outros. Conferido no jogo (ROM PT-BR no emulador): o save de Kanto
+ * mostra Pokédex 702, 8 insígnias e ₽ 29 785 679; em cópias, trocar o grupo do mapa muda a região mostrada, e
+ * zerar/preencher os bytes de cada região muda os números na tela (Johto: 0xFF em 0xE2 dá 6 insígnias, em 0xE3
+ * dá 2; Pokédex de 0x1CC a 0x24D).
+ * O jogo conta 1034 bits da Pokédex: os 1025 da Dex Nacional e 9 espécies próprias do Quetzal.
  */
 export const SUMMARY = {
   hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918,
-  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBytes: 129,
-  mapGroup: 0x474, regTag: 0xA8, kanto: { groups: [36, 37, 38, 39], dex: 0x3D4, badges: 0x2CC },
+  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBits: 1034,
+  mapGroup: 0x474, regTag: 0xA8,
+  regions: [
+    { id: 'johto', groups: [34, 35], dex: 0x1CC, badgeBit: 0xE2 * 8 + 2 },
+    { id: 'kanto', groups: [36, 37, 38, 39], dex: 0x3D4, badgeBit: 0x2CC * 8 },
+  ],
 };
 
 export const PARTY = {
@@ -273,15 +278,15 @@ export function parseSave(input) {
   const key = dv.getUint32(s0 + SUMMARY.key, true);
   const s4 = S[4];
   const tag = (o, s) => String.fromCharCode(u8[s4 + o], u8[s4 + o + 1], u8[s4 + o + 2]) === s;
-  // Jogador em Kanto: Pokédex e insígnias de Kanto (seção 4); senão, as de sempre (ver SUMMARY)
-  const kanto = tag(SUMMARY.regTag, 'REG') && SUMMARY.kanto.groups.includes(u8[s1 + SUMMARY.mapGroup]);
-  const dexAt = kanto ? s4 + SUMMARY.kanto.dex : tag(SUMMARY.dexTag, 'ROP') ? s4 + SUMMARY.dex : null;
+  // Jogador em Johto ou Kanto: Pokédex e insígnias da região (seção 4); senão, as de Hoenn (ver SUMMARY)
+  const region = tag(SUMMARY.regTag, 'REG') ? SUMMARY.regions.find(r => r.groups.includes(u8[s1 + SUMMARY.mapGroup])) : null;
+  const dexAt = region ? s4 + region.dex : tag(SUMMARY.dexTag, 'ROP') ? s4 + SUMMARY.dex : null;
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
     money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
-    badges: { count: kanto ? countBits(u8, s4 + SUMMARY.kanto.badges, 8) : countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
+    badges: { count: region ? countBits(u8, s4, 8, region.badgeBit) : countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
     dex: dexAt === null ? null : dexSummary(dexBits(u8, dexAt, SUMMARY.dexTotal), SUMMARY.dexTotal,
-      { owned: countBits(u8, dexAt, SUMMARY.dexBytes * 8) }),
+      { owned: countBits(u8, dexAt, SUMMARY.dexBits) }),
   });
 
   return {
