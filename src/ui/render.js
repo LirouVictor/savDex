@@ -141,7 +141,8 @@ export function summaryHtml(s) {
   if (s.dex) {
     const pct = Math.round(Math.min(1, s.dex.owned / s.dex.total) * 100);
     tiles.push(tile('st-dex', 'dex', t('Pokédex (capturados)'), `${num(s.dex.owned)}<small>/${num(s.dex.total)}</small>`, s.dex,
-      `<span class="sum-bar" aria-hidden="true"><span style="width:${pct}%"></span></span><small class="sum-pct">${pct}%</small>`));
+      `<span class="sum-bar" aria-hidden="true"><span style="width:${pct}%"></span></span><small class="sum-pct">${pct}%</small>`
+      + (s.dex.caught && s.dex.owned < s.dex.total ? `<button class="sum-more" type="button" data-dex>${t('Ver o que falta')} ›</button>` : '')));
   }
   return `<dl class="sum">${tiles.join('')}</dl>`;
 }

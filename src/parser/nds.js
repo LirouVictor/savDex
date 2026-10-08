@@ -12,7 +12,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
 
 const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 'BCAD', 'BCDA', 'BDAC', 'BDCA',
   'CABD', 'CADB', 'CBAD', 'CBDA', 'CDAB', 'CDBA', 'DABC', 'DACB', 'DBAC', 'DBCA', 'DCAB', 'DCBA'];
@@ -201,7 +201,7 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
       playTime: playTime(dv.getUint16(tr + 0x22, true), u8[tr + 0x24], u8[tr + 0x25], 'confirmado'),
       money: { value: dv.getUint32(tr + 0x14, true), confidence: 'confirmado' },
       badges: { count: badges, total: gameId === 'hgss' ? 16 : 8, confidence: 'confirmado' },
-      dex: dv.getUint32(dex, true) === DEX_MAGIC ? { owned: countBits(u8, dex + 4, 493), total: 493, confidence: 'confirmado' } : null,
+      dex: dv.getUint32(dex, true) === DEX_MAGIC ? dexSummary(dexBits(u8, dex + 4, 493), 493) : null,
     });
     for (let b = 0; b < 18; b++) {
       const slots = [];
@@ -218,7 +218,7 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
       playTime: playTime(dv.getUint16(0x19424, true), u8[0x19426], u8[0x19427], 'confirmado'),
       money: { value: dv.getUint32(M.money, true), confidence: 'confirmado' },
       badges: { count: countBits(u8, M.money + 4, 8), total: 8, confidence: 'confirmado' },
-      dex: dv.getUint32(M.dex, true) === DEX_MAGIC ? { owned: countBits(u8, M.dex + 8, 649), total: 649, confidence: 'confirmado' } : null,
+      dex: dv.getUint32(M.dex, true) === DEX_MAGIC ? dexSummary(dexBits(u8, M.dex + 8, 649), 649) : null,
     });
     // Nomes apagados pelo cabeçalho do .duc: vale a cópia de segurança, se as caixas dela forem iguais às principais
     const backup = GEN5_BACKUP[gameId];

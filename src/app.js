@@ -99,6 +99,8 @@ function render() {
     const ok = await copyText(toShowdown({ ...data, pc: { boxes: [] } }, { includePC: false }));
     status(t(ok ? 'Equipe copiada no formato Showdown.' : 'Não consegui copiar neste navegador. Use "Showdown (TXT)".'));
   });
+  const dexBtn = out.querySelector('[data-dex]');
+  if (dexBtn) dexBtn.addEventListener('click', () => openDex(dexBtn));
   const imgBtn = out.querySelector('[data-team-image]');
   if (imgBtn) imgBtn.addEventListener('click', () => openTeamImage(imgBtn));
   const partyGrid = out.querySelector('.party-grid');
@@ -500,6 +502,41 @@ function openHistory(opener) {
       document.getElementById('changes-slot').innerHTML = '';
       dlg.close();
     });
+  };
+  draw();
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+}
+
+// Pokédex: o que falta capturar (pacote carregado só ao abrir; nos jogos oficiais, também o dex.json, pelas evoluções)
+let dexMissing = null;
+async function openDex(opener) {
+  const dlg = document.getElementById('dex');
+  const official = !T.quetzal && !T.unbound && !T.soulgold;
+  if (!dexMissing) {
+    dexMissing = Promise.all([import('./dex/missing.js'), official ? import('./data/dex.json').then(m => m.default) : null]);
+  }
+  let mod, chains;
+  try { [mod, chains] = await dexMissing; } catch (e) { dexMissing = null; console.error(e); return; }
+  if (official && !chains) chains = (await import('./data/dex.json')).default;
+  const info = mod.missingDex(state.data, T, official ? chains : null);
+  const name = mod.dexNamer(T, official ? chains : null);
+  const view = { gen: 0, filter: 'all' };
+  const draw = () => {
+    dlg.innerHTML = mod.dexWinHtml(info, name, state.data.game && state.data.game.id, view);
+    dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  };
+  dlg.onclick = e => {
+    const f = e.target.closest('[data-dex-filter]'), g = e.target.closest('[data-dex-gen]');
+    if (f) { view.filter = f.dataset.dexFilter; view.gen = 0; }
+    else if (g) view.gen = +g.dataset.dexGen;
+    else return;
+    draw();
+    dlg.querySelector(f ? `[data-dex-filter="${view.filter}"]` : `[data-dex-gen="${view.gen}"]`)?.focus();
   };
   draw();
   const scroll = window.scrollY;

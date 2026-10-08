@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
-import { countBits, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
 
 export const SAVE_SIZE = 0x20000;
 export const SECTOR_SIZE = 0x1000;
@@ -268,7 +268,7 @@ export function parseSave(input) {
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
     money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
     badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
-    dex: dexOk ? { owned: countBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), total: SUMMARY.dexTotal, confidence: 'confirmado' } : null,
+    dex: dexOk ? dexSummary(dexBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), SUMMARY.dexTotal) : null,
   });
 
   return {

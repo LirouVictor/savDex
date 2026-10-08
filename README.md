@@ -29,7 +29,7 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 - **Pokémon SoulGold** (hack de Emerald ambientado em Johto; conferido no próprio jogo: equipe, PC e resumo).
 - Hacks que mantêm o formato de um desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou.
 
-No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, os mesmos quatro (a Pokédex Nacional do jogo vai até o 809); no SoulGold, os mesmos quatro (Pokédex de Johto, 702).
+No card do treinador aparece o **resumo do save**: tempo de jogo, dinheiro, insígnias e Pokédex (capturados contra o total do jogo) nos jogos oficiais; no Quetzal, tempo de jogo, dinheiro, insígnias e Pokédex; no Unbound, os mesmos quatro (a Pokédex Nacional do jogo vai até o 809); no SoulGold, os mesmos quatro (Pokédex de Johto, 702). Em **Ver o que falta**, a lista das espécies que faltam na Pokédex, por geração, com quem dá para conseguir evoluindo um Pokémon que você já tem e, no Unbound e no SoulGold, quais já foram vistos.
 
 O app identifica o formato antes de ler. Um save que não bate com nenhum formato conhecido mostra um aviso ("não é de um jogo suportado"), em vez de dados parecidos com os certos.
 

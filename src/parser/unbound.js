@@ -16,7 +16,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
 
 export const UNBOUND_SIGNATURES = { 0x01121999: '2.1', 0x01122000: '2.1.1.2+' };
 const OLD_SIGNATURE = 0x01121998; // Unbound 2.0
@@ -26,7 +26,7 @@ const DATA = 0xFF0;
 // O SaveBlock1 do CFRU ocupa as seções 1–4 em blocos de 0xFF0 bytes (não 0xF80 como no FireRed).
 const MONEY = 0x290; // u32 sem chave (a chave do FireRed, 0xF20 da seção 0, é 0 nos saves)
 const FLAGS = 0xEE0, BADGE_FLAG = 0x820; // insígnias = flags 0x820–0x827, como no FireRed (os scripts dos ginásios usam essas)
-const CAUGHT = 0x38D; // Pokédex do DPE: capturados na RAM 0x020258B9 = SaveBlock1 (0x0202552C) + 0x38D; vistos em + 0x310
+const CAUGHT = 0x38D, SEEN = 0x310; // Pokédex do DPE: capturados na RAM 0x020258B9 = SaveBlock1 (0x0202552C) + 0x38D; vistos em + 0x310
 const DEX_TOTAL = 809; // a Pokédex Nacional do jogo vai até o Melmetal (a Gen 8 tem marca no save, mas não entra na lista nem na contagem)
 const MON = 58;
 const PER_BOX = 30;
@@ -106,7 +106,9 @@ function unboundSummary(s0, s0v, sec) {
     playTime: playTime(s0v.getUint16(0x0E, true), s0[0x10], s0[0x11], 'confirmado'),
     money: { value: new DataView(block(MONEY, 4).buffer).getUint32(0, true), confidence: 'confirmado' },
     badges: { count: countBits(flags, 0, 8, BADGE_FLAG & 7), total: 8, confidence: 'confirmado' },
-    dex: { owned: countBits(block(CAUGHT, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL), total: DEX_TOTAL, confidence: 'confirmado' },
+    // Vistos conferidos na tela da Pokédex do jogo (153 no save de 11h)
+    dex: dexSummary(dexBits(block(CAUGHT, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL), DEX_TOTAL,
+      { seen: dexBits(block(SEEN, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL) }),
   });
 }
 
