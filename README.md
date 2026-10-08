@@ -23,7 +23,7 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 
 - **Pokémon Quetzal** (testado na Alpha 9 PT-BR; o save não guarda a versão do jogo).
 - **Pokémon Emerald** e **FireRed/LeafGreen** (conferidos com saves reais).
-- **Pokémon Ruby/Sapphire** (mesmo formato do Emerald; ainda sem save real para testar).
+- **Pokémon Ruby/Sapphire** (conferido com saves reais de Ruby e Sapphire).
 - **Pokémon Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White** e **Black 2/White 2** (DS; conferidos com saves reais). Save state do emulador (`.dst`) não é o save do jogo e mostra um aviso.
 - **Pokémon Unbound** (versão 2.1 em diante; conferido com saves reais da 2.1.0 e da 2.1.1). Versões mais novas abrem com um aviso, e a 2.0 ainda não é suportada.
 - **Pokémon SoulGold** (hack de Emerald ambientado em Johto; conferido no próprio jogo: equipe, PC e resumo).

@@ -31,7 +31,7 @@ export const GAMES = {
 
 // Resumo: tempo de jogo e Pokédex na seção 0 (SaveBlock2); dinheiro e insígnias (flags) no SaveBlock1,
 // que ocupa as seções 1–4 (0xF80 bytes cada). O dinheiro do Emerald e do FireRed/LeafGreen é guardado
-// com XOR da chave da seção 0. Conferido com saves reais de Emerald e FireRed (Ruby/Sapphire: provável).
+// com XOR da chave da seção 0 (o Ruby/Sapphire não tem chave). Conferido com saves reais de Emerald, FireRed, Ruby e Sapphire.
 const SUMMARY = {
   emerald: { key: 0xAC, money: 0x490, flags: 0x1270, badge: 0x867 },
   rs: { key: null, money: 0x490, flags: 0x1220, badge: 0x807 },
@@ -41,7 +41,7 @@ const DEX3 = 386;
 
 function gen3Summary(u8, dv, S, gameId) {
   const L = SUMMARY[gameId];
-  const confidence = gameId === 'rs' ? 'provável' : 'confirmado';
+  const confidence = 'confirmado';
   const s0 = S[0];
   // Posição no SaveBlock1 → posição no arquivo
   const sb1 = o => S[1 + Math.floor(o / 0xF80)] + (o % 0xF80);
@@ -148,7 +148,19 @@ function readParty(u8, dv, s1, layout) {
   return out;
 }
 
-/** Qual jogo da Gen 3: pela posição da equipe que tem checksums válidos e pelo código em 0xAC. */
+/**
+ * Ruby/Sapphire × Emerald (mesma posição da equipe). 0 em 0xAC só aparece em Ruby/Sapphire, mas lá esse campo é
+ * do recorde da Battle Tower e pode ter dado. O SaveBlock2 do Ruby/Sapphire acaba em 0x890 (tamanho do checksum
+ * da seção 0); o do Emerald usa a seção até 0xF2C. Conferido com saves reais de Ruby e Sapphire (0xAC ≠ 0 e tudo
+ * zerado depois de 0x890) e de Emerald (dados depois de 0x890).
+ */
+function isRubySapphire(u8, dv, s0) {
+  if (dv.getUint32(s0 + GEN3.trainer.gameCode, true) === 0) return true;
+  for (let k = 0x890; k < 0xF2C; k++) if (u8[s0 + k]) return false;
+  return true;
+}
+
+/** Qual jogo da Gen 3: pela posição da equipe que tem checksums válidos e, entre Ruby/Sapphire e Emerald, pela seção 0. */
 export function detectGen3(u8) {
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
   const slots = gen3Slots(dv).filter(s => s.usable);
@@ -160,7 +172,7 @@ export function detectGen3(u8) {
     if (!party || party.some(m => !m.checksumOk)) continue;
     if (!party.length && layout === 'frlg' && dv.getUint32(S[0] + GEN3.trainer.gameCode, true) !== 1) continue;
     let game = games[0];
-    if (layout === 'rse') game = dv.getUint32(S[0] + GEN3.trainer.gameCode, true) === 0 ? 'rs' : 'emerald';
+    if (layout === 'rse') game = isRubySapphire(u8, dv, S[0]) ? 'rs' : 'emerald';
     return { game: GAMES[game], layout, slot: slots[0] };
   }
   return null;
