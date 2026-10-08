@@ -80,7 +80,7 @@ suite.skipIf(!SAVES.every(f => existsSync(f)))('Pokémon Unbound com saves reais
       const money = f === SAVES[0] ? 998404199 : 999997299;
       expect(d.summary).toEqual({
         playTime: { h: 999, m: 59, s: 59, confidence: 'confirmado' }, money: { value: money, confidence: 'confirmado' },
-        badges: { count: 8, total: 8, confidence: 'confirmado' }, dex: { owned: 809, total: 809, confidence: 'confirmado' },
+        badges: { count: 8, total: 8, confidence: 'confirmado' }, dex: expect.objectContaining({ owned: 809, total: 809, confidence: 'confirmado' }),
       });
     }
   });
@@ -120,7 +120,7 @@ suite.skipIf(!existsSync(SAVE_C))('Pokémon Unbound: save real com 11h de jogo',
   it('resumo igual ao do jogo: tempo, dinheiro, insígnias e Pokédex Nacional (até 809)', () => {
     expect(d.trainer).toMatchObject({ tid: 8044, sid: 21042 });
     expect(d.summary).toMatchObject({
-      playTime: { h: 11, m: 48, s: 56 }, money: { value: 4040 }, badges: { count: 0, total: 8 }, dex: { owned: 151, total: 809 },
+      playTime: { h: 11, m: 48, s: 56 }, money: { value: 4040 }, badges: { count: 0, total: 8 }, dex: expect.objectContaining({ owned: 151, total: 809 }),
     });
   });
   it('equipe com stats = fórmula', () => {

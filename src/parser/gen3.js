@@ -7,7 +7,7 @@ import { decodeText } from './charset.js';
 import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
-import { countBits, playTime, summary } from './summary.js';
+import { dexBits, dexSummary, playTime, summary } from './summary.js';
 
 export const SECTORS_PER_SLOT = 14;
 const SECTOR_SIZE = 0x1000;
@@ -55,7 +55,7 @@ function gen3Summary(u8, dv, S, gameId) {
     playTime: playTime(dv.getUint16(s0 + 0x0E, true), u8[s0 + 0x10], u8[s0 + 0x11], confidence),
     money: { value: (dv.getUint32(sb1(L.money), true) ^ key) >>> 0, confidence },
     badges: { count: badges, total: 8, confidence },
-    dex: { owned: countBits(u8, s0 + 0x28, DEX3), total: DEX3, confidence },
+    dex: dexSummary(dexBits(u8, s0 + 0x28, DEX3), DEX3),
   });
 }
 

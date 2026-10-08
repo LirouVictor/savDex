@@ -19,7 +19,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, playTime, summary } from './summary.js';
+import { countBits, dexSummary, playTime, summary } from './summary.js';
 
 export const SOULGOLD = { id: 'soulgold', name: 'Pokémon SoulGold', short: 'SoulGold' };
 
@@ -235,8 +235,10 @@ export function describeSoulGold(raw, T, SG) {
   }
 
   // Pokédex como no jogo: capturados da Pokédex de Johto (702 espécies), pela Dex Nacional
+  // (vistos também conferidos: "Johto: vistos 6, capturados 1" na Pokédex do jogo)
   const bit = (arr, n) => (arr[(n - 1) >> 3] >> ((n - 1) & 7)) & 1;
-  const dex = { owned: SG.johto.filter(n => bit(raw.caught, n)).length, total: SG.johto.length, confidence: 'confirmado' };
+  const dex = dexSummary(SG.johto.filter(n => bit(raw.caught, n)), SG.johto.length,
+    { seen: SG.johto.filter(n => bit(raw.seen, n)), list: SG.johto });
   const boxes = raw.pc.boxes.map(b => ({ ...b, slots: b.slots.map(s => mon(s, 'pc', b)) }));
   return {
     game: SOULGOLD,

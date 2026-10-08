@@ -98,7 +98,7 @@ suite('SoulGold: leitura', () => {
     const { data } = load(save);
     expect(data.game.id).toBe('soulgold');
     expect(data.trainer).toMatchObject({ name: 'GOLD', tid: 12345, sid: 54321 });
-    expect(data.summary).toMatchObject({ playTime: { h: 3, m: 4, s: 5 }, money: { value: 12345 }, badges: { count: 2, total: 8 }, dex: { owned: 3, total: 702 } });
+    expect(data.summary).toMatchObject({ playTime: { h: 3, m: 4, s: 5 }, money: { value: 12345 }, badges: { count: 2, total: 8 }, dex: expect.objectContaining({ owned: 3, total: 702 }) });
     const m = data.party[0];
     expect(m.species).toMatchObject({ name: 'Froakie', types: ['water'] });
     expect(m).toMatchObject({ level: 8, hp: 13, nickname: 'Froakie' });
@@ -140,7 +140,7 @@ suite.skipIf(!existsSync(REAL))('SoulGold: save real', () => {
   beforeAll(() => { d = load(readFileSync(REAL)).data; });
   it('resumo igual ao do jogo', () => {
     expect(d.trainer).toMatchObject({ name: 'Victor', tid: 21893 });
-    expect(d.summary).toMatchObject({ playTime: { h: 0, m: 28 }, money: { value: 3000 }, badges: { count: 0 }, dex: { owned: 1, total: 702 } });
+    expect(d.summary).toMatchObject({ playTime: { h: 0, m: 28 }, money: { value: 3000 }, badges: { count: 0 }, dex: expect.objectContaining({ owned: 1, total: 702 }) });
   });
   it('equipe igual à do jogo', () => {
     const [m] = d.party;
@@ -159,7 +159,7 @@ suite.skipIf(!existsSync(REAL_B))('SoulGold: save real com equipe cheia e PC', (
   let d;
   beforeAll(() => { d = load(readFileSync(REAL_B)).data; });
   it('resumo igual ao do jogo', () => {
-    expect(d.summary).toMatchObject({ playTime: { h: 0, m: 51 }, money: { value: 3300 }, badges: { count: 0 }, dex: { owned: 7, total: 702 } });
+    expect(d.summary).toMatchObject({ playTime: { h: 0, m: 51 }, money: { value: 3300 }, badges: { count: 0 }, dex: expect.objectContaining({ owned: 7, total: 702 }) });
     expect(d.warnings).toEqual([]);
   });
   it('equipe igual à do jogo (Pokémon de 96 bytes)', () => {

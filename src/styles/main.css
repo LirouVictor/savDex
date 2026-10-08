@@ -744,3 +744,30 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 /* Imagem da equipe */
 .party-actions { margin-top: 12px; }
 .team-img { display: block; width: 100%; height: auto; margin-bottom: 12px; box-shadow: 0 0 0 3px var(--edge); image-rendering: auto; }
+
+/* Pokédex: o que falta (janela aberta pelo bloco da Pokédex) */
+.sum-more {
+  flex-basis: 100%; min-height: 44px; margin: 2px 0 -6px; padding: 0; border: 0; background: none;
+  color: var(--c); font: 700 .8rem var(--body); text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.dex-sheet { --hi: var(--minus); }
+.dex-sheet .sheet-bar { justify-content: space-between; }
+.dex-sheet .sheet-bar h2 { font-size: 1rem; margin: 0; }
+.dex-count { margin: 10px 0 4px; color: var(--muted); }
+.dex-count b { font-family: var(--pixel); color: var(--ink); }
+.dex-done { font: 700 1rem var(--pixel); color: var(--accent); }
+.dex-filters, .dex-gens { display: flex; gap: 6px; margin: 10px 0 0; }
+.dex-filters { flex-wrap: wrap; }
+/* Gerações numa linha só, rolando para o lado */
+.dex-gens { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.dex-filters .btn, .dex-gens .btn { flex: none; width: auto; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
+.dex-filters small, .dex-gens small { opacity: .75; }
+.dex-grid { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.dex-mon { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; padding: 4px 4px 6px; text-align: center; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.dex-mon img { width: 68px; height: 44px; object-fit: contain; }
+.dex-mon img.ico { object-view-box: inset(12px 4px 0 4px); }
+.dex-no { font: .62rem var(--pixel); color: var(--muted); }
+.dex-name { font-size: .8rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.dex-tag { margin-top: 2px; padding: 0 5px; font-size: .68rem; line-height: 1.5; overflow-wrap: anywhere; }
+.dex-seen { color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+.dex-evo { color: var(--accent-ink); background: var(--accent); }
