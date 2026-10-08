@@ -240,9 +240,46 @@ suite.skipIf(!existsSync(FILE_H) || !existsSync(FILE_60))('HP atual (fixtures/qu
   });
 });
 
+// Save de outro jogador, do Quetzal em inglês (Alpha 9): o PC usa registros de 31 bytes (sem HP nem PP),
+// tem 45 caixas e passa da primeira seção (0xF80 bytes por seção). Antes, saía com dados sem sentido.
+const FILE_EN = process.env.QUETZAL_SAVE_EN || new URL('../fixtures/quetzal-en.sav', import.meta.url).pathname;
+suite.skipIf(!existsSync(FILE_EN))('Quetzal em inglês: PC de 31 bytes (fixtures/quetzal-en.sav)', () => {
+  const raw = existsSync(FILE_EN) ? parseSave(readFileSync(FILE_EN)) : null;
+  const d = raw ? describe(raw, T) : null;
+
+  it('treinador, resumo e equipe', () => {
+    expect(raw.trainer).toEqual({ name: 'ABC', tid: 58883, sid: 36547 });
+    expect(raw.warnings).toEqual([]);
+    expect(raw.summary).toMatchObject({ playTime: { h: 338, m: 8 }, badges: { count: 8 }, dex: { owned: 445 } });
+    expect(d.party.map(m => [m.species.name, m.level])).toEqual([
+      ['Linoone', 70], ['Fraxure', 44], ['Ferroseed', 38], ['Corvisquire', 36], ['Frosmoth', 36], ['Finizen', 31]]);
+  });
+
+  it('PC: 397 Pokémon em 45 caixas, todos com o nome da espécie como apelido', () => {
+    expect(raw.pc.recordSize).toBe(31);
+    expect(d.pc.boxes).toHaveLength(45);
+    expect(d.pc.boxes.map(b => b.slots.length)).toEqual([28, 30, 30, 30, 29, 30, 30, 30, 30, 30, 10,
+      ...Array(29).fill(0), 6, 2, 22, 30, 30]);
+    const all = d.pc.boxes.flatMap(b => b.slots);
+    expect(all).toHaveLength(397);
+    // O jogo grava o nome da espécie como apelido: bate com a espécie lida em todos os que têm nome
+    expect(all.filter(m => m.nickname && m.hasNickname).map(m => m.nickname)).toEqual([]);
+    expect(all.flatMap(m => m.moves).filter(mv => mv.pp !== null)).toEqual([]);
+    expect(all.filter(m => m.hp !== null)).toEqual([]);
+    const at = (box, slot) => d.pc.boxes[box - 1].slots.find(m => m.slot === slot);
+    expect(at(1, 17)).toMatchObject({ species: { name: 'Arcanine', form: 'Hisui' }, exp: 420, nature: { name: 'Calm' } });
+    expect(at(45, 30).species.name).toBe('Diglett');
+    expect(at(41, 1)).toMatchObject({ species: { name: 'Roserade' }, ivs: { hp: 31, atk: 31, def: 31, spe: 31, spa: 31, spd: 31 },
+      evs: { hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 } });
+    // Bit de fêmea na mesma posição do registro de 38 bytes: 0 no Nidoran♂ (32), 1 no Nidoran♀ (29)
+    const rawAll = raw.pc.boxes.flatMap(b => b.slots);
+    expect([32, 29].map(id => rawAll.filter(s => s.speciesId === id).map(s => s.femaleBit))).toEqual([[0], [1]]);
+  });
+});
+
 // Com as tabelas da ROM, nada dos saves reais fica como "provável" ou "não mapeado"
 const ROM_CHECK = ['PokemonQuetzalPtBrAlpha9v0.sav', 'PokemonQuetzalPtBrAlpha9v0-pc.sav', 'PokemonQuetzalPtBrAlpha9v0-3.sav',
-  'quetzal-59h.sav', 'quetzal-60h.sav', 'quetzal-60h-haunter.sav', 'quetzal-cmp-old.sav', 'quetzal-cmp-new.sav']
+  'quetzal-59h.sav', 'quetzal-60h.sav', 'quetzal-60h-haunter.sav', 'quetzal-cmp-old.sav', 'quetzal-cmp-new.sav', 'quetzal-en.sav']
   .map(f => new URL('../fixtures/' + f, import.meta.url).pathname).filter(f => existsSync(f));
 suite.skipIf(!ROM_CHECK.length)('tabelas da ROM contra os saves reais', () => {
   it('espécies, itens e golpes confirmados; stats da equipe = fórmula com os stats base da ROM', () => {

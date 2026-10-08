@@ -8,10 +8,12 @@ export const NEWS = [
   {
     date: '2026-10-08',
     pt: [
+      'Quetzal: corrigido o PC que aparecia com Pokémon e dados sem sentido (espécies estranhas, “Golpe 1022”, “Item 964”) no Quetzal em inglês, que guarda o PC num formato menor (sem HP nem PP) e tem 45 caixas. Também corrigida a leitura das caixas além das primeiras em qualquer save do Quetzal com o PC mais cheio.',
       'Contagem de visitas com o Cloudflare Web Analytics, sem cookies e sem nada do seu save: só a página aberta, de onde veio, navegador, aparelho e país. Detalhes na Privacidade.',
       'Ruby/Sapphire conferidos com saves reais: o resumo (tempo de jogo, dinheiro, insígnias e Pokédex) deixou de ser “provável”. Corrigido também um save de Ruby/Sapphire que aparecia como Emerald, com o dinheiro errado.',
     ],
     en: [
+      'Quetzal: fixed the PC showing nonsense Pokémon and data (odd species, “Move 1022”, “Item 964”) in the English Quetzal, which stores the PC in a smaller format (no HP or PP) and has 45 boxes. Also fixed reading boxes past the first ones in any Quetzal save with a fuller PC.',
       'Visit counting with Cloudflare Web Analytics, with no cookies and nothing from your save: only the page opened, where you came from, browser, device and country. Details in Privacy.',
       'Ruby/Sapphire checked against real saves: the summary (play time, money, badges and Pokédex) is no longer “probable”. Also fixed a Ruby/Sapphire save that showed up as Emerald, with the wrong money.',
     ],

@@ -16,7 +16,7 @@ export default {
   'Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.':
     'No game, no file: a Quetzal save with made-up Pokémon to try savDex.',
   'Jogos suportados': 'Supported games',
-  'Pokémon Quetzal <small>(testado na Alpha 9 PT-BR)</small>': 'Pokémon Quetzal <small>(tested on Alpha 9 PT-BR)</small>',
+  'Pokémon Quetzal <small>(testado na Alpha 9 PT-BR e inglês)</small>': 'Pokémon Quetzal <small>(tested on Alpha 9 PT-BR and English)</small>',
   'Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.':
     'Hacks that keep the format of these games also open, but species, move and item names may not match if the hack changed them. A save from another game shows a warning instead of wrong data.',
   'Esquecer este save': 'Forget this save',

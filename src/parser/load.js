@@ -11,11 +11,11 @@ import { unboundSignature, parseUnbound, describeUnbound } from './unbound.js';
 import { detectNds, parseNds, describeNds, ndsTables } from './nds.js';
 import { isSoulGoldSave, parseSoulGold, describeSoulGold } from './soulgold.js';
 
-export const QUETZAL = { id: 'quetzal', name: 'Pokémon Quetzal', short: 'Quetzal', note: 'testado na Alpha 9 (PT-BR)' };
+export const QUETZAL = { id: 'quetzal', name: 'Pokémon Quetzal', short: 'Quetzal', note: 'testado na Alpha 9 (PT-BR e inglês)' };
 
 /** Jogos suportados, para mostrar na tela inicial e nas mensagens de erro. */
 export const SUPPORTED = [
-  'Pokémon Quetzal (testado na Alpha 9 PT-BR)',
+  'Pokémon Quetzal (testado na Alpha 9 PT-BR e inglês)',
   'Pokémon Emerald',
   'Pokémon FireRed / LeafGreen',
   'Pokémon Ruby / Sapphire',
