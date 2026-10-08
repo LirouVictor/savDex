@@ -19,13 +19,17 @@ export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
 /**
  * Resumo: tempo de jogo (seção 0), dinheiro (seção 1, XOR com a chave da seção 0), insígnias (8 flags na
  * seção 1 a partir do bit `badgeBit`) e Pokédex (capturados pela Dex Nacional na seção 4, logo depois do
- * bloco marcado "ROP"). Um save em inglês (PC de 21 bytes) tem esse bloco vazio e a Pokédex em `dexAlt`: ali
- * estão marcadas todas as 658 espécies que o jogador tem na equipe e no PC (698 no total). Ainda não conferido
- * no jogo: nesse caso a Pokédex, o dinheiro e as insígnias ficam como "provável".
+ * bloco marcado "ROP"). Com o jogador em **Kanto** (grupo do mapa atual, `0x474` da seção 1, entre 36 e 39, e o
+ * bloco "REG" na seção 4), o jogo mostra a Pokédex e as insígnias de Kanto, guardadas na seção 4: capturados em
+ * `kanto.dex` e insígnias nos 8 bits de `kanto.badges`. Conferido no jogo (tela de continuar e menu) com um save
+ * em inglês aberto com a ROM PT-BR: Pokédex 702, 8 insígnias e ₽ 29 785 679; zerar esses bytes numa cópia zera
+ * os números na tela, e o grupo do mapa só mostra os dados de Kanto com 36–39.
+ * O jogo conta todos os bits do bloco da Pokédex (129 bytes; os acima do 1025 são espécies próprias do Quetzal).
  */
 export const SUMMARY = {
   hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918,
-  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexAlt: 0x3D4, dexTotal: 1025,
+  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBytes: 129,
+  mapGroup: 0x474, regTag: 0xA8, kanto: { groups: [36, 37, 38, 39], dex: 0x3D4, badges: 0x2CC },
 };
 
 export const PARTY = {
@@ -268,17 +272,16 @@ export function parseSave(input) {
   // Conferido com a tela do jogo: 6 insígnias e Pokédex 67. Total = Dex Nacional do expansion (1025).
   const key = dv.getUint32(s0 + SUMMARY.key, true);
   const s4 = S[4];
-  const dexOk = String.fromCharCode(u8[s4 + SUMMARY.dexTag], u8[s4 + SUMMARY.dexTag + 1], u8[s4 + SUMMARY.dexTag + 2]) === 'ROP';
-  let caught = dexOk ? dexBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal) : null;
-  // Pokédex vazia no lugar de sempre e preenchida em dexAlt: o outro layout (ver SUMMARY), não conferido no jogo
-  const alt = dexOk && !caught.length ? dexBits(u8, s4 + SUMMARY.dexAlt, SUMMARY.dexTotal) : [];
-  if (alt.length) caught = alt;
-  const conf = alt.length ? 'provável' : 'confirmado';
+  const tag = (o, s) => String.fromCharCode(u8[s4 + o], u8[s4 + o + 1], u8[s4 + o + 2]) === s;
+  // Jogador em Kanto: Pokédex e insígnias de Kanto (seção 4); senão, as de sempre (ver SUMMARY)
+  const kanto = tag(SUMMARY.regTag, 'REG') && SUMMARY.kanto.groups.includes(u8[s1 + SUMMARY.mapGroup]);
+  const dexAt = kanto ? s4 + SUMMARY.kanto.dex : tag(SUMMARY.dexTag, 'ROP') ? s4 + SUMMARY.dex : null;
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
-    money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: conf },
-    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: conf },
-    dex: caught ? { ...dexSummary(caught, SUMMARY.dexTotal), confidence: conf } : null,
+    money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
+    badges: { count: kanto ? countBits(u8, s4 + SUMMARY.kanto.badges, 8) : countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
+    dex: dexAt === null ? null : dexSummary(dexBits(u8, dexAt, SUMMARY.dexTotal), SUMMARY.dexTotal,
+      { owned: countBits(u8, dexAt, SUMMARY.dexBytes * 8) }),
   });
 
   return {

@@ -277,8 +277,8 @@ suite.skipIf(!existsSync(FILE_EN))('Quetzal em inglês: PC de 31 bytes (fixtures
   });
 });
 
-// Outro save do Quetzal em inglês: PC de 21 bytes (sem apelido) em 67 caixas, e a Pokédex em outra posição da
-// seção 4 (0x3D4; o bloco de sempre, em 0x9D0, está vazio). Pokédex, dinheiro e insígnias ainda não conferidos no jogo.
+// Outro save do Quetzal em inglês: PC de 21 bytes (sem apelido) em 67 caixas, jogador em Kanto (grupo do mapa 37):
+// Pokédex e insígnias de Kanto na seção 4. Conferido no jogo (ROM PT-BR): Pokédex 702, 8 insígnias, ₽ 29 785 679.
 const FILE_EN2 = process.env.QUETZAL_SAVE_EN2 || new URL('../fixtures/quetzal-en2.sav', import.meta.url).pathname;
 suite.skipIf(!existsSync(FILE_EN2))('Quetzal em inglês: PC de 21 bytes (fixtures/quetzal-en2.sav)', () => {
   const raw = existsSync(FILE_EN2) ? parseSave(readFileSync(FILE_EN2)) : null;
@@ -293,14 +293,16 @@ suite.skipIf(!existsSync(FILE_EN2))('Quetzal em inglês: PC de 21 bytes (fixture
     expect(d.pc.boxes[0].slots.slice(0, 3).map(m => [m.species.name, m.level])).toEqual([['Linoone', 21], ['Rhyhorn', 29], ['Skwovet', 5]]);
   });
 
-  it('Pokédex na posição alternativa: inclui todas as espécies da equipe e do PC; resumo como "provável"', () => {
+  it('resumo de Kanto como na tela do jogo; a Pokédex inclui todas as espécies da equipe e do PC', () => {
     const dex = raw.summary.dex;
-    expect([dex.owned, dex.total, dex.confidence]).toEqual([698, 1025, 'provável']);
+    // O jogo conta também 4 espécies próprias do Quetzal (bits acima do 1025): 698 + 4 = 702
+    expect([dex.owned, dex.caught.length, dex.total, dex.confidence]).toEqual([702, 698, 1025, 'confirmado']);
+    expect(raw.summary.badges).toEqual({ count: 8, total: 8, confidence: 'confirmado' });
+    expect(raw.summary.money).toEqual({ value: 29785679, confidence: 'confirmado' });
     const caught = new Set(dex.caught);
     const nat = id => (id <= 898 ? id : Q.species[id][5]);
     const missing = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)].map(m => nat(m.speciesId)).filter(n => n && !caught.has(n)); // os próprios do Quetzal (Browt…) não têm nº nacional
     expect(missing).toEqual([]);
-    expect([raw.summary.money.confidence, raw.summary.badges.confidence, raw.summary.playTime.confidence]).toEqual(['provável', 'provável', 'confirmado']);
   });
 });
 

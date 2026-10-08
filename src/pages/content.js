@@ -8,14 +8,14 @@ export const NEWS = [
   {
     date: '2026-10-08',
     pt: [
-      'Quetzal: lê também o PC compacto de 67 caixas (sem apelidos, HP e PP), que antes aparecia com Pokémon e dados sem sentido. Nesse tipo de save a Pokédex fica em outro lugar e aparece como “provável”, junto com o dinheiro e as insígnias, até ser conferida no jogo.',
+      'Quetzal: lê também o PC compacto de 67 caixas (sem apelidos, HP e PP), que antes aparecia com Pokémon e dados sem sentido, e a Pokédex e as insígnias de quem está jogando em Kanto, conferidas no próprio jogo.',
       'Pokédex: no card do treinador, “Ver o que falta” mostra as espécies que faltam capturar, por geração, marcando as que dá para conseguir evoluindo um Pokémon que você já tem (equipe ou PC) e, no Unbound e no SoulGold, as que você já viu.',
       'Quetzal: corrigido o PC que aparecia com Pokémon e dados sem sentido (espécies estranhas, “Golpe 1022”, “Item 964”) no Quetzal em inglês, que guarda o PC num formato menor (sem HP nem PP) e tem 45 caixas. Também corrigida a leitura das caixas além das primeiras em qualquer save do Quetzal com o PC mais cheio.',
       'Contagem de visitas com o Cloudflare Web Analytics, sem cookies e sem nada do seu save: só a página aberta, de onde veio, navegador, aparelho e país. Detalhes na Privacidade.',
       'Ruby/Sapphire conferidos com saves reais: o resumo (tempo de jogo, dinheiro, insígnias e Pokédex) deixou de ser “provável”. Corrigido também um save de Ruby/Sapphire que aparecia como Emerald, com o dinheiro errado.',
     ],
     en: [
-      'Quetzal: also reads the compact 67-box PC (no nicknames, HP or PP), which used to show nonsense Pokémon and data. In this kind of save the Pokédex is stored elsewhere and shows as “probable”, along with money and badges, until checked in the game.',
+      'Quetzal: also reads the compact 67-box PC (no nicknames, HP or PP), which used to show nonsense Pokémon and data, and the Pokédex and badges of players in Kanto, checked against the game itself.',
       'Pokédex: on the trainer card, “See what’s missing” lists the species you still need to catch, by generation, marking the ones you can get by evolving a Pokémon you already have (party or PC) and, in Unbound and SoulGold, the ones you have already seen.',
       'Quetzal: fixed the PC showing nonsense Pokémon and data (odd species, “Move 1022”, “Item 964”) in the English Quetzal, which stores the PC in a smaller format (no HP or PP) and has 45 boxes. Also fixed reading boxes past the first ones in any Quetzal save with a fuller PC.',
       'Visit counting with Cloudflare Web Analytics, with no cookies and nothing from your save: only the page opened, where you came from, browser, device and country. Details in Privacy.',

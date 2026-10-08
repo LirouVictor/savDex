@@ -19,8 +19,8 @@ export function dexBits(u8, start, total) {
  * Pokédex do resumo: capturados (números da Dex Nacional), vistos quando o jogo foi conferido, e a lista
  * de espécies da Pokédex do jogo quando não é 1..total (SoulGold: a de Johto).
  */
-export function dexSummary(caught, total, { seen = null, list = null } = {}) {
-  return { owned: caught.length, total, confidence: 'confirmado', caught, ...(seen ? { seen } : {}), ...(list ? { list } : {}) };
+export function dexSummary(caught, total, { seen = null, list = null, owned = caught.length } = {}) {
+  return { owned, total, confidence: 'confirmado', caught, ...(seen ? { seen } : {}), ...(list ? { list } : {}) };
 }
 
 /** Tempo de jogo, só se os minutos e segundos fizerem sentido. */
