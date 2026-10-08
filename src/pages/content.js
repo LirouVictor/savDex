@@ -1,16 +1,18 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-06';
+export const UPDATED = '2026-10-08';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
     date: '2026-10-08',
     pt: [
+      'Contagem de visitas com o Cloudflare Web Analytics, sem cookies e sem nada do seu save: só a página aberta, de onde veio, navegador, aparelho e país. Detalhes na Privacidade.',
       'Ruby/Sapphire conferidos com saves reais: o resumo (tempo de jogo, dinheiro, insígnias e Pokédex) deixou de ser “provável”. Corrigido também um save de Ruby/Sapphire que aparecia como Emerald, com o dinheiro errado.',
     ],
     en: [
+      'Visit counting with Cloudflare Web Analytics, with no cookies and nothing from your save: only the page opened, where you came from, browser, device and country. Details in Privacy.',
       'Ruby/Sapphire checked against real saves: the summary (play time, money, badges and Pokédex) is no longer “probable”. Also fixed a Ruby/Sapphire save that showed up as Emerald, with the wrong money.',
     ],
   },
@@ -181,7 +183,8 @@ const PRIVACY = {
   <li><b>Sprites</b>: as imagens dos Pokémon vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
   <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), no Quetzal e no Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. <b>Montar equipe</b> faz dois envios: o primeiro escolhe os 6; o segundo, menor, leva só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato do primeiro envio; o do segundo aparece junto com o resultado. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
 </ul>
-<p>O savDex não usa ferramentas de análise de visitas. Se isso mudar, esta página será atualizada antes.</p>`,
+<h3>Contagem de visitas</h3>
+<p>O savDex usa o <b>Cloudflare Web Analytics</b> para saber quantas pessoas usam o site. Um script pequeno do Cloudflare (static.cloudflareinsights.com) envia, a cada página aberta, o endereço da página, o site de onde você veio, o navegador, o sistema, o tipo de aparelho e o tempo de carregamento. O país é tirado do endereço IP, que não é guardado. <b>Não usa cookies</b>, não guarda nada no aparelho, não segue você entre sites e <b>nada do seu save</b> (nem o nome do arquivo) vai junto. Bloqueadores de anúncios costumam barrar esse script; o app funciona igual.</p>`,
   },
   en: {
     title: 'Privacy',
@@ -208,7 +211,8 @@ const PRIVACY = {
   <li><b>Sprites</b>: Pokémon images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
   <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the party (weaknesses, coverage, base Speed), in Quetzal and Unbound the public list of moves each member learns by level, and your request, if any. <b>Build a team</b> sends two requests: the first picks the 6; the second, smaller, carries only that team and the app’s calculations about it, for the weaknesses and tips. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text of the first request; the second one is shown with the result. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
 </ul>
-<p>savDex uses no visitor analytics. If that changes, this page will be updated first.</p>`,
+<h3>Visit counting</h3>
+<p>savDex uses <b>Cloudflare Web Analytics</b> to know how many people use the site. A small Cloudflare script (static.cloudflareinsights.com) sends, for each page opened, the page address, the site you came from, the browser, the operating system, the device type and the load time. The country is derived from the IP address, which is not stored. It <b>uses no cookies</b>, stores nothing on your device, does not track you across sites and <b>nothing from your save</b> (not even the file name) goes with it. Ad blockers often block this script; the app works the same.</p>`,
   },
 };
 
