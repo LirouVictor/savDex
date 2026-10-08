@@ -14,7 +14,7 @@ import {
  * @param {object} [o.olderSlot] dados para o outro slot (save anterior)
  * @param {number} [o.rotate] rotação física dos setores dentro do slot
  * @param {string[]} [o.boxNames] nomes das caixas (padrão BOX1, BOX2…)
- * @param {38|31} [o.pcRecord] tamanho do registro do PC (38 nos saves PT-BR, 31 no save em inglês)
+ * @param {38|31|21} [o.pcRecord] tamanho do registro do PC (38 nos saves PT-BR; 31 e 21 nos saves em inglês)
  * @param {[number, number, number]} [o.playTime] horas, minutos e segundos
  * @param {number} [o.money] dinheiro (gravado com XOR de uma chave, como no jogo)
  * @param {number} [o.badges] insígnias (0–8)
@@ -98,7 +98,7 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     if (F.hp) put(m.hp ?? 0, B.hp[0]);
     for (let k = 0; k < F.dataBytes; k++) pc[off + k] = Number((bits >> BigInt(8 * k)) & 0xFFn);
     if (F.pp !== null) (m.moves || []).forEach(([, pp], j) => { pc[off + F.pp + j] = pp; });
-    pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + F.nickname);
+    if (F.nickname !== null) pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + F.nickname);
   }
   for (let s = 0; s < nSec; s++) sections[PC.firstSection + s].set(pc.subarray(s * PC.sectionData, (s + 1) * PC.sectionData));
 

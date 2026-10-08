@@ -19,11 +19,13 @@ export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
 /**
  * Resumo: tempo de jogo (seção 0), dinheiro (seção 1, XOR com a chave da seção 0), insígnias (8 flags na
  * seção 1 a partir do bit `badgeBit`) e Pokédex (capturados pela Dex Nacional na seção 4, logo depois do
- * bloco marcado "ROP").
+ * bloco marcado "ROP"). Um save em inglês (PC de 21 bytes) tem esse bloco vazio e a Pokédex em `dexAlt`: ali
+ * estão marcadas todas as 658 espécies que o jogador tem na equipe e no PC (698 no total). Ainda não conferido
+ * no jogo: nesse caso a Pokédex, o dinheiro e as insígnias ficam como "provável".
  */
 export const SUMMARY = {
   hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918,
-  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025,
+  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexAlt: 0x3D4, dexTotal: 1025,
 };
 
 export const PARTY = {
@@ -75,13 +77,16 @@ export const PC = {
   },
   nicknameLen: 10,
   /**
-   * Formatos do registro do PC. 38 bytes (saves PT-BR): 24 bytes de dados (com o HP atual), PP e apelido;
-   * 37 caixas, conferidas no jogo pelo autor. 31 bytes (save em inglês): os mesmos 168 primeiros bits, sem HP
-   * nem PP, e o apelido; 45 caixas (a 45ª tem Pokémon e uma 46ª não cabe nas seções).
+   * Formatos do registro do PC (o jogo troca dados por caixas). 38 bytes (saves PT-BR): 24 bytes de dados
+   * (com o HP atual), PP e apelido; 37 caixas, conferidas no jogo pelo autor. 31 bytes (um save em inglês): os
+   * mesmos 168 primeiros bits, sem HP nem PP, e o apelido; 45 caixas (a 45ª tem Pokémon e uma 46ª não cabe nas
+   * seções). 21 bytes (outro save em inglês): só os 168 bits, sem apelido; 67 caixas (o número de nomes de
+   * caixa guardados; uma 68ª não cabe).
    */
   formats: [
     { monSize: 38, dataBytes: 24, pp: 24, nickname: 28, hp: true, boxCount: 37 },
     { monSize: 31, dataBytes: 21, pp: null, nickname: 21, hp: false, boxCount: 45 },
+    { monSize: 21, dataBytes: 21, pp: null, nickname: null, hp: false, boxCount: 67 },
   ],
   /** Limites do Quetzal (ROM): espécies até 1528, golpes até 848, exp até o máximo da curva Medium Slow. */
   maxSpecies: 1528,
@@ -237,7 +242,7 @@ export function parseSave(input) {
       slotsOut.push({
         slot: s + 1,
         speciesId,
-        nickname: decodeText(e, F.nickname, PC.nicknameLen),
+        nickname: F.nickname === null ? '' : decodeText(e, F.nickname, PC.nicknameLen),
         itemId: bitField(bits, ...B.item),
         exp: bitField(bits, ...B.exp10) * 10,
         ballId: bitField(bits, ...B.ball),
@@ -264,11 +269,16 @@ export function parseSave(input) {
   const key = dv.getUint32(s0 + SUMMARY.key, true);
   const s4 = S[4];
   const dexOk = String.fromCharCode(u8[s4 + SUMMARY.dexTag], u8[s4 + SUMMARY.dexTag + 1], u8[s4 + SUMMARY.dexTag + 2]) === 'ROP';
+  let caught = dexOk ? dexBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal) : null;
+  // Pokédex vazia no lugar de sempre e preenchida em dexAlt: o outro layout (ver SUMMARY), não conferido no jogo
+  const alt = dexOk && !caught.length ? dexBits(u8, s4 + SUMMARY.dexAlt, SUMMARY.dexTotal) : [];
+  if (alt.length) caught = alt;
+  const conf = alt.length ? 'provável' : 'confirmado';
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
-    money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
-    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
-    dex: dexOk ? dexSummary(dexBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), SUMMARY.dexTotal) : null,
+    money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: conf },
+    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: conf },
+    dex: caught ? { ...dexSummary(caught, SUMMARY.dexTotal), confidence: conf } : null,
   });
 
   return {

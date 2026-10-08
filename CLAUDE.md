@@ -5,7 +5,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 ## Comandos
 
 - `npm run dev` / `npm run build` (saída em `dist/`) / `npm run preview`
-- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo) e `fixtures/quetzal-60h.sav` (insígnias 6 e Pokédex 67 na tela; Haunter e Doublade recém-capturados) e `fixtures/quetzal-60h-haunter.sav` (o mesmo, com o Haunter ferido levado para a equipe) e `fixtures/quetzal-en.sav` (Quetzal em inglês, de outro jogador: PC de 31 bytes com 397 Pokémon em 45 caixas), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H` / `QUETZAL_SAVE_60H` / `QUETZAL_SAVE_HAUNTER` / `QUETZAL_SAVE_EN`. **Saves reais não são versionados** (`.gitignore`).
+- `npm test`: Vitest. Os testes sintéticos sempre rodam; os do save real (`test/parser.fixture.test.js`) só rodam se existirem `fixtures/PokemonQuetzalPtBrAlpha9v0.sav` e `fixtures/PokemonQuetzalPtBrAlpha9v0-pc.sav` (Lucario e Basculegion movidos para a BOX1, posições 21 e 23) e, opcional, `fixtures/PokemonQuetzalPtBrAlpha9v0-3.sav` (Tyranitar e Scorbunny shinys na equipe, Serperior no PC), `fixtures/quetzal-59h.sav` (tempo e dinheiro conferidos na tela do jogo) e `fixtures/quetzal-60h.sav` (insígnias 6 e Pokédex 67 na tela; Haunter e Doublade recém-capturados) e `fixtures/quetzal-60h-haunter.sav` (o mesmo, com o Haunter ferido levado para a equipe) e `fixtures/quetzal-en.sav` (Quetzal em inglês, de outro jogador: PC de 31 bytes com 397 Pokémon em 45 caixas) e `fixtures/quetzal-en2.sav` (inglês, terceiro jogador: PC de 21 bytes com 708 Pokémon em 67 caixas, Pokédex em outra posição), ou `QUETZAL_SAVE` / `QUETZAL_SAVE_PC` / `QUETZAL_SAVE_3` / `QUETZAL_SAVE_59H` / `QUETZAL_SAVE_60H` / `QUETZAL_SAVE_HAUNTER` / `QUETZAL_SAVE_EN` / `QUETZAL_SAVE_EN2`. **Saves reais não são versionados** (`.gitignore`).
 - `npm run tables`: regenera `src/data/*.json` a partir do pokeemerald-expansion e dos CSVs da PokeAPI (precisa de rede). Os JSON são versionados; o build não acessa rede.
 - `npm run dex`: regenera `src/data/dex.json` (não usado nos saves do Quetzal, do Unbound e do SoulGold, que têm evoluções e golpes por nível da ROM) (linhas evolutivas com o método em português e em inglês e golpes por nível do jogo oficial mais recente; golpes ligados aos IDs do expansion pelo nome). Carregado sob demanda ao abrir o detalhe de um Pokémon; aparece como "provável" (o jogo do save pode ter mudado).
 - `npm run gen3`: regenera `src/data/gen3.json` (tabelas da Gen 3 oficial a partir do decomp pret/pokeemerald + nomes da PokeAPI).
@@ -193,21 +193,22 @@ Contagem em `0x6A4` (u8). Registros a partir de `0x6A8`, **104 bytes (0x68), sem
 
 Concatenar os **0xF80** bytes de dados de cada seção (como no pokeemerald; de 0xF80 a 0xFF4 fica vazio em todas as seções dos saves vistos), em ordem de section ID (43 648 bytes no total). **Confirmado** com o save em inglês (397 Pokémon no PC): com 0xFF4, os registros saem deslocados a partir da 2ª seção (o apelido "Carbink" fica partido no byte 0xF80 da seção 5 e continua no início da 6). Os PCs dos saves PT-BR do autor cabiam na 1ª seção, por isso o erro não aparecia neles.
 
-**Dois formatos de registro** (o save não diz qual; `pcFormat` em `save.js` lê os registros nos dois e fica com o que dá mais Pokémon coerentes: espécie ≤ 1528, golpes ≤ 848, exp ≤ máximo, natureza ≤ 24, habilidade ≤ 2):
+**Três formatos de registro** (o jogo troca dados por caixas; o save não diz qual; `pcFormat` em `save.js` lê os registros nos dois e fica com o que dá mais Pokémon coerentes: espécie ≤ 1528, golpes ≤ 848, exp ≤ máximo, natureza ≤ 24, habilidade ≤ 2):
 
 - **38 bytes** (saves PT-BR do autor): a tabela abaixo; **37 caixas**.
 - **31 bytes** (save do Quetzal **em inglês**, `fixtures/quetzal-en.sav`): os mesmos bits 0–167 (espécie … habilidade) em 21 bytes, e o apelido em 21–30; **sem HP atual nem PP** (o app mostra "—"). **45 caixas**: a 45ª tem Pokémon e uma 46ª não cabe nas seções (0x461 + 1350 × 31 = 0xA8A7 de 0xAA80). Conferido com os 397 Pokémon do save: o apelido (o jogo grava o nome da espécie) bate com a espécie lida em todos, golpes/naturezas/habilidades dentro dos limites, EVs múltiplos de 4, o bit de fêmea 0 no Nidoran♂ e 1 no Nidoran♀. Nesse save, treinador, equipe (os stats salvos batem com a fórmula) e resumo estão nas mesmas posições dos saves PT-BR.
+- **21 bytes** (outro save **em inglês**, `fixtures/quetzal-en2.sav`): só os bits 0–167, **sem apelido**, HP nem PP; **67 caixas** (o número de nomes de caixa guardados; 0x461 + 2010 × 21 = 0xA943, uma 68ª não cabe). Conferido com os 708 Pokémon do save: todos coerentes (espécies, golpes por nível compatíveis com o nível, naturezas, habilidades). Nesse save o bloco da Pokédex em `0x9D0` está vazio e os capturados estão em **`0x3D4` da seção 4** (698, incluindo todas as 658 espécies que o jogador tem na equipe e no PC); as flags das insígnias leem 0 e o dinheiro ₽ 29 785 679. **Não conferido no jogo**: quando a Pokédex vem de `0x3D4`, Pokédex, dinheiro e insígnias aparecem como "provável".
 
 | Offset | Campo | Status |
 |---|---|---|
 | 0x000 | caixa atual (u8) | provável |
 | 0x001 | nomes das caixas, 9 bytes cada, espaço para 67 | confirmado ("BOX1".."BOX67" no save de referência) |
 | 0x25C | 67 bytes de wallpaper (0,1,2,3 repetindo) | provável |
-| 0x461 | Pokémon, **38 bytes cada** (31 no save em inglês), 30 por caixa, **37 caixas** (45 no save em inglês) | confirmado |
+| 0x461 | Pokémon, **38 bytes cada** (31 ou 21 nos saves em inglês), 30 por caixa, **37 caixas** (45 ou 67 nos saves em inglês) | confirmado |
 
 O jogo mostra **37 caixas** (confirmado pelo autor): 1 110 registros, até 0x461 + 1110×38 = 0xA917 (uma 38ª não caberia em 0xAA80). Os 361 bytes seguintes da área do PC não foram investigados. Os nomes de caixa têm espaço para 67, mas só os 37 primeiros são usados.
 
-Registro de 38 bytes (no de 31, os bits 0–167 são os mesmos). Bits contados em little-endian a partir do byte 0 (bit *n* = bit `n % 8` do byte `n / 8`):
+Registro de 38 bytes (nos de 31 e 21, os bits 0–167 são os mesmos). Bits contados em little-endian a partir do byte 0 (bit *n* = bit `n % 8` do byte `n / 8`):
 
 | Bits | Largura | Campo | Status |
 |---|---|---|---|

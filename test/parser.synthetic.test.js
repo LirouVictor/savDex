@@ -88,6 +88,19 @@ suite('parseSave (save sintético)', () => {
     expect(r.warnings).toEqual([]);
   });
 
+  it('PC com registros de 21 bytes (outro save em inglês): sem apelido, HP nem PP, 67 caixas', () => {
+    const pc = {};
+    ['Bulbasaur', 'Ivysaur', 'Venusaur'].forEach((n, i) => { pc[i * 400] = { species: i + 1, exp: 5000 * (i + 1), nature: i + 3, abilityNum: i % 3, moves: [[33, 35]], ivs: [1, 2, 3, 4, 5, 6] }; });
+    pc[2009] = { species: 1528, exp: 1059860 };
+    const r = parseSave(makeSave({ trainer: base.trainer, pc, pcRecord: 21 }));
+    expect([r.pc.recordSize, r.pc.boxCount, r.pc.boxes.length]).toEqual([21, 67, 67]);
+    const all = r.pc.boxes.flatMap(b => b.slots.map(s => ({ box: b.index + 1, ...s })));
+    expect(all.map(s => [s.box, s.slot, s.speciesId, s.nickname])).toEqual([[1, 1, 1, ''], [14, 11, 2, ''], [27, 21, 3, ''], [67, 30, 1528, '']]);
+    expect(all[2]).toMatchObject({ exp: 15000, natureId: 5, abilityNum: 2, hp: null, ivs: { hp: 1, atk: 2, def: 3, spe: 4, spa: 5, spd: 6 } });
+    expect(all[2].moves).toEqual([{ id: 33, pp: null }]);
+    expect(r.warnings).toEqual([]);
+  });
+
   it('HP atual: equipe em 0x23, PC nos bits 168–183', () => {
     const r = parseSave(makeSave({ trainer: base.trainer,
       party: [{ pid: 1, species: 94, level: 29, hp: 33, stats: [66, 40, 40, 60, 70, 40] }],

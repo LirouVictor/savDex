@@ -277,9 +277,36 @@ suite.skipIf(!existsSync(FILE_EN))('Quetzal em inglês: PC de 31 bytes (fixtures
   });
 });
 
+// Outro save do Quetzal em inglês: PC de 21 bytes (sem apelido) em 67 caixas, e a Pokédex em outra posição da
+// seção 4 (0x3D4; o bloco de sempre, em 0x9D0, está vazio). Pokédex, dinheiro e insígnias ainda não conferidos no jogo.
+const FILE_EN2 = process.env.QUETZAL_SAVE_EN2 || new URL('../fixtures/quetzal-en2.sav', import.meta.url).pathname;
+suite.skipIf(!existsSync(FILE_EN2))('Quetzal em inglês: PC de 21 bytes (fixtures/quetzal-en2.sav)', () => {
+  const raw = existsSync(FILE_EN2) ? parseSave(readFileSync(FILE_EN2)) : null;
+  const d = raw ? describe(raw, T) : null;
+
+  it('PC: 708 Pokémon em 67 caixas, todos coerentes', () => {
+    expect([raw.pc.recordSize, d.pc.boxes.length]).toEqual([21, 67]);
+    const all = d.pc.boxes.flatMap(b => b.slots);
+    expect(all).toHaveLength(708);
+    expect(d.pc.boxes.map(b => b.slots.length).filter(Boolean)).toEqual([...Array(22).fill(30), 15, 3, 30]);
+    expect(all.filter(m => m.species.confidence !== 'confirmado' || !m.nature || m.ability.num > 2)).toEqual([]);
+    expect(d.pc.boxes[0].slots.slice(0, 3).map(m => [m.species.name, m.level])).toEqual([['Linoone', 21], ['Rhyhorn', 29], ['Skwovet', 5]]);
+  });
+
+  it('Pokédex na posição alternativa: inclui todas as espécies da equipe e do PC; resumo como "provável"', () => {
+    const dex = raw.summary.dex;
+    expect([dex.owned, dex.total, dex.confidence]).toEqual([698, 1025, 'provável']);
+    const caught = new Set(dex.caught);
+    const nat = id => (id <= 898 ? id : Q.species[id][5]);
+    const missing = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)].map(m => nat(m.speciesId)).filter(n => n && !caught.has(n)); // os próprios do Quetzal (Browt…) não têm nº nacional
+    expect(missing).toEqual([]);
+    expect([raw.summary.money.confidence, raw.summary.badges.confidence, raw.summary.playTime.confidence]).toEqual(['provável', 'provável', 'confirmado']);
+  });
+});
+
 // Com as tabelas da ROM, nada dos saves reais fica como "provável" ou "não mapeado"
 const ROM_CHECK = ['PokemonQuetzalPtBrAlpha9v0.sav', 'PokemonQuetzalPtBrAlpha9v0-pc.sav', 'PokemonQuetzalPtBrAlpha9v0-3.sav',
-  'quetzal-59h.sav', 'quetzal-60h.sav', 'quetzal-60h-haunter.sav', 'quetzal-cmp-old.sav', 'quetzal-cmp-new.sav', 'quetzal-en.sav']
+  'quetzal-59h.sav', 'quetzal-60h.sav', 'quetzal-60h-haunter.sav', 'quetzal-cmp-old.sav', 'quetzal-cmp-new.sav', 'quetzal-en.sav', 'quetzal-en2.sav']
   .map(f => new URL('../fixtures/' + f, import.meta.url).pathname).filter(f => existsSync(f));
 suite.skipIf(!ROM_CHECK.length)('tabelas da ROM contra os saves reais', () => {
   it('espécies, itens e golpes confirmados; stats da equipe = fórmula com os stats base da ROM', () => {

@@ -38,7 +38,7 @@ O app identifica o formato antes de ler. Um save que não bate com nenhum format
 | | Equipe | PC |
 |---|---|---|
 | Espécie, apelido, golpes | ✅ | ✅ |
-| PP | ✅ | ✅ (não guardado no save em inglês) |
+| PP | ✅ | ✅ (alguns saves não guardam) |
 | Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
 | Poké Ball | ✅ | ✅ |
 | Shiny | ✅ | ✅ |
@@ -46,7 +46,7 @@ O app identifica o formato antes de ler. Um save que não bate com nenhum format
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
 | Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
 | Stats | ✅ | calculados (stats base + nível, IVs, EVs, natureza) |
-| HP atual | ✅ | ✅ (não guardado no save em inglês) |
+| HP atual | ✅ | ✅ (alguns saves não guardam) |
 
 Também tem:
 - **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;
