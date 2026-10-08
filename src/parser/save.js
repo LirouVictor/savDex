@@ -19,11 +19,17 @@ export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
 /**
  * Resumo: tempo de jogo (seção 0), dinheiro (seção 1, XOR com a chave da seção 0), insígnias (8 flags na
  * seção 1 a partir do bit `badgeBit`) e Pokédex (capturados pela Dex Nacional na seção 4, logo depois do
- * bloco marcado "ROP").
+ * bloco marcado "ROP"). Com o jogador em **Kanto** (grupo do mapa atual, `0x474` da seção 1, entre 36 e 39, e o
+ * bloco "REG" na seção 4), o jogo mostra a Pokédex e as insígnias de Kanto, guardadas na seção 4: capturados em
+ * `kanto.dex` e insígnias nos 8 bits de `kanto.badges`. Conferido no jogo (tela de continuar e menu) com um save
+ * em inglês aberto com a ROM PT-BR: Pokédex 702, 8 insígnias e ₽ 29 785 679; zerar esses bytes numa cópia zera
+ * os números na tela, e o grupo do mapa só mostra os dados de Kanto com 36–39.
+ * O jogo conta todos os bits do bloco da Pokédex (129 bytes; os acima do 1025 são espécies próprias do Quetzal).
  */
 export const SUMMARY = {
   hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918,
-  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025,
+  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBytes: 129,
+  mapGroup: 0x474, regTag: 0xA8, kanto: { groups: [36, 37, 38, 39], dex: 0x3D4, badges: 0x2CC },
 };
 
 export const PARTY = {
@@ -75,13 +81,16 @@ export const PC = {
   },
   nicknameLen: 10,
   /**
-   * Formatos do registro do PC. 38 bytes (saves PT-BR): 24 bytes de dados (com o HP atual), PP e apelido;
-   * 37 caixas, conferidas no jogo pelo autor. 31 bytes (save em inglês): os mesmos 168 primeiros bits, sem HP
-   * nem PP, e o apelido; 45 caixas (a 45ª tem Pokémon e uma 46ª não cabe nas seções).
+   * Formatos do registro do PC (o jogo troca dados por caixas). 38 bytes (saves PT-BR): 24 bytes de dados
+   * (com o HP atual), PP e apelido; 37 caixas, conferidas no jogo pelo autor. 31 bytes (um save em inglês): os
+   * mesmos 168 primeiros bits, sem HP nem PP, e o apelido; 45 caixas (a 45ª tem Pokémon e uma 46ª não cabe nas
+   * seções). 21 bytes (outro save em inglês): só os 168 bits, sem apelido; 67 caixas (o número de nomes de
+   * caixa guardados; uma 68ª não cabe).
    */
   formats: [
     { monSize: 38, dataBytes: 24, pp: 24, nickname: 28, hp: true, boxCount: 37 },
     { monSize: 31, dataBytes: 21, pp: null, nickname: 21, hp: false, boxCount: 45 },
+    { monSize: 21, dataBytes: 21, pp: null, nickname: null, hp: false, boxCount: 67 },
   ],
   /** Limites do Quetzal (ROM): espécies até 1528, golpes até 848, exp até o máximo da curva Medium Slow. */
   maxSpecies: 1528,
@@ -237,7 +246,7 @@ export function parseSave(input) {
       slotsOut.push({
         slot: s + 1,
         speciesId,
-        nickname: decodeText(e, F.nickname, PC.nicknameLen),
+        nickname: F.nickname === null ? '' : decodeText(e, F.nickname, PC.nicknameLen),
         itemId: bitField(bits, ...B.item),
         exp: bitField(bits, ...B.exp10) * 10,
         ballId: bitField(bits, ...B.ball),
@@ -263,12 +272,16 @@ export function parseSave(input) {
   // Conferido com a tela do jogo: 6 insígnias e Pokédex 67. Total = Dex Nacional do expansion (1025).
   const key = dv.getUint32(s0 + SUMMARY.key, true);
   const s4 = S[4];
-  const dexOk = String.fromCharCode(u8[s4 + SUMMARY.dexTag], u8[s4 + SUMMARY.dexTag + 1], u8[s4 + SUMMARY.dexTag + 2]) === 'ROP';
+  const tag = (o, s) => String.fromCharCode(u8[s4 + o], u8[s4 + o + 1], u8[s4 + o + 2]) === s;
+  // Jogador em Kanto: Pokédex e insígnias de Kanto (seção 4); senão, as de sempre (ver SUMMARY)
+  const kanto = tag(SUMMARY.regTag, 'REG') && SUMMARY.kanto.groups.includes(u8[s1 + SUMMARY.mapGroup]);
+  const dexAt = kanto ? s4 + SUMMARY.kanto.dex : tag(SUMMARY.dexTag, 'ROP') ? s4 + SUMMARY.dex : null;
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
     money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
-    badges: { count: countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
-    dex: dexOk ? dexSummary(dexBits(u8, s4 + SUMMARY.dex, SUMMARY.dexTotal), SUMMARY.dexTotal) : null,
+    badges: { count: kanto ? countBits(u8, s4 + SUMMARY.kanto.badges, 8) : countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
+    dex: dexAt === null ? null : dexSummary(dexBits(u8, dexAt, SUMMARY.dexTotal), SUMMARY.dexTotal,
+      { owned: countBits(u8, dexAt, SUMMARY.dexBytes * 8) }),
   });
 
   return {
