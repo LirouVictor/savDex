@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-06';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-08',
+    pt: [
+      'Ruby/Sapphire conferidos com saves reais: o resumo (tempo de jogo, dinheiro, insígnias e Pokédex) deixou de ser “provável”. Corrigido também um save de Ruby/Sapphire que aparecia como Emerald, com o dinheiro errado.',
+    ],
+    en: [
+      'Ruby/Sapphire checked against real saves: the summary (play time, money, badges and Pokédex) is no longer “probable”. Also fixed a Ruby/Sapphire save that showed up as Emerald, with the wrong money.',
+    ],
+  },
+  {
     date: '2026-10-07',
     pt: [
       'Detalhe do Pokémon renovado: cabeçalho com a cor do tipo, barra no topo com copiar e fechar sempre à mão, natureza/item/habilidade/bola em duas colunas, poder e precisão já na linha de cada golpe e barras de stats coloridas (do mais fraco ao mais forte).',

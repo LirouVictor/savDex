@@ -54,6 +54,7 @@ export function encodeMon(m, party = false) {
 /**
  * @param {object} o
  * @param {'emerald'|'rs'|'frlg'} o.game
+ * @param {number} [o.towerRecord] Ruby/Sapphire: valor em 0xAC (recorde da Battle Tower; 0 = sem recorde)
  * @param {{name:string, tid:number, sid:number}} o.trainer
  * @param {object[]} [o.party]
  * @param {Record<number, object>} [o.pc] índice global do slot (0–419) -> Pokémon
@@ -66,7 +67,10 @@ export function makeGen3Save(o) {
   sections[0].set(encodeText(o.trainer.name, 7), GEN3.trainer.name);
   s0.setUint16(GEN3.trainer.tid, o.trainer.tid, true);
   s0.setUint16(GEN3.trainer.sid, o.trainer.sid, true);
-  s0.setUint32(GEN3.trainer.gameCode, o.game === 'frlg' ? 1 : o.game === 'rs' ? 0 : 0x12345678, true);
+  // 0xAC: 1 no FireRed/LeafGreen, a chave no Emerald; no Ruby/Sapphire é do recorde da Battle Tower (0 sem recorde)
+  s0.setUint32(GEN3.trainer.gameCode, o.game === 'frlg' ? 1 : o.game === 'rs' ? (o.towerRecord ?? 0) : 0x12345678, true);
+  // O Emerald usa a seção 0 depois de 0x890 (o Ruby/Sapphire não): como no save real, dados da Battle Frontier em 0xEE0
+  if (o.game === 'emerald') s0.setUint16(0xEE0, 0xFFFF, true);
   const layout = GEN3.party[o.game === 'frlg' ? 'frlg' : 'rse'];
   const s1 = new DataView(sections[1].buffer);
   const party = o.party || [];

@@ -17,8 +17,6 @@ export default {
     'No game, no file: a Quetzal save with made-up Pokémon to try savDex.',
   'Jogos suportados': 'Supported games',
   'Pokémon Quetzal <small>(testado na Alpha 9 PT-BR)</small>': 'Pokémon Quetzal <small>(tested on Alpha 9 PT-BR)</small>',
-  'Pokémon Ruby / Sapphire <small>(mesmo formato do Emerald; ainda sem save real para testar)</small>':
-    'Pokémon Ruby / Sapphire <small>(same format as Emerald; not yet tested with a real save)</small>',
   'Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.':
     'Hacks that keep the format of these games also open, but species, move and item names may not match if the hack changed them. A save from another game shows a warning instead of wrong data.',
   'Esquecer este save': 'Forget this save',

@@ -18,7 +18,7 @@ export const SUPPORTED = [
   'Pokémon Quetzal (testado na Alpha 9 PT-BR)',
   'Pokémon Emerald',
   'Pokémon FireRed / LeafGreen',
-  'Pokémon Ruby / Sapphire (mesmo formato; ainda sem save real para testar)',
+  'Pokémon Ruby / Sapphire',
   'Pokémon Unbound (2.1)',
   'Pokémon SoulGold (hack de Emerald; conferido no próprio jogo)',
   'Pokémon Diamond / Pearl',

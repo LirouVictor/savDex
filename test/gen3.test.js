@@ -59,8 +59,13 @@ suite('Gen 3 oficial: detecção e leitura', () => {
     expect(egg.species.form).toBe('ovo');
   });
 
-  it('Ruby/Sapphire (código 0) e FireRed/LeafGreen (equipe em outro lugar)', () => {
+  it('Ruby/Sapphire (0 em 0xAC, ou recorde da Battle Tower sem os dados do Emerald) e FireRed/LeafGreen (equipe em outro lugar)', () => {
     expect(loadSave(makeGen3Save({ game: 'rs', trainer, party }), T, G).data.game.id).toBe('rs');
+    // Recorde da Battle Tower em 0xAC: continua Ruby/Sapphire (antes virava Emerald e o dinheiro saía com a chave errada)
+    const rs = loadSave(makeGen3Save({ game: 'rs', trainer, party, towerRecord: 0xC9C7BFC7, summary: { hours: 1, minutes: 2, seconds: 3, money: 999999, badges: 8, owned: [1] } }), T, G).data;
+    expect(rs.game.id).toBe('rs');
+    expect(rs.summary.money.value).toBe(999999);
+    expect(loadSave(makeGen3Save({ game: 'emerald', trainer, party }), T, G).data.game.id).toBe('emerald');
     const fr = loadSave(makeGen3Save({ game: 'frlg', trainer, party, pc }), T, G).data;
     expect(fr.game.id).toBe('frlg');
     expect(fr.party[0].species.name).toBe('Swampert');
@@ -70,7 +75,7 @@ suite('Gen 3 oficial: detecção e leitura', () => {
     const summary = { hours: 38, minutes: 12, seconds: 5, money: 124560, badges: 5, owned: [1, 25, 151, 386] };
     for (const game of ['emerald', 'frlg', 'rs']) {
       const { data } = loadSave(makeGen3Save({ game, trainer, party, summary }), T, G);
-      const conf = game === 'rs' ? 'provável' : 'confirmado';
+      const conf = 'confirmado';
       expect(data.summary).toEqual({
         playTime: { h: 38, m: 12, s: 5, confidence: conf },
         money: { value: 124560, confidence: conf },
@@ -146,6 +151,22 @@ for (const [file, id] of [['emerald.sav', 'emerald'], ['firered.sav', 'frlg']]) 
       expect(data.warnings).toEqual([]);
       // Saves completos: os valores máximos do jogo (o dinheiro só dá 999999 com a chave certa)
       expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999 }, badges: { count: 8 }, dex: { owned: 386, total: 386 } });
+    });
+  });
+}
+
+// Saves reais de Ruby e Sapphire (exports do GameShark, coleções completas): o 0xAC tem recorde da Battle Tower e a
+// seção 0 é zerada depois de 0x890. Dinheiro sem chave (₽ 999 999), 8 insígnias (flags 0x807–0x80E; a 0x803, sem uso
+// no jogo, é a única desligada entre as de sistema), Pokédex 386, e os stats salvos da equipe batem com a fórmula.
+for (const [f, name] of [['fixtures/rs-a.sps', 'Sapphire'], ['fixtures/rs-b.sps', 'Ruby']]) {
+  suite.skipIf(!existsSync(f))(`Ruby/Sapphire: save real (${name})`, () => {
+    it('identifica o jogo e lê o resumo', () => {
+      const { data } = loadSave(readFileSync(f), T, G);
+      expect(data.game.id).toBe('rs');
+      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999, confidence: 'confirmado' }, badges: { count: 8 }, dex: { owned: 386 } });
+      expect(data.party.map(m => m.species.name)).toEqual(['Skarmory', 'Swampert', 'Smeargle', 'Smeargle']);
+      for (const m of data.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
+      expect(data.pc.boxes.reduce((a, b) => a + b.slots.length, 0)).toBeGreaterThan(400);
     });
   });
 }
