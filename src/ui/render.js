@@ -53,7 +53,7 @@ function movesList(moves) {
     return `<li><details class="move t-${esc(mv.type || 'none')}">
       <summary><span class="mv-name">${esc(mv.name)}</span>
         <span class="mt">${esc(mv.type || '—')} · ${esc(cat)}</span>
-        <span class="mv-nums">${val(t('Poder'), power)}${val(t('Precisão'), acc)}${val('PP', mv.pp)}</span></summary>
+        <span class="mv-nums">${val(t('Poder'), power)}${val(t('Precisão'), acc)}${val('PP', mv.pp ?? '—')}</span></summary>
       <div class="move-info"><p class="move-desc" data-move="${mv.id}"></p></div>
     </details></li>`;
   }).join('')}</ul>`;

@@ -45,18 +45,20 @@ export const PARTY = {
 export const PC = {
   firstSection: 5,
   lastSection: 15,
+  /**
+   * Bytes do PC em cada seção: 0xF80, como no pokeemerald (o resto até 0xFF4 fica vazio). Conferido com
+   * um save em inglês com 397 Pokémon no PC: com 0xFF4, os registros saem deslocados a partir da 2ª seção.
+   */
+  sectionData: 0xF80,
   currentBox: 0x00,
   boxNames: 0x01,
   boxNameLen: 9,
   /** Nomes de caixa guardados no save (o jogo só usa as primeiras `boxCount`). */
   boxNameSlots: 67,
-  /** Caixas que o jogo mostra (confirmado no jogo pelo autor). */
-  boxCount: 37,
   wallpapers: 0x25C,
   monStart: 0x461,
-  monSize: 38,
   perBox: 30,
-  // Posições em bits (little-endian a partir do byte 0 do registro): [início, largura]
+  // Posições em bits (little-endian a partir do byte 0 do registro): [início, largura]; iguais nos dois formatos
   bits: {
     species: [0, 11],
     item: [11, 10],
@@ -69,11 +71,22 @@ export const PC = {
     ivs: 124, ivWidth: 5,
     nature: [161, 5],
     ability: [166, 2],
-    hp: [168, 16], // HP atual (igual ao máximo calculado em 82 de 86; o Haunter ferido tem 33, o mesmo da equipe)
+    hp: [168, 16], // HP atual (só no registro de 38 bytes)
   },
-  pp: 24,
-  nickname: 28,
   nicknameLen: 10,
+  /**
+   * Formatos do registro do PC. 38 bytes (saves PT-BR): 24 bytes de dados (com o HP atual), PP e apelido;
+   * 37 caixas, conferidas no jogo pelo autor. 31 bytes (save em inglês): os mesmos 168 primeiros bits, sem HP
+   * nem PP, e o apelido; 45 caixas (a 45ª tem Pokémon e uma 46ª não cabe nas seções).
+   */
+  formats: [
+    { monSize: 38, dataBytes: 24, pp: 24, nickname: 28, hp: true, boxCount: 37 },
+    { monSize: 31, dataBytes: 21, pp: null, nickname: 21, hp: false, boxCount: 45 },
+  ],
+  /** Limites do Quetzal (ROM): espécies até 1528, golpes até 848, exp até o máximo da curva Medium Slow. */
+  maxSpecies: 1528,
+  maxMove: 848,
+  maxExp: 1059860,
 };
 
 /** Ordem em que o jogo guarda EVs, IVs e stats. */
@@ -186,11 +199,11 @@ export function parseSave(input) {
     });
   }
 
-  // PC: setores 5..15 concatenados (0xFF4 bytes úteis de cada)
+  // PC: setores 5..15 concatenados (0xF80 bytes úteis de cada)
   const parts = [];
   for (let id = PC.firstSection; id <= PC.lastSection; id++) {
     if (S[id] === undefined) { warnings.push(t('Setor {id} do PC ausente.', { id })); continue; }
-    parts.push(u8.subarray(S[id], S[id] + SECTOR_DATA));
+    parts.push(u8.subarray(S[id], S[id] + PC.sectionData));
   }
   const pc = new Uint8Array(parts.reduce((a, p) => a + p.length, 0));
   { let o = 0; for (const p of parts) { pc.set(p, o); o += p.length; } }
@@ -199,20 +212,20 @@ export function parseSave(input) {
   for (let b = 0; b < PC.boxNameSlots; b++) {
     boxNames.push(decodeText(pc, PC.boxNames + b * PC.boxNameLen, PC.boxNameLen) || `BOX${b + 1}`);
   }
-  const capacity = Math.max(0, Math.floor((pc.length - PC.monStart) / PC.monSize));
-  const readableBoxes = Math.min(PC.boxCount, Math.ceil(capacity / PC.perBox));
-  if (capacity < PC.boxCount * PC.perBox) {
-    warnings.push(t('Os setores do PC só comportam {n} Pokémon; o esperado eram {total}. As caixas que não couberam não são lidas.', { n: capacity, total: PC.boxCount * PC.perBox }));
+  const F = pcFormat(pc);
+  const capacity = Math.max(0, Math.floor((pc.length - PC.monStart) / F.monSize));
+  const readableBoxes = Math.min(F.boxCount, Math.ceil(capacity / PC.perBox));
+  if (capacity < F.boxCount * PC.perBox) {
+    warnings.push(t('Os setores do PC só comportam {n} Pokémon; o esperado eram {total}. As caixas que não couberam não são lidas.', { n: capacity, total: F.boxCount * PC.perBox }));
   }
 
   const boxes = [];
   for (let b = 0; b < readableBoxes; b++) {
     const slotsOut = [];
     for (let s = 0; s < PC.perBox && b * PC.perBox + s < capacity; s++) {
-      const o = PC.monStart + (b * PC.perBox + s) * PC.monSize;
-      const e = pc.subarray(o, o + PC.monSize);
+      const e = pcRecord(pc, F, b * PC.perBox + s);
       if (!e.some(x => x)) continue;
-      const bits = readBits(e, 24);
+      const bits = readBits(e, F.dataBytes);
       const B = PC.bits;
       const speciesId = bitField(bits, ...B.species);
       if (!speciesId) continue;
@@ -224,7 +237,7 @@ export function parseSave(input) {
       slotsOut.push({
         slot: s + 1,
         speciesId,
-        nickname: decodeText(e, PC.nickname, PC.nicknameLen),
+        nickname: decodeText(e, F.nickname, PC.nicknameLen),
         itemId: bitField(bits, ...B.item),
         exp: bitField(bits, ...B.exp10) * 10,
         ballId: bitField(bits, ...B.ball),
@@ -232,9 +245,10 @@ export function parseSave(input) {
         femaleBit: bitField(bits, ...B.female),
         natureId: bitField(bits, ...B.nature),
         abilityNum: bitField(bits, ...B.ability),
-        hp: bitField(bits, ...B.hp),
+        hp: F.hp ? bitField(bits, ...B.hp) : null,
         evs, ivs,
-        moves: B.moves.map((bit, j) => ({ id: bitField(bits, bit, B.moveWidth), pp: e[PC.pp + j] })).filter(m => m.id),
+        // O registro de 31 bytes não guarda PP
+        moves: B.moves.map((bit, j) => ({ id: bitField(bits, bit, B.moveWidth), pp: F.pp === null ? null : e[F.pp + j] })).filter(m => m.id),
         raw: hex(e),
       });
     }
@@ -263,8 +277,39 @@ export function parseSave(input) {
     trainer,
     summary: info,
     party,
-    pc: { currentBox: pc[PC.currentBox], boxCount: PC.boxCount, capacity, boxes },
+    pc: { currentBox: pc[PC.currentBox], boxCount: F.boxCount, capacity, boxes, recordSize: F.monSize },
   };
+}
+
+const pcRecord = (pc, F, i) => pc.subarray(PC.monStart + i * F.monSize, PC.monStart + (i + 1) * F.monSize);
+
+/**
+ * Formato do registro do PC (38 ou 31 bytes). O save não diz qual é: lê todos os registros nos dois formatos
+ * e fica com o que der mais Pokémon coerentes (espécie, golpes, exp, natureza e habilidade dentro dos limites
+ * do Quetzal). Num formato errado, quase todos os registros saem incoerentes. Empate (PC vazio): 38 bytes.
+ */
+export function pcFormat(pc) {
+  const B = PC.bits;
+  let best = PC.formats[0], bestScore = -Infinity;
+  for (const F of PC.formats) {
+    let score = 0;
+    const n = Math.min(F.boxCount * PC.perBox, Math.floor((pc.length - PC.monStart) / F.monSize));
+    for (let i = 0; i < n; i++) {
+      const e = pcRecord(pc, F, i);
+      if (!e.some(x => x)) continue;
+      const bits = readBits(e, F.dataBytes);
+      const sp = bitField(bits, ...B.species);
+      if (!sp) continue;
+      const ok = sp <= PC.maxSpecies
+        && bitField(bits, ...B.exp10) * 10 <= PC.maxExp
+        && bitField(bits, ...B.nature) <= 24
+        && bitField(bits, ...B.ability) <= 2
+        && B.moves.every(bit => bitField(bits, bit, B.moveWidth) <= PC.maxMove);
+      score += ok ? 1 : -1;
+    }
+    if (score > bestScore) { best = F; bestScore = score; }
+  }
+  return best;
 }
 
 /** Lê os primeiros `n` bytes como inteiro little-endian (BigInt). */

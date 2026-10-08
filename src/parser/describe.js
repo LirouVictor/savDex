@@ -216,7 +216,9 @@ export function makeResolver(T) {
 const SHOWDOWN_NAMES = { 'Nidoran♀': 'Nidoran-F', 'Nidoran♂': 'Nidoran-M' };
 const showdownSpecies = name => SHOWDOWN_NAMES[name] || name;
 
-const sameName = (a, b) => (a || '').toLowerCase() === (b || '').toLowerCase();
+// O jogo escreve Farfetch’d com o apóstrofo curvo; a tabela, com o reto
+const plainName = s => (s || '').toLowerCase().replace(/[’']/g, "'");
+const sameName = (a, b) => plainName(a) === plainName(b);
 
 /**
  * @param {ReturnType<import('./save.js').parseSave>} raw

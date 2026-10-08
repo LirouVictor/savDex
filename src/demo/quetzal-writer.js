@@ -2,7 +2,7 @@
 // Só cria arquivos novos; o app nunca grava no save do usuário.
 import { encodeText } from '../parser/charset.js';
 import {
-  SAVE_SIZE, SECTOR_SIZE, SECTOR_DATA, SECTORS_PER_SLOT, SIGNATURE, FOOTER, TRAINER, PARTY, PC, SUMMARY, sectorChecksum,
+  SAVE_SIZE, SECTOR_SIZE, SECTORS_PER_SLOT, SIGNATURE, FOOTER, TRAINER, PARTY, PC, SUMMARY, sectorChecksum,
 } from '../parser/save.js';
 
 /**
@@ -14,6 +14,7 @@ import {
  * @param {object} [o.olderSlot] dados para o outro slot (save anterior)
  * @param {number} [o.rotate] rotação física dos setores dentro do slot
  * @param {string[]} [o.boxNames] nomes das caixas (padrão BOX1, BOX2…)
+ * @param {38|31} [o.pcRecord] tamanho do registro do PC (38 nos saves PT-BR, 31 no save em inglês)
  * @param {[number, number, number]} [o.playTime] horas, minutos e segundos
  * @param {number} [o.money] dinheiro (gravado com XOR de uma chave, como no jogo)
  * @param {number} [o.badges] insígnias (0–8)
@@ -73,12 +74,13 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     d1.setUint16(r + PARTY.hp, p.hp ?? (p.stats || [0])[0], true);
   });
 
-  // Seções 5..15: PC (área contínua de 0xFF4 bytes por seção)
+  // Seções 5..15: PC (área contínua de 0xF80 bytes por seção); registro de 38 bytes (ou 31 com o.pcRecord = 31)
+  const F = PC.formats.find(f => f.monSize === (o.pcRecord ?? 38));
   const nSec = PC.lastSection - PC.firstSection + 1;
-  const pc = new Uint8Array(nSec * SECTOR_DATA);
+  const pc = new Uint8Array(nSec * PC.sectionData);
   for (let b = 0; b < PC.boxNameSlots; b++) pc.set(encodeText((o.boxNames && o.boxNames[b]) || `BOX${b + 1}`, PC.boxNameLen), PC.boxNames + b * PC.boxNameLen);
   for (const [idx, m] of Object.entries(o.pc || {})) {
-    const off = PC.monStart + Number(idx) * PC.monSize;
+    const off = PC.monStart + Number(idx) * F.monSize;
     const B = PC.bits;
     const put = (value, offset) => { bits |= BigInt(value) << BigInt(offset); };
     let bits = 0n;
@@ -93,12 +95,12 @@ function writeSlot(u8, slot, o, saveIndex, rotate) {
     (m.ivs || [0, 0, 0, 0, 0, 0]).forEach((v, j) => put(v, B.ivs + j * B.ivWidth));
     put(m.nature ?? 0, B.nature[0]);
     put(m.abilityNum ?? 0, B.ability[0]);
-    put(m.hp ?? 0, B.hp[0]);
-    for (let k = 0; k < 24; k++) pc[off + k] = Number((bits >> BigInt(8 * k)) & 0xFFn);
-    (m.moves || []).forEach(([, pp], j) => { pc[off + PC.pp + j] = pp; });
-    pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + PC.nickname);
+    if (F.hp) put(m.hp ?? 0, B.hp[0]);
+    for (let k = 0; k < F.dataBytes; k++) pc[off + k] = Number((bits >> BigInt(8 * k)) & 0xFFn);
+    if (F.pp !== null) (m.moves || []).forEach(([, pp], j) => { pc[off + F.pp + j] = pp; });
+    pc.set(encodeText(m.nickname ?? '', PC.nicknameLen), off + F.nickname);
   }
-  for (let s = 0; s < nSec; s++) sections[PC.firstSection + s].set(pc.subarray(s * SECTOR_DATA, (s + 1) * SECTOR_DATA));
+  for (let s = 0; s < nSec; s++) sections[PC.firstSection + s].set(pc.subarray(s * PC.sectionData, (s + 1) * PC.sectionData));
 
   // Rodapés e gravação com rotação física
   sections.forEach((sec, id) => {

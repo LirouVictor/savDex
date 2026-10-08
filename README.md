@@ -21,7 +21,7 @@ Sem jogo ou sem arquivo? Toque em **Ver um save de exemplo** na tela inicial: ab
 
 ### Jogos suportados
 
-- **Pokémon Quetzal** (testado na Alpha 9 PT-BR; o save não guarda a versão do jogo).
+- **Pokémon Quetzal** (testado na Alpha 9 PT-BR e em inglês; o save não guarda a versão do jogo).
 - **Pokémon Emerald** e **FireRed/LeafGreen** (conferidos com saves reais).
 - **Pokémon Ruby/Sapphire** (conferido com saves reais de Ruby e Sapphire).
 - **Pokémon Diamond/Pearl**, **Platinum**, **HeartGold/SoulSilver**, **Black/White** e **Black 2/White 2** (DS; conferidos com saves reais). Save state do emulador (`.dst`) não é o save do jogo e mostra um aviso.
@@ -37,7 +37,8 @@ O app identifica o formato antes de ler. Um save que não bate com nenhum format
 
 | | Equipe | PC |
 |---|---|---|
-| Espécie, apelido, golpes, PP | ✅ | ✅ |
+| Espécie, apelido, golpes | ✅ | ✅ |
+| PP | ✅ | ✅ (não guardado no save em inglês) |
 | Natureza, item, habilidade, IVs, EVs | ✅ | ✅ |
 | Poké Ball | ✅ | ✅ |
 | Shiny | ✅ | ✅ |
@@ -45,7 +46,7 @@ O app identifica o formato antes de ler. Um save que não bate com nenhum format
 | Experiência | ✅ | ✅ (o jogo guarda ÷ 10) |
 | Nível | ✅ | calculado pela experiência (curva conferida no jogo) |
 | Stats | ✅ | calculados (stats base + nível, IVs, EVs, natureza) |
-| HP atual | provável (`0x23`), ainda não mostrado | — |
+| HP atual | ✅ | ✅ (não guardado no save em inglês) |
 
 Também tem:
 - **Busca** na equipe e em todas as caixas (nome, espécie, golpe, habilidade, item), com filtros (tipo, shiny, habilidade oculta, gênero, 6 IVs 31) e ordenação;

@@ -55,10 +55,37 @@ suite('parseSave (save sintético)', () => {
     expect(raw.pc.boxes[1].slots[0]).toMatchObject({ itemId: 389, exp: 199100, natureId: 15, abilityNum: 2, ballId: 25, shiny: true });
     expect(box1.slots[0]).toMatchObject({ ballId: 1, shiny: false });
     expect(raw.pc.boxes[1].slots[0].evs).toEqual({ hp: 4, atk: 0, def: 0, spe: 252, spa: 252, spd: 0 });
-    expect(raw.pc.capacity).toBe(1152);
+    expect(raw.pc.capacity).toBe(1119); // 11 seções × 0xF80 bytes
+    expect(raw.pc.recordSize).toBe(38);
     expect(raw.pc.boxes).toHaveLength(37);
     expect(raw.pc.boxes[36].slots).toEqual([expect.objectContaining({ slot: 30, speciesId: 4, nickname: '', exp: 1059860, abilityNum: 1, natureId: 24 })]);
     expect(raw.warnings).toEqual([]);
+  });
+
+  it('PC: registro que atravessa o fim de uma seção (0xF80 bytes por seção)', () => {
+    // Registro 74 = bytes 0xF5D–0xF82: começa na seção 5 e termina na 6
+    const r = parseSave(makeSave({ trainer: base.trainer, pc: { 74: { species: 448, nickname: 'Lucario', exp: 500000, nature: 15, moves: [[396, 16]] }, 400: { species: 1, nickname: 'Bulbasaur' } } }));
+    expect(r.pc.boxes[2].slots).toEqual([expect.objectContaining({ slot: 15, speciesId: 448, nickname: 'Lucario', exp: 500000, natureId: 15 })]);
+    expect(r.pc.boxes[13].slots).toEqual([expect.objectContaining({ slot: 11, speciesId: 1, nickname: 'Bulbasaur' })]);
+  });
+
+  it('PC com registros de 31 bytes (save em inglês): sem HP nem PP, 45 caixas', () => {
+    const pc = {};
+    ['Bulbasaur', 'Ivysaur', 'Venusaur', 'Charmander'].forEach((n, i) => { pc[i * 97] = { species: i + 1, nickname: n, exp: 1000 * (i + 1), nature: i, abilityNum: i % 3, moves: [[33, 35], [45, 40]], evs: [4, 252, 0, 252, 0, 0], ivs: [31, 30, 29, 28, 27, 26], female: i % 2 === 1 }; });
+    pc[1349] = { species: 1528, nickname: '', exp: 1059860 };
+    const r = parseSave(makeSave({ trainer: base.trainer, pc, pcRecord: 31 }));
+    expect(r.pc.recordSize).toBe(31);
+    expect(r.pc.boxCount).toBe(45);
+    expect(r.pc.boxes).toHaveLength(45);
+    const all = r.pc.boxes.flatMap(b => b.slots.map(s => ({ box: b.index + 1, ...s })));
+    expect(all.map(s => [s.box, s.slot, s.speciesId, s.nickname])).toEqual([
+      [1, 1, 1, 'Bulbasaur'], [4, 8, 2, 'Ivysaur'], [7, 15, 3, 'Venusaur'], [10, 22, 4, 'Charmander'], [45, 30, 1528, ''],
+    ]);
+    expect(all[1]).toMatchObject({ exp: 2000, natureId: 1, abilityNum: 1, femaleBit: 1, hp: null });
+    expect(all[1].moves).toEqual([{ id: 33, pp: null }, { id: 45, pp: null }]);
+    expect(all[1].evs).toEqual({ hp: 4, atk: 252, def: 0, spe: 252, spa: 0, spd: 0 });
+    expect(all[1].ivs).toEqual({ hp: 31, atk: 30, def: 29, spe: 28, spa: 27, spd: 26 });
+    expect(r.warnings).toEqual([]);
   });
 
   it('HP atual: equipe em 0x23, PC nos bits 168–183', () => {
