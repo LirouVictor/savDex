@@ -141,6 +141,9 @@ export function buildView(r, byRef, model, T, opts = null) {
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
   const gap = levelGap(mons);
   const check = mons.length ? warn + bullets([...teamFacts(mons, T).split('\n'), ...(gap ? [gap] : [])], byRef) : '';
+  // Trocas feitas pelo app (critério que a IA furou): quem saiu, quem entrou e como ficaram os tipos
+  const fixed = r.fix ? `<p class="ai-fix"><b>${t('Ajuste do app:')}</b> ${r.fix.swaps.map(s => t('{out} saiu, {in} entrou', { out: `<b>${monShort(s.out)}</b>`, in: `<b>${monShort(s.in)}</b>` })).join('; ')}.
+    ${t('Membros fracos a cada tipo: {list}.', { list: r.fix.counts.map(c => `${esc(c.type[0].toUpperCase() + c.type.slice(1))} ${c.before} → ${c.after}`).join(', ') })}</p>` : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}${checksHtml(x, byRef, opts && { ...opts, T })}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">
@@ -157,6 +160,7 @@ export function buildView(r, byRef, model, T, opts = null) {
     <p class="hint team-msg" role="status"></p>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
     <ul class="ai-members">${cards}</ul>
+    ${fixed}
     ${short}
     <div class="ai-cols">
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}

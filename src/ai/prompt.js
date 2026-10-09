@@ -193,11 +193,12 @@ export const BUILD_SCHEMA = {
 export const REFINE_SCHEMA = {
   type: 'OBJECT',
   properties: {
+    resumo: { type: 'STRING', description: 'Estratégia em até 3 frases' },
     pontos_fortes: strList,
     pontos_fracos: { ...strList, description: 'Inclua os tipos que acertam muitos membros e os tipos sem golpe super efetivo, pelos cálculos do app' },
     dicas: { ...strList, description: 'Até 5 ajustes concretos (golpe, item, natureza, EVs) que atacam os pontos fracos, cada um com o motivo' },
   },
-  required: ['pontos_fortes', 'pontos_fracos', 'dicas'],
+  required: ['resumo', 'pontos_fortes', 'pontos_fracos', 'dicas'],
 };
 
 /**
@@ -243,7 +244,7 @@ const FIELD_MOVES = {
   'Rain Dance': 'chuva', 'Sunny Day': 'sol', Sandstorm: 'tempestade de areia', Hail: 'neve/granizo', Snowscape: 'neve/granizo',
   'Electric Terrain': 'Electric Terrain', 'Psychic Terrain': 'Psychic Terrain', 'Grassy Terrain': 'Grassy Terrain', 'Misty Terrain': 'Misty Terrain',
 };
-const isMegaStone = item => !!item && /ite( [XYZ])?$/.test(item.name) && !/^(Eviolite|Meteorite)$/.test(item.name);
+export const isMegaStone = item => !!item && /ite( [XYZ])?$/.test(item.name) && !/^(Eviolite|Meteorite)$/.test(item.name);
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 
 /** Fatos calculados pelo app sobre a equipe (a IA interpreta, não recalcula). */
@@ -451,7 +452,7 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
 }
 
 /** Usa (ou põe) clima, terreno ou Trick Room, pela habilidade ou por um golpe. */
-function strategyOf(m) {
+export function strategyOf(m) {
   const ab = m.ability && m.ability.name;
   const set = new Set(), use = new Set();
   if (ab && FIELD[ab]) set.add(FIELD[ab]);
@@ -523,11 +524,13 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
  * Pedido da segunda etapa da montagem: só a equipe escolhida, as contas do app sobre ela e (Quetzal/Unbound)
  * os golpes por nível de cada membro, para os pontos fracos e as dicas saírem do que a equipe tem de verdade.
  */
-export function refinePrompt(team, T, note = '', { dex = null, game = null } = {}) {
+export function refinePrompt(team, T, note = '', { dex = null, game = null, swaps = [] } = {}) {
   const issues = buildIssues(team, T);
   const wishLine = wish(note);
+  const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })).join('; ');
   return [
-    t('Esta é a equipe escolhida. Não troque membros: escreva pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).'),
+    t('Esta é a equipe escolhida. Não troque membros: escreva o resumo da estratégia, pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).'),
+    ...(swaps.length ? [t('O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.', { list: swapped })] : []),
     t('Os pontos fracos devem falar dos tipos que acertam muitos membros e dos tipos sem golpe super efetivo. As dicas devem atacar esses pontos: golpe, item, natureza ou EVs, dizendo o quê e por quê. Não sugira o que o Pokémon já tem; não fale de nível nem de treino.'),
     t('Golpe novo: cite pelo nome só se estiver na lista "Aprende por nível" do Pokémon; fora dela, só o tipo (ex.: "um golpe Ground, se ele aprender").'),
     ...(wishLine ? [wishLine] : []),
@@ -572,6 +575,8 @@ export function checkAnalysis(data, byRef) {
 /** Confere a segunda etapa (só textos); null se veio vazia, para ficar com os da primeira. */
 export function checkRefine(data) {
   const r = { pontos_fortes: texts(data && data.pontos_fortes), pontos_fracos: texts(data && data.pontos_fracos), dicas: texts(data && data.dicas) };
+  const resumo = String((data && data.resumo) || '').trim();
+  if (resumo) r.resumo = resumo;
   return r.pontos_fracos.length || r.dicas.length ? r : null;
 }
 
