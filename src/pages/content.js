@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-08';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-09',
+    pt: [
+      'Assistente: na montagem de equipe, a IA segue uma ordem de prioridades (estratégia em conjunto, poucas fraquezas em comum, cobertura, equilíbrio; stats base só para desempatar) e, quando o PC não cabe inteiro no pedido (no Groq, por exemplo), entram primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, não só os de stats base mais altos.',
+    ],
+    en: [
+      'Assistant: when building a team, the AI follows an order of priorities (a strategy that works together, few shared weaknesses, coverage, balance; base stats only as a tiebreaker) and, when the PC does not fit whole in the request (on Groq, for example), those who set or benefit from weather, terrain and Trick Room and the best of each type go in first, not just the ones with the highest base stats.',
+    ],
+  },
+  {
     date: '2026-10-08',
     pt: [
       'Quetzal: lê também o PC compacto de 67 caixas (sem apelidos, HP e PP), que antes aparecia com Pokémon e dados sem sentido, e a Pokédex e as insígnias de quem está jogando em Johto ou Kanto, conferidas no próprio jogo.',

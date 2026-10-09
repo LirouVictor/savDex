@@ -54,6 +54,7 @@ suite('IA: dados enviados', () => {
     expect(b).toContain('Pedido do jogador: quero usar o Lucario');
     expect(b).toContain('DISPONÍVEIS (4):');
     expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
+    expect(b).toContain('não os 6 mais fortes sozinhos');
     expect(b).toContain('Nas dicas, só ajustes concretos');
     expect(b).toContain('Não afirme fraquezas, resistências nem contagens da equipe final');
     expect(b).toContain('não sugira o que o Pokémon já tem');
@@ -115,6 +116,28 @@ suite('IA: cálculos do app e candidatos', () => {
     const rilla = mon({ sp: 'Rillaboom', id: 812, box: 2, slot: 1, types: ['grass'], ab: 'Grassy Surge', moves: [['Grassy Glide', 'grass', 0, 55]] });
     expect(strategyLines([rilla])).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam C2-1 (Grassy Glide).');
     expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim).');
+  });
+  it('montagem com pouco espaço: estratégia e variedade de tipos antes dos stats base', () => {
+    const strong = Array.from({ length: 20 }, (_, i) => mon({ sp: 'Big' + i, id: 500 + i, box: 2, slot: i + 1, types: ['dragon'], base: [100, 100, 100, 100, 100, 100] }));
+    const pool = [
+      ...party,
+      ...strong,
+      mon({ sp: 'Kingdra', id: 230, box: 1, slot: 1, types: ['water', 'dragon'], ab: 'Swift Swim', base: [75, 95, 95, 95, 95, 85] }),
+      mon({ sp: 'Venusaur', id: 3, box: 1, slot: 2, types: ['grass', 'poison'], ab: 'Chlorophyll', base: [80, 82, 83, 100, 100, 80] }), // ninguém põe sol
+      mon({ sp: 'Reuniclus', id: 579, box: 1, slot: 3, types: ['psychic'], ab: 'Magic Guard', base: [110, 65, 75, 125, 85, 30], moves: [['Trick Room', 'psychic', 2, 0]] }),
+      mon({ sp: 'Raichu', id: 26, box: 1, slot: 4, types: ['electric'], base: [60, 90, 55, 90, 80, 110] }),
+    ];
+    const refs = buildPool(pool, 10).map(refOf);
+    expect(refs).toHaveLength(10);
+    expect(refs.slice(0, 3)).toEqual(['E1', 'E2', 'E3']);
+    // Swift Swim (Pelipper põe chuva) e Trick Room entram; Chlorophyll sem sol, não por isso
+    expect(refs).toEqual(expect.arrayContaining(['C1-1', 'C1-3']));
+    // um de cada tipo antes dos mais fortes (Raichu, o único Electric; Venusaur, Grass/Poison)
+    expect(refs).toEqual(expect.arrayContaining(['C1-4', 'C1-2', 'C2-1']));
+    expect(refs.filter(r => r.startsWith('C2-'))).toHaveLength(3); // 1 pelo tipo Dragon + 2 pelos stats base
+    // com espaço para todos, nada muda
+    expect(buildPool(pool, 250)).toHaveLength(pool.length);
+    expect(buildPrompt(pool, T)).toContain('5. Stats base altos: só para desempatar.');
   });
   it('regras: cálculos do app como fonte de verdade, limitação em vez de suposição, golpes só da lista', () => {
     const s = systemPrompt({ id: 'quetzal' });

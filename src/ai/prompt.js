@@ -7,7 +7,7 @@ import { moveInfo } from '../parser/describe.js';
 import { t } from '../i18n.js';
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
-/** Limite de candidatos enviados (os de maior total de stats base primeiro). */
+/** Limite de candidatos enviados (ver buildPool e analysisPool para quem entra). */
 export const MAX_CANDIDATES = 250;
 /**
  * Na análise da equipe, só os candidatos do PC que mais ajudam (resistem às fraquezas da equipe, cobrem
@@ -115,7 +115,7 @@ export function systemPrompt(game) {
     t('Regras:'),
     t('- Use SOMENTE os dados enviados: espécies, tipos, habilidades, itens, naturezas, stats base, IVs e golpes. Não invente Pokémon, golpes ou habilidades que não estejam na lista.'),
     t('- Os cálculos do app (tipos, cobertura, contagens, velocidade) são a fonte de verdade: interprete-os, não recalcule nem contradiga.'),
-    t('- Se uma conclusão depender de uma mecânica, habilidade ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.'),
+    t('- Se uma conclusão depender de uma mecânica, habilidade, item ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.'),
     ...rules,
     t('- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".'),
     t('- Ignore o nível: o jogador pode treinar qualquer Pokémon.'),
@@ -449,15 +449,64 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
   ].join('\n');
 }
 
-/** Disponíveis para a montagem: a equipe + os melhores do PC, uma cópia por espécie (a de melhores IVs). */
-export const buildPool = (all, max = MAX_CANDIDATES) => candidates(all, max, 1);
+/** Usa (ou põe) clima, terreno ou Trick Room, pela habilidade ou por um golpe. */
+function strategyOf(m) {
+  const ab = m.ability && m.ability.name;
+  const set = new Set(), use = new Set();
+  if (ab && FIELD[ab]) set.add(FIELD[ab]);
+  if (ab && ABUSERS[ab]) use.add(ABUSERS[ab]);
+  for (const mv of m.moves) {
+    if (FIELD_MOVES[mv.name]) set.add(FIELD_MOVES[mv.name]);
+    if (mv.name === 'Trick Room') set.add('Trick Room');
+    for (const f of MOVE_ABUSERS[mv.name] || []) use.add(f);
+  }
+  return { set, use };
+}
+
+/**
+ * Disponíveis para a montagem: a equipe + o PC, uma cópia por espécie (a de melhores IVs). Com pouco espaço
+ * (o Groq aceita menos), os stats base não decidem sozinhos: primeiro entram quem põe clima/terreno/Trick Room
+ * e quem aproveita um clima/terreno que alguém consegue pôr (até 1/5 das vagas), depois os melhores de cada
+ * tipo (para a IA ter como fugir de fraquezas em comum) e, por fim, os de maior total de stats base.
+ */
+export function buildPool(all, max = MAX_CANDIDATES) {
+  const every = candidates(all, Infinity, 1);
+  if (every.length <= max) return every;
+  const out = every.filter(m => m.location === 'party').slice(0, max);
+  const pc = every.filter(m => m.location !== 'party'); // já em ordem de stats base
+  const taken = new Set(out);
+  const take = m => { if (m && out.length < max && !taken.has(m)) { taken.add(m); out.push(m); } };
+
+  const roles = new Map(every.map(m => [m, strategyOf(m)]));
+  const settable = new Set(every.flatMap(m => [...roles.get(m).set]));
+  const strategic = pc.filter(m => roles.get(m).set.size || [...roles.get(m).use].some(f => settable.has(f)));
+  const room = out.length + Math.ceil((max - out.length) / 5);
+  for (const m of strategic) if (out.length < room) take(m);
+
+  const perType = Math.max(1, Math.floor(max / 60));
+  const types = [...new Set(pc.flatMap(m => m.species.types))];
+  for (let round = 0; round < perType; round++) {
+    for (const ty of types) take(pc.filter(m => m.species.types.includes(ty) && !taken.has(m))[0]);
+  }
+  for (const m of pc) take(m);
+
+  // A equipe primeiro; o PC em ordem de stats base, como antes
+  const order = new Map(every.map((m, i) => [m, i]));
+  return out.sort((a, b) => order.get(a) - order.get(b));
+}
 
 export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   const pool = buildPool(all, max);
   const hints = strategyLines(pool);
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
-    t('Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.'),
+    t('Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:'),
+    t('1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), se houver quem a ponha e quem a aproveite; não force uma estratégia fraca.'),
+    t('2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.'),
+    t('3. Cobertura ofensiva variada (golpes de tipos diferentes).'),
+    t('4. Equilíbrio entre atacantes físicos e especiais, velocidade (membros rápidos ou um plano de Trick Room) e papéis variados.'),
+    t('5. Stats base altos: só para desempatar.'),
+    t('Obrigatório: no máximo um Pokémon com megapedra. Se nenhuma equipe cumprir tudo, escolha a melhor possível e não diga que ela cumpre o que não cumpre.'),
     t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.'),
     t('Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").'),
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
