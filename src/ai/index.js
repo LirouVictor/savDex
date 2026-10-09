@@ -5,6 +5,8 @@
 import { provider } from './providers.js';
 import { refOf, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
+import { repairTeam } from './repair.js';
+import { t } from '../i18n.js';
 
 /**
  * Monta o pedido sem enviar nada.
@@ -53,11 +55,21 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
     return { html: analysisView(checkAnalysis(first.data, byRef), byRef, `${P.service} (${first.model})`, { dex, T, lite }), byRef, team: null };
   }
   const r = checkBuild(first.data, byRef);
-  const team = r.membros.map(x => byRef.get(x.ref));
+  let team = r.membros.map(x => byRef.get(x.ref));
+  // O app conserta o que dá para medir: tipo acertando 3+ membros em cheio (troca até 2, mexendo o mínimo)
+  const fix = team.length ? repairTeam(team, buildPool(all, P.maxCandidates), T, { note }) : null;
+  if (fix) {
+    team = fix.team;
+    for (const s of fix.swaps) {
+      const x = r.membros.find(m => m.ref === refOf(s.out));
+      Object.assign(x, { ref: refOf(s.in), papel: t('troca do app'), motivo: t('Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.', { ref: refOf(s.out) }) });
+    }
+    r.fix = fix;
+  }
   let refine = null;
   if (team.length) {
     onStep(2);
-    refine = { prompt: refinePrompt(team, T, note, { dex, game }), ok: false };
+    refine = { prompt: refinePrompt(team, T, note, { dex, game, swaps: fix ? fix.swaps : [] }), ok: false };
     try {
       const second = await P.generateJSON({ system, prompt: refine.prompt, schema: localizedSchema(REFINE_SCHEMA) });
       const texts = checkRefine(second.data);

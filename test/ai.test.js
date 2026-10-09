@@ -1,6 +1,7 @@
 import { describe as suite, it, expect, beforeEach } from 'vitest';
 import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap, refinePrompt, checkRefine } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
+import { repairTeam } from '../src/ai/repair.js';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
 import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
@@ -55,6 +56,9 @@ suite('IA: dados enviados', () => {
     expect(b).toContain('DISPONÍVEIS (4):');
     expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
     expect(b).toContain('não os 6 mais fortes sozinhos');
+    // Sem quem ponha clima/terreno/Trick Room, a IA é avisada para não montar em volta disso
+    expect(b).toContain('Nenhum disponível põe clima, terreno nem Trick Room');
+    expect(systemPrompt({ id: 'quetzal' })).toContain('não a que a espécie costuma ter');
     expect(b).toContain('Nas dicas, só ajustes concretos');
     expect(b).toContain('Não afirme fraquezas, resistências nem contagens da equipe final');
     expect(b).toContain('não sugira o que o Pokémon já tem');
@@ -116,6 +120,7 @@ suite('IA: cálculos do app e candidatos', () => {
     const rilla = mon({ sp: 'Rillaboom', id: 812, box: 2, slot: 1, types: ['grass'], ab: 'Grassy Surge', moves: [['Grassy Glide', 'grass', 0, 55]] });
     expect(strategyLines([rilla])).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam C2-1 (Grassy Glide).');
     expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim).');
+    expect(buildPrompt(pool, T)).not.toContain('Nenhum disponível põe clima');
   });
   it('montagem com pouco espaço: estratégia e variedade de tipos antes dos stats base', () => {
     const strong = Array.from({ length: 20 }, (_, i) => mon({ sp: 'Big' + i, id: 500 + i, box: 2, slot: i + 1, types: ['dragon'], base: [100, 100, 100, 100, 100, 100] }));
@@ -485,5 +490,70 @@ suite('IA: transparência antes de enviar', () => {
     const { system, prompt } = prepareAi('analyze', { all: withTrainer, T });
     const text = system + prompt;
     expect(text).not.toMatch(/SEGREDO|4242|9999|252|EVs[: ]+\d|Nv\.? 77/); // "EVs" só aparece como sugestão de ajuste
+  });
+});
+
+suite('IA: o app conserta a equipe montada', () => {
+  const F = (sp, slot, types, base, extra = {}) => mon({ sp, id: slot, box: 1, slot, types, base, ...extra });
+  // A equipe "de sol" da IA: 5 de fogo (5 fracos a Water, 4 a Ground e Rock) + Corviknight
+  const fire = [
+    F('Torkoal', 1, ['fire'], [70, 85, 140, 85, 70, 20], { ab: 'White Smoke' }),
+    F('Charizard', 2, ['fire', 'flying'], [78, 84, 78, 109, 85, 100], { item: 'Charizardite Y' }),
+    F('Arcanine', 3, ['fire', 'rock'], [95, 115, 80, 95, 80, 90]),
+    F('Armarouge', 4, ['fire', 'psychic'], [85, 60, 100, 125, 80, 75]),
+    F('Blaziken', 5, ['fire', 'fighting'], [80, 120, 70, 110, 70, 80], { item: 'Blazikenite' }),
+    F('Corviknight', 6, ['flying', 'steel'], [98, 87, 105, 53, 85, 67]),
+  ];
+  const pool = [
+    ...fire,
+    F('Swampert', 7, ['water', 'ground'], [100, 110, 90, 85, 90, 60]),
+    F('Ludicolo', 8, ['water', 'grass'], [80, 70, 70, 90, 100, 70]),
+    F('Garchomp', 9, ['dragon', 'ground'], [108, 130, 95, 80, 85, 102]),
+    F('Venusaur', 10, ['grass', 'poison'], [80, 82, 83, 100, 100, 80], { item: 'Venusaurite' }),
+    F('Rattata', 11, ['normal'], [30, 56, 35, 25, 35, 72]),
+  ];
+
+  it('troca até 2 membros para nenhum tipo acertar 3+, sem tirar quem foi pedido e sem 2ª megapedra nova', () => {
+    const fix = repairTeam(fire, pool, T);
+    expect(fix.swaps.length).toBeLessThanOrEqual(2);
+    expect(buildIssues(fix.team, T).filter(x => !x.includes('megapedra')).length).toBeLessThan(buildIssues(fire, T).filter(x => !x.includes('megapedra')).length);
+    expect(fix.team.map(m => m.species.name)).not.toContain('Venusaur'); // já há megapedras na equipe
+    expect(fix.counts.find(c => c.type === 'water')).toMatchObject({ before: 5 });
+    expect(fix.counts.find(c => c.type === 'water').after).toBeLessThan(5);
+    // Quem o jogador citou no pedido fica
+    const keep = repairTeam(fire, pool, T, { note: 'quero usar o Torkoal e o Charizard' });
+    expect(keep.swaps.map(s => s.out.species.name)).not.toEqual(expect.arrayContaining(['Torkoal']));
+    expect(keep.swaps.map(s => s.out.species.name)).not.toEqual(expect.arrayContaining(['Charizard']));
+  });
+
+  it('sem critério furado, nada muda; quem sustenta o clima da equipe não sai', () => {
+    expect(repairTeam(pool.slice(6, 9), pool, T)).toBe(null);
+    const rain = [
+      F('Pelipper', 12, ['water', 'flying'], [60, 50, 100, 95, 70, 65], { ab: 'Drizzle' }),
+      F('Kingdra', 13, ['water', 'dragon'], [75, 95, 95, 95, 95, 85], { ab: 'Swift Swim' }),
+      F('Lanturn', 14, ['water', 'electric'], [125, 58, 58, 76, 76, 67]),
+      F('Gyarados', 15, ['water', 'flying'], [95, 125, 79, 60, 100, 81]),
+    ];
+    const fix = repairTeam(rain, [...rain, ...pool], T); // Grass acerta Pelipper? não; Electric acerta Pelipper, Kingdra? não: Pelipper e Gyarados
+    if (fix) expect(fix.swaps.map(s => s.out.species.name)).not.toEqual(expect.arrayContaining(['Pelipper', 'Kingdra']));
+  });
+
+  it('montagem: a tela mostra a troca do app e a segunda etapa escreve para a equipe final', async () => {
+    const { sendAi } = await import('../src/ai/index.js');
+    const sent = [];
+    const firstAnswer = { nome: 'Sol', resumo: 'sol', pontos_fortes: ['a'], pontos_fracos: ['b'], dicas: [], membros: fire.map(m => ({ ref: refOf(m), papel: 'x', motivo: 'y' })) };
+    const P = { service: 'Gemini', maxCandidates: 250, generateJSON: async ({ prompt }) => {
+      sent.push(prompt);
+      return sent.length === 1 ? { data: firstAnswer, model: 'm', fallback: false }
+        : { data: { resumo: 'Resumo novo.', pontos_fortes: ['f'], pontos_fracos: ['w'], dicas: ['d'] }, model: 'm', fallback: false };
+    } };
+    const res = await sendAi({ kind: 'build', P, system: 's', prompt: 'p', schema: {}, all: pool, T, dex: null, game: null, note: '', counts: {} });
+    expect(res.html).toContain('Ajuste do app:');
+    expect(res.html).toMatch(/Membros fracos a cada tipo: [^<]*Water 5 → [0-4]/);
+    expect(res.html).toContain('troca do app');
+    expect(res.html).toContain('Resumo novo.');
+    expect(sent[1]).toContain('O app trocou membros da escolha anterior');
+    expect(res.team.length).toBe(6);
+    expect(res.team).not.toEqual(fire);
   });
 });

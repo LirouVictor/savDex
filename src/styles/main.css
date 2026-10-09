@@ -593,7 +593,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px;
   background: var(--top-bg); color: var(--top-ink); box-shadow: inset 0 -4px 0 var(--accent);
 }
-.ai-hero.build { grid-template-columns: minmax(0, 1fr) auto; }
+/* Montagem: nome em cima e botões embaixo (lado a lado, o nome ficava espremido no celular) */
+.ai-hero.build { grid-template-columns: minmax(0, 1fr); }
 .ai-medal {
   width: 76px; height: 76px; display: grid; place-content: center; text-align: center;
   background: var(--accent); color: var(--accent-ink);
@@ -625,6 +626,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-list { padding: 0; list-style: none; display: grid; gap: 8px; }
 .ai-list li { position: relative; padding-left: 16px; line-height: 1.45; }
 .ai-list li::before { content: ""; position: absolute; left: 2px; top: .5em; width: 6px; height: 6px; background: var(--c); }
+.ai-fix { margin: 0; padding: 10px 14px; line-height: 1.5; background: var(--win-2); box-shadow: inset 4px 0 0 var(--accent); }
 .ai-warn { padding: 8px 10px; line-height: 1.45; background: color-mix(in srgb, var(--accent-2) 16%, var(--win)); box-shadow: inset 4px 0 0 var(--accent-2); }
 .ai-movecheck { display: block; margin-top: 4px; font-size: .82rem; line-height: 1.4; color: var(--muted); }
 .ai-movecheck.ok { color: var(--accent); }
@@ -758,7 +760,6 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .team-icons img.gone, .team-gone img { opacity: .35; filter: grayscale(1); }
 .team-gone { cursor: default; }
 .team-actions { margin-top: 10px; }
-.ai-hero .export-btns { justify-content: flex-end; }
 
 /* Pokédex: o que falta (janela aberta pelo bloco da Pokédex) */
 .sum-more {

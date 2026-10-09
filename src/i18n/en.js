@@ -461,8 +461,12 @@ export default {
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
   'Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:':
     'Build the best WHOLE, not the 6 strongest on their own. Priorities, in this order:',
-  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), se houver quem a ponha e quem a aproveite; não force uma estratégia fraca.':
-    '1. A strategy that works together (weather, terrain or Trick Room), if someone sets it and someone benefits from it; do not force a weak strategy.',
+  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), só se ela aparecer nas pistas de estratégia abaixo, com quem a ponha e quem a aproveite; não force uma estratégia fraca.':
+    '1. A strategy that works together (weather, terrain or Trick Room), only if it appears in the strategy hints below, with someone who sets it and someone who benefits from it; do not force a weak strategy.',
+  'Nenhum disponível põe clima, terreno nem Trick Room (pela habilidade ou por um golpe): não monte a equipe em volta disso.':
+    'No available Pokémon sets weather, terrain or Trick Room (by ability or move): do not build the team around that.',
+  '- A habilidade de cada Pokémon é a da linha dele ("Hab:"), não a que a espécie costuma ter (ex.: um Torkoal com White Smoke não põe sol).':
+    '- Each Pokémon’s ability is the one on its line ("Ability:"), not the one the species usually has (e.g. a Torkoal with White Smoke does not set sun).',
   '2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.':
     '2. Few shared weaknesses: no type that hits 3 or more members super effectively.',
   '3. Cobertura ofensiva variada (golpes de tipos diferentes).':
@@ -475,8 +479,8 @@ export default {
     'Required: at most one Pokémon holding a Mega Stone. If no team meets everything, choose the best possible one and do not claim it meets what it does not.',
   'Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.':
     'In the tips, only concrete adjustments (a move, the item, the nature or the EVs), saying why.',
-  'Esta é a equipe escolhida. Não troque membros: escreva pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).':
-    'This is the chosen team. Do not swap members: write strengths, weaknesses and tips for IT, using the app calculations below (source of truth).',
+  'Esta é a equipe escolhida. Não troque membros: escreva o resumo da estratégia, pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).':
+    'This is the chosen team. Do not swap members: write the strategy summary, strengths, weaknesses and tips for IT, using the app’s calculations below (source of truth).',
   'Os pontos fracos devem falar dos tipos que acertam muitos membros e dos tipos sem golpe super efetivo. As dicas devem atacar esses pontos: golpe, item, natureza ou EVs, dizendo o quê e por quê. Não sugira o que o Pokémon já tem; não fale de nível nem de treino.':
     'The weaknesses must cover the types that hit many members and the types with no super effective move. The tips must address those points: move, item, nature or EVs, saying what and why. Do not suggest what the Pokémon already has; do not talk about level or training.',
   'Golpe novo: cite pelo nome só se estiver na lista "Aprende por nível" do Pokémon; fora dela, só o tipo (ex.: "um golpe Ground, se ele aprender").':
@@ -699,4 +703,13 @@ export default {
   '{n} de {max}': '{n} of {max}',
   'Ficam só neste aparelho. Ao abrir uma versão mais nova do save, o app mostra onde cada membro está agora.':
     'They stay on this device only. When you open a newer version of the save, the app shows where each member is now.',
+  // Conserto da equipe montada (app)
+  'troca do app': 'app swap',
+  'Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.': 'Took the place of {ref}: resists the types that hit many members.',
+  '{out} saiu e {in} entrou': '{out} left and {in} joined',
+  'O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.':
+    'The app swapped members of the previous choice so that no type hits 3 or more super effectively ({list}): write for the team as it is now.',
+  'Ajuste do app:': 'App adjustment:',
+  '{out} saiu, {in} entrou': '{out} out, {in} in',
+  'Membros fracos a cada tipo: {list}.': 'Members weak to each type: {list}.',
 };
