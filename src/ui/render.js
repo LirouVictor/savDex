@@ -4,6 +4,7 @@ import { spriteSrc, iconSrc, spriteUrl } from './sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { analyzeTeam, defenseMatchups } from '../analysis.js';
 import { t, num } from '../i18n.js';
+import { freeAbilityMode } from '../ai/free.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad5 = n => String(n).padStart(5, '0');
@@ -364,6 +365,7 @@ export function analysisWin(d, T) {
  */
 export function aiWin(d, providers) {
   const noParty = !d.party.length;
+  const free = freeAbilityMode(d.game);
   const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   // Fechada até o usuário abrir (app.js lembra a escolha neste aparelho)
   return `<details class="win win-fold" id="ai-win">
@@ -389,6 +391,9 @@ export function aiWin(d, providers) {
     <div id="ai-main" class="hidden">
       <label class="ai-label" for="ai-note">${t('Pedido (opcional)')}</label>
       <input id="ai-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: quero usar o Lucario; sem lendários')}">
+      ${free ? `<label class="ai-skip ai-free"><input type="checkbox" id="ai-free"> ${free === 'patch'
+    ? t('Modo livre: considerar trocar a habilidade (Ability Capsule e Ability Patch)')
+    : t('Modo livre: considerar trocar entre a 1ª e a 2ª habilidade (Ability Capsule)')}</label>` : ''}
       <div class="export-btns ai-actions">
         <button class="btn" type="button" data-ai="analyze"${noParty ? ' disabled' : ''}>${t('Analisar minha equipe')}</button>
         <button class="btn" type="button" data-ai="build">${t('Montar equipe')}</button>

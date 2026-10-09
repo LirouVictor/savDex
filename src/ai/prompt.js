@@ -27,12 +27,31 @@ export const refOf = m => (m.location === 'party' ? `E${m.slot}` : `C${m.boxInde
 export const REF_RE = /\b(E[1-6]|C\d{1,2}-\d{1,2})\b/g;
 export const speciesKey = m => `${m.species.name}|${m.species.form || ''}`;
 
+export { freeAbilityMode } from './free.js';
+
+/** Habilidades para as quais o Pokémon pode trocar no modo livre, com o item que faz a troca. */
+export function abilityAlts(m, free) {
+  const list = m.species.abilities;
+  if (!free || !m.ability || !Array.isArray(list)) return [];
+  const cur = list.indexOf(m.ability.name);
+  const out = [];
+  list.forEach((name, j) => {
+    if (!name || name === m.ability.name || out.some(a => a.name === name)) return;
+    const hidden = j === 2 || cur === 2;
+    if (hidden && free !== 'patch') return;
+    out.push({ name, item: hidden ? 'Ability Patch' : 'Ability Capsule' });
+  });
+  return out;
+}
+
 /** Uma linha compacta por Pokémon. Sem nível nem stats: o jogador pode upar, então não contam. */
-export function monLine(m) {
+export function monLine(m, free = null) {
   const sp = m.species;
   const name = sp.name + (sp.form ? ` (${sp.form})` : '') + (m.hasNickname ? ` "${m.nickname}"` : '');
   const parts = [refOf(m), name, sp.types.map(cap).join('/') || t('tipo desconhecido')];
-  if (m.ability) parts.push(`${t('Hab')}: ${m.ability.name}${m.ability.hidden ? ` (${t('oculta')})` : ''}`);
+  const alts = abilityAlts(m, free);
+  if (m.ability) parts.push(`${t('Hab')}: ${m.ability.name}${m.ability.hidden ? ` (${t('oculta')})` : ''}`
+    + (alts.length ? `; ${t('troca possível')}: ${alts.map(a => `${a.name} [${a.item}]`).join(', ')}` : ''));
   parts.push(`Item: ${m.item ? m.item.name + (isMegaStone(m.item) ? ` (${t('megapedra')})` : '') : '—'}`);
   if (m.nature) parts.push(`${t('Natureza')}: ${m.nature.name}${m.nature.plus ? ` (+${STAT_LABEL[m.nature.plus]} −${STAT_LABEL[m.nature.minus]})` : ''}`);
   if (sp.baseStats) parts.push(`Base ${sp.baseStats.join('/')} = ${bst(m)}`);
@@ -119,6 +138,7 @@ export function systemPrompt(game) {
     ...rules,
     t('- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".'),
     t('- Ignore o nível: o jogador pode treinar qualquer Pokémon.'),
+    t('- Stats base e IVs vêm na ordem HP/Atk/Def/SpA/SpD/Spe.'),
     t('- A habilidade de cada Pokémon é a da linha dele ("Hab:"), não a que a espécie costuma ter (ex.: um Torkoal com White Smoke não põe sol).'),
     t('- Antes de sugerir trocar um item ou criticar um set, veja se a habilidade do Pokémon já anula a desvantagem (ex.: Magic Guard anula o recuo da Life Orb).'),
     t('- Golpe que o Pokémon ainda não tem: cite pelo nome só se estiver na lista "Aprende por nível" dele (quando enviada) e diga que ele precisa aprender. Fora dela, sugira só o tipo (ex.: "um golpe Electric, se ele aprender").'),
@@ -402,7 +422,7 @@ export function learnLines(party, dex, T, game) {
  * Pistas de estratégia entre os disponíveis: quem põe clima/terreno (habilidade ou golpe), quem aproveita
  * (habilidade ou golpe) e quem usa Trick Room. Só os climas/terrenos que alguém consegue pôr.
  */
-export function strategyLines(pool) {
+export function strategyLines(pool, free = null) {
   const fields = new Map(); // clima → { set: [], use: [] }
   const get = f => fields.get(f) || fields.set(f, { set: [], use: [] }).get(f);
   const room = [];
@@ -410,6 +430,11 @@ export function strategyLines(pool) {
     const ref = refOf(m), ab = m.ability && m.ability.name;
     if (ab && FIELD[ab]) get(FIELD[ab]).set.push(`${ref} (${ab})`);
     if (ab && ABUSERS[ab]) get(ABUSERS[ab]).use.push(`${ref} (${ab})`);
+    for (const a of abilityAlts(m, free)) {
+      const how = `${ref} (${a.name}, ${t('com {item}', { item: a.item })})`;
+      if (FIELD[a.name]) get(FIELD[a.name]).set.push(how);
+      if (ABUSERS[a.name]) get(ABUSERS[a.name]).use.push(how);
+    }
     for (const mv of m.moves) {
       for (const f of MOVE_ABUSERS[mv.name] || []) get(f).use.push(`${ref} (${mv.name})`);
       if (FIELD_MOVES[mv.name] && !(ab && FIELD[ab] === FIELD_MOVES[mv.name])) get(FIELD_MOVES[mv.name]).set.push(`${ref} (${mv.name})`);
@@ -422,6 +447,9 @@ export function strategyLines(pool) {
   return out.length ? ['', t('Pistas de estratégia (habilidades e golpes dos disponíveis):'), ...out] : [];
 }
 
+/** Linha do modo livre (habilidade trocável por item), só quando ligado. */
+const freeLine = free => (free ? [t('MODO LIVRE: a habilidade pode ser trocada para as de "troca possível", com o item entre colchetes. Pode contar com elas ao escolher; quando contar, diga nas dicas qual habilidade usar e com qual item.')] : []);
+
 const wish = text => (text && text.trim() ? `\n${t('Pedido do jogador:')} ${text.trim().slice(0, 300)}\n` : '');
 
 /**
@@ -431,32 +459,34 @@ const wish = text => (text && text.trim() ? `\n${t('Pedido do jogador:')} ${text
  * @param {number} [max] limite de candidatos do serviço (o Groq aceita menos)
  * @param {{ dex?: object, game?: object }} [extra] golpes por nível (dex.json) e o jogo
  */
-export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = null, game = null } = {}) {
+export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null } = {}) {
   const party = all.filter(m => m.location === 'party');
   const pool = analysisPool(all, T, Math.min(ANALYSIS_PC, max - party.length));
   return [
     t('Avalie a EQUIPE ATUAL. Dê UMA nota de 0 a 10 pesando: defesa entre os membros (25%), cobertura ofensiva (25%), papéis e sinergia (20%), ameaças comuns do jogo (20%), itens e sets (10%).'),
     t('Trocas com o PC: até 3, só as que resolvem um problema claro (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Preserve quem sustenta a estratégia da equipe (clima, terreno, Trick Room…), mesmo que não seja o mais forte sozinho: melhore o conjunto, não peças isoladas.'),
     t('Dicas por membro: só quando mudam algo concreto (um golpe, o item, a natureza ou os EVs), dizendo o quê e por quê. Omita quem já está bem montado; não repita o que o Pokémon já faz.'),
+    ...freeLine(free),
     wish(note),
     t('EQUIPE ATUAL:'),
-    ...party.map(monLine),
+    ...party.map(m => monLine(m, free)),
     '',
     t('Cálculos do app (só tipos e números, sem habilidades):'),
     teamFacts(party, T),
     ...learnLines(party, dex, T, game),
     '',
     t('PC ({n} candidatos que mais ajudam a equipe):', { n: pool.length }),
-    ...pool.map(monLine),
+    ...pool.map(m => monLine(m, free)),
   ].join('\n');
 }
 
-/** Usa (ou põe) clima, terreno ou Trick Room, pela habilidade ou por um golpe. */
-export function strategyOf(m) {
-  const ab = m.ability && m.ability.name;
+/** Usa (ou põe) clima, terreno ou Trick Room, pela habilidade (no modo livre, também as trocáveis) ou por um golpe. */
+export function strategyOf(m, free = null) {
   const set = new Set(), use = new Set();
-  if (ab && FIELD[ab]) set.add(FIELD[ab]);
-  if (ab && ABUSERS[ab]) use.add(ABUSERS[ab]);
+  for (const ab of [m.ability && m.ability.name, ...abilityAlts(m, free).map(a => a.name)]) {
+    if (ab && FIELD[ab]) set.add(FIELD[ab]);
+    if (ab && ABUSERS[ab]) use.add(ABUSERS[ab]);
+  }
   for (const mv of m.moves) {
     if (FIELD_MOVES[mv.name]) set.add(FIELD_MOVES[mv.name]);
     if (mv.name === 'Trick Room') set.add('Trick Room');
@@ -471,7 +501,7 @@ export function strategyOf(m) {
  * e quem aproveita um clima/terreno que alguém consegue pôr (até 1/5 das vagas), depois os melhores de cada
  * tipo (para a IA ter como fugir de fraquezas em comum) e, por fim, os de maior total de stats base.
  */
-export function buildPool(all, max = MAX_CANDIDATES) {
+export function buildPool(all, max = MAX_CANDIDATES, free = null) {
   const every = candidates(all, Infinity, 1);
   if (every.length <= max) return every;
   const out = every.filter(m => m.location === 'party').slice(0, max);
@@ -479,7 +509,7 @@ export function buildPool(all, max = MAX_CANDIDATES) {
   const taken = new Set(out);
   const take = m => { if (m && out.length < max && !taken.has(m)) { taken.add(m); out.push(m); } };
 
-  const roles = new Map(every.map(m => [m, strategyOf(m)]));
+  const roles = new Map(every.map(m => [m, strategyOf(m, free)]));
   const settable = new Set(every.flatMap(m => [...roles.get(m).set]));
   const strategic = pc.filter(m => roles.get(m).set.size || [...roles.get(m).use].some(f => settable.has(f)));
   const room = out.length + Math.ceil((max - out.length) / 5);
@@ -497,9 +527,9 @@ export function buildPool(all, max = MAX_CANDIDATES) {
   return out.sort((a, b) => order.get(a) - order.get(b));
 }
 
-export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
-  const pool = buildPool(all, max);
-  const hints = strategyLines(pool);
+export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES, { free = null } = {}) {
+  const pool = buildPool(all, max, free);
+  const hints = strategyLines(pool, free);
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
     t('Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:'),
@@ -512,11 +542,12 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
     t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.'),
     t('Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").'),
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
+    ...freeLine(free),
     wish(note),
     ...hints,
     ...(hints.length ? [''] : ['', t('Nenhum disponível põe clima, terreno nem Trick Room (pela habilidade ou por um golpe): não monte a equipe em volta disso.'), '']),
     t('DISPONÍVEIS ({n}):', { n: pool.length }),
-    ...pool.map(monLine),
+    ...pool.map(m => monLine(m, free)),
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -524,7 +555,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
  * Pedido da segunda etapa da montagem: só a equipe escolhida, as contas do app sobre ela e (Quetzal/Unbound)
  * os golpes por nível de cada membro, para os pontos fracos e as dicas saírem do que a equipe tem de verdade.
  */
-export function refinePrompt(team, T, note = '', { dex = null, game = null, swaps = [] } = {}) {
+export function refinePrompt(team, T, note = '', { dex = null, game = null, swaps = [], free = null } = {}) {
   const issues = buildIssues(team, T);
   const wishLine = wish(note);
   const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })).join('; ');
@@ -533,9 +564,10 @@ export function refinePrompt(team, T, note = '', { dex = null, game = null, swap
     ...(swaps.length ? [t('O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.', { list: swapped })] : []),
     t('Os pontos fracos devem falar dos tipos que acertam muitos membros e dos tipos sem golpe super efetivo. As dicas devem atacar esses pontos: golpe, item, natureza ou EVs, dizendo o quê e por quê. Não sugira o que o Pokémon já tem; não fale de nível nem de treino.'),
     t('Golpe novo: cite pelo nome só se estiver na lista "Aprende por nível" do Pokémon; fora dela, só o tipo (ex.: "um golpe Ground, se ele aprender").'),
+    ...freeLine(free),
     ...(wishLine ? [wishLine] : []),
     t('EQUIPE:'),
-    ...team.map(monLine),
+    ...team.map(m => monLine(m, free)),
     '',
     t('Cálculos do app (só tipos e números, sem habilidades):'),
     teamFacts(team, T),

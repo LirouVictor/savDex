@@ -2,6 +2,7 @@ import { describe as suite, it, expect, beforeEach } from 'vitest';
 import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap, refinePrompt, checkRefine } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import { repairTeam } from '../src/ai/repair.js';
+import { abilityAlts, freeAbilityMode } from '../src/ai/prompt.js';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
 import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
@@ -474,10 +475,10 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false });
+    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false, free: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
-    expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: os de maior total de stats base, um por espécie)');
+    expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: um por espécie;');
     expect(html).toContain('Não vai');
     expect(html).toContain('Seu pedido: “quero o Lucario”');
     expect(html).toContain('data-send');
@@ -555,5 +556,47 @@ suite('IA: o app conserta a equipe montada', () => {
     expect(sent[1]).toContain('O app trocou membros da escolha anterior');
     expect(res.team.length).toBe(6);
     expect(res.team).not.toEqual(fire);
+  });
+});
+
+suite('IA: modo livre (habilidade trocável por item)', () => {
+  const tork = mon({ sp: 'Torkoal', id: 324, box: 1, slot: 1, types: ['fire'], base: [70, 85, 140, 85, 70, 20], ab: 'White Smoke' });
+  tork.species.abilities = ['White Smoke', 'Drought', 'Shell Armor'];
+  const venu = mon({ sp: 'Venusaur', id: 3, box: 1, slot: 2, types: ['grass', 'poison'], base: [80, 82, 83, 100, 100, 80], ab: 'Overgrow' });
+  venu.species.abilities = ['Overgrow', null, 'Chlorophyll'];
+  const pool = [all[0], all[1], tork, venu];
+
+  it('lista as habilidades trocáveis com o item, conforme o jogo', () => {
+    expect(abilityAlts(tork, 'patch')).toEqual([{ name: 'Drought', item: 'Ability Capsule' }, { name: 'Shell Armor', item: 'Ability Patch' }]);
+    expect(abilityAlts(venu, 'capsule')).toEqual([]); // sem 2ª habilidade; a oculta só com Ability Patch
+    expect(abilityAlts(tork, null)).toEqual([]);
+    expect(monLine(tork, 'patch')).toContain('Hab: White Smoke; troca possível: Drought [Ability Capsule], Shell Armor [Ability Patch]');
+    expect(monLine(tork)).not.toContain('troca possível');
+    expect(freeAbilityMode({ id: 'quetzal' })).toBe('patch');
+    expect(freeAbilityMode({ id: 'unbound' })).toBe('capsule');
+    expect(freeAbilityMode({ id: 'emerald', gen: 3 })).toBe(null);
+  });
+
+  it('pistas de estratégia e pedido contam com as habilidades trocáveis só no modo livre', () => {
+    expect(strategyLines(pool).join('\n')).not.toMatch(/sol/);
+    const lines = strategyLines(pool, 'patch').join('\n');
+    expect(lines).toContain('- sol: põem C1-1 (Drought, com Ability Capsule); aproveitam C1-2 (Chlorophyll, com Ability Patch).');
+    const b = buildPrompt(pool, T, '', 250, { free: 'patch' });
+    expect(b).toContain('MODO LIVRE');
+    expect(b).not.toContain('Nenhum disponível põe clima');
+    expect(buildPrompt(pool, T)).not.toContain('MODO LIVRE');
+    expect(analysisPrompt(pool, T, '', 250, { free: 'patch' })).toContain('troca possível: Drought');
+    expect(systemPrompt({ id: 'quetzal' })).toContain('HP/Atk/Def/SpA/SpD/Spe');
+  });
+
+  it('o modo livre só liga nos jogos que têm o item, e o pedido avisa na confirmação', async () => {
+    const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
+    const on = prepareAi('build', { all: pool, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, free: true });
+    expect(on.counts.free).toBe(true);
+    expect(on.prompt).toContain('troca possível');
+    expect(confirmHtml(on)).toContain('Modo livre: as outras habilidades');
+    const off = prepareAi('build', { all: pool, T, game: { id: 'emerald', gen: 3, name: 'Emerald' }, free: true });
+    expect(off.counts.free).toBe(false);
+    expect(off.prompt).not.toContain('troca possível');
   });
 });

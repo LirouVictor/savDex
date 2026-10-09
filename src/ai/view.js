@@ -180,7 +180,7 @@ export function confirmView(prep) {
   const pc = counts.pc
     ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t(analyze
       ? '(de {total}: os que mais ajudam a equipe, resistindo às fraquezas dela ou cobrindo tipos sem golpe super efetivo, depois os de maior total de stats base)'
-      : '(de {total}: os de maior total de stats base, um por espécie)', { total: counts.pcTotal }) : '')
+      : '(de {total}: um por espécie; quando não cabem todos, primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, depois os de maior total de stats base)', { total: counts.pcTotal }) : '')
     : t('nenhum do PC');
   const text = `${system}\n\n${prompt}`;
   return `<h2 class="pixel" id="ai-confirm-title">${esc(t('Enviar ao {service}?', { service: P.service }))}</h2>
@@ -192,6 +192,7 @@ export function confirmView(prep) {
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
         ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
         ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
+        ${counts.free ? `<li>${t('Modo livre: as outras habilidades que cada um pode ter, trocando por item.')}</li>` : ''}
         ${analyze ? '' : `<li>${counts.learn2
           ? t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe, as contas do app sobre ela e os golpes que cada um aprende por nível, para os pontos fracos e as dicas.')
           : t('Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas.')}</li>`}

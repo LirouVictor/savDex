@@ -551,7 +551,6 @@ export default {
   'A IA sugeriu só {n} Pokémon válidos.': 'The AI suggested only {n} valid Pokémon.',
   'escolhido automaticamente': 'chosen automatically',
   '{n} do PC': '{n} from the PC',
-  '(de {total}: os de maior total de stats base, um por espécie)': '(out of {total}: the ones with the highest base stat total, one per species)',
   'Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.': 'Strategy hints: who sets weather or terrain, who benefits and who uses Trick Room.',
   'nenhum do PC': 'none from the PC',
   'Enviar ao {service}?': 'Send to {service}?',
@@ -712,4 +711,15 @@ export default {
   'Ajuste do app:': 'App adjustment:',
   '{out} saiu, {in} entrou': '{out} out, {in} in',
   'Membros fracos a cada tipo: {list}.': 'Members weak to each type: {list}.',
+  // Modo livre (habilidade trocável por item) e ordem dos stats
+  'troca possível': 'possible swap',
+  '- Stats base e IVs vêm na ordem HP/Atk/Def/SpA/SpD/Spe.': '- Base stats and IVs come in the order HP/Atk/Def/SpA/SpD/Spe.',
+  'com {item}': 'with {item}',
+  'MODO LIVRE: a habilidade pode ser trocada para as de "troca possível", com o item entre colchetes. Pode contar com elas ao escolher; quando contar, diga nas dicas qual habilidade usar e com qual item.':
+    'FREE MODE: the ability can be swapped to the ones under "possible swap", with the item in brackets. You may count on them when choosing; when you do, say in the tips which ability to use and with which item.',
+  '(de {total}: um por espécie; quando não cabem todos, primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, depois os de maior total de stats base)':
+    '(of {total}: one per species; when not all fit, first those who set or benefit from weather, terrain and Trick Room and the best of each type, then those with the highest base stat total)',
+  'Modo livre: as outras habilidades que cada um pode ter, trocando por item.': 'Free mode: the other abilities each one can have by swapping with an item.',
+  'Modo livre: considerar trocar a habilidade (Ability Capsule e Ability Patch)': 'Free mode: consider swapping the ability (Ability Capsule and Ability Patch)',
+  'Modo livre: considerar trocar entre a 1ª e a 2ª habilidade (Ability Capsule)': 'Free mode: consider swapping between the 1st and 2nd ability (Ability Capsule)',
 };
