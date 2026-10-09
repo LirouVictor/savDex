@@ -3,7 +3,7 @@
 // sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
-import { refOf, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
+import { refOf, freeAbilityMode, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
 import { repairTeam } from './repair.js';
 import { t } from '../i18n.js';
@@ -11,24 +11,27 @@ import { t } from '../i18n.js';
 /**
  * Monta o pedido sem enviar nada.
  * @param {'analyze'|'build'} kind
- * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object }} ctx dex = golpes por nível (dex.json), opcional
+ * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object, free?: boolean }} ctx dex = golpes por nível
+ *   (dex.json), opcional; free = modo livre (habilidade trocável por item, nos jogos em que o item existe)
  */
-export function prepareAi(kind, { all, T, game = null, note = '', dex = null }) {
+export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false }) {
   const P = provider();
   const system = systemPrompt(game);
-  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game }) : buildPrompt(all, T, note, P.maxCandidates);
+  const mode = free ? freeAbilityMode(game) : null;
+  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game, free: mode }) : buildPrompt(all, T, note, P.maxCandidates, { free: mode });
   const lines = prompt.split('\n');
   const counts = {
     party: lines.filter(l => /^E\d \|/.test(l)).length,
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
     learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
-    hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates)).length > 0, // clima/terreno/Trick Room
+    hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode).length > 0, // clima/terreno/Trick Room
+    free: !!mode,
   };
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
   // Montagem do Quetzal/Unbound: a segunda etapa leva os golpes por nível dos 6 escolhidos
   counts.learn2 = kind === 'build' && !!dex && !!game && ['quetzal', 'unbound', 'soulgold'].includes(game.id);
-  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, dex, game, note: note.trim(), counts };
+  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, dex, game, note: note.trim(), counts, free: mode };
 }
 
 /** HTML da janela de confirmação ("o que vai ser enviado"). */
@@ -46,7 +49,7 @@ const isLite = m => /lite/i.test(m || '');
  * @param {{ onStep?: (step: number) => void }} [opts] avisa quando começa a segunda etapa (para a tela de espera)
  */
 export async function sendAi(prep, { onStep = () => {} } = {}) {
-  const { kind, P, system, prompt, schema, all, T, dex, game, note } = prep;
+  const { kind, P, system, prompt, schema, all, T, dex, game, note, free = null } = prep;
   const byRef = new Map(all.map(m => [refOf(m), m]));
   const first = await P.generateJSON({ system, prompt, schema });
   const models = [first.model];
@@ -57,7 +60,7 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
   const r = checkBuild(first.data, byRef);
   let team = r.membros.map(x => byRef.get(x.ref));
   // O app conserta o que dá para medir: tipo acertando 3+ membros em cheio (troca até 2, mexendo o mínimo)
-  const fix = team.length ? repairTeam(team, buildPool(all, P.maxCandidates), T, { note }) : null;
+  const fix = team.length ? repairTeam(team, buildPool(all, P.maxCandidates, free), T, { note, free }) : null;
   if (fix) {
     team = fix.team;
     for (const s of fix.swaps) {
@@ -69,7 +72,7 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
   let refine = null;
   if (team.length) {
     onStep(2);
-    refine = { prompt: refinePrompt(team, T, note, { dex, game, swaps: fix ? fix.swaps : [] }), ok: false };
+    refine = { prompt: refinePrompt(team, T, note, { dex, game, swaps: fix ? fix.swaps : [], free }), ok: false };
     try {
       const second = await P.generateJSON({ system, prompt: refine.prompt, schema: localizedSchema(REFINE_SCHEMA) });
       const texts = checkRefine(second.data);

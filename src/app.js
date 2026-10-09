@@ -278,7 +278,7 @@ function setupAi(out) {
       const game = state.data.game;
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
-      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex });
+      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex, free: !!$('#ai-free')?.checked });
       if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
       aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? t('Analisando a equipe') : t('Montando a equipe')}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
       const res = await ai.sendAi(prep, {
@@ -300,6 +300,12 @@ function setupAi(out) {
       $('#ai-provider').disabled = false;
     }
   }));
+  // Modo livre (habilidade trocável por item): a escolha fica neste aparelho
+  const freeBox = $('#ai-free');
+  if (freeBox) {
+    try { freeBox.checked = localStorage.getItem('ai-free') === '1'; } catch { /* sem armazenamento */ }
+    freeBox.addEventListener('change', () => { try { if (freeBox.checked) localStorage.setItem('ai-free', '1'); else localStorage.removeItem('ai-free'); } catch { /* sem armazenamento */ } });
+  }
   const ask = $('#ai-ask');
   ask.checked = !skipConfirm();
   ask.addEventListener('change', () => setSkipConfirm(!ask.checked));

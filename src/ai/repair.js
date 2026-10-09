@@ -20,10 +20,10 @@ const lean = m => (m.species.baseStats ? (m.species.baseStats[1] >= m.species.ba
  * Quem não pode sair: quem o jogador citou no pedido e quem sustenta uma estratégia que a equipe usa
  * (põe um clima/terreno que outro membro aproveita, ou o aproveita; Trick Room com membro lento).
  */
-function keepers(team, note) {
+function keepers(team, note, free) {
   const text = (note || '').toLowerCase();
   const keep = new Set(team.filter(m => text && text.includes(m.species.name.toLowerCase())));
-  const roles = team.map(strategyOf);
+  const roles = team.map(m => strategyOf(m, free));
   const set = new Set(roles.flatMap(r => [...r.set])), use = new Set(roles.flatMap(r => [...r.use]));
   const slow = team.some(m => m.species.baseStats && m.species.baseStats[SPE] <= 60);
   team.forEach((m, i) => {
@@ -37,11 +37,11 @@ function keepers(team, note) {
  * @param {object[]} team os Pokémon escolhidos pela IA
  * @param {object[]} pool os disponíveis que a IA viu (uma cópia por espécie)
  * @param {{ types: string[], typechart: number[][] }} T
- * @param {{ note?: string }} [opts] pedido do jogador (quem ele citou fica)
+ * @param {{ note?: string, free?: string|null }} [opts] pedido do jogador (quem ele citou fica) e o modo livre
  * @returns {null | { team: object[], swaps: Array<{ out: object, in: object }>, counts: Array<{ type: string, before: number, after: number }> }}
  *   null quando não há o que consertar (ou nenhuma troca melhora)
  */
-export function repairTeam(team, pool, T, { note = '' } = {}) {
+export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const types = T.types.filter(ty => ty && ty !== 'stellar');
   // O mesmo multiplicador da análise da equipe (analysis.js): sem habilidades nem itens
@@ -59,7 +59,7 @@ export function repairTeam(team, pool, T, { note = '' } = {}) {
   if (!start) return null;
   const problem = types.filter((_, i) => before[i] >= LIMIT);
 
-  const keep = keepers(team, note);
+  const keep = keepers(team, note, free);
   const out = team.map((m, i) => i).filter(i => !keep.has(team[i]));
   const inTeam = new Set(team.map(speciesKey));
   const cands = pool
