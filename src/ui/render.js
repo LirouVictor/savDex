@@ -206,13 +206,15 @@ export function warningsWin(warnings) {
   </section>`;
 }
 
-export function partyWin(d) {
+/** @param {{ canSave?: boolean }} [opts] canSave = mostrar "Salvar equipe" (não no save de exemplo) */
+export function partyWin(d, { canSave = false } = {}) {
   const tiles = d.party.map((m, i) => `<li>${monTile(m, `data-party="${i}"`)}</li>`).join('');
   const empty = Array.from({ length: Math.max(0, 6 - d.party.length) }, () => '<li class="ptile-empty" aria-hidden="true"></li>').join('');
   return `<section class="win" id="party-win" aria-labelledby="party-h">
     <div class="win-title"><h2 id="party-h">${t('Equipe')}</h2><small>${t('{n} de 6 · toque para ver detalhes', { n: d.party.length })}</small></div>
     ${d.party.length ? `<ul class="party-grid">${tiles}${empty}</ul>` : `<p class="hint">${t('Nenhum Pokémon na equipe.')}</p>`}
-    ${d.party.length ? `<div class="export-btns party-actions"><button class="btn btn-ghost btn-small" type="button" data-team-image>${t('Imagem da equipe')}</button></div>` : ''}
+    ${d.party.length ? `<div class="export-btns party-actions"><button class="btn btn-ghost btn-small" type="button" data-team-image>${t('Imagem da equipe')}</button>${canSave ? `<button class="btn btn-ghost btn-small" type="button" data-save-team>${t('Salvar equipe')}</button>` : ''}</div>
+    ${canSave ? '<p class="hint team-msg" role="status"></p>' : ''}` : ''}
   </section>`;
 }
 

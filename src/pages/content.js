@@ -1,16 +1,18 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-08';
+export const UPDATED = '2026-10-09';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
     date: '2026-10-09',
     pt: [
+      'Equipes salvas: guarde a equipe atual (botão “Salvar equipe” na seção Equipe) ou uma montada pela IA. Elas ficam em Ferramentas → Equipes salvas, só neste aparelho e só para o save delas, e mostram onde cada membro está agora quando você abre uma versão mais nova do save (na equipe, em qual caixa, se evoluiu ou se não está mais lá), com fraquezas, cobertura, cópia para o Showdown e imagem.',
       'Assistente: na montagem de equipe, a IA segue uma ordem de prioridades (estratégia em conjunto, poucas fraquezas em comum, cobertura, equilíbrio; stats base só para desempatar) e, quando o PC não cabe inteiro no pedido (no Groq, por exemplo), entram primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, não só os de stats base mais altos.',
     ],
     en: [
+      'Saved teams: keep the current party (“Save team” button in the Party section) or one built by the AI. They live in Tools → Saved teams, on this device only and only for their own save, and show where each member is now when you open a newer version of the save (in the party, in which box, whether it evolved or is no longer there), with weaknesses, coverage, a Showdown copy and an image.',
       'Assistant: when building a team, the AI follows an order of priorities (a strategy that works together, few shared weaknesses, coverage, balance; base stats only as a tiebreaker) and, when the PC does not fit whole in the request (on Groq, for example), those who set or benefit from weather, terrain and Trick Room and the best of each type go in first, not just the ones with the highest base stats.',
     ],
   },
@@ -182,6 +184,7 @@ const PRIVACY = {
   <li>O arquivo é lido no navegador. Ele <b>não é enviado</b> para nenhum servidor, nem para o savDex.</li>
   <li>Uma cópia do último save aberto fica guardada <b>só neste navegador</b> (IndexedDB), para abrir sozinha na próxima visita. O botão <b>Esquecer este save</b> apaga essa cópia. O save de exemplo não é guardado.</li>
   <li><b>Histórico</b>: cada vez que você abre o save depois de jogar, uma versão dele fica guardada neste navegador (até 30 por save), para o app mostrar o que mudou. O botão <b>Apagar o histórico deste save</b>, na janela Histórico, apaga essas versões.</li>
+  <li><b>Equipes salvas</b>: quando você toca em <b>Salvar equipe</b>, os dados dos Pokémon dessa equipe (espécie, golpes, item, natureza, IVs, onde estavam) ficam guardados neste navegador (até 20 por save), para o app mostrar onde cada um está nas próximas versões do save. O botão <b>Apagar</b> de cada equipe, em Ferramentas → Equipes salvas, apaga a equipe.</li>
   <li>A <b>imagem da equipe</b> é desenhada no aparelho; ela só sai daqui se você a compartilhar.</li>
   <li>Quando você abre o save pelo menu Compartilhar do Android, o arquivo passa pelo cache do navegador só até a página lê-lo.</li>
 </ul>
@@ -210,6 +213,7 @@ const PRIVACY = {
   <li>The file is read in the browser. It is <b>never uploaded</b> to any server, savDex included.</li>
   <li>A copy of the last save you opened is kept <b>only in this browser</b> (IndexedDB) so it opens by itself next time. The <b>Forget this save</b> button deletes that copy. The example save is not kept.</li>
   <li><b>History</b>: each time you open the save after playing, a version of it is kept in this browser (up to 30 per save) so the app can show what changed. The <b>Delete this save’s history</b> button, in the History window, deletes those versions.</li>
+  <li><b>Saved teams</b>: when you tap <b>Save team</b>, the data of that team’s Pokémon (species, moves, item, nature, IVs, where they were) is kept in this browser (up to 20 per save), so the app can show where each one is in later versions of the save. The <b>Delete</b> button of each team, in Tools → Saved teams, deletes it.</li>
   <li>The <b>party image</b> is drawn on your device; it only leaves it if you share it.</li>
   <li>When you open the save from the Android Share menu, the file goes through the browser cache only until the page reads it.</li>
 </ul>

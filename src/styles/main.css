@@ -745,6 +745,21 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .party-actions { margin-top: 12px; }
 .team-img { display: block; width: 100%; height: auto; margin-bottom: 12px; box-shadow: 0 0 0 3px var(--edge); image-rendering: auto; }
 
+/* Equipes salvas (Ferramentas) */
+.team-msg { margin-top: 8px; }
+.team-msg:empty { display: none; }
+.teams { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.team > summary { flex-wrap: wrap; row-gap: 4px; }
+.team-head { flex: 1 1 150px; min-width: 0; display: grid; }
+.team-head b { overflow-wrap: anywhere; }
+.team-head small { font: 400 .72rem var(--body); opacity: .8; }
+.team-icons { display: flex; flex-wrap: wrap; }
+.team-icons img { width: 34px; height: 28px; image-rendering: pixelated; object-fit: contain; }
+.team-icons img.gone, .team-gone img { opacity: .35; filter: grayscale(1); }
+.team-gone { cursor: default; }
+.team-actions { margin-top: 10px; }
+.ai-hero .export-btns { justify-content: flex-end; }
+
 /* Pokédex: o que falta (janela aberta pelo bloco da Pokédex) */
 .sum-more {
   flex-basis: 100%; min-height: 44px; margin: 2px 0 -6px; padding: 0; border: 0; background: none;

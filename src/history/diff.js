@@ -8,7 +8,7 @@
 //   Pokémon com a mesma assinatura são pareados pela mesma espécie e pela experiência mais próxima.
 //   IVs, natureza e habilidade podem mudar no jogo (itens de treino): quem sobra é pareado de novo pela
 //   espécie, Poké Ball, shiny e gênero (e, se a espécie mudou, pela mesma posição), com a experiência sem
-//   diminuir; esses aparecem como "treinados".
+//   diminuir; esses aparecem como "treinados". (Nos jogos com PID, PID diferente é sempre outro Pokémon.)
 
 const allMons = d => [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
 
@@ -51,11 +51,10 @@ const looseKey = m => [m.ball ? m.ball.id : '', m.shiny ? 1 : 0, m.gender && m.g
 const samePlace = (a, b) => a.location === b.location && a.boxIndex === b.boxIndex && a.slot === b.slot;
 
 /**
- * @param {object} before dados da versão antiga
- * @param {object} after dados da versão nova
+ * Pareia os mesmos Pokémon entre duas listas (regras no começo do arquivo).
+ * @returns {{ pairs: Array<[object, object]>, added: object[], removed: object[] }} added = só na nova; removed = só na antiga
  */
-export function diffSaves(before, after) {
-  const quetzal = !!(after.game && after.game.id === 'quetzal');
+export function matchMons(oldList, newList, quetzal) {
   const group = list => {
     const g = new Map();
     for (const m of list) {
@@ -65,7 +64,7 @@ export function diffSaves(before, after) {
     }
     return g;
   };
-  const oldG = group(allMons(before)), newG = group(allMons(after));
+  const oldG = group(oldList), newG = group(newList);
   const pairs = [], added = [], removed = [];
   for (const [k, news] of newG) {
     const olds = [...(oldG.get(k) || [])];
@@ -91,9 +90,11 @@ export function diffSaves(before, after) {
 
   // 2ª passada: o mesmo Pokémon com IVs, natureza ou habilidade mudados. Mesma espécie (ou, se mudou, a
   // mesma posição: evoluiu sem sair do lugar), mesma bola, shiny e gênero, experiência sem diminuir.
+  // Não vale entre dois Pokémon reconhecidos pelo PID (PID diferente = outro Pokémon).
+  const byPid = m => !quetzal && m.pid !== undefined && !!m.ot;
   const rematch = (fits, rank) => {
     for (const n of [...added]) {
-      const cand = removed.filter(o => looseKey(o) === looseKey(n) && (o.exp ?? 0) <= (n.exp ?? 0) && fits(o, n));
+      const cand = removed.filter(o => !(byPid(o) && byPid(n)) && looseKey(o) === looseKey(n) && (o.exp ?? 0) <= (n.exp ?? 0) && fits(o, n));
       if (!cand.length) continue;
       const o = cand.reduce((a, b) => (rank(b, n) < rank(a, n) ? b : a));
       removed.splice(removed.indexOf(o), 1);
@@ -103,6 +104,16 @@ export function diffSaves(before, after) {
   };
   rematch((o, n) => o.speciesId === n.speciesId, (o, n) => (samePlace(o, n) ? -1 : n.exp - o.exp));
   rematch((o, n) => samePlace(o, n), (o, n) => n.exp - o.exp);
+  return { pairs, added, removed };
+}
+
+/**
+ * @param {object} before dados da versão antiga
+ * @param {object} after dados da versão nova
+ */
+export function diffSaves(before, after) {
+  const quetzal = !!(after.game && after.game.id === 'quetzal');
+  const { pairs, added, removed } = matchMons(allMons(before), allMons(after), quetzal);
 
   const evolved = [], leveled = [], learned = [], trained = [];
   for (const [o, n] of pairs) {

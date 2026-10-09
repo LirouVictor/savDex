@@ -23,6 +23,7 @@ import N from '../src/data/nds.json';
 import { makeHgssSave, makeGen4Save, makeBwSave } from './helpers/make-nds.js';
 import { diffSaves } from '../src/history/diff.js';
 import { changesWin, historyStartWin, historyList } from '../src/history/view.js';
+import { teamsWin, newTeam, locateTeam } from '../src/teams/view.js';
 
 const placeholders = s => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
 
@@ -59,7 +60,7 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
   /** Desenha tudo o que o app mostra para um save, inclusive o detalhe de cada Pokémon. */
   function renderAll(data, T2) {
     const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
-    let html = R.trainerWin(data, 'x.sav') + R.warningsWin(data.warnings) + R.partyWin(data) + R.pcWin(data)
+    let html = R.trainerWin(data, 'x.sav') + R.warningsWin(data.warnings) + R.partyWin(data, { canSave: true }) + R.pcWin(data)
       + R.analysisWin(data, T2) + R.aiWin(data, Object.values(PROVIDERS)) + R.searchWin(data, T2) + R.exportWin();
     for (const box of data.pc.boxes) html += R.boxGrid(box);
     all.forEach((m, i) => {
@@ -72,6 +73,12 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
     html += changesWin(diffSaves(data, data), { savedAt: 0 }, 2).html + changesWin(diffSaves(fewer, data), { savedAt: 0 }, 2).html
       + changesWin(diffSaves(data, fewer), { savedAt: 0 }, 2).html + historyStartWin()
       + historyList([{ id: 1, signature: 'a', savedAt: 0, name: 'x', total: 1, saveIndex: 1 }, { id: 2, signature: 'b', savedAt: 0, name: 'x', total: 1, saveIndex: 1 }], 'a', 2);
+    // Equipes salvas: uma da equipe e uma "da IA" com um Pokémon que não está mais no save
+    const teams = [newTeam(all.slice(0, 6), { saveKey: 'k', name: 'a', source: 'party' }), newTeam(all.slice(0, 2), { saveKey: 'k', name: 'b', source: 'ai' })]
+      .map((tm, id) => ({ ...tm, id }));
+    const located = teams.map(tm => locateTeam(tm, data));
+    if (located[1][0]) located[1][0] = { ...located[1][0], now: null };
+    html += teamsWin(teams, located, T2, 0);
     return { html, all };
   }
 

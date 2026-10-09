@@ -4,14 +4,14 @@ import { loadSave, isQuetzal, isUnbound, isNds, isSoulGold } from './parser/inde
 import BASE from './data/tables.js';
 import G3 from './data/gen3.json';
 import { toCSV, toShowdown, showdownTeam, toJSON, fileBase } from './export.js';
-import { t } from './i18n.js';
+import { t, locale } from './i18n.js';
 import { download, downloadBlob, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
 import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
 import { saveKey, signature, diffSaves, orderSaves } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
-import { listHistory, addHistory, clearHistory } from './ui/store.js';
+import { listHistory, addHistory, clearHistory, listTeams, addTeam, putTeam, deleteTeam } from './ui/store.js';
 
 const PAGE = 15; // resultados da busca por página
 let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
@@ -32,9 +32,13 @@ export async function openSave(buffer, fileName, opts = {}) {
   T = loaded.T;
   const firstFilled = data.pc.boxes.findIndex(b => b.slots.length);
   const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
-  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], page: 0, searched: false };
+  // persist = save do usuário (não o de exemplo): guarda o histórico e permite salvar equipes
+  state = { data, fileName, box: firstFilled >= 0 ? firstFilled : 0, all, results: [], page: 0, searched: false, persist: !!opts.history, key: saveKey(data) };
   render();
-  if (opts.history) setupHistory(buffer).catch(e => console.error(e));
+  if (opts.history) {
+    setupHistory(buffer).catch(e => console.error(e));
+    refreshTeams().catch(e => console.error(e));
+  }
   return data;
 }
 
@@ -78,7 +82,7 @@ function render() {
       <div id="changes-slot"></div>
     </div>
     <div class="grp" id="grp-party">
-      ${R.partyWin(data)}
+      ${R.partyWin(data, { canSave: state.persist })}
       ${R.analysisWin(data, T)}
     </div>
     <div class="grp" id="grp-pc">
@@ -87,6 +91,7 @@ function render() {
     </div>
     <div class="grp" id="grp-tools">
       ${R.aiWin(data, Object.values(PROVIDERS))}
+      <div id="teams-slot"></div>
       ${R.exportWin()}
     </div>
     ${R.navBar()}`;
@@ -103,6 +108,9 @@ function render() {
   if (dexBtn) dexBtn.addEventListener('click', () => openDex(dexBtn));
   const imgBtn = out.querySelector('[data-team-image]');
   if (imgBtn) imgBtn.addEventListener('click', () => openTeamImage(imgBtn));
+  const saveBtn = out.querySelector('[data-save-team]');
+  if (saveBtn) saveBtn.addEventListener('click', () => saveTeam(data.party, t('Equipe de {date}', { date: new Date().toLocaleDateString(locale()) }), 'party', saveBtn));
+  setupTeams(out.querySelector('#teams-slot'));
   const partyGrid = out.querySelector('.party-grid');
   if (partyGrid) partyGrid.addEventListener('click', e => {
     const btn = e.target.closest('[data-party]');
@@ -279,6 +287,7 @@ function setupAi(out) {
       });
       state.ai = res;
       aiOut.innerHTML = res.html;
+      if (!state.persist) aiOut.querySelector('[data-ai-save]')?.remove();
       aiOut.scrollIntoView({ block: 'start' });
       $('#ai-model').value = provider().getModel();
     } catch (e) {
@@ -301,7 +310,10 @@ function setupAi(out) {
     if (copy && state.ai && state.ai.team) {
       const ok = await copyText(showdownTeam(state.ai.team));
       copy.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
+      return;
     }
+    const save = e.target.closest('[data-ai-save]');
+    if (save && state.ai && state.ai.team) saveTeam(state.ai.team, state.ai.name || t('Equipe da IA'), 'ai', save);
   });
 }
 
@@ -548,7 +560,7 @@ async function openDex(opener) {
 }
 
 // Imagem da equipe: gerada no aparelho; Compartilhar (Android) ou Baixar
-async function openTeamImage(opener) {
+async function openTeamImage(opener, opts = {}) {
   const dlg = document.getElementById('image');
   dlg.innerHTML = `<button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
     <h2 class="pixel" id="image-title">${t('Imagem da equipe')}</h2><p class="hint">${t('Gerando a imagem…')}</p>`;
@@ -563,7 +575,7 @@ async function openTeamImage(opener) {
   dlg.showModal();
   try {
     const { teamImage } = await import('./ui/team-image.js');
-    const blob = await teamImage(state.data);
+    const blob = await teamImage(state.data, opts);
     if (!dlg.open) return;
     url = URL.createObjectURL(blob);
     const name = fileBase(state.data) + '-equipe.png';
@@ -582,6 +594,85 @@ async function openTeamImage(opener) {
     const hint = dlg.querySelector('.hint');
     if (hint) hint.textContent = t('Não consegui gerar a imagem.');
   }
+}
+
+// Equipes salvas (só neste aparelho, por save): o pacote da janela só carrega quando há equipe ou ao salvar
+let teamsMod = null;
+const loadTeams = () => (teamsMod ||= import('./teams/view.js').catch(e => { teamsMod = null; throw e; }));
+
+async function refreshTeams() {
+  const cur = state;
+  if (!cur.persist) return;
+  const list = await listTeams(cur.key);
+  if (state !== cur) return;
+  const slot = document.getElementById('teams-slot');
+  if (!list.length) { cur.teams = null; slot.innerHTML = ''; return; }
+  const V = await loadTeams();
+  if (state !== cur) return;
+  cur.teams = { list, located: list.map(team => V.locateTeam(team, cur.data)) };
+  slot.innerHTML = V.teamsWin(list, cur.teams.located, T, cur.openTeam ?? null);
+}
+
+/** Salva a equipe; a mensagem aparece no `.team-msg` mais perto do botão. */
+async function saveTeam(mons, name, source, btn) {
+  const cur = state;
+  const msgEl = btn.closest('section, .ai-result')?.querySelector('.team-msg');
+  const say = text => { if (msgEl) msgEl.textContent = text; };
+  try {
+    const V = await loadTeams();
+    const team = V.newTeam(mons, { saveKey: cur.key, name, source });
+    const list = await listTeams(cur.key);
+    if (list.some(x => V.teamSig(x) === V.teamSig(team))) return say(t('Essa equipe já está salva (Ferramentas → Equipes salvas).'));
+    if (list.length >= V.TEAM_MAX) return say(t('Limite de {n} equipes por save: apague uma em Ferramentas → Equipes salvas.', { n: V.TEAM_MAX }));
+    const id = await addTeam(team);
+    if (id == null) return say(t('Não consegui salvar neste navegador.'));
+    if (state !== cur) return;
+    cur.openTeam = id;
+    say(t('Equipe salva em Ferramentas → Equipes salvas.'));
+    await refreshTeams();
+  } catch (e) {
+    console.error(e);
+    say(t('Não consegui salvar neste navegador.'));
+  }
+}
+
+function setupTeams(slot) {
+  slot.addEventListener('toggle', e => {
+    const det = e.target.closest('[data-team]');
+    if (!det || !state.teams) return;
+    if (det.open) state.openTeam = +det.dataset.team;
+    else if (state.openTeam === +det.dataset.team) state.openTeam = null;
+  }, true);
+  slot.addEventListener('click', async e => {
+    const tm = state.teams;
+    if (!tm) return;
+    const b = e.target.closest('[data-team-mon], [data-team-copy], [data-team-img], [data-team-rename], [data-team-del]');
+    if (!b) return;
+    if (b.dataset.teamMon) {
+      const [ti, mi] = b.dataset.teamMon.split(':').map(Number);
+      const m = tm.located[ti][mi].now;
+      if (m) openDetail(m, b);
+      return;
+    }
+    const ti = +(b.dataset.teamCopy ?? b.dataset.teamImg ?? b.dataset.teamRename ?? b.dataset.teamDel);
+    const team = tm.list[ti], located = tm.located[ti];
+    if (!team) return;
+    const V = await loadTeams();
+    if (b.dataset.teamCopy != null) {
+      const ok = await copyText(V.teamShowdown(located));
+      b.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
+    } else if (b.dataset.teamImg != null) {
+      openTeamImage(b, { mons: located.filter(x => x.now).map(x => x.now), title: team.name });
+    } else if (b.dataset.teamRename != null) {
+      const name = V.cleanName(prompt(t('Nome da equipe'), team.name) ?? '');
+      if (!name || name === team.name) return;
+      await putTeam({ ...team, name });
+      await refreshTeams();
+    } else if (confirm(t('Apagar a equipe "{name}"? Os Pokémon continuam no save.', { name: team.name }))) {
+      await deleteTeam(team.id);
+      await refreshTeams();
+    }
+  });
 }
 
 function exportAs(kind) {
