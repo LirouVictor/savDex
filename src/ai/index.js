@@ -68,7 +68,7 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
       console.warn(e); // fica com os pontos e dicas da primeira etapa
     }
   }
-  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite }), byRef, team };
+  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite }), byRef, team, name: r.nome };
 }
 
 /** Prepara e envia direto (sem confirmação). */

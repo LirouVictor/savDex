@@ -149,8 +149,12 @@ export function buildView(r, byRef, model, T, opts = null) {
         <p class="ai-kicker">${t('Equipe sugerida')}</p>
         <p class="ai-team-name">${esc(r.nome)}</p>
       </div>
-      <button class="btn btn-ghost btn-small" type="button" data-ai-copy>${t('Copiar (Showdown)')}</button>
+      <div class="export-btns">
+        <button class="btn btn-ghost btn-small" type="button" data-ai-copy>${t('Copiar (Showdown)')}</button>
+        ${mons.length ? `<button class="btn btn-ghost btn-small" type="button" data-ai-save>${t('Salvar equipe')}</button>` : ''}
+      </div>
     </div>
+    <p class="hint team-msg" role="status"></p>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
     <ul class="ai-members">${cards}</ul>
     ${short}
