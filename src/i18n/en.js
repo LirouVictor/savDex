@@ -420,8 +420,8 @@ export default {
     '- Before suggesting an item change or criticizing a set, check whether the Pokémon’s ability already cancels the drawback (e.g. Magic Guard cancels Life Orb recoil).',
   '- Os cálculos do app (tipos, cobertura, contagens, velocidade) são a fonte de verdade: interprete-os, não recalcule nem contradiga.':
     '- The app’s calculations (types, coverage, counts, speed) are the source of truth: interpret them, do not recalculate or contradict them.',
-  '- Se uma conclusão depender de uma mecânica, habilidade ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.':
-    '- If a conclusion depends on a mechanic, ability or interaction that is not in the data, say it is a limitation instead of assuming how it works in this game.',
+  '- Se uma conclusão depender de uma mecânica, habilidade, item ou interação que não esteja nos dados, diga que é uma limitação em vez de supor como funciona neste jogo.':
+    '- If a conclusion depends on a mechanic, ability, item or interaction that is not in the data, say it is a limitation instead of assuming how it works in this game.',
   '- Golpe que o Pokémon ainda não tem: cite pelo nome só se estiver na lista "Aprende por nível" dele (quando enviada) e diga que ele precisa aprender. Fora dela, sugira só o tipo (ex.: "um golpe Electric, se ele aprender").':
     '- A move the Pokémon doesn’t have yet: name it only if it is in its "Learns by level" list (when sent) and say it needs to learn it. Otherwise, suggest only the type (e.g. "an Electric move, if it can learn one").',
   '- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.':
@@ -459,8 +459,20 @@ export default {
   'Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):': 'Learns by level (list from the recent official games; this game may differ):',
   'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.':
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
-  'Critérios: sinergia de tipos e papéis variados; equilíbrio entre atacantes físicos e especiais; velocidade (membros rápidos ou um plano de Trick Room); no máximo um Pokémon com megapedra; nenhum tipo que acerte em cheio 3 ou mais membros; cobertura de golpes. Se houver quem ponha clima/terreno e quem o aproveite, considere montar a equipe em volta disso.':
-    'Criteria: type synergy and varied roles; balance between physical and special attackers; speed (fast members or a Trick Room plan); at most one Pokémon holding a Mega Stone; no type that hits 3 or more members super effectively; move coverage. If someone sets weather/terrain and someone benefits from it, consider building the team around that.',
+  'Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:':
+    'Build the best WHOLE, not the 6 strongest on their own. Priorities, in this order:',
+  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), se houver quem a ponha e quem a aproveite; não force uma estratégia fraca.':
+    '1. A strategy that works together (weather, terrain or Trick Room), if someone sets it and someone benefits from it; do not force a weak strategy.',
+  '2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.':
+    '2. Few shared weaknesses: no type that hits 3 or more members super effectively.',
+  '3. Cobertura ofensiva variada (golpes de tipos diferentes).':
+    '3. Varied offensive coverage (moves of different types).',
+  '4. Equilíbrio entre atacantes físicos e especiais, velocidade (membros rápidos ou um plano de Trick Room) e papéis variados.':
+    '4. Balance between physical and special attackers, speed (fast members or a Trick Room plan) and varied roles.',
+  '5. Stats base altos: só para desempatar.':
+    '5. High base stats: only as a tiebreaker.',
+  'Obrigatório: no máximo um Pokémon com megapedra. Se nenhuma equipe cumprir tudo, escolha a melhor possível e não diga que ela cumpre o que não cumpre.':
+    'Required: at most one Pokémon holding a Mega Stone. If no team meets everything, choose the best possible one and do not claim it meets what it does not.',
   'Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.':
     'In the tips, only concrete adjustments (a move, the item, the nature or the EVs), saying why.',
   'Esta é a equipe escolhida. Não troque membros: escreva pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).':
