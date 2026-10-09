@@ -461,8 +461,12 @@ export default {
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
   'Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:':
     'Build the best WHOLE, not the 6 strongest on their own. Priorities, in this order:',
-  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), se houver quem a ponha e quem a aproveite; não force uma estratégia fraca.':
-    '1. A strategy that works together (weather, terrain or Trick Room), if someone sets it and someone benefits from it; do not force a weak strategy.',
+  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), só se ela aparecer nas pistas de estratégia abaixo, com quem a ponha e quem a aproveite; não force uma estratégia fraca.':
+    '1. A strategy that works together (weather, terrain or Trick Room), only if it appears in the strategy hints below, with someone who sets it and someone who benefits from it; do not force a weak strategy.',
+  'Nenhum disponível põe clima, terreno nem Trick Room (pela habilidade ou por um golpe): não monte a equipe em volta disso.':
+    'No available Pokémon sets weather, terrain or Trick Room (by ability or move): do not build the team around that.',
+  '- A habilidade de cada Pokémon é a da linha dele ("Hab:"), não a que a espécie costuma ter (ex.: um Torkoal com White Smoke não põe sol).':
+    '- Each Pokémon’s ability is the one on its line ("Ability:"), not the one the species usually has (e.g. a Torkoal with White Smoke does not set sun).',
   '2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.':
     '2. Few shared weaknesses: no type that hits 3 or more members super effectively.',
   '3. Cobertura ofensiva variada (golpes de tipos diferentes).':

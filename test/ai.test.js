@@ -55,6 +55,9 @@ suite('IA: dados enviados', () => {
     expect(b).toContain('DISPONÍVEIS (4):');
     expect(b).toContain('nenhum tipo que acerte em cheio 3 ou mais membros');
     expect(b).toContain('não os 6 mais fortes sozinhos');
+    // Sem quem ponha clima/terreno/Trick Room, a IA é avisada para não montar em volta disso
+    expect(b).toContain('Nenhum disponível põe clima, terreno nem Trick Room');
+    expect(systemPrompt({ id: 'quetzal' })).toContain('não a que a espécie costuma ter');
     expect(b).toContain('Nas dicas, só ajustes concretos');
     expect(b).toContain('Não afirme fraquezas, resistências nem contagens da equipe final');
     expect(b).toContain('não sugira o que o Pokémon já tem');
@@ -116,6 +119,7 @@ suite('IA: cálculos do app e candidatos', () => {
     const rilla = mon({ sp: 'Rillaboom', id: 812, box: 2, slot: 1, types: ['grass'], ab: 'Grassy Surge', moves: [['Grassy Glide', 'grass', 0, 55]] });
     expect(strategyLines([rilla])).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam C2-1 (Grassy Glide).');
     expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim).');
+    expect(buildPrompt(pool, T)).not.toContain('Nenhum disponível põe clima');
   });
   it('montagem com pouco espaço: estratégia e variedade de tipos antes dos stats base', () => {
     const strong = Array.from({ length: 20 }, (_, i) => mon({ sp: 'Big' + i, id: 500 + i, box: 2, slot: i + 1, types: ['dragon'], base: [100, 100, 100, 100, 100, 100] }));

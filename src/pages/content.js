@@ -8,10 +8,12 @@ export const NEWS = [
   {
     date: '2026-10-09',
     pt: [
+      'Assistente: na montagem, a IA só monta equipe de clima, terreno ou Trick Room se algum Pokémon disponível realmente o põe (pela habilidade que ele tem, não pela que a espécie costuma ter). Corrigido o nome da equipe sugerida, que aparecia espremido no celular.',
       'Equipes salvas: guarde a equipe atual (botão “Salvar equipe” na seção Equipe) ou uma montada pela IA. Elas ficam em Ferramentas → Equipes salvas, só neste aparelho e só para o save delas, e mostram onde cada membro está agora quando você abre uma versão mais nova do save (na equipe, em qual caixa, se evoluiu ou se não está mais lá), com fraquezas, cobertura, cópia para o Showdown e imagem.',
       'Assistente: na montagem de equipe, a IA segue uma ordem de prioridades (estratégia em conjunto, poucas fraquezas em comum, cobertura, equilíbrio; stats base só para desempatar) e, quando o PC não cabe inteiro no pedido (no Groq, por exemplo), entram primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, não só os de stats base mais altos.',
     ],
     en: [
+      'Assistant: when building, the AI only builds a weather, terrain or Trick Room team if an available Pokémon really sets it (by the ability it has, not the one the species usually has). Fixed the suggested team’s name, which showed up squeezed on phones.',
       'Saved teams: keep the current party (“Save team” button in the Party section) or one built by the AI. They live in Tools → Saved teams, on this device only and only for their own save, and show where each member is now when you open a newer version of the save (in the party, in which box, whether it evolved or is no longer there), with weaknesses, coverage, a Showdown copy and an image.',
       'Assistant: when building a team, the AI follows an order of priorities (a strategy that works together, few shared weaknesses, coverage, balance; base stats only as a tiebreaker) and, when the PC does not fit whole in the request (on Groq, for example), those who set or benefit from weather, terrain and Trick Room and the best of each type go in first, not just the ones with the highest base stats.',
     ],

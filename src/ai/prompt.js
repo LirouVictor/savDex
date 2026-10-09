@@ -119,6 +119,7 @@ export function systemPrompt(game) {
     ...rules,
     t('- Cite Pokémon SEMPRE pela referência do começo de cada linha (ex.: E1, C3-12), também dentro dos textos, e SEM escrever o nome junto (o app troca a referência pelo nome). Certo: "C3-12 resiste a Ice". Errado: "Garchomp (C3-12) resiste a Ice".'),
     t('- Ignore o nível: o jogador pode treinar qualquer Pokémon.'),
+    t('- A habilidade de cada Pokémon é a da linha dele ("Hab:"), não a que a espécie costuma ter (ex.: um Torkoal com White Smoke não põe sol).'),
     t('- Antes de sugerir trocar um item ou criticar um set, veja se a habilidade do Pokémon já anula a desvantagem (ex.: Magic Guard anula o recuo da Life Orb).'),
     t('- Golpe que o Pokémon ainda não tem: cite pelo nome só se estiver na lista "Aprende por nível" dele (quando enviada) e diga que ele precisa aprender. Fora dela, sugira só o tipo (ex.: "um golpe Electric, se ele aprender").'),
     t('- Escreva em português do Brasil, de forma direta e específica. Nomes de Pokémon, golpes, itens, habilidades e tipos ficam em inglês.'),
@@ -501,7 +502,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
     t('Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:'),
-    t('1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), se houver quem a ponha e quem a aproveite; não force uma estratégia fraca.'),
+    t('1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), só se ela aparecer nas pistas de estratégia abaixo, com quem a ponha e quem a aproveite; não force uma estratégia fraca.'),
     t('2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.'),
     t('3. Cobertura ofensiva variada (golpes de tipos diferentes).'),
     t('4. Equilíbrio entre atacantes físicos e especiais, velocidade (membros rápidos ou um plano de Trick Room) e papéis variados.'),
@@ -512,7 +513,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES) {
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
     wish(note),
     ...hints,
-    ...(hints.length ? [''] : []),
+    ...(hints.length ? [''] : ['', t('Nenhum disponível põe clima, terreno nem Trick Room (pela habilidade ou por um golpe): não monte a equipe em volta disso.'), '']),
     t('DISPONÍVEIS ({n}):', { n: pool.length }),
     ...pool.map(monLine),
   ].join('\n').replace(/\n{3,}/g, '\n\n');
