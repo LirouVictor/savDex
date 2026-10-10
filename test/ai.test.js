@@ -687,7 +687,7 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(teamFacts([tork, zard, venu, corv], T)).toContain('Alertas de sinergia: com sol, Fire fica mais forte');
   });
 
-  it('time de sol do save real: golpes Fire contam, Water não fura, conserto respeita o sol e o nível', () => {
+  it('time de sol do save real: golpes Fire contam, Water não fura, conserto respeita o sol', () => {
     const L = (sp, slot, types, base, level, o) => Object.assign(S(sp, slot, types, base, o), { level });
     const zardY = L('Charizard', 11, ['fire', 'flying'], [78, 84, 78, 109, 85, 100], 93, { ab: 'Solar Power', item: 'Charizardite Y', moves: [['Flamethrower', 'fire', 1, 90], ['Solar Beam', 'grass', 1, 120], ['Air Slash', 'flying', 1, 75]] });
     const blaz = L('Blaziken', 12, ['fire', 'fighting'], [80, 120, 70, 110, 70, 80], 92, { ab: 'Speed Boost', item: 'Blazikenite', moves: [['High Jump Kick', 'fighting', 0, 130], ['Flare Blitz', 'fire', 0, 120]] });
@@ -706,12 +706,14 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(buildIssues(team, T).join(' ')).toContain('Ground acerta 4 membros');
     // Duas megapedras: megaevolui a que põe o sol
     expect(teamFacts(team, T)).toContain('megaevolua C1-11, que põe sol para a equipe');
-    // Conserto: não traz quem atrapalha o sol (Swampert com Liquidation) nem quem está 15+ níveis abaixo (Annihilape 60)
+    // Conserto: não traz quem atrapalha o sol (Swampert com Liquidation); o nível não pesa (Annihilape 60 pode entrar)
     const swamp = L('Swampert', 17, ['water', 'ground'], [100, 110, 90, 85, 90, 60], 95, { moves: [['Liquidation', 'water', 0, 85], ['High Horsepower', 'ground', 0, 95]] });
     const anni = L('Annihilape', 18, ['fighting', 'ghost'], [110, 115, 80, 50, 90, 90], 60, { moves: [['Rage Fist', 'ghost', 0, 50]] });
     const chomp = L('Garchomp', 19, ['dragon', 'ground'], [108, 130, 95, 80, 85, 102], 95, { moves: [['Earthquake', 'ground', 0, 100]] });
     const fix = repairTeam(team, [...team, swamp, anni, chomp], T);
-    expect(fix.swaps.map(x => x.in.species.name)).toEqual(['Garchomp']);
+    const ins = fix.swaps.map(x => x.in.species.name);
+    expect(ins).toContain('Garchomp');
+    expect(ins).not.toContain('Swampert');
     expect(fix.swaps.map(x => x.out.species.name)).not.toContain('Charizard');
     expect(fix.counts.map(c => c.type)).not.toContain('water');
   });

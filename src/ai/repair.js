@@ -3,7 +3,7 @@
 // disponíveis que resolvam, mexendo o mínimo. A IA continua escolhendo a ideia da equipe; o app só conserta
 // o que dá para medir. Sem chamada a mais: a segunda etapa da IA escreve os textos já para a equipe final.
 
-import { isMegaStone, strategyOf, speciesKey, LEVEL_GAP } from './prompt.js';
+import { isMegaStone, strategyOf, speciesKey } from './prompt.js';
 import { benefits, teamWeathers, weatherConflict, WEATHER } from './strategy.js';
 
 /** Candidatos testados (os que resistem aos tipos problemáticos, de maior total de stats base). */
@@ -68,12 +68,8 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
 
   const out = team.map((m, i) => i).filter(i => !keep.has(team[i]));
   const inTeam = new Set(team.map(speciesKey));
-  // Nível: não traz quem está 15+ níveis abaixo do mais alto da equipe (o nível fica no app, não vai para a IA)
-  const levels = team.map(m => m.level).filter(Boolean);
-  const top = levels.length ? Math.max(...levels) : 0;
   const cands = pool
     .filter(m => !inTeam.has(speciesKey(m)) && m.species.types.length)
-    .filter(m => !(top && m.level && m.level <= top - LEVEL_GAP))
     .filter(m => !weathers.some(f => weatherConflict(m, f, T)))
     .filter(m => problem.some(ty => mult(ty, m.species.types) < 1) && !problem.some(ty => mult(ty, m.species.types) > 1))
     .map(m => [m, problem.filter(ty => mult(ty, m.species.types) < 1).length * 100 + bst(m)])
