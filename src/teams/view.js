@@ -59,7 +59,7 @@ function teamBody(team, located, ti, T) {
 export function teamsWin(teams, located, T, openId = null) {
   const items = teams.map((team, ti) => {
     const gone = located[ti].filter(x => !x.now).length;
-    const src = team.source === 'ai' ? t('montada pela IA') : t('equipe do save');
+    const src = team.source === 'ai' ? t('montada pela IA') : team.source === 'app' ? t('montada pelo app') : t('equipe do save');
     return `<li><details class="fold team" data-team="${team.id}"${team.id === openId ? ' open' : ''}>
       <summary><span class="team-head"><b>${esc(team.name)}</b>
         <small>${esc(when(team.createdAt))} · ${src}${gone ? ` · ${t(gone === 1 ? '1 fora do save' : '{n} fora do save', { n: gone })}` : ''}</small></span>

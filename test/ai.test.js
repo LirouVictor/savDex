@@ -208,12 +208,12 @@ suite('IA: conferência da resposta', () => {
   });
   it('montagem: o app avisa quando a equipe fura os critérios pedidos', () => {
     const steel = (sp, slot, item) => mon({ sp, id: slot, box: 5, slot, types: ['steel'], item });
-    const team = [steel('Skarmory', 1, 'Scizorite'), steel('Klefki', 2, 'Metagrossite'), steel('Bronzong', 3)];
+    const team = [steel('Skarmory', 1, 'Scizorite'), steel('Klefki', 2, 'Metagrossite'), steel('Bronzong', 3, 'Steelixite')];
     expect(buildIssues(team, T)).toEqual([
       'Fighting acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
       'Ground acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
       'Fire acerta 3 membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).',
-      '2 Pokémon com megapedra (o pedido era no máximo um).',
+      '3 Pokémon com megapedra (o pedido era no máximo dois).',
     ]);
     const refs = new Map(team.map(m => [refOf(m), m]));
     const r = checkBuild({ nome: 'T', resumo: '', pontos_fortes: [], pontos_fracos: [], dicas: [], membros: team.map(m => ({ ref: refOf(m) })) }, refs);
@@ -705,7 +705,8 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(buildIssues(team, T).join(' ')).not.toContain('Water');
     expect(buildIssues(team, T).join(' ')).toContain('Ground acerta 4 membros');
     // Duas megapedras: megaevolui a que põe o sol
-    expect(teamFacts(team, T)).toContain('megaevolua C1-11, que põe sol para a equipe');
+    expect(teamFacts(team, T)).toContain('só uma megaevolução por batalha; para ter sol, megaevolua C1-11');
+    expect(buildIssues(team, T).join(' ')).not.toContain('megapedra'); // duas megapedras valem
     // Conserto: não traz quem atrapalha o sol (Swampert com Liquidation); o nível não pesa (Annihilape 60 pode entrar)
     const swamp = L('Swampert', 17, ['water', 'ground'], [100, 110, 90, 85, 90, 60], 95, { moves: [['Liquidation', 'water', 0, 85], ['High Horsepower', 'ground', 0, 95]] });
     const anni = L('Annihilape', 18, ['fighting', 'ghost'], [110, 115, 80, 50, 90, 90], 60, { moves: [['Rage Fist', 'ghost', 0, 50]] });

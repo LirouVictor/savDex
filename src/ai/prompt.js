@@ -245,6 +245,8 @@ export function schemaHint(schema) {
   ].join('\n');
 }
 
+/** Megapedras numa equipe: até 2 (só uma megaevolui por batalha; a outra é a opção para outra batalha). */
+export const MAX_MEGAS = 2;
 export const isMegaStone = item => !!item && /ite( [XYZ])?$/.test(item.name) && !/^(Eviolite|Meteorite)$/.test(item.name);
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 
@@ -276,7 +278,7 @@ export function teamFacts(party, T) {
     t('Velocidade base (maior primeiro): {list}.', { list: speed.join(', ') || none }),
     t('Tipos repetidos: {list}.', { list: repeated.join(', ') || none }),
     mega
-      ? t('Megapedras: {list} (só uma megaevolução por batalha: megaevolua {ref}, que põe {field} para a equipe, e troque as outras megapedras por outro item).', { list: megas.join(', '), ref: refOf(mega.m), field: t(mega.field) })
+      ? t('Megapedras: {list} (só uma megaevolução por batalha; para ter {field}, megaevolua {ref}).', { list: megas.join(', '), ref: refOf(mega.m), field: t(mega.field) })
       : t('Megapedras: {list} (só uma megaevolução por batalha).', { list: megas.join(', ') || none }),
     t('Põem clima/terreno/Trick Room: {list}.', { list: field.join(', ') || none }),
     t('Alertas de sinergia: {list}.', { list: synergy.join('; ') || none }),
@@ -303,7 +305,8 @@ export function buildIssues(team, T) {
   const out = a.defense.filter(r => r.weak.length >= 3 && !halved.has(r.type))
     .map(r => t('{type} acerta {n} membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).', { type: cap(r.type), n: r.weak.length }));
   const megas = team.filter(m => isMegaStone(m.item)).length;
-  if (megas > 1) out.push(t('{n} Pokémon com megapedra (o pedido era no máximo um).', { n: megas }));
+  // Duas megapedras valem (escolher qual megaevolui conforme a batalha); três ou mais, não
+  if (megas > MAX_MEGAS) out.push(t('{n} Pokémon com megapedra (o pedido era no máximo dois).', { n: megas }));
   return out;
 }
 
@@ -515,7 +518,7 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES, { free = nu
     t('3. Cobertura ofensiva variada (golpes de tipos diferentes).'),
     t('4. Equilíbrio entre atacantes físicos e especiais, velocidade (membros rápidos ou um plano de Trick Room) e papéis variados.'),
     t('5. Stats base altos: só para desempatar.'),
-    t('Obrigatório: no máximo um Pokémon com megapedra. Se nenhuma equipe cumprir tudo, escolha a melhor possível e não diga que ela cumpre o que não cumpre.'),
+    t('Obrigatório: no máximo dois Pokémon com megapedra (só um megaevolui por batalha; o outro é a opção para outra batalha). Se nenhuma equipe cumprir tudo, escolha a melhor possível e não diga que ela cumpre o que não cumpre.'),
     t('Nas dicas, só ajustes concretos (um golpe, o item, a natureza ou os EVs), dizendo por quê.'),
     t('Nas dicas, não sugira o que o Pokémon já tem (item ou golpe). Aqui não vai a lista de golpes por nível: golpe novo, só pelo tipo (ex.: "um golpe Flying, se ele aprender").'),
     t('Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.'),
