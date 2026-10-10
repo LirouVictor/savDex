@@ -87,6 +87,17 @@ suite('Montador de equipes (sem IA)', () => {
     for (const r of buildTeams(all, T, { want })) expect(names(r)).toEqual(expect.arrayContaining(['Corviknight', 'Slaking']));
   });
 
+  it('golpes fracos do começo do jogo não contam (cobertura, prioridade, clima)', () => {
+    slot = 0;
+    const weak = mon('Dragapult', ['dragon', 'ghost'], [88, 120, 75, 100, 75, 142], { moves: [['Quick Attack', 'normal', 0, 40], ['Astonish', 'ghost', 0, 30], ['Bite', 'dark', 0, 60], ['Infestation', 'bug', 1, 20]] });
+    const goodra = mon('Goodra', ['dragon'], [90, 100, 70, 110, 150, 80], { ab: 'Sap Sipper', moves: [['Water Pulse', 'water', 1, 60], ['Dragon Breath', 'dragon', 1, 60], ['Protect', 'normal', 2, 0]] });
+    const bascu = mon('Basculegion', ['water', 'ghost'], [120, 112, 65, 80, 75, 78], { ab: 'Adaptability', moves: [['Wave Crash', 'water', 0, 120], ['Aqua Jet', 'water', 0, 40], ['Last Respects', 'ghost', 0, 50], ['Agility', 'psychic', 2, 0]] });
+    const [a, b, c] = prepare([weak, goodra, bascu], T);
+    expect([a.dmg, a.cov, a.roles.includes('prioridade')]).toEqual([0, 0, false]);
+    expect([b.dmg, b.strat.boost.has('chuva')]).toEqual([0, false]);
+    expect([c.dmg, c.roles.includes('prioridade'), c.strat.boost.has('chuva')]).toEqual([3, true, true]);
+  });
+
   it('sem lendários: ficam de fora, menos quem o jogador pediu', () => {
     const all = [...pool(),
       mon('Kyogre', ['water'], [100, 100, 90, 150, 140, 90], { ab: 'Drizzle', moves: [atk('Water Spout', 'water', 1), atk('Ice Beam', 'ice', 1), atk('Thunder', 'electric', 1)] }),

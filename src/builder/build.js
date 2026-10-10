@@ -8,7 +8,7 @@
 // os golpes que o Pokémon aprende e ainda não sabe também contam (para pôr o plano, aproveitá-lo e para os papéis),
 // com peso menor, e a tela diz o que ensinar.
 
-import { strategyOf, rolesOf, weatherConflict, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, FIELD_MOVES } from '../ai/strategy.js';
+import { strategyOf, rolesOf, weatherConflict, PRIORITY_MOVES, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, FIELD_MOVES } from '../ai/strategy.js';
 import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
 import { evolvedVersions, megaForm } from '../ai/evolve.js';
 import { moveInfo } from '../parser/describe.js';
@@ -55,6 +55,18 @@ const TEACH_SKIP = new Set(['String Shot', 'Scary Face', 'Cotton Spore', 'Low Sw
 // Papel que só vem de golpe a ensinar vale menos que o de golpe que o Pokémon já sabe (ocupa um espaço de golpe)
 const LEARN_ROLE = 0.6;
 
+// Golpes de dano que contam: os fracos do começo do jogo (Tackle, Ember, Water Pulse…) não seguram uma batalha.
+// Contam poder 70+, poder variável, os que batem mais do que o número diz (vários acertos, poder que cresce…)
+// e os de prioridade com STAB (Aqua Jet no Basculegion conta; Quick Attack no Dreepy, não).
+const STRONG_LOW = new Set(['Acrobatics', 'Weather Ball', 'Last Respects', 'Rage Fist', 'Dual Wingbeat', 'Triple Axel', 'Bonemerang',
+  'Double Iron Bash', 'Tachyon Cutter', 'Surging Strikes', 'Population Bomb', 'Icicle Spear', 'Bullet Seed', 'Rock Blast', 'Scale Shot',
+  'Pin Missile', 'Tail Slap', 'Bone Rush', 'Dragon Darts', 'Twin Beam', 'Gear Grind', 'Dual Chop', 'Triple Dive', 'Water Shuriken',
+  'Knock Off', 'Facade', 'Hex', 'Venoshock', 'Storm Throw', 'Grassy Glide', 'Stored Power', 'Power Trip', 'Brine', 'Payback',
+  'Avalanche', 'Revenge', 'Stomping Tantrum', 'Lash Out', 'Rising Voltage', 'Expanding Force', 'Terrain Pulse']);
+const realMove = (mv, types) => damaging(mv) && (PRIORITY_MOVES.has(mv.name)
+  ? types.includes(mv.type) || mv.power >= 70
+  : !mv.power || mv.power >= 70 || STRONG_LOW.has(mv.name));
+
 const popcount = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
 const damaging = mv => (mv.category === 0 || mv.category === 1) && !!mv.type;
 
@@ -74,7 +86,7 @@ export function levelMoves(m, dex, T) {
   for (let i = 2; i < raw.length; i += 2) {
     const info = typeof raw[i] === 'number' ? moveInfo(raw[i], T) : null;
     const name = info ? (info.known ? info.name : null) : String(raw[i]);
-    if (name && !out.some(x => x.name === name)) out.push({ name, level: raw[i - 1] });
+    if (name && !out.some(x => x.name === name)) out.push({ name, level: raw[i - 1], type: info && info.type, power: info && info.power, category: info && info.category });
   }
   return out;
 }
@@ -117,7 +129,9 @@ export function prepare(all, T, dex = null) {
  */
 function entry(m, bf, T, types, mult, learn = []) {
   const b = bf.species.baseStats;
-  const moves = m.moves.filter(damaging);
+  const moves = m.moves.filter(mv => realMove(mv, bf.species.types));
+  // Os golpes fracos ficam de fora das contas (cobertura, clima); os de efeito (Icy Wind, Nuzzle…) continuam
+  const useful = m.moves.filter(mv => !damaging(mv) || moves.includes(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
   const ab = bf.ability && bf.ability.name;
   // Defesa: 2 = 4×, 1 = 2×, 0 neutro, -1 resiste ou imune pelo tipo, -2 anula pela habilidade (Lightning Rod…)
   const def = types.map(a => {
@@ -128,7 +142,7 @@ function entry(m, bf, T, types, mult, learn = []) {
   // Cobertura: tipos (puros) que algum golpe de dano acerta em cheio
   let cov = 0;
   types.forEach((d, i) => { if (moves.some(mv => mult(mv.type, [d]) > 1)) cov |= 1 << i; });
-  const roles = rolesOf(m);
+  const roles = rolesOf({ ...m, moves: useful });
   let roleMask = 0;
   ROLES.forEach((r, i) => { if (roles.includes(r)) roleMask |= 1 << i; });
   const phys = moves.filter(mv => mv.category === 0).length, spec = moves.length - phys;
@@ -137,12 +151,12 @@ function entry(m, bf, T, types, mult, learn = []) {
   // Aproveita de verdade: habilidade (Swift Swim, Chlorophyll…), megapedra ou golpe próprio do clima (Thunder,
   // Solar Beam…). Weather Ball e os golpes Fire/Water só ficam mais fortes: contam menos (e mais com STAB).
   const strong = new Set([ABUSERS[ab], MEGA_ABUSERS[m.item && m.item.name]].filter(Boolean));
-  for (const mv of m.moves) if (mv.name !== 'Weather Ball') for (const f of MOVE_ABUSERS[mv.name] || []) strong.add(f);
+  for (const mv of useful) if (mv.name !== 'Weather Ball') for (const f of MOVE_ABUSERS[mv.name] || []) strong.add(f);
   const stab = new Set();
   for (const [f, w] of Object.entries(WEATHER)) if (bf.species.types.includes(w.boosts) && moves.some(mv => mv.type === w.boosts)) stab.add(f);
   // Quanto aproveita cada campo: habilidade de velocidade 16, outra habilidade ou megapedra 11, golpe do próprio
   // clima ou golpe com STAB fortalecido 6, outro golpe fortalecido (ou Weather Ball) 3
-  const strat = strategyOf(bf);
+  const strat = strategyOf({ ...bf, moves: useful });
   // Golpes a ensinar: põem o campo (Trick Room, Rain Dance…), aproveitam (Thunder, Solar Beam…) ou dão um papel
   const teach = new Map(); // golpe → nível em que aprende
   const learnSet = new Set(), learnUse = new Set();
@@ -151,7 +165,9 @@ function entry(m, bf, T, types, mult, learn = []) {
     if (f && !strat.set.has(f)) { learnSet.add(f); teach.set(x.name, x.level); }
     if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); teach.set(x.name, x.level); }
   }
-  const teachable = learn.filter(x => !TEACH_SKIP.has(x.name));
+  // Prioridade só de golpe que bate de verdade; setup só em quem ataca forte (Agility no Pelipper não ajuda)
+  const teachable = learn.filter(x => !TEACH_SKIP.has(x.name) && (!PRIORITY_MOVES.has(x.name) || realMove(x, bf.species.types))
+    && (Math.max(b[1], b[3]) >= 100 || !rolesOf({ species: {}, moves: [x] }).includes('setup')));
   const learnRoles = rolesOf({ ...bf, moves: teachable.map(x => ({ name: x.name })) }).filter(r => TEACH_ROLES.includes(r) && !roles.includes(r));
   let learnRoleMask = 0;
   ROLES.forEach((r, i) => { if (learnRoles.includes(r)) learnRoleMask |= 1 << i; });
@@ -162,7 +178,7 @@ function entry(m, bf, T, types, mult, learn = []) {
   }
   const value = {};
   for (const f of [...WEATHERS, ...TERRAINS]) {
-    const sig = m.moves.some(mv => mv.name !== 'Weather Ball' && (MOVE_ABUSERS[mv.name] || []).includes(f));
+    const sig = useful.some(mv => mv.name !== 'Weather Ball' && (MOVE_ABUSERS[mv.name] || []).includes(f));
     value[f] = Math.max(ABUSERS[ab] === f ? (SPEED_ABILITIES.has(ab) ? 16 : 11) : 0, MEGA_ABUSERS[m.item && m.item.name] === f ? 11 : 0,
       sig || stab.has(f) ? 6 : 0, learnUse.has(f) ? 5 : 0, strat.use.has(f) || strat.boost.has(f) ? 3 : 0);
   }
@@ -241,7 +257,7 @@ export function scoreParts(team, plan, types) {
     p.members += (e.bst - 350) / 12 - e.bad; // 300 → −4, 450 → +8, 600 → +21
     // A megaevolução sobe os stats (já contados na forma mega, quando o app a conhece); só uma por batalha
     if (e.mega) { if (e.megaKnown) gains.push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
-    if (e.dmg < 2) p.members -= 6;
+    if (e.dmg < 2) p.members -= 6 * (2 - e.dmg); // sem golpes de dano que contam, ele não segura uma batalha
     if (e.lean === 'phys') phys++; else if (e.lean === 'spec') spec++;
     if (e.spe >= FAST) fast++;
     if (e.spe <= SLOW && e.dmg >= 2) slow++;
@@ -288,7 +304,7 @@ function allowed(team, e, plan) {
 
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
 function solo(e, plan) {
-  let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - (e.dmg < 2 ? 6 : 0);
+  let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg);
   if (plan.field && plan.kind !== 'room') {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
     v += (e.value[plan.field] || 0) * 1.2;

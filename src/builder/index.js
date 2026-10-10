@@ -111,6 +111,10 @@ function describeMember(e, team, plan, types) {
   const extra = ROLE_ORDER.filter(r => e.roleMoves.has(r) && !team.some(o => o.roles.includes(r)));
   if (extra.length) reasons.push(t('Pode ganhar: {list}.', { list: list(extra.map(r => `${t(r)} (${e.roleMoves.get(r).name}, ${learnAt(e.roleMoves.get(r).level)})`)) }));
   if (!role) role = roles.length ? t(roles[0]) : t('cobertura');
+  // Sem outro motivo: entra pela força (stats base) e pelos golpes que acertam bem
+  if (!reasons.length) {
+    reasons.push(t('Atacante {kind} com stats base {bst}.', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
+  }
   if (m.evolvedFrom) reasons.push(t('Evolua {from} para {to}: a conta é com a forma evoluída.', { from: m.evolvedFrom.species.name, to: m.species.name }));
   return { ref: refOf(m), papel: role, motivo: reasons.join(' ') };
 }
