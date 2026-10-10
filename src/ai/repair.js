@@ -3,7 +3,8 @@
 // disponíveis que resolvam, mexendo o mínimo. A IA continua escolhendo a ideia da equipe; o app só conserta
 // o que dá para medir. Sem chamada a mais: a segunda etapa da IA escreve os textos já para a equipe final.
 
-import { isMegaStone, strategyOf, speciesKey } from './prompt.js';
+import { isMegaStone, strategyOf, speciesKey, LEVEL_GAP } from './prompt.js';
+import { benefits, teamWeathers, weatherConflict, WEATHER } from './strategy.js';
 
 /** Candidatos testados (os que resistem aos tipos problemáticos, de maior total de stats base). */
 const CANDIDATES = 40;
@@ -18,17 +19,17 @@ const lean = m => (m.species.baseStats ? (m.species.baseStats[1] >= m.species.ba
 
 /**
  * Quem não pode sair: quem o jogador citou no pedido e quem sustenta uma estratégia que a equipe usa
- * (põe um clima/terreno que outro membro aproveita, ou o aproveita; Trick Room com membro lento).
+ * (põe um clima/terreno que algum membro aproveita, ou o aproveita pela habilidade, golpe próprio ou megapedra;
+ * Trick Room com membro lento). Quem só tem golpe Fire/Water que o clima fortalece pode sair.
  */
-function keepers(team, note, free) {
+function keepers(team, roles, note) {
   const text = (note || '').toLowerCase();
   const keep = new Set(team.filter(m => text && text.includes(m.species.name.toLowerCase())));
-  const roles = team.map(m => strategyOf(m, free));
-  const set = new Set(roles.flatMap(r => [...r.set])), use = new Set(roles.flatMap(r => [...r.use]));
+  const set = new Set(roles.flatMap(r => [...r.set]));
   const slow = team.some(m => m.species.baseStats && m.species.baseStats[SPE] <= 60);
   team.forEach((m, i) => {
     const r = roles[i];
-    if ([...r.set].some(f => use.has(f) || (f === 'Trick Room' && slow)) || [...r.use].some(f => set.has(f))) keep.add(m);
+    if ([...r.set].some(f => roles.some(o => benefits(o, f)) || (f === 'Trick Room' && slow)) || [...r.use].some(f => set.has(f))) keep.add(m);
   });
   return keep;
 }
@@ -46,9 +47,15 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
   const types = T.types.filter(ty => ty && ty !== 'stellar');
   // O mesmo multiplicador da análise da equipe (analysis.js): sem habilidades nem itens
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
+  const roles = team.map(m => strategyOf(m, free));
+  const keep = keepers(team, roles, note);
+  // Clima que a equipe sustenta: quem põe fica, e o tipo que ele corta pela metade (Water no sol, Fire na chuva)
+  // não conta como fraqueza (2× vira 1×). Quem entra não pode atrapalhar esse clima.
+  const weathers = teamWeathers(team, roles).filter(f => team.some((m, i) => keep.has(m) && roles[i].set.has(f)));
+  const halved = new Set(weathers.map(f => WEATHER[f].weakens));
   const cache = new Map();
   const weakVec = m => {
-    if (!cache.has(m)) cache.set(m, types.map(atk => (m.species.types.length && mult(atk, m.species.types) > 1 ? 1 : 0)));
+    if (!cache.has(m)) cache.set(m, types.map(atk => (!halved.has(atk) && m.species.types.length && mult(atk, m.species.types) > 1 ? 1 : 0)));
     return cache.get(m);
   };
   const counts = list => types.map((_, i) => list.reduce((n, m) => n + weakVec(m)[i], 0));
@@ -59,11 +66,15 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
   if (!start) return null;
   const problem = types.filter((_, i) => before[i] >= LIMIT);
 
-  const keep = keepers(team, note, free);
   const out = team.map((m, i) => i).filter(i => !keep.has(team[i]));
   const inTeam = new Set(team.map(speciesKey));
+  // Nível: não traz quem está 15+ níveis abaixo do mais alto da equipe (o nível fica no app, não vai para a IA)
+  const levels = team.map(m => m.level).filter(Boolean);
+  const top = levels.length ? Math.max(...levels) : 0;
   const cands = pool
     .filter(m => !inTeam.has(speciesKey(m)) && m.species.types.length)
+    .filter(m => !(top && m.level && m.level <= top - LEVEL_GAP))
+    .filter(m => !weathers.some(f => weatherConflict(m, f, T)))
     .filter(m => problem.some(ty => mult(ty, m.species.types) < 1) && !problem.some(ty => mult(ty, m.species.types) > 1))
     .map(m => [m, problem.filter(ty => mult(ty, m.species.types) < 1).length * 100 + bst(m)])
     .sort((a, b) => b[1] - a[1]).slice(0, CANDIDATES).map(([m]) => m);

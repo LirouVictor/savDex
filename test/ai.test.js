@@ -85,7 +85,9 @@ suite('IA: cálculos do app e candidatos', () => {
     expect(f).toContain('Tipos repetidos: Water ×2, Flying ×2.');
     expect(f).toContain('Megapedras: E2 (Lucarionite Z)'); // Eviolite não é megapedra
     expect(f).toContain('Põem clima/terreno/Trick Room: E1 (chuva).');
-    expect(f).toContain('Alertas de sinergia: E1 põe chuva, mas só 1 membro(s) aproveita(m).');
+    // Gyarados (Waterfall) também aproveita a chuva: golpe Water 1,5× mais forte
+    expect(f).toContain('Alertas de sinergia: nenhum.');
+    expect(teamFacts(party.slice(0, 2), T)).toContain('Alertas de sinergia: E1 põe chuva, mas só 1 membro(s) aproveita(m).');
   });
   it('PC da análise: quem resiste às fraquezas da equipe vem antes, e no máximo ANALYSIS_PC', () => {
     const pc = [
@@ -115,7 +117,7 @@ suite('IA: cálculos do app e candidatos', () => {
     ];
     const lines = strategyLines(pool, null, T);
     expect(lines[1]).toMatch(/^Pistas de estratégia/);
-    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam (2): E1 (Hurricane), C1-1 (Swift Swim); o clima corta a fraqueza a Fire de E2, C1-2.');
+    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam (2): E1 (Hurricane), C1-1 (Swift Swim); golpes Water 1,5× mais fortes (1): E3; o clima corta a fraqueza a Fire de E2, C1-2.');
     expect(lines).toContain('- Trick Room: põem C1-3; nenhum lento para aproveitar.');
     expect(lines.join('\n')).not.toMatch(/sol|Chlorophyll/);
     expect(strategyLines(party.slice(1), null, T)).toEqual([]);
@@ -683,6 +685,35 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(w).not.toContain('mas só');
     expect(synergyWarnings([tork, pel, venu], T, refOf).join(' | ')).toMatch(/climas diferentes na mesma equipe \(sol, chuva\)/);
     expect(teamFacts([tork, zard, venu, corv], T)).toContain('Alertas de sinergia: com sol, Fire fica mais forte');
+  });
+
+  it('time de sol do save real: golpes Fire contam, Water não fura, conserto respeita o sol e o nível', () => {
+    const L = (sp, slot, types, base, level, o) => Object.assign(S(sp, slot, types, base, o), { level });
+    const zardY = L('Charizard', 11, ['fire', 'flying'], [78, 84, 78, 109, 85, 100], 93, { ab: 'Solar Power', item: 'Charizardite Y', moves: [['Flamethrower', 'fire', 1, 90], ['Solar Beam', 'grass', 1, 120], ['Air Slash', 'flying', 1, 75]] });
+    const blaz = L('Blaziken', 12, ['fire', 'fighting'], [80, 120, 70, 110, 70, 80], 92, { ab: 'Speed Boost', item: 'Blazikenite', moves: [['High Jump Kick', 'fighting', 0, 130], ['Flare Blitz', 'fire', 0, 120]] });
+    const arca = L('Arcanine', 13, ['fire', 'rock'], [95, 115, 80, 95, 80, 90], 100, { ab: 'Rock Head', item: 'Choice Band', moves: [['Flare Blitz', 'fire', 0, 120], ['Head Smash', 'rock', 0, 150]] });
+    const torkW = L('Torkoal', 14, ['fire'], [70, 85, 140, 85, 70, 20], 30, { ab: 'White Smoke', moves: [['Lava Plume', 'fire', 1, 80]] });
+    const ceru = L('Ceruledge', 15, ['fire', 'ghost'], [75, 125, 80, 60, 100, 85], 29, { ab: 'Flash Fire', moves: [['Flame Charge', 'fire', 0, 50]] });
+    const corvL = L('Corviknight', 16, ['flying', 'steel'], [98, 87, 105, 53, 85, 67], 100, { ab: 'Mirror Armor', moves: [['Brave Bird', 'flying', 0, 120], ['Roost', 'flying', 2, 0]] });
+    const team = [zardY, blaz, arca, torkW, ceru, corvL];
+    // Golpe Fire de dano aproveita o sol (1,5×): não é "só 1 aproveita"
+    expect(strategyOf(blaz).boost.has('sol')).toBe(true);
+    expect(synergyWarnings(team, T, refOf).join(' | ')).not.toContain('mas só');
+    expect(strategyLines(team, null, T).join('\n')).toContain('aproveitam (1): C1-11 (Solar Power); golpes Fire 1,5× mais fortes (4): C1-12, C1-13, C1-14, C1-15;');
+    // Com o sol, a fraqueza a Water aparece com a observação e não fura o critério
+    expect(teamFacts(team, T)).toMatch(/Water \(5 fracos, 0 resistem\/imunes; com sol, cai pela metade\)/);
+    expect(buildIssues(team, T).join(' ')).not.toContain('Water');
+    expect(buildIssues(team, T).join(' ')).toContain('Ground acerta 4 membros');
+    // Duas megapedras: megaevolui a que põe o sol
+    expect(teamFacts(team, T)).toContain('megaevolua C1-11, que põe sol para a equipe');
+    // Conserto: não traz quem atrapalha o sol (Swampert com Liquidation) nem quem está 15+ níveis abaixo (Annihilape 60)
+    const swamp = L('Swampert', 17, ['water', 'ground'], [100, 110, 90, 85, 90, 60], 95, { moves: [['Liquidation', 'water', 0, 85], ['High Horsepower', 'ground', 0, 95]] });
+    const anni = L('Annihilape', 18, ['fighting', 'ghost'], [110, 115, 80, 50, 90, 90], 60, { moves: [['Rage Fist', 'ghost', 0, 50]] });
+    const chomp = L('Garchomp', 19, ['dragon', 'ground'], [108, 130, 95, 80, 85, 102], 95, { moves: [['Earthquake', 'ground', 0, 100]] });
+    const fix = repairTeam(team, [...team, swamp, anni, chomp], T);
+    expect(fix.swaps.map(x => x.in.species.name)).toEqual(['Garchomp']);
+    expect(fix.swaps.map(x => x.out.species.name)).not.toContain('Charizard');
+    expect(fix.counts.map(c => c.type)).not.toContain('water');
   });
 
   it('pedido: planos de referência, função de cada membro e Tera no Quetzal', () => {
