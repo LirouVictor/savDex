@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, scoreParts, attackTypes, sets } from './build.js';
+import { buildTeams, altTeams, scoreParts, attackTypes, sets } from './build.js';
 import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
@@ -210,31 +210,51 @@ function teamTips(team, plan) {
 const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo']];
 
 /**
- * Monta as equipes e prepara o que a tela precisa de cada uma.
+ * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
+ * a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
 export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false } = {}) {
+  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready });
   const types = attackTypes(T);
-  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready });
-  return results.map(res => {
-    const { plan, team } = res;
-    const membros = team.map(e => describeMember(e, team, plan, types));
-    const { good, bad } = teamPoints(team, plan, types);
-    const r = {
-      nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: plan.field
-        ? t('Plano: {plan}. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.', { plan: t(plan.field) })
-        : t('Equilibrada: sem clima, terreno nem Trick Room. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.'),
-      membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
-    };
-    const mons = team.map(e => e.m);
-    return {
-      name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r,
-      // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
-      byRef: new Map(mons.map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),
-      shown: new Map(mons.map(m => [refOf(m), m])),
-      evolved: new Map(mons.filter(m => m.evolvedFrom).map(m => [refOf(m), m])),
-    };
-  });
+  const results = raw.map(res => describeTeam(res, types));
+  Object.defineProperty(results, 'raw', { value: raw });
+  return results;
+}
+
+/**
+ * Alternativas do plano da equipe results[i] (a busca roda agora). Entram logo depois das equipes do plano.
+ * @returns {number} a posição da primeira alternativa nova, ou -1 se não há nenhuma com nota perto da melhor
+ */
+export function moreOptions(results, i, T) {
+  const main = results[i];
+  if (!main || main.alt || main.alts) return -1;
+  const types = attackTypes(T);
+  const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types));
+  main.alts = { count: alts.length };
+  if (!alts.length) return -1;
+  results.splice(i + 1, 0, ...alts);
+  return i + 1;
+}
+
+function describeTeam(res, types) {
+  const { plan, team } = res;
+  const membros = team.map(e => describeMember(e, team, plan, types));
+  const { good, bad } = teamPoints(team, plan, types);
+  const r = {
+    nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: plan.field
+      ? t('Plano: {plan}. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.', { plan: t(plan.field) })
+      : t('Equilibrada: sem clima, terreno nem Trick Room. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.'),
+    membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
+  };
+  const mons = team.map(e => e.m);
+  return {
+    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0,
+    // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
+    byRef: new Map(mons.map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),
+    shown: new Map(mons.map(m => [refOf(m), m])),
+    evolved: new Map(mons.filter(m => m.evolvedFrom).map(m => [refOf(m), m])),
+  };
 }
 
 /** Abas (uma por plano) e a equipe escolhida. */
@@ -243,8 +263,12 @@ export function resultsHtml(results, i, T) {
   const cur = results[i] || results[0];
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
   const parts = PARTS.map(([k, label]) => `${t(label)} ${Math.round(cur.parts[k]) > 0 ? '+' : ''}${Math.round(cur.parts[k])}`).join(' · ');
+  // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
+  const more = cur.alt ? '' : !cur.alts
+    ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`
+    : !cur.alts.count ? `<p class="hint builder-more">${t('Nenhuma outra opção deste plano com nota perto desta (90% ou mais).')}</p>` : '';
   return `<div class="dex-filters builder-tabs" role="group" aria-label="${esc(t('Planos'))}">${tabs}</div>
-    <p class="hint builder-score">${t('Nota {n}', { n: Math.round(cur.score) })}: ${esc(parts)}</p>
+    <p class="hint builder-score">${t('Nota {n}', { n: Math.round(cur.score) })}: ${esc(parts)}</p>${more}
     ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}`;
 }
 

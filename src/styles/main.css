@@ -782,6 +782,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .dex-gens { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .dex-filters .btn, .dex-gens .btn { flex: none; width: auto; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
 .dex-filters small, .dex-gens small { opacity: .75; }
+.builder-more { margin: 8px 0 0; }
+.builder-more .btn { line-height: 1.5; }
 .dex-grid { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
 .dex-mon { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; padding: 4px 4px 6px; text-align: center; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
 .dex-mon img { width: 68px; height: 44px; object-fit: contain; }

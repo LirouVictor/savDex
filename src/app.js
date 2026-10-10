@@ -371,6 +371,18 @@ function setupBuilder(out) {
     if (!cur) return;
     const tab = e.target.closest('[data-plan]');
     if (tab) { show(+tab.dataset.plan); return; }
+    // Alternativas do plano: só calcula quando o jogador pede (no celular, a busca de cada plano leva alguns segundos)
+    const more = e.target.closest('[data-more]');
+    if (more) {
+      const b = state.builder, i = b.i;
+      more.disabled = true;
+      more.innerHTML = `${t('Procurando outras opções')}<span class="dots" aria-hidden="true"></span>`;
+      await new Promise(r => setTimeout(r, 30)); // deixa a espera aparecer antes das contas
+      if (state.builder !== b) return; // montou de novo enquanto isso
+      const k = mod.moreOptions(b.results, i, T);
+      show(k >= 0 ? k : i);
+      return;
+    }
     const card = e.target.closest('[data-ref]');
     if (card) { const m = cur.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
     const copy = e.target.closest('[data-ai-copy]');

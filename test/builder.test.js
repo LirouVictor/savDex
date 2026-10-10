@@ -1,8 +1,8 @@
 import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
-import { buildTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
+import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
 import { megaForm } from '../src/ai/evolve.js';
-import { runBuilder, resultsHtml, wantedMons } from '../src/builder/index.js';
+import { runBuilder, moreOptions, resultsHtml, wantedMons } from '../src/builder/index.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
 let slot = 0;
@@ -271,14 +271,38 @@ suite('Montador de equipes (sem IA)', () => {
     expect(names(ready)).not.toContain('Kingdra'); // Nv. 5 contra os outros no 50: no modo pronto, sai
   });
 
-  it('alternativas por plano: no máximo 3 membros iguais e nota perto da melhor', () => {
+  it('alternativas por plano (sob demanda): no máximo 3 membros iguais e nota perto da melhor', () => {
     const rs = buildTeams(pool(), T);
-    for (const r of rs.filter(x => x.alt)) {
-      const first = rs.find(x => x.plan === r.plan && !x.alt);
-      expect(r.team.filter(e => first.team.some(f => f.real === e.real)).length).toBeLessThanOrEqual(3);
-      expect(r.score).toBeGreaterThanOrEqual(first.score * 0.9);
+    expect(rs.some(x => x.alt)).toBe(false); // a busca inicial só faz a melhor de cada plano
+    const keys = new Set(rs.map(r => r.team.map(e => e.id).sort().join()));
+    let found = 0;
+    for (const first of rs) {
+      const alts = altTeams(rs, first);
+      alts.forEach((r, k) => {
+        expect(r.alt).toBe(k + 1);
+        expect(r.plan).toBe(first.plan);
+        expect(planHolds(r.team, r.plan)).toBe(true);
+        for (const other of [first, ...alts.slice(0, k)]) expect(r.team.filter(e => other.team.some(f => f.real === e.real)).length).toBeLessThanOrEqual(3);
+        expect(r.score).toBeGreaterThanOrEqual(first.score * 0.9);
+        expect(keys.has(r.team.map(e => e.id).sort().join())).toBe(false); // não repete uma equipe já mostrada
+      });
+      found += alts.length;
     }
-    expect(rs.some(x => x.alt)).toBe(true);
+    expect(found).toBeGreaterThan(0);
+  });
+
+  it('tela: o botão pede as alternativas do plano e elas entram logo depois da melhor', () => {
+    const rs = runBuilder(pool(), T);
+    const n = rs.length;
+    expect(resultsHtml(rs, 0, T)).toContain('data-more');
+    const k = moreOptions(rs, 0, T);
+    expect(k).toBe(1);
+    expect(rs.length).toBeGreaterThan(n);
+    expect(rs[1].plan).toBe(rs[0].plan);
+    expect(rs[1].name).toContain('opção 2');
+    expect(resultsHtml(rs, 0, T)).not.toContain('data-more'); // já pediu
+    expect(resultsHtml(rs, 1, T)).not.toContain('data-more');
+    expect(moreOptions(rs, 0, T)).toBe(-1); // não busca de novo
   });
 
   it('golpes que aprende: quem aprende Trick Room abre o plano e a tela diz o que ensinar', () => {

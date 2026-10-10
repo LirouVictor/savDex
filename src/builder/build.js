@@ -616,39 +616,57 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   };
   const out = [];
   for (const plan of plans(pool)) {
-    // Quem atrapalha o clima fica de fora; mas quem aproveita de verdade (Chlorophyll, Swift Swim…) vale o risco
-    // de ser fraco ao tipo que o clima fortalece (Venusaur no sol): entra, com uma pena menor
-    for (const x of pool) {
-      for (const e of x.base ? [x, x.base] : [x]) {
-        const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
-        e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
-        e.risk = c === 'weak' && e.strong.has(plan.field);
-      }
-    }
-    const forced = forcedFor(plan);
-    const r = bestTeam(pool, plan, types, forced);
-    if (!r || r.team.length < 6 || !planHolds(r.team, plan)) continue;
-    const group = [r];
-    // Alternativas: outras equipes do mesmo plano, com no máximo metade dos membros iguais, perto da nota da melhor
-    const prev = [new Set(r.team.map(e => e.real))];
-    for (let k = 1; k < ALTS; k++) {
-      const a = bestTeam(pool, plan, types, forced, prev, ALT_BEAM);
-      if (!a || a.team.length < 6 || !planHolds(a.team, plan) || a.score < r.score - (1 - ALT_MIN) * Math.abs(r.score)) break;
-      group.push({ ...a, alt: k });
-      prev.push(new Set(a.team.map(e => e.real)));
-    }
-    out.push(group);
+    setPlanFlags(pool, plan);
+    const r = bestTeam(pool, plan, types, forcedFor(plan));
+    if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(r);
   }
-  // Os planos da melhor nota para a pior; as alternativas logo depois da melhor do plano
-  out.sort((a, b) => b[0].score - a[0].score);
+  // Os planos da melhor nota para a pior, sem repetir a mesma equipe
+  out.sort((a, b) => b.score - a.score);
   const seen = new Set();
-  const result = out.flat().filter(r => {
-    const k = r.team.map(e => e.id).sort((a, b) => a - b).join(',');
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-  Object.defineProperty(result, 'pool', { value: pool }); // para conferências (busca local nos testes de comparação)
+  const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
+  // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
+  Object.defineProperty(result, 'pool', { value: pool }); // também para conferências (busca local nos testes de comparação)
+  Object.defineProperty(result, 'ctx', { value: { types, forcedFor } });
   return result;
+}
+
+/**
+ * Alternativas de um plano (sob demanda: a busca custa quase o mesmo que a da melhor, e no celular só vale pagar
+ * por ela quando o jogador pede): outras equipes do mesmo plano, cada uma com no máximo ALT_SHARED membros iguais
+ * a cada equipe anterior do plano e nota de pelo menos ALT_MIN da melhor.
+ * @param {object[]} results o que buildTeams devolveu
+ * @param {object} main a equipe principal do plano (um item de results)
+ * @returns {Array<{ plan, team: object[], score: number, alt: number }>} na ordem (alt 1, 2…), sem repetir equipes de results
+ */
+export function altTeams(results, main) {
+  const { pool } = results, { types, forcedFor } = results.ctx, { plan } = main;
+  setPlanFlags(pool, plan);
+  const forced = forcedFor(plan);
+  const seen = new Set(results.map(r => teamKey(r.team)));
+  const prev = [new Set(main.team.map(e => e.real))];
+  const out = [];
+  for (let k = 1; k < ALTS; k++) {
+    const a = bestTeam(pool, plan, types, forced, prev, ALT_BEAM);
+    if (!a || a.team.length < 6 || !planHolds(a.team, plan) || a.score < main.score - (1 - ALT_MIN) * Math.abs(main.score)) break;
+    prev.push(new Set(a.team.map(e => e.real)));
+    if (!seen.has(teamKey(a.team)) && seen.add(teamKey(a.team))) out.push({ ...a, alt: out.length + 1 });
+  }
+  return out;
+}
+
+const teamKey = team => team.map(e => e.id).sort((a, b) => a - b).join(',');
+
+/**
+ * Marca, para o plano, quem atrapalha o clima (fica de fora) e quem aproveita de verdade (Chlorophyll, Swift Swim…)
+ * mas é fraco ao tipo que o clima fortalece (Venusaur no sol: entra, com uma pena menor).
+ */
+export function setPlanFlags(pool, plan) {
+  for (const x of pool) {
+    for (const e of x.base ? [x, x.base] : [x]) {
+      const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
+      e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
+      e.risk = c === 'weak' && e.strong.has(plan.field);
+    }
+  }
 }
 

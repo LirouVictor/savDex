@@ -5,7 +5,8 @@
 // de tier dos membros como medida externa
 // Saves: os de fixtures/ (não versionados) e, se existir, o de BENCH_USER_SAVE. Para cada save e plano mede a nota
 // e as partes, a pior fraqueza em comum, a cobertura real (contra os dois tipos dos Pokémon com stats base 450+),
-// o trabalho pendente (evoluir, ensinar, nível), a diversidade entre as equipes, o tempo e quanto uma busca local
+// o trabalho pendente (evoluir, ensinar, nível), a diversidade entre as equipes, o tempo (o inicial e o das alternativas
+// de cada plano, que a tela só calcula quando o jogador pede) e quanto uma busca local
 // (trocar um membro de cada vez) ainda melhoraria a nota. A saída em JSON serve de linha de base para comparar versões.
 import { it } from 'vitest';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
@@ -43,10 +44,12 @@ const allowed = (team, e, plan) => !team.some(x => x.real === e.real || x.key ==
   && !(plan.kind === 'weather' && [...e.strat.set].some(f => B.WEATHERS.includes(f) && f !== plan.field));
 
 function setFlags(pool, plan) {
-  for (const e of pool) {
-    const c = plan.kind === 'weather' && e.conflictBy ? e.conflictBy[plan.field] : null;
-    e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
-    e.risk = c === 'weak' && e.strong.has(plan.field);
+  for (const x of pool) {
+    for (const e of x.base ? [x, x.base] : [x]) {
+      const c = plan.kind === 'weather' && e.conflictBy ? e.conflictBy[plan.field] : null;
+      e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
+      e.risk = c === 'weak' && e.strong.has(plan.field);
+    }
   }
 }
 
@@ -120,14 +123,24 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
       const opts = { dex, ...extra, statModel: process.env.BENCH_STAT_MODEL || 'bst' };
       const t0 = performance.now();
-      const teams = B.buildTeams(all, T, opts);
+      const mains = B.buildTeams(all, T, opts);
       const ms = Math.round(performance.now() - t0);
-      const pool = teams.pool || B.prepare(all, T, dex, { ...extra, statModel: opts.statModel });
+      // Alternativas (na tela, só quando o jogador pede): o tempo de cada plano à parte
+      const teams = B.altTeams ? [] : mains, altMs = [];
+      if (B.altTeams) {
+        for (const r of mains) {
+          const t1 = performance.now();
+          const alts = B.altTeams(mains, r);
+          altMs.push(Math.round(performance.now() - t1));
+          teams.push(r, ...alts);
+        }
+      }
+      const pool = mains.pool;
       const rows = [];
       for (const r of teams) {
         setFlags(r.team, r.plan);
         const m = teamMetrics(r.team, r.plan, T, types, refLevel, extra);
-        const pl = teams.pool ? teams.pool : null;
+        const pl = pool;
         if (pl) setFlags(pl, r.plan);
         m.lsGain = pl ? r1(localGain(r.team, pl, r.plan, types, extra)) : null;
         rows.push({ plan: r.plan.field || 'equilibrada', alt: r.alt || 0, ...m });
@@ -135,7 +148,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const first = rows.filter(x => !x.alt);
       const cnt = new Map();
       for (const r of teams.filter(x => !x.alt)) for (const e of r.team) cnt.set(e.real, (cnt.get(e.real) || 0) + 1);
-      const save = { save: name, game: g, mons: all.length, pool: pool.length, ms, plans: rows,
+      const save = { save: name, game: g, mons: all.length, pool: pool.length, ms, altMs, msTotal: ms + altMs.reduce((a, b) => a + b, 0), plans: rows,
         diversity: { distinct: cnt.size, teams: first.length, inAll: [...cnt].filter(([, c]) => c === first.length && first.length > 1).map(([m]) => m.species.name) } };
       res.push(save);
       // A equipe do jogador como referência (o time de chuva do autor guiou os pesos)
@@ -156,7 +169,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
   for (const [mode, res] of Object.entries(out.modes)) {
     lines.push(`\n=== modo ${mode}`);
     for (const s of res) {
-      lines.push(`# ${s.save} (${s.game}) ${s.mons} Pokémon, ${s.ms} ms; ${s.diversity.distinct} diferentes em ${s.diversity.teams} equipes; em todas: ${s.diversity.inAll.join(', ') || '—'}`);
+      lines.push(`# ${s.save} (${s.game}) ${s.mons} Pokémon, ${s.ms} ms (alternativas por plano: ${(s.altMs || []).join('/')} ms); ${s.diversity.distinct} diferentes em ${s.diversity.teams} equipes; em todas: ${s.diversity.inAll.join(', ') || '—'}`);
       for (const r of s.plans) {
         lines.push(`  ${(r.plan + (r.alt ? ' #' + (r.alt + 1) : '')).padEnd(22)} ${String(r.score).padStart(6)} ${JSON.stringify(r.parts)} pior ${r.worst.type} ${r.worst.w}/${r.worst.r} crit ${r.critical} cob ${r.pureCov}/${r.realCov}% pend evo${r.evolve} ens${r.teach} nv${r.belowLevel} leg${r.legends} ls+${r.lsGain}`);
         lines.push(`      ${r.names.join(', ')}`);
