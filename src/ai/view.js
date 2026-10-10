@@ -83,7 +83,9 @@ function footer(model, dropped, opts = null) {
     ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
     : '';
   const lite = opts && opts.lite && opts.lite.length
-    ? `<p class="hint">${esc(t('O modelo escolhido estava sobrecarregado: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. Vale tentar de novo mais tarde.', { list: opts.lite.join(', ') }))}</p>`
+    ? `<p class="hint">${esc(opts.liteWhy === 'quota'
+      ? t('A cota grátis de hoje do modelo escolhido acabou: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. A cota volta no dia seguinte.', { list: opts.lite.join(', ') })
+      : t('O modelo escolhido estava sobrecarregado: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. Vale tentar de novo mais tarde.', { list: opts.lite.join(', ') }))}</p>`
     : '';
   const ref = opts && opts.refine;
   const second = ref

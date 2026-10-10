@@ -54,8 +54,10 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
   const first = await P.generateJSON({ system, prompt, schema });
   const models = [first.model];
   const lite = [first].filter(x => x.fallback && isLite(x.model)).map(x => x.model);
+  // Por que veio de um Lite: cota do dia (Gemini) ou sobrecarga
+  let liteWhy = first.fallback === 'quota' ? 'quota' : 'overload';
   if (kind === 'analyze') {
-    return { html: analysisView(checkAnalysis(first.data, byRef), byRef, `${P.service} (${first.model})`, { dex, T, lite }), byRef, team: null };
+    return { html: analysisView(checkAnalysis(first.data, byRef), byRef, `${P.service} (${first.model})`, { dex, T, lite, liteWhy }), byRef, team: null };
   }
   const r = checkBuild(first.data, byRef);
   let team = r.membros.map(x => byRef.get(x.ref));
@@ -79,11 +81,12 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
       if (texts) { Object.assign(r, texts); refine.ok = true; }
       if (second.model !== first.model) models.push(second.model);
       if (second.fallback && isLite(second.model) && !lite.includes(second.model)) lite.push(second.model);
+      if (second.fallback === 'quota') liteWhy = 'quota';
     } catch (e) {
       console.warn(e); // fica com os pontos e dicas da primeira etapa
     }
   }
-  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite }), byRef, team, name: r.nome };
+  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite, liteWhy }), byRef, team, name: r.nome };
 }
 
 /** Prepara e envia direto (sem confirmação). */
