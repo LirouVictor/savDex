@@ -19,7 +19,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, dexSummary, playTime, summary } from './summary.js';
+import { countBits, dexSummary, playTime, summary, bitList, badgeSummary } from './summary.js';
 
 export const SOULGOLD = { id: 'soulgold', name: 'Pokémon SoulGold', short: 'SoulGold' };
 
@@ -151,7 +151,7 @@ export function parseSoulGold(u8) {
     summary: {
       playTime: playTime(dv.getUint16(s0 + 0x0E, true), u8[s0 + 0x10], u8[s0 + 0x11], 'confirmado'),
       money: { value: (new DataView(sb1Bytes(MONEY, 4).buffer).getUint32(0, true) ^ key) >>> 0, confidence: 'confirmado' },
-      badges: { count: countBits(flags, 0, 8, BADGE_FLAG & 7), total: 8, confidence: 'confirmado' },
+      badges: badgeSummary(bitList(flags, 0, 8, BADGE_FLAG & 7), ['johto']),
     },
     caught: sb1Bytes(DEX_CAUGHT, Math.ceil(DEX_BITS / 8)),
     seen: sb1Bytes(DEX_SEEN, Math.ceil(DEX_BITS / 8)),

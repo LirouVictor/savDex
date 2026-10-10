@@ -9,6 +9,8 @@ export const SILHOUETTE = 'data:image/svg+xml,' + encodeURIComponent(
   '<path fill="#fbf8ee" d="M7 5h2v1h1v2H9v1H8V8h1V6H7v1H6V6h1zM8 10h1v1H8z"/></svg>');
 
 export const spriteUrl = id => `${SPRITE_BASE}/${id}.png`;
+/** Imagem de uma insígnia (sprites/badges/N.png do mesmo repositório; números em parser/summary.js). */
+export const badgeUrl = id => `${SPRITE_BASE.replace(/\/pokemon$/, '')}/badges/${id}.png`;
 export const iconUrl = id => `${SPRITE_BASE}/versions/generation-viii/icons/${id}.png`;
 
 /** Sprite grande (96×96) para a espécie; silhueta se não houver correspondência. */

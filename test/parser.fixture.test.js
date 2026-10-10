@@ -24,7 +24,7 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     // Tempo de jogo: cresce na ordem dos 3 saves (ver os testes dos outros dois)
     expect(raw.summary).toEqual({
       playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' },
-      badges: { count: 6, total: 8, confidence: 'confirmado' }, dex: expect.objectContaining({ owned: 63, total: 1025, confidence: 'confirmado' }),
+      badges: expect.objectContaining({ count: 6, total: 8, confidence: 'confirmado' }), dex: expect.objectContaining({ owned: 63, total: 1025, confidence: 'confirmado' }),
     });
   });
 
@@ -207,7 +207,7 @@ suite.skipIf(!existsSync(FILE_59))('resumo conferido no jogo (fixtures/quetzal-5
     const raw = parseSave(readFileSync(FILE_59));
     expect(raw.summary).toEqual({
       playTime: { h: 59, m: 20, s: 49, confidence: 'confirmado' }, money: { value: 1247386, confidence: 'confirmado' },
-      badges: { count: 6, total: 8, confidence: 'confirmado' }, dex: expect.objectContaining({ owned: 65, total: 1025, confidence: 'confirmado' }),
+      badges: expect.objectContaining({ count: 6, total: 8, confidence: 'confirmado' }), dex: expect.objectContaining({ owned: 65, total: 1025, confidence: 'confirmado' }),
     });
     expect(raw.warnings.filter(w => w.includes('Checksum'))).toEqual([]);
   });
@@ -218,7 +218,7 @@ const FILE_60 = process.env.QUETZAL_SAVE_60H || new URL('../fixtures/quetzal-60h
 suite.skipIf(!existsSync(FILE_60))('resumo conferido no jogo (fixtures/quetzal-60h.sav)', () => {
   it('insígnias 6, Pokédex 67 (+ Haunter e Doublade) e tempo 60:16', () => {
     const raw = parseSave(readFileSync(FILE_60));
-    expect(raw.summary).toMatchObject({ playTime: { h: 60, m: 16 }, badges: { count: 6, total: 8 }, dex: expect.objectContaining({ owned: 67, total: 1025 }) });
+    expect(raw.summary).toMatchObject({ playTime: { h: 60, m: 16 }, badges: expect.objectContaining({ count: 6, total: 8 }), dex: expect.objectContaining({ owned: 67, total: 1025 }) });
     const pc = describe(raw, T).pc.boxes.flatMap(b => b.slots).map(m => m.species.name);
     expect(pc).toEqual(expect.arrayContaining(['Feebas', 'Froakie', 'Haunter', 'Doublade']));
   });
@@ -250,7 +250,7 @@ suite.skipIf(!existsSync(FILE_EN))('Quetzal em inglês: PC de 31 bytes (fixtures
   it('treinador, resumo e equipe', () => {
     expect(raw.trainer).toEqual({ name: 'ABC', tid: 58883, sid: 36547 });
     expect(raw.warnings).toEqual([]);
-    expect(raw.summary).toMatchObject({ playTime: { h: 338, m: 8 }, badges: { count: 8 }, dex: expect.objectContaining({ owned: 445 }) });
+    expect(raw.summary).toMatchObject({ playTime: { h: 338, m: 8 }, badges: expect.objectContaining({ count: 8 }), dex: expect.objectContaining({ owned: 445 }) });
     expect(d.party.map(m => [m.species.name, m.level])).toEqual([
       ['Linoone', 70], ['Fraxure', 44], ['Ferroseed', 38], ['Corvisquire', 36], ['Frosmoth', 36], ['Finizen', 31]]);
   });
@@ -297,7 +297,8 @@ suite.skipIf(!existsSync(FILE_EN2))('Quetzal em inglês: PC de 21 bytes (fixture
     const dex = raw.summary.dex;
     // O jogo conta também 4 espécies próprias do Quetzal (bits acima do 1025): 698 + 4 = 702
     expect([dex.owned, dex.caught.length, dex.total, dex.confidence]).toEqual([702, 698, 1025, 'confirmado']);
-    expect(raw.summary.badges).toEqual({ count: 8, total: 8, confidence: 'confirmado' });
+    expect(raw.summary.badges).toEqual(expect.objectContaining({ count: 8, total: 8, confidence: 'confirmado' }));
+    expect(raw.summary.badges.icons).toEqual([1, 2, 3, 4, 5, 6, 7, 8]); // Kanto, conferido na tela de estatísticas
     expect(raw.summary.money).toEqual({ value: 29785679, confidence: 'confirmado' });
     const caught = new Set(dex.caught);
     const nat = id => (id <= 898 ? id : Q.species[id][5]);
@@ -331,6 +332,9 @@ const INS7 = process.env.QUETZAL_SAVE_68H || 'fixtures/quetzal-7ins.sav';
 suite.skipIf(!existsSync(INS7))('save real do Quetzal com 68h (insígnias conferidas no jogo)', () => {
   it('insígnias e Pokédex como na tela de continuar', () => {
     const raw = parseSave(readFileSync(INS7));
-    expect(raw.summary).toMatchObject({ playTime: { h: 68, m: 1 }, badges: { count: 6, total: 8 }, dex: expect.objectContaining({ owned: 80 }) });
+    expect(raw.summary).toMatchObject({ playTime: { h: 68, m: 1 }, badges: expect.objectContaining({ count: 6, total: 8 }), dex: expect.objectContaining({ owned: 80 }) });
+    // Hoenn, as 6 primeiras (Stone a Feather), como na tela de estatísticas do jogo
+    expect(raw.summary.badges.got).toEqual([true, true, true, true, true, true, false, false]);
+    expect(raw.summary.badges.icons).toEqual([17, 18, 19, 20, 21, 22, 23, 24]);
   });
 });

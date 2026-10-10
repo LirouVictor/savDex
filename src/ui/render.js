@@ -1,6 +1,6 @@
 // Templates HTML da interface. Strings simples, sem framework.
 
-import { spriteSrc, iconSrc, spriteUrl } from './sprites.js';
+import { spriteSrc, iconSrc, spriteUrl, badgeUrl } from './sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { analyzeTeam, defenseMatchups } from '../analysis.js';
 import { t, num } from '../i18n.js';
@@ -136,8 +136,13 @@ export function summaryHtml(s) {
   if (s.playTime) tiles.push(tile('st-time', 'clock', t('Tempo de jogo'), `${s.playTime.h}<small>h</small> ${String(s.playTime.m).padStart(2, '0')}<small>m</small>`, s.playTime));
   if (s.money) tiles.push(tile('st-money', 'coin', t('Dinheiro'), `<small>₽</small> ${num(s.money.value)}`, s.money));
   if (s.badges) {
-    const pips = Array.from({ length: s.badges.total }, (_, i) => `<i${i < s.badges.count ? ' class="on"' : ''}></i>`).join('');
-    tiles.push(tile('st-badges', 'medal', t('Insígnias'), `${s.badges.count}<small>/${s.badges.total}</small>`, s.badges, `<span class="pips" aria-hidden="true">${pips}</span>`));
+    const b = s.badges;
+    const has = i => (b.got ? b.got[i] : i < b.count);
+    // Com a região conhecida, as próprias insígnias (as que faltam, apagadas); senão, pinos
+    const extra = b.icons
+      ? `<span class="bdgs" aria-hidden="true">${b.icons.map((id, i) => `<img class="bdg${has(i) ? '' : ' off'}" src="${esc(badgeUrl(id))}" width="24" height="24" alt="" loading="lazy" decoding="async">`).join('')}</span>`
+      : `<span class="pips" aria-hidden="true">${Array.from({ length: b.total }, (_, i) => `<i${has(i) ? ' class="on"' : ''}></i>`).join('')}</span>`;
+    tiles.push(tile('st-badges', 'medal', t('Insígnias'), `${b.count}<small>/${b.total}</small>`, b, extra));
   }
   if (s.dex) {
     const pct = Math.round(Math.min(1, s.dex.owned / s.dex.total) * 100);

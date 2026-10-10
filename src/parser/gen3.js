@@ -7,7 +7,7 @@ import { decodeText } from './charset.js';
 import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
-import { dexBits, dexSummary, playTime, summary } from './summary.js';
+import { dexBits, dexSummary, playTime, summary, bitList, badgeSummary } from './summary.js';
 
 export const SECTORS_PER_SLOT = 14;
 const SECTOR_SIZE = 0x1000;
@@ -46,15 +46,14 @@ function gen3Summary(u8, dv, S, gameId) {
   // Posição no SaveBlock1 → posição no arquivo
   const sb1 = o => S[1 + Math.floor(o / 0xF80)] + (o % 0xF80);
   const key = L.key == null ? 0 : dv.getUint32(s0 + L.key, true);
-  let badges = 0;
-  for (let i = 0; i < 8; i++) {
+  const badges = Array.from({ length: 8 }, (_, i) => {
     const f = L.badge + i;
-    badges += (u8[sb1(L.flags + (f >> 3))] >> (f & 7)) & 1;
-  }
+    return !!((u8[sb1(L.flags + (f >> 3))] >> (f & 7)) & 1);
+  });
   return summary({
     playTime: playTime(dv.getUint16(s0 + 0x0E, true), u8[s0 + 0x10], u8[s0 + 0x11], confidence),
     money: { value: (dv.getUint32(sb1(L.money), true) ^ key) >>> 0, confidence },
-    badges: { count: badges, total: 8, confidence },
+    badges: badgeSummary(badges, [gameId === 'frlg' ? 'kanto' : 'hoenn'], confidence),
     dex: dexSummary(dexBits(u8, s0 + 0x28, DEX3), DEX3),
   });
 }

@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { decodeText } from './charset.js';
-import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary, bitList, badgeSummary } from './summary.js';
 
 export const SAVE_SIZE = 0x20000;
 export const SECTOR_SIZE = 0x1000;
@@ -287,7 +287,7 @@ export function parseSave(input) {
   const info = summary({
     playTime: playTime(dv.getUint16(s0 + SUMMARY.hours, true), u8[s0 + SUMMARY.minutes], u8[s0 + SUMMARY.seconds], 'confirmado'),
     money: { value: (dv.getUint32(s1 + SUMMARY.money, true) ^ key) >>> 0, confidence: 'confirmado' },
-    badges: { count: region ? countBits(u8, s4, 8, region.badgeBit) : countBits(u8, s1, 8, SUMMARY.badgeBit), total: 8, confidence: 'confirmado' },
+    badges: region ? badgeSummary(bitList(u8, s4, 8, region.badgeBit), [region.id]) : badgeSummary(bitList(u8, s1, 8, SUMMARY.badgeBit), ['hoenn']),
     dex: dexAt === null ? null : dexSummary(dexBits(u8, dexAt, SUMMARY.dexTotal), SUMMARY.dexTotal,
       { owned: countBits(u8, dexAt, SUMMARY.dexBits) }),
   });
