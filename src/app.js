@@ -335,6 +335,10 @@ function setupBuilder(out) {
     bOut.innerHTML = mod.resultsHtml(state.builder.results, i, T);
     if (!state.persist) bOut.querySelector('[data-ai-save]')?.remove();
   };
+  // Sem lendários: a escolha fica neste aparelho
+  const noLeg = $('#builder-nolegend');
+  try { noLeg.checked = localStorage.getItem('builder-nolegend') === '1'; } catch { /* sem armazenamento */ }
+  noLeg.addEventListener('change', () => { try { if (noLeg.checked) localStorage.setItem('builder-nolegend', '1'); else localStorage.removeItem('builder-nolegend'); } catch { /* sem armazenamento */ } });
   $('#builder-run').addEventListener('click', async e => {
     const btn = e.currentTarget;
     btn.disabled = true;
@@ -345,7 +349,8 @@ function setupBuilder(out) {
       const game = state.data.game;
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex), i: 0 };
+      const noLegends = $('#builder-nolegend').checked;
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);

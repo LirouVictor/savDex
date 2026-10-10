@@ -1,6 +1,6 @@
 import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
-import { buildTeams, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
+import { buildTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
 import { megaForm } from '../src/ai/evolve.js';
 import { runBuilder, resultsHtml, wantedMons } from '../src/builder/index.js';
 
@@ -85,6 +85,21 @@ suite('Montador de equipes (sem IA)', () => {
     const want = wantedMons(all, 'corviknight, Slaking');
     expect(want.map(m => m.species.name)).toEqual(['Corviknight', 'Slaking']);
     for (const r of buildTeams(all, T, { want })) expect(names(r)).toEqual(expect.arrayContaining(['Corviknight', 'Slaking']));
+  });
+
+  it('sem lendários: ficam de fora, menos quem o jogador pediu', () => {
+    const all = [...pool(),
+      mon('Kyogre', ['water'], [100, 100, 90, 150, 140, 90], { ab: 'Drizzle', moves: [atk('Water Spout', 'water', 1), atk('Ice Beam', 'ice', 1), atk('Thunder', 'electric', 1)] }),
+      mon('Ho-Oh', ['fire', 'flying'], [106, 130, 90, 110, 154, 90], { ab: 'Regenerator', moves: [atk('Sacred Fire', 'fire'), atk('Brave Bird', 'flying'), ['Recover', 'normal', 2, 0]] }),
+      mon('Mewtwo', ['psychic'], [106, 110, 90, 154, 90, 130], { ab: 'Pressure', moves: [atk('Psystrike', 'psychic', 1), atk('Aura Sphere', 'fighting', 1), atk('Ice Beam', 'ice', 1)] })];
+    expect(all.filter(isLegendary).map(m => m.species.name)).toEqual(['Kyogre', 'Ho-Oh', 'Mewtwo']);
+    const leg = ['Kyogre', 'Ho-Oh', 'Mewtwo'];
+    expect(buildTeams(all, T).some(r => names(r).some(n => leg.includes(n)))).toBe(true);
+    const off = buildTeams(all, T, { noLegends: true });
+    expect(off.length).toBeGreaterThan(0);
+    for (const r of off) expect(names(r).filter(n => leg.includes(n))).toEqual([]);
+    const want = wantedMons(all, 'mewtwo');
+    for (const r of buildTeams(all, T, { want, noLegends: true })) expect(names(r).filter(n => leg.includes(n))).toEqual(['Mewtwo']);
   });
 
   it('quem não evoluiu conta pela forma evoluída (Quetzal: evoluções da ROM)', () => {

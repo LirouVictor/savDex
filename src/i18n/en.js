@@ -800,6 +800,7 @@ export default {
   'O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.': 'The app searches all your Pokémon (party and PC) for the best team for each plan the save supports: weather, terrain, Trick Room or balanced. No key, no internet and no quota.',
   'Quero na equipe (opcional)': 'I want on the team (optional)',
   'Ex.: Charizard, Lucario': 'E.g.: Charizard, Lucario',
+  'Sem lendários e míticos (menos os que você pedir acima)': 'No legendaries or mythicals (except the ones you ask for above)',
   'Montar equipes': 'Build teams',
   'aprende no Nv. {n}': 'learns at Lv. {n}',
   'aprende ao evoluir': 'learns on evolving',
