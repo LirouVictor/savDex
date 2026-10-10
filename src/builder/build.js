@@ -408,48 +408,56 @@ export const score = (team, plan, types) => scoreParts(team, plan, types).total;
  * repetidos, velocidade) e plano (quem põe e quem aproveita).
  */
 export function scoreParts(team, plan, types) {
+  let k = 0;
+  for (const e of team) if (e.mega && e.base) k++;
+  if (k < 2) return partsOf(team, plan, types, false);
   const megas = team.filter(e => e.mega && e.base);
-  if (megas.length < 2) { const { defByType, ...p } = partsOf(team, plan, types); return p; }
   // Duas megas: só uma megaevolui por batalha. Um cenário para cada uma (a outra luta na forma comum, com a habilidade
   // dela: Lightning Rod no Raichu se quem megaevolui é o Golisopod). O jogador escolhe qual megaevoluir conforme o
   // adversário: na defesa vale, tipo a tipo, o cenário que segura melhor; o plano vale o cenário que o sustenta
   // (Charizard Y megaevolvendo no sol); os stats e o equilíbrio, a média dos cenários
-  const scen = megas.map(mg => partsOf(team.map(e => (e.base && e !== mg ? e.base : e)), plan, types));
-  const avg = k => scen.reduce((x, p) => x + p[k], 0) / scen.length;
-  const max = k => Math.max(...scen.map(p => p[k]));
+  const scen = megas.map(mg => partsOf(team.map(e => (e.base && e !== mg ? e.base : e)), plan, types, true));
+  const avg = key => { let x = 0; for (const q of scen) x += q[key]; return x / scen.length; };
+  const max = key => { let x = -Infinity; for (const q of scen) if (q[key] > x) x = q[key]; return x; };
   const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), total: 0 };
-  for (let a = 0; a < types.length; a++) p.defense += Math.max(...scen.map(x => x.defByType[a]));
+  for (let a = 0; a < types.length; a++) { let x = -Infinity; for (const q of scen) if (q.defByType[a] > x) x = q.defByType[a]; p.defense += x; }
   p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready;
   return p;
 }
 
-/** As partes da nota de uma equipe numa forma fixa (cada mega já decidida: megaevolui ou não). */
-function partsOf(team, plan, types) {
+/**
+ * As partes da nota de uma equipe numa forma fixa (cada mega já decidida: megaevolui ou não). Com `byType`, também a
+ * defesa tipo a tipo (para comparar os cenários das duas megas). É a conta mais repetida da busca (dezenas de milhares
+ * de vezes por plano): sem criar listas à toa.
+ */
+function partsOf(team, plan, types, byType) {
   const n = team.length;
   const halved = halvedIndex(plan, types);
-  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, total: 0, defByType: new Array(types.length).fill(0) };
+  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, total: 0 };
+  if (byType) p.defByType = new Array(types.length).fill(0);
   // Fraquezas em comum: 3 ou mais fracos ao mesmo tipo pesa muito; mais fracos que resistentes, um pouco
   for (let a = 0; a < types.length; a++) {
     if (a === halved) continue;
     let w = 0, r = 0, q = 0, absorb = false;
     for (const e of team) { const v = e.def[a]; if (v > 0) { w++; if (v > 1) q++; } else if (v < 0) { r++; if (v < -1) absorb = true; } }
     // Com quem anula o tipo pela habilidade (Lightning Rod num time fraco a Electric), a fraqueza em comum pesa metade
-    p.defByType[a] = -((absorb ? 6 : 12) * Math.max(0, w - 2) + 4 * Math.max(0, w - r - 1) + 2 * q);
-    p.defense += p.defByType[a];
+    const v = -((absorb ? 6 : 12) * Math.max(0, w - 2) + 4 * Math.max(0, w - r - 1) + 2 * q);
+    if (byType) p.defByType[a] = v;
+    p.defense += v;
   }
   // Cobertura ofensiva e papéis (cada um conta uma vez)
   let cov = 0, roles = 0, learnRoles = 0;
   for (const e of team) { cov |= e.cov; roles |= e.roleMask; learnRoles |= e.learnRoleMask; }
   p.offense = 2.5 * popcount(cov);
   // Papel que ninguém tem mas alguém aprende vale menos (é preciso ensinar o golpe)
-  ROLES.forEach((r, i) => { if (roles & (1 << i)) p.roles += ROLE_W[r]; else if (learnRoles & (1 << i)) p.roles += ROLE_W[r] * LEARN_ROLE; });
+  for (let i = 0; i < ROLES.length; i++) { if (roles & (1 << i)) p.roles += ROLE_W[ROLES[i]]; else if (learnRoles & (1 << i)) p.roles += ROLE_W[ROLES[i]] * LEARN_ROLE; }
   // Cada membro: stats base; quem tem menos de 2 golpes de dano rende pouco
-  let phys = 0, spec = 0, fast = 0, slow = 0, megas = 0, gains = [];
+  let phys = 0, spec = 0, fast = 0, slow = 0, megas = 0, gains = null;
   const typeCount = new Int8Array(types.length);
   for (const e of team) {
     p.members += e.statVal - e.bad; // stats base (statValue): 300 → −4, 450 → +8, 600 → +21
     // A megaevolução sobe os stats (já contados na forma mega, quando o app a conhece); só uma por batalha
-    if (e.mega) { if (e.megaKnown) gains.push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
+    if (e.mega) { if (e.megaKnown) (gains || (gains = [])).push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
     if (e.dmg < 2) p.members -= 6 * (2 - e.dmg); // sem golpes de dano que contam, ele não segura uma batalha
     p.ready -= e.cost; // o que falta para ele estar pronto (evoluir, ensinar…), conforme o modo
     if (e.lean === 'phys') phys++; else if (e.lean === 'spec') spec++;
@@ -458,7 +466,7 @@ function partsOf(team, plan, types) {
     for (const i of e.typeIdx) typeCount[i]++;
   }
   // Com 2 megas da forma conhecida, só uma megaevolui por batalha: metade do ganho da menor não conta
-  if (gains.length > 1) p.members -= Math.min(...gains) / 2;
+  if (gains && gains.length > 1) p.members -= Math.min(...gains) / 2;
   // Físicos × especiais (só faz sentido com a equipe quase pronta), tipos repetidos, velocidade
   if (n >= 4) p.balance -= 4 * Math.max(0, 2 - phys) + 4 * Math.max(0, 2 - spec);
   for (const c of typeCount) if (c > 1) p.balance -= 6 * Math.max(0, c - 2) + 1.5 * (c - 1);
@@ -490,9 +498,10 @@ function partsOf(team, plan, types) {
 
 /** Pode entrar: não repete Pokémon nem espécie, até 2 megapedras e, num plano de clima, nenhum outro clima. */
 function allowed(team, e, plan) {
-  if (team.some(x => x.real === e.real || x.key === e.key)) return false;
-  if (e.mega && team.filter(x => x.mega).length >= MAX_MEGAS) return false;
-  if (plan.kind === 'weather' && [...e.strat.set].some(f => WEATHERS.includes(f) && f !== plan.field)) return false;
+  let megas = 0;
+  for (const x of team) { if (x.real === e.real || x.key === e.key) return false; if (x.mega) megas++; }
+  if (e.mega && megas >= MAX_MEGAS) return false;
+  if (plan.kind === 'weather') for (const f of e.strat.set) if (f !== plan.field && WEATHERS.includes(f)) return false;
   return true;
 }
 
@@ -537,7 +546,7 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
   let best = null;
   for (const seed of seeds) {
     if (seed.length > 6) continue;
-    let beam = [{ team: seed, s: score(seed, plan, types) }];
+    let beam = [{ team: seed, ids: seed.map(e => e.id).sort((a, b) => a - b), s: score(seed, plan, types) }];
     while (beam[0].team.length < 6) {
       const next = new Map();
       for (const st of beam) {
@@ -545,9 +554,14 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
           if (!allowed(st.team, c, plan)) continue;
           const team = [...st.team, c];
           if (prev.length && tooClose(team)) continue;
-          const key = team.map(e => e.id).sort((a, b) => a - b).join(',');
+          // A mesma equipe em outra ordem é a mesma: chave = números em ordem (os da parcial já estão ordenados)
+          const ids = st.ids.slice();
+          let j = ids.length;
+          while (j > 0 && ids[j - 1] > c.id) { ids[j] = ids[j - 1]; j--; }
+          ids[j] = c.id;
+          const key = ids.join(',');
           if (next.has(key)) continue;
-          next.set(key, { team, s: score(team, plan, types) });
+          next.set(key, { team, ids, s: score(team, plan, types) });
         }
       }
       if (!next.size) break;
