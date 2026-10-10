@@ -111,6 +111,7 @@ function describeMember(e, team, plan, types) {
   const byAb = new Map();
   for (const mv of e.boosted || []) byAb.set(mv.by, [...(byAb.get(mv.by) || []), mv.name]);
   for (const [ab, mvs] of byAb) reasons.push(t('{ability} fortalece {moves}.', { ability: ab, moves: list(mvs) }));
+  if (e.teachAtk && e.teachAtk.length) reasons.push(t('Golpes de dano a ensinar: {list}.', { list: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)) }));
   if (e.contrary && e.contrary.length) reasons.push(t('Contrary: com {moves}, os stats sobem em vez de baixar.', { moves: list(e.contrary) }));
   // Único que acerta um tipo em cheio
   const only = types.filter((ty, a) => (e.cov & (1 << a)) && !team.some(o => o !== e && (o.cov & (1 << a))));
@@ -174,6 +175,10 @@ function teamTips(team, plan) {
     taught.add(mv); taught.add(e);
     tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: mv, ref: refOf(e.m), when: learnAt(lv), why }));
   };
+  // Golpes de dano que faltam (o app contou com eles): sempre aparecem
+  for (const e of team) {
+    if (e.teachAtk && e.teachAtk.length) tips.push(t('Ensine {moves} a {ref}: golpes de dano.', { moves: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)), ref: refOf(e.m) }));
+  }
   // O plano depende de golpe a ensinar quando ninguém o põe com o que já sabe
   const f = plan.field;
   if (f && !team.some(e => e.strat.set.has(f))) {

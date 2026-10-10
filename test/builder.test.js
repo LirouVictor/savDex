@@ -191,6 +191,18 @@ suite('Montador de equipes (sem IA)', () => {
     expect(mega.roles).toEqual(expect.arrayContaining(['intimidação', 'setup'])); // Intimidate antes, Contrary depois
   });
 
+  it('golpes de dano que faltam vêm dos que ele aprende por nível (Staraptor só com Close Combat → Brave Bird)', () => {
+    slot = 0;
+    const staraptor = mon('Staraptor', ['normal', 'flying'], [85, 120, 70, 50, 60, 100], { ab: 'Intimidate', moves: [atk('Close Combat', 'fighting'), ['Double Team', 'normal', 2, 0], ['Feather Dance', 'flying', 2, 0], ['Whirlwind', 'normal', 2, 0]] });
+    const learn = [[0, 'Close Combat'], [12, 'Wing Attack'], [33, 'Take Down'], [44, 'Air Slash'], [49, 'Brave Bird']];
+    const ids = Object.fromEntries(learn.map(([, n]) => [n, T.moves.findIndex(x => x && x[0] === n)]));
+    const dex = { rom: true, learn: { [staraptor.speciesId]: [1, ...learn.flatMap(([lv, n]) => [lv, ids[n]])] } };
+    const [e] = prepare([staraptor], T, dex);
+    expect(e.teachAtk.map(x => x.name)).toEqual(['Brave Bird']); // do próprio tipo e físico, como ele ataca
+    expect(e.dmg).toBe(2);
+    expect(prepare([staraptor], T)[0].dmg).toBe(1); // sem a tabela, só o que ele sabe
+  });
+
   it('golpes que aprende: quem aprende Trick Room abre o plano e a tela diz o que ensinar', () => {
     const trId = T.moves.findIndex(r => r && r[0] === 'Trick Room');
     const slowpoke = (sp, types) => mon(sp, types, [100, 120, 100, 90, 90, 30], { moves: [atk('A', types[0]), atk('B', types[types.length - 1], 1), atk('Earthquake', 'ground')] });

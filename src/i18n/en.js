@@ -808,6 +808,8 @@ export default {
   'Contrary: com {moves}, os stats sobem em vez de baixar.': 'Contrary: with {moves}, stats go up instead of down.',
   'Dê {stone} a {ref} (o app contou com a mega).': 'Give {stone} to {ref} (the app counted the Mega).',
   'intimidação': 'Intimidate',
+  'Golpes de dano a ensinar: {list}.': 'Attacking moves to teach: {list}.',
+  'Ensine {moves} a {ref}: golpes de dano.': 'Teach {moves} to {ref}: attacking moves.',
   'Atacante {kind} com stats base {bst}.': '{kind} attacker with base stat total {bst}.',
   'físico': 'Physical',
   'especial': 'Special',

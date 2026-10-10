@@ -52,6 +52,9 @@ const TEACH_ROLES = ['pivô', 'prioridade', 'recuperação', 'controle de veloci
 const TEACH_SKIP = new Set(['String Shot', 'Scary Face', 'Cotton Spore', 'Low Sweep', 'Bulldoze', 'Rock Tomb', 'Nuzzle', 'Growth', 'Work Up',
   'Hone Claws', 'Flame Charge', 'Power-Up Punch', 'Trailblaze', 'Quick Attack', 'Feint', 'Teleport', 'Baton Pass', 'Rest', 'Autotomize']);
 
+// Golpe de dano que ainda precisa ensinar: pena pequena (o Pokémon pronto vale um pouco mais)
+const TEACH_ATK = 3;
+
 // Papel que só vem de golpe a ensinar vale menos que o de golpe que o Pokémon já sabe (ocupa um espaço de golpe)
 const LEARN_ROLE = 0.6;
 
@@ -199,6 +202,25 @@ function entry(m, bf, T, types, mult, learn = []) {
   const realSet = new Set(real.map(([o]) => o));
   // Os golpes fracos ficam de fora das contas (cobertura, clima); os de efeito (Icy Wind, Nuzzle…) continuam
   const useful = m.moves.filter(mv => !damaging(mv) || realSet.has(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
+  // Com menos de 2 golpes de dano e espaço no moveset (golpes fracos ou sem papel), os que ele aprende por nível
+  // completam: os do próprio tipo primeiro, depois os mais fortes, no lado (físico/especial) em que ele ataca melhor.
+  // Contam como os outros, com uma pena pequena por ter que ensinar (teachAtk)
+  const slots = 4 - m.moves.filter(mv => realSet.has(mv) || (!damaging(mv) && useful.includes(mv) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out').length;
+  const need = Math.min(Math.max(0, 2 - moves.length), slots);
+  const teachAtk = [];
+  if (need > 0) {
+    const physical = b[1] >= b[3];
+    const known = new Set(m.moves.map(mv => mv.name));
+    const score = x => (bf.species.types.includes(x.type) ? 1.5 : 1) * (x.power || 60) * ((x.category === 0) === physical ? 1 : 0.7);
+    const cands = learn.filter(x => !known.has(x.name)).map(x => boostMove(x, abs, bf.species.types))
+      .filter(x => realMove(x, bf.species.types)).sort((x, y) => score(y) - score(x));
+    for (const x of cands) {
+      if (teachAtk.length >= need) break;
+      if (teachAtk.some(y => y.type === x.type)) continue; // dois do mesmo tipo não somam cobertura
+      teachAtk.push(x);
+    }
+    moves.push(...teachAtk);
+  }
   // Defesa: 2 = 4×, 1 = 2×, 0 neutro, -1 resiste ou imune pelo tipo, -2 anula pela habilidade (Lightning Rod…)
   const preImmune = abBase !== ab ? ABILITY_IMMUNE[abBase] || [] : [];
   const def = types.map(a => {
@@ -262,7 +284,7 @@ function entry(m, bf, T, types, mult, learn = []) {
   const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
     m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask,
-    given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary,
+    given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
     learnSet, learnUse, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
@@ -335,6 +357,7 @@ export function scoreParts(team, plan, types) {
     // A megaevolução sobe os stats (já contados na forma mega, quando o app a conhece); só uma por batalha
     if (e.mega) { if (e.megaKnown) gains.push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
     if (e.dmg < 2) p.members -= 6 * (2 - e.dmg); // sem golpes de dano que contam, ele não segura uma batalha
+    p.members -= TEACH_ATK * e.teachAtk.length; // golpe de dano que ainda precisa ensinar
     if (e.lean === 'phys') phys++; else if (e.lean === 'spec') spec++;
     if (e.spe >= FAST) fast++;
     if (e.spe <= SLOW && e.dmg >= 2) slow++;
@@ -381,7 +404,7 @@ function allowed(team, e, plan) {
 
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
 function solo(e, plan) {
-  let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg);
+  let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - TEACH_ATK * e.teachAtk.length;
   if (plan.field && plan.kind !== 'room') {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
     v += (e.value[plan.field] || 0) * 1.2;
@@ -468,8 +491,22 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     e.conflictBy = {};
     for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.bf, f, T);
   }
-  const forced = want.map(m => pool.find(e => e.real === m || e.m === m) || pool.find(e => e.key === speciesKey(m))).filter(Boolean)
-    .filter((e, i, a) => a.indexOf(e) === i).slice(0, 6);
+  // Quem o jogador pediu: todas as versões dele (com cada megapedra, no modo sem restrição de item); em cada plano
+  // entra a que rende mais, sem passar de 2 megapedras
+  const groups = [];
+  for (const m of want) {
+    let g = pool.filter(e => e.real === m || e.m === m);
+    if (!g.length) { const k = pool.find(e => e.key === speciesKey(m)); g = k ? pool.filter(e => e.real === k.real) : []; }
+    if (g.length && !groups.some(x => x[0].real === g[0].real)) groups.push(g);
+  }
+  const forcedFor = plan => {
+    const out = [];
+    for (const g of groups.slice(0, 6)) {
+      const ok = g.filter(e => !e.mega || out.filter(x => x.mega).length < MAX_MEGAS);
+      out.push((ok.length ? ok : g).reduce((a, b) => (solo(b, plan) > solo(a, plan) ? b : a)));
+    }
+    return out;
+  };
   const out = [];
   for (const plan of plans(pool)) {
     // Quem atrapalha o clima fica de fora; mas quem aproveita de verdade (Chlorophyll, Swift Swim…) vale o risco
@@ -479,7 +516,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
       e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
       e.risk = c === 'weak' && e.strong.has(plan.field);
     }
-    const r = bestTeam(pool, plan, types, forced);
+    const r = bestTeam(pool, plan, types, forcedFor(plan));
     if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(r);
   }
   out.sort((a, b) => b.score - a.score);
