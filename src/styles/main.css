@@ -215,6 +215,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .sum-v { font-family: var(--pixel); font-size: min(1.35rem, calc(100cqi / var(--n, 6) * 1.3)); line-height: 1.1; color: var(--ink); white-space: nowrap; }
 .sum-v small { font-size: .62em; color: var(--muted); }
 .sum .badge { font-size: .62rem; }
+.bdgs { flex-basis: 100%; display: grid; grid-template-columns: repeat(4, 24px); gap: 4px; }
+.bdg { width: 24px; height: 24px; object-fit: contain; }
+.bdg.off { opacity: .2; filter: grayscale(1); }
 .pips { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
 .pips i { width: 12px; height: 12px; box-shadow: inset 0 0 0 2px var(--c); transform: rotate(45deg) scale(.82); }
 .pips i.on { background: var(--c); }

@@ -16,7 +16,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { SaveError, STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary, bitList, badgeSummary } from './summary.js';
 
 export const UNBOUND_SIGNATURES = { 0x01121999: '2.1', 0x01122000: '2.1.1.2+' };
 const OLD_SIGNATURE = 0x01121998; // Unbound 2.0
@@ -105,7 +105,7 @@ function unboundSummary(s0, s0v, sec) {
   return summary({
     playTime: playTime(s0v.getUint16(0x0E, true), s0[0x10], s0[0x11], 'confirmado'),
     money: { value: new DataView(block(MONEY, 4).buffer).getUint32(0, true), confidence: 'confirmado' },
-    badges: { count: countBits(flags, 0, 8, BADGE_FLAG & 7), total: 8, confidence: 'confirmado' },
+    badges: badgeSummary(bitList(flags, 0, 8, BADGE_FLAG & 7)),
     // Vistos conferidos na tela da Pokédex do jogo (153 no save de 11h)
     dex: dexSummary(dexBits(block(CAUGHT, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL), DEX_TOTAL,
       { seen: dexBits(block(SEEN, Math.ceil(DEX_TOTAL / 8)), 0, DEX_TOTAL) }),

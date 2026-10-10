@@ -12,7 +12,7 @@ import { natureFromId } from './natures.js';
 import { calcStats, hiddenPowerType } from './stats.js';
 import { STAT_ORDER } from './save.js';
 import { levelForExp } from './gen3.js';
-import { countBits, dexBits, dexSummary, playTime, summary } from './summary.js';
+import { countBits, dexBits, dexSummary, playTime, summary, bitList, badgeSummary } from './summary.js';
 
 const ORDERS = ['ABCD', 'ABDC', 'ACBD', 'ACDB', 'ADBC', 'ADCB', 'BACD', 'BADC', 'BCAD', 'BCDA', 'BDAC', 'BDCA',
   'CABD', 'CADB', 'CBAD', 'CBDA', 'CDAB', 'CDBA', 'DABC', 'DACB', 'DBAC', 'DBCA', 'DCAB', 'DCBA'];
@@ -196,11 +196,11 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
     const count = Math.min(6, dv.getUint32(g + L.party, true));
     for (let i = 0; i < count; i++) { const m = read(g + L.party + 4 + i * 236, 236); if (m) party.push({ ...m, slot: i + 1 }); }
     const tr = g + L.trainer, dex = g + GEN4_DEX[gameId];
-    const badges = countBits(u8, tr + 0x1A, 8) + (gameId === 'hgss' ? countBits(u8, tr + 0x1F, 8) : 0);
+    const badges = [...bitList(u8, tr + 0x1A, 8), ...(gameId === 'hgss' ? bitList(u8, tr + 0x1F, 8) : [])];
     info = summary({
       playTime: playTime(dv.getUint16(tr + 0x22, true), u8[tr + 0x24], u8[tr + 0x25], 'confirmado'),
       money: { value: dv.getUint32(tr + 0x14, true), confidence: 'confirmado' },
-      badges: { count: badges, total: gameId === 'hgss' ? 16 : 8, confidence: 'confirmado' },
+      badges: badgeSummary(badges, gameId === 'hgss' ? ['johto', 'kanto'] : ['sinnoh']),
       dex: dv.getUint32(dex, true) === DEX_MAGIC ? dexSummary(dexBits(u8, dex + 4, 493), 493) : null,
     });
     for (let b = 0; b < 18; b++) {
@@ -217,7 +217,7 @@ export function parseNds(u8, gameId, { lost = 0 } = {}) {
     info = summary({
       playTime: playTime(dv.getUint16(0x19424, true), u8[0x19426], u8[0x19427], 'confirmado'),
       money: { value: dv.getUint32(M.money, true), confidence: 'confirmado' },
-      badges: { count: countBits(u8, M.money + 4, 8), total: 8, confidence: 'confirmado' },
+      badges: badgeSummary(bitList(u8, M.money + 4, 8)),
       dex: dv.getUint32(M.dex, true) === DEX_MAGIC ? dexSummary(dexBits(u8, M.dex + 8, 649), 649) : null,
     });
     // Nomes apagados pelo cabeçalho do .duc: vale a cópia de segurança, se as caixas dela forem iguais às principais

@@ -5,6 +5,7 @@ import { STAT_LABEL, SHOWDOWN_ORDER } from '../export.js';
 import { analyzeTeam } from '../analysis.js';
 import { moveInfo } from '../parser/describe.js';
 import { t } from '../i18n.js';
+import { strategyOf as fieldsOf, strategyReport, rolesOf, synergyWarnings } from './strategy.js';
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
 /** Limite de candidatos enviados (ver buildPool e analysisPool para quem entra). */
@@ -61,6 +62,8 @@ export function monLine(m, free = null) {
     return `${mv.name} [${cap(mv.type) || '?'}, ${cat}${mv.power ? ', ' + mv.power : ''}]`;
   });
   parts.push(`${t('Golpes')}: ${moves.join('; ') || '—'}`);
+  const roles = rolesOf(m);
+  if (roles.length) parts.push(`${t('Papéis')}: ${roles.map(r => t(r)).join(', ')}`);
   return parts.join(' | ');
 }
 
@@ -89,6 +92,7 @@ const GAME_CONTEXT = {
     '(tipo Fairy, divisão físico/especial por golpe, megaevoluções, habilidades e golpes até a geração 9, formas regionais).',
     '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.',
     '- Só uma megaevolução pode ser usada por batalha.',
+    '- Há Terastalização (uma por batalha). Nas dicas, pode sugerir o tipo Tera de um membro e dizer por quê: reforçar o golpe principal (ex.: Tera Normal com Double-Edge ou Extreme Speed) ou tirar fraquezas. O tipo Tera atual de cada Pokémon não vem do save.',
   ],
   soulgold: [
     'Pokémon SoulGold, uma ROM hack de Pokémon Emerald com engine expandida, ambientada em Johto',
@@ -196,7 +200,7 @@ export const BUILD_SCHEMA = {
         type: 'OBJECT',
         properties: {
           ref: str,
-          papel: { type: 'STRING', description: 'Papel em 1 a 3 palavras (ex.: atacante físico)' },
+          papel: { type: 'STRING', description: 'Função no plano em 1 a 3 palavras (ex.: põe o sol, aproveita a chuva, pivô, tanque, cobertura)' },
           motivo: { type: 'STRING', description: 'O que ele traz que os outros não têm (tipo, cobertura, velocidade, estratégia)' },
         },
         required: ['ref', 'papel', 'motivo'],
@@ -241,29 +245,6 @@ export function schemaHint(schema) {
   ].join('\n');
 }
 
-// Habilidades que montam uma estratégia (clima, terreno): a IA deve preservar quem sustenta o plano
-const FIELD = {
-  Drizzle: 'chuva', Drought: 'sol', 'Sand Stream': 'tempestade de areia', 'Snow Warning': 'neve/granizo',
-  'Electric Surge': 'Electric Terrain', 'Psychic Surge': 'Psychic Terrain', 'Grassy Surge': 'Grassy Terrain', 'Misty Surge': 'Misty Terrain',
-};
-// Quem aproveita cada clima/terreno (habilidades) e os golpes que os põem
-const ABUSERS = {
-  'Swift Swim': 'chuva', 'Rain Dish': 'chuva', Hydration: 'chuva', 'Dry Skin': 'chuva',
-  Chlorophyll: 'sol', 'Solar Power': 'sol', 'Flower Gift': 'sol', Protosynthesis: 'sol',
-  'Sand Rush': 'tempestade de areia', 'Sand Force': 'tempestade de areia', 'Sand Veil': 'tempestade de areia',
-  'Slush Rush': 'neve/granizo', 'Ice Body': 'neve/granizo', 'Snow Cloak': 'neve/granizo',
-  'Surge Surfer': 'Electric Terrain', 'Quark Drive': 'Electric Terrain', 'Grass Pelt': 'Grassy Terrain',
-};
-// Golpes que ficam mais fortes (ou mais certeiros, ou ganham prioridade) com o clima/terreno
-const MOVE_ABUSERS = {
-  'Grassy Glide': ['Grassy Terrain'], 'Rising Voltage': ['Electric Terrain'], 'Expanding Force': ['Psychic Terrain'], 'Misty Explosion': ['Misty Terrain'],
-  'Solar Beam': ['sol'], 'Solar Blade': ['sol'], Thunder: ['chuva'], Hurricane: ['chuva'], Blizzard: ['neve/granizo'],
-  'Weather Ball': ['chuva', 'sol', 'tempestade de areia', 'neve/granizo'],
-};
-const FIELD_MOVES = {
-  'Rain Dance': 'chuva', 'Sunny Day': 'sol', Sandstorm: 'tempestade de areia', Hail: 'neve/granizo', Snowscape: 'neve/granizo',
-  'Electric Terrain': 'Electric Terrain', 'Psychic Terrain': 'Psychic Terrain', 'Grassy Terrain': 'Grassy Terrain', 'Misty Terrain': 'Misty Terrain',
-};
 export const isMegaStone = item => !!item && /ite( [XYZ])?$/.test(item.name) && !/^(Eviolite|Meteorite)$/.test(item.name);
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 
@@ -281,7 +262,8 @@ export function teamFacts(party, T) {
   const speed = party.filter(m => m.species.baseStats).sort((x, y) => y.species.baseStats[SPE] - x.species.baseStats[SPE])
     .map(m => `${refOf(m)} ${m.species.baseStats[SPE]}`);
   const megas = party.filter(m => isMegaStone(m.item)).map(m => `${refOf(m)} (${m.item.name})`);
-  const field = party.filter(m => m.ability && FIELD[m.ability.name]).map(m => `${refOf(m)} ${m.ability.name} (${t(FIELD[m.ability.name])})`);
+  const field = party.map(m => [m, [...fieldsOf(m).set]]).filter(([, f]) => f.length).map(([m, f]) => `${refOf(m)} (${f.map(x => t(x)).join(', ')})`);
+  const synergy = synergyWarnings(party, T, refOf);
   const none = t('nenhum');
   return [
     t('Tipos que acertam muitos membros em cheio: {list}.', { list: alert.join(', ') || none }),
@@ -291,7 +273,8 @@ export function teamFacts(party, T) {
     t('Velocidade base (maior primeiro): {list}.', { list: speed.join(', ') || none }),
     t('Tipos repetidos: {list}.', { list: repeated.join(', ') || none }),
     t('Megapedras: {list} (só uma megaevolução por batalha).', { list: megas.join(', ') || none }),
-    t('Clima/terreno: {list}.', { list: field.join(', ') || none }),
+    t('Põem clima/terreno/Trick Room: {list}.', { list: field.join(', ') || none }),
+    t('Alertas de sinergia: {list}.', { list: synergy.join('; ') || none }),
   ].join('\n');
 }
 
@@ -419,32 +402,12 @@ export function learnLines(party, dex, T, game) {
 }
 
 /**
- * Pistas de estratégia entre os disponíveis: quem põe clima/terreno (habilidade ou golpe), quem aproveita
- * (habilidade ou golpe) e quem usa Trick Room. Só os climas/terrenos que alguém consegue pôr.
+ * Pistas de estratégia entre os disponíveis (strategy.js): para cada clima/terreno que alguém consegue pôr, quem
+ * põe, quem aproveita, quem o clima protege e quem segura o que o ameaça; Trick Room com os lentos.
  */
-export function strategyLines(pool, free = null) {
-  const fields = new Map(); // clima → { set: [], use: [] }
-  const get = f => fields.get(f) || fields.set(f, { set: [], use: [] }).get(f);
-  const room = [];
-  for (const m of pool) {
-    const ref = refOf(m), ab = m.ability && m.ability.name;
-    if (ab && FIELD[ab]) get(FIELD[ab]).set.push(`${ref} (${ab})`);
-    if (ab && ABUSERS[ab]) get(ABUSERS[ab]).use.push(`${ref} (${ab})`);
-    for (const a of abilityAlts(m, free)) {
-      const how = `${ref} (${a.name}, ${t('com {item}', { item: a.item })})`;
-      if (FIELD[a.name]) get(FIELD[a.name]).set.push(how);
-      if (ABUSERS[a.name]) get(ABUSERS[a.name]).use.push(how);
-    }
-    for (const mv of m.moves) {
-      for (const f of MOVE_ABUSERS[mv.name] || []) get(f).use.push(`${ref} (${mv.name})`);
-      if (FIELD_MOVES[mv.name] && !(ab && FIELD[ab] === FIELD_MOVES[mv.name])) get(FIELD_MOVES[mv.name]).set.push(`${ref} (${mv.name})`);
-      if (mv.name === 'Trick Room' && !room.includes(ref)) room.push(ref);
-    }
-  }
-  const out = [...fields].filter(([, x]) => x.set.length).map(([f, x]) => `- ${t(f)}: ${t('põem {list}', { list: x.set.join(', ') })}; `
-    + (x.use.length ? t('aproveitam {list}', { list: x.use.join(', ') }) : t('ninguém aproveita (habilidade ou golpe)')) + '.');
-  if (room.length) out.push(`- Trick Room: ${room.join(', ')}.`);
-  return out.length ? ['', t('Pistas de estratégia (habilidades e golpes dos disponíveis):'), ...out] : [];
+export function strategyLines(pool, free = null, T = null) {
+  const out = T ? strategyReport(pool, T, refOf, m => abilityAlts(m, free)) : [];
+  return out.length ? ['', t('Pistas de estratégia (habilidades, golpes e megapedras dos disponíveis; a mais forte primeiro):'), ...out] : [];
 }
 
 /** Linha do modo livre (habilidade trocável por item), só quando ligado. */
@@ -480,20 +443,8 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
   ].join('\n');
 }
 
-/** Usa (ou põe) clima, terreno ou Trick Room, pela habilidade (no modo livre, também as trocáveis) ou por um golpe. */
-export function strategyOf(m, free = null) {
-  const set = new Set(), use = new Set();
-  for (const ab of [m.ability && m.ability.name, ...abilityAlts(m, free).map(a => a.name)]) {
-    if (ab && FIELD[ab]) set.add(FIELD[ab]);
-    if (ab && ABUSERS[ab]) use.add(ABUSERS[ab]);
-  }
-  for (const mv of m.moves) {
-    if (FIELD_MOVES[mv.name]) set.add(FIELD_MOVES[mv.name]);
-    if (mv.name === 'Trick Room') set.add('Trick Room');
-    for (const f of MOVE_ABUSERS[mv.name] || []) use.add(f);
-  }
-  return { set, use };
-}
+/** Usa (ou põe) clima, terreno ou Trick Room: habilidade (no modo livre, também as trocáveis), golpe ou megapedra. */
+export const strategyOf = (m, free = null) => fieldsOf(m, abilityAlts(m, free).map(a => a.name));
 
 /**
  * Disponíveis para a montagem: a equipe + o PC, uma cópia por espécie (a de melhores IVs). Com pouco espaço
@@ -529,11 +480,18 @@ export function buildPool(all, max = MAX_CANDIDATES, free = null) {
 
 export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES, { free = null } = {}) {
   const pool = buildPool(all, max, free);
-  const hints = strategyLines(pool, free);
+  const hints = strategyLines(pool, free, T);
   return [
     t('Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.'),
-    t('Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:'),
-    t('1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), só se ela aparecer nas pistas de estratégia abaixo, com quem a ponha e quem a aproveite; não force uma estratégia fraca.'),
+    t('Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Escolha UM plano e monte em volta dele:'),
+    t('- Clima ou terreno: 1 ou 2 que põem (ex.: Torkoal e Mega Charizard Y no sol) + 2 ou mais que aproveitam + quem o clima protege (no sol, os fracos a Water; na chuva, os fracos a Fire) + quem segura o que ameaça o clima.'),
+    t('- Trick Room: 1 ou 2 que põem + atacantes lentos e fortes; evite os rápidos.'),
+    t('- Ofensivo com setup: quem abre o caminho (hazards ou telas) + 1 ou 2 que sobem stats (setup) + prioridade.'),
+    t('- Equilibrado: núcleo de 2 ou 3 que cobrem as fraquezas uns dos outros + pivô (U-turn, Volt Switch…) + quem aguenta pancada + quem fecha a luta.'),
+    t('Cada membro precisa de uma função no plano (põe, aproveita, protegido pelo plano, segura o que ameaça o plano, pivô, setup, controle de velocidade, tanque); no máximo 2 só para cobertura. Escreva a função no campo papel. Use os "Papéis" de cada linha, calculados pelo app pelos golpes e stats.'),
+    t('Evite quem tem a fraqueza que o plano fortalece (ex.: fraco a Fire num time de sol) e quem depende de golpes que o plano enfraquece (ex.: golpes Water no sol).'),
+    t('Prioridades, nesta ordem:'),
+    t('1. Um plano que funcione junto. Clima, terreno ou Trick Room, só se aparecer nas pistas de estratégia abaixo, com quem ponha e 2 ou mais que aproveitem; não force um plano fraco.'),
     t('2. Poucas fraquezas em comum: nenhum tipo que acerte em cheio 3 ou mais membros.'),
     t('3. Cobertura ofensiva variada (golpes de tipos diferentes).'),
     t('4. Equilíbrio entre atacantes físicos e especiais, velocidade (membros rápidos ou um plano de Trick Room) e papéis variados.'),

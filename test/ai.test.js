@@ -2,7 +2,8 @@ import { describe as suite, it, expect, beforeEach } from 'vitest';
 import { refOf, monLine, candidates, checkAnalysis, checkBuild, analysisPrompt, buildPrompt, schemaHint, ANALYSIS_SCHEMA, BUILD_SCHEMA, teamFacts, analysisPool, learnLines, systemPrompt, ANALYSIS_PC, buildPool, strategyLines, buildIssues, moveChecks, levelGap, refinePrompt, checkRefine } from '../src/ai/prompt.js';
 import dex from '../src/data/dex.json';
 import { repairTeam } from '../src/ai/repair.js';
-import { abilityAlts, freeAbilityMode } from '../src/ai/prompt.js';
+import { abilityAlts, freeAbilityMode, strategyOf } from '../src/ai/prompt.js';
+import { rolesOf, synergyWarnings } from '../src/ai/strategy.js';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
 import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
@@ -83,7 +84,8 @@ suite('IA: cálculos do app e candidatos', () => {
     expect(f).toContain('Velocidade base (maior primeiro): E2 90, E3 81, E1 65.');
     expect(f).toContain('Tipos repetidos: Water ×2, Flying ×2.');
     expect(f).toContain('Megapedras: E2 (Lucarionite Z)'); // Eviolite não é megapedra
-    expect(f).toContain('Clima/terreno: E1 Drizzle (chuva).');
+    expect(f).toContain('Põem clima/terreno/Trick Room: E1 (chuva).');
+    expect(f).toContain('Alertas de sinergia: E1 põe chuva, mas só 1 membro(s) aproveita(m).');
   });
   it('PC da análise: quem resiste às fraquezas da equipe vem antes, e no máximo ANALYSIS_PC', () => {
     const pc = [
@@ -111,16 +113,16 @@ suite('IA: cálculos do app e candidatos', () => {
       mon({ sp: 'Venusaur', id: 3, box: 1, slot: 2, types: ['grass', 'poison'], ab: 'Chlorophyll' }), // sem quem ponha sol
       mon({ sp: 'Reuniclus', id: 579, box: 1, slot: 3, types: ['psychic'], ab: 'Magic Guard', moves: [['Trick Room', 'psychic', 2, 0], ['Rain Dance', 'water', 2, 0]] }),
     ];
-    const lines = strategyLines(pool);
+    const lines = strategyLines(pool, null, T);
     expect(lines[1]).toMatch(/^Pistas de estratégia/);
-    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam E1 (Hurricane), C1-1 (Swift Swim).');
-    expect(lines).toContain('- Trick Room: C1-3.');
+    expect(lines).toContain('- chuva: põem E1 (Drizzle), C1-3 (Rain Dance); aproveitam (2): E1 (Hurricane), C1-1 (Swift Swim); o clima corta a fraqueza a Fire de E2, C1-2.');
+    expect(lines).toContain('- Trick Room: põem C1-3; nenhum lento para aproveitar.');
     expect(lines.join('\n')).not.toMatch(/sol|Chlorophyll/);
-    expect(strategyLines(party.slice(1))).toEqual([]);
+    expect(strategyLines(party.slice(1), null, T)).toEqual([]);
     // golpes que aproveitam o terreno também contam (Rillaboom com Grassy Surge e Grassy Glide)
     const rilla = mon({ sp: 'Rillaboom', id: 812, box: 2, slot: 1, types: ['grass'], ab: 'Grassy Surge', moves: [['Grassy Glide', 'grass', 0, 55]] });
-    expect(strategyLines([rilla])).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam C2-1 (Grassy Glide).');
-    expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim).');
+    expect(strategyLines([rilla], null, T)).toContain('- Grassy Terrain: põem C2-1 (Grassy Surge); aproveitam (1): C2-1 (Grassy Glide).');
+    expect(buildPrompt(pool, T)).toContain('C1-1 (Swift Swim)');
     expect(buildPrompt(pool, T)).not.toContain('Nenhum disponível põe clima');
   });
   it('montagem com pouco espaço: estratégia e variedade de tipos antes dos stats base', () => {
@@ -578,9 +580,9 @@ suite('IA: modo livre (habilidade trocável por item)', () => {
   });
 
   it('pistas de estratégia e pedido contam com as habilidades trocáveis só no modo livre', () => {
-    expect(strategyLines(pool).join('\n')).not.toMatch(/sol/);
-    const lines = strategyLines(pool, 'patch').join('\n');
-    expect(lines).toContain('- sol: põem C1-1 (Drought, com Ability Capsule); aproveitam C1-2 (Chlorophyll, com Ability Patch).');
+    expect(strategyLines(pool, null, T).join('\n')).not.toMatch(/sol/);
+    const lines = strategyLines(pool, 'patch', T).join('\n');
+    expect(lines).toContain('- sol: põem C1-1 (Drought, com Ability Capsule); aproveitam (1): C1-2 (Chlorophyll, com Ability Patch); o clima corta a fraqueza a Water de C1-1.');
     const b = buildPrompt(pool, T, '', 250, { free: 'patch' });
     expect(b).toContain('MODO LIVRE');
     expect(b).not.toContain('Nenhum disponível põe clima');
@@ -598,5 +600,47 @@ suite('IA: modo livre (habilidade trocável por item)', () => {
     const off = prepareAi('build', { all: pool, T, game: { id: 'emerald', gen: 3, name: 'Emerald' }, free: true });
     expect(off.counts.free).toBe(false);
     expect(off.prompt).not.toContain('troca possível');
+  });
+});
+
+suite('IA: plano, papéis e sinergia (strategy.js)', () => {
+  const S = (sp, slot, types, base, o = {}) => mon({ sp, id: slot, box: 1, slot, types, base, ...o });
+  const tork = S('Torkoal', 1, ['fire'], [70, 85, 140, 85, 70, 20], { ab: 'Drought', moves: [['Stealth Rock', 'rock', 2, 0], ['Lava Plume', 'fire', 1, 80], ['Rapid Spin', 'normal', 0, 50]] });
+  const zard = S('Charizard', 2, ['fire', 'flying'], [78, 84, 78, 109, 85, 100], { ab: 'Blaze', item: 'Charizardite Y', moves: [['Solar Beam', 'grass', 1, 120], ['Fire Blast', 'fire', 1, 110]] });
+  const venu = S('Venusaur', 3, ['grass', 'poison'], [80, 82, 83, 100, 100, 80], { ab: 'Chlorophyll', moves: [['Growth', 'normal', 2, 0], ['Weather Ball', 'normal', 1, 50], ['Synthesis', 'grass', 2, 0]] });
+  const corv = S('Corviknight', 4, ['flying', 'steel'], [98, 87, 105, 53, 85, 67], { ab: 'Pressure', moves: [['U-turn', 'bug', 0, 70], ['Roost', 'flying', 2, 0]] });
+  const swam = S('Swampert', 5, ['water', 'ground'], [100, 110, 90, 85, 90, 60], { ab: 'Torrent', moves: [['Liquidation', 'water', 0, 85], ['Earthquake', 'ground', 0, 100]] });
+  const pel = S('Pelipper', 6, ['water', 'flying'], [60, 50, 100, 95, 70, 65], { ab: 'Drizzle', moves: [['Hurricane', 'flying', 1, 110], ['Tailwind', 'flying', 2, 0]] });
+
+  it('papéis pelos golpes e stats, na linha de cada Pokémon', () => {
+    expect(rolesOf(tork)).toEqual(expect.arrayContaining(['hazards', 'tira hazards', 'lento (Trick Room)', 'tanque']));
+    expect(rolesOf(venu)).toEqual(expect.arrayContaining(['setup', 'recuperação']));
+    expect(rolesOf(corv)).toEqual(expect.arrayContaining(['pivô', 'recuperação', 'tanque']));
+    expect(rolesOf(pel)).toContain('controle de velocidade');
+    expect(monLine(corv)).toContain('Papéis: pivô, recuperação, tanque');
+  });
+
+  it('megapedra que põe clima conta como quem põe; pistas com quem o clima protege', () => {
+    expect([...strategyOf(zard).set]).toEqual(['sol']);
+    const lines = strategyLines([tork, zard, venu, corv, swam], null, T).join('\n');
+    expect(lines).toMatch(/- sol: põem C1-1 \(Drought\), C1-2 \(Charizardite Y\); aproveitam \(2\): C1-2 \(Solar Beam\), C1-3 \(Chlorophyll\)/);
+    expect(lines).toContain('o clima corta a fraqueza a Water de C1-1, C1-2');
+  });
+
+  it('alertas: fraqueza que o clima fortalece, golpe que ele enfraquece, climas diferentes', () => {
+    const w = synergyWarnings([tork, zard, venu, corv, swam], T, refOf).join(' | ');
+    expect(w).toContain('com sol, Fire fica mais forte, e é fraqueza de C1-3, C1-4');
+    expect(w).toContain('com sol, golpes Water perdem metade da força: C1-5');
+    expect(w).not.toContain('mas só');
+    expect(synergyWarnings([tork, pel, venu], T, refOf).join(' | ')).toMatch(/climas diferentes na mesma equipe \(sol, chuva\)/);
+    expect(teamFacts([tork, zard, venu, corv], T)).toContain('Alertas de sinergia: com sol, Fire fica mais forte');
+  });
+
+  it('pedido: planos de referência, função de cada membro e Tera no Quetzal', () => {
+    const b = buildPrompt([tork, zard, venu, corv, swam, pel], T);
+    expect(b).toContain('Escolha UM plano');
+    expect(b).toContain('Cada membro precisa de uma função no plano');
+    expect(systemPrompt({ id: 'quetzal' })).toContain('Terastalização');
+    expect(systemPrompt({ id: 'unbound' })).not.toContain('Terastalização');
   });
 });

@@ -1,10 +1,23 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-09';
+export const UPDATED = '2026-10-10';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-10',
+    pt: [
+      'Insígnias com as próprias imagens no card do treinador (as que faltam aparecem apagadas), no Quetzal, no SoulGold, na Gen 3 oficial e em Diamond/Pearl, Platinum e HG/SS. No Unbound e em Black/White continuam os pinos.',
+      'Quetzal: corrigida a contagem de insígnias, que podia mostrar uma a mais (7 num save com 6). Agora é a mesma da tela do jogo, conferida no emulador com vários saves.',
+      'Assistente: a montagem de equipe agora parte de um plano (clima ou terreno, Trick Room, ofensivo com setup ou equilibrado) e dá uma função a cada membro. O app calcula os papéis de cada Pokémon (pivô, setup, prioridade, tanque…), quem põe e quem aproveita cada clima (inclusive pela megapedra, como o Mega Charizard Y), quem o clima protege e avisa quando algo atrapalha (ex.: um membro fraco a Fire num time de sol). No Quetzal, as dicas podem sugerir o tipo Tera.',
+    ],
+    en: [
+      'Badges with their own images on the trainer card (missing ones are faded), in Quetzal, SoulGold, official Gen 3 and Diamond/Pearl, Platinum and HG/SS. Unbound and Black/White keep the pins.',
+      'Quetzal: fixed the badge count, which could show one too many (7 on a save with 6). It now matches the game’s screen, checked in the emulator with several saves.',
+      'Assistant: team building now starts from a plan (weather or terrain, Trick Room, setup offense or balance) and gives each member a function. The app works out each Pokémon’s roles (pivot, setup, priority, tank…), who sets and who abuses each weather (Mega Stones included, like Mega Charizard Y), who the weather protects, and warns when something gets in the way (e.g. a Fire-weak member on a sun team). In Quetzal, the tips can suggest a Tera type.',
+    ],
+  },
   {
     date: '2026-10-09',
     pt: [
@@ -202,7 +215,7 @@ const PRIVACY = {
 <h3>Conexões que o app faz</h3>
 <ul>
   <li><b>Hospedagem</b>: o site é servido pelo Cloudflare Pages. Como em qualquer site, o servidor recebe dados técnicos do acesso (como o endereço IP).</li>
-  <li><b>Sprites</b>: as imagens dos Pokémon vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
+  <li><b>Sprites</b>: as imagens dos Pokémon e das insígnias vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
   <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar equipe</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), no Quetzal e no Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. <b>Montar equipe</b> faz dois envios: o primeiro escolhe os 6; o segundo, menor, leva só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato do primeiro envio; o do segundo aparece junto com o resultado. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
 </ul>
 <h3>Contagem de visitas</h3>
@@ -231,7 +244,7 @@ const PRIVACY = {
 <h3>Connections the app makes</h3>
 <ul>
   <li><b>Hosting</b>: the site is served by Cloudflare Pages. As with any website, the server receives technical data about the visit (such as the IP address).</li>
-  <li><b>Sprites</b>: Pokémon images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
+  <li><b>Sprites</b>: Pokémon and badge images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
   <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build a team</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the party (weaknesses, coverage, base Speed), in Quetzal and Unbound the public list of moves each member learns by level, and your request, if any. <b>Build a team</b> sends two requests: the first picks the 6; the second, smaller, carries only that team and the app’s calculations about it, for the weaknesses and tips. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text of the first request; the second one is shown with the result. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
 </ul>
 <h3>Visit counting</h3>

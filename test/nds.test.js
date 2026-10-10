@@ -38,7 +38,7 @@ suite('Jogos de DS: Diamond/Pearl, Platinum, HeartGold/SoulSilver, Black/White e
       expect(d.summary).toEqual({
         playTime: { h: 24, m: 49, s: 27, confidence: 'confirmado' },
         money: { value: 3000, confidence: 'confirmado' },
-        badges: game === 'hgss' ? { count: 10, total: 16, confidence: 'confirmado' } : { count: 8, total: 8, confidence: 'confirmado' },
+        badges: expect.objectContaining(game === 'hgss' ? { count: 10, total: 16, confidence: 'confirmado', icons: [...Array(8)].map((_, i) => 9 + i).concat([...Array(8)].map((_, i) => 1 + i)) } : { count: 8, total: 8, confidence: 'confirmado', icons: [25, 26, 27, 28, 29, 30, 31, 32] }),
         dex: expect.objectContaining({ owned: 3, total: 493, confidence: 'confirmado' }),
       });
     }
@@ -173,7 +173,7 @@ suite.skipIf(!existsSync('fixtures/dp.duc'))('Diamond/Pearl com save real', () =
     expect(d.summary).toEqual({
       playTime: { h: 24, m: 49, s: 27, confidence: 'confirmado' },
       money: { value: 999999, confidence: 'confirmado' },
-      badges: { count: 8, total: 8, confidence: 'confirmado' },
+      badges: expect.objectContaining({ count: 8, total: 8, confidence: 'confirmado' }),
       dex: expect.objectContaining({ owned: 493, total: 493, confidence: 'confirmado' }),
     });
     const pc = d.pc.boxes.flatMap(b => b.slots);
@@ -193,7 +193,7 @@ suite.skipIf(!existsSync('fixtures/dppt.duc') || !existsSync('fixtures/b2w2.duc'
     const pc = d.pc.boxes.flatMap(b => b.slots);
     expect(pc).toHaveLength(354);
     expect(d.pc.boxes.map(b => b.name).slice(0, 2)).toEqual(['HAVE FUN', 'COLLECTN']);
-    expect(d.summary).toMatchObject({ money: { value: 999999 }, badges: { count: 8, total: 8 }, dex: expect.objectContaining({ owned: 493, total: 493 }) });
+    expect(d.summary).toMatchObject({ money: { value: 999999 }, badges: expect.objectContaining({ count: 8, total: 8 }), dex: expect.objectContaining({ owned: 493, total: 493 }) });
     expect(pc.filter(m => m.species.confidence !== 'confirmado' || m.ability.confidence !== 'confirmado')).toEqual([]);
   });
 
@@ -206,6 +206,6 @@ suite.skipIf(!existsSync('fixtures/dppt.duc') || !existsSync('fixtures/b2w2.duc'
     expect(d.party.map(m => m.species.form).filter(Boolean)).toEqual(['Black', 'Therian', 'Therian', 'Therian']);
     expect(d.pc.boxes.flatMap(b => b.slots)).toHaveLength(458);
     expect(d.pc.boxes.map(b => b.name).slice(0, 2)).toEqual(['HAVE FUN', 'EVENTS+']);
-    expect(d.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 9999999 }, badges: { count: 8 }, dex: expect.objectContaining({ owned: 649, total: 649 }) });
+    expect(d.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 9999999 }, badges: expect.objectContaining({ count: 8 }), dex: expect.objectContaining({ owned: 649, total: 649 }) });
   });
 });

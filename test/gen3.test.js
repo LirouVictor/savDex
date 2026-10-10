@@ -79,7 +79,7 @@ suite('Gen 3 oficial: detecção e leitura', () => {
       expect(data.summary).toEqual({
         playTime: { h: 38, m: 12, s: 5, confidence: conf },
         money: { value: 124560, confidence: conf },
-        badges: { count: 5, total: 8, confidence: conf },
+        badges: expect.objectContaining({ count: 5, total: 8, confidence: conf }),
         dex: expect.objectContaining({ owned: 4, total: 386, confidence: conf }),
       });
     }
@@ -150,7 +150,7 @@ for (const [file, id] of [['emerald.sav', 'emerald'], ['firered.sav', 'frlg']]) 
       expect(data.pc.boxes).toHaveLength(14);
       expect(data.warnings).toEqual([]);
       // Saves completos: os valores máximos do jogo (o dinheiro só dá 999999 com a chave certa)
-      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999 }, badges: { count: 8 }, dex: expect.objectContaining({ owned: 386, total: 386 }) });
+      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999 }, badges: expect.objectContaining({ count: 8 }), dex: expect.objectContaining({ owned: 386, total: 386 }) });
     });
   });
 }
@@ -163,7 +163,7 @@ for (const [f, name] of [['fixtures/rs-a.sps', 'Sapphire'], ['fixtures/rs-b.sps'
     it('identifica o jogo e lê o resumo', () => {
       const { data } = loadSave(readFileSync(f), T, G);
       expect(data.game.id).toBe('rs');
-      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999, confidence: 'confirmado' }, badges: { count: 8 }, dex: expect.objectContaining({ owned: 386 }) });
+      expect(data.summary).toMatchObject({ playTime: { h: 999, m: 59, s: 59 }, money: { value: 999999, confidence: 'confirmado' }, badges: expect.objectContaining({ count: 8 }), dex: expect.objectContaining({ owned: 386 }) });
       expect(data.party.map(m => m.species.name)).toEqual(['Skarmory', 'Swampert', 'Smeargle', 'Smeargle']);
       for (const m of data.party) expect(calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature)).toEqual(m.stats);
       expect(data.pc.boxes.reduce((a, b) => a + b.slots.length, 0)).toBeGreaterThan(400);

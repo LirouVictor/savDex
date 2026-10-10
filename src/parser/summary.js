@@ -8,6 +8,30 @@ export function countBits(u8, start, n, from = 0) {
   return c;
 }
 
+/** Os n bits a partir do bit `from` (bit i = bit i % 8 do byte start + i / 8), como true/false. */
+export function bitList(u8, start, n, from = 0) {
+  return Array.from({ length: n }, (_, k) => !!((u8[start + ((from + k) >> 3)] >> ((from + k) & 7)) & 1));
+}
+
+/**
+ * Número da primeira insígnia de cada região nas imagens do PokeAPI/sprites (sprites/badges/N.png), na ordem dos
+ * ginásios: Kanto 1–8, Johto 9–16, Hoenn 17–24, Sinnoh 25–32. A ordem dos bits no save é a mesma (conferido nas
+ * telas do Quetzal e do SoulGold no emulador). Unova (a ordem das imagens não é a dos ginásios) e regiões próprias
+ * (Borrius, do Unbound) ficam sem ícone.
+ */
+export const BADGE_ICONS = { kanto: 1, johto: 9, hoenn: 17, sinnoh: 25 };
+
+/**
+ * Insígnias do resumo: quantas, quais (`got`, na ordem dos ginásios) e, quando a região é conhecida, o número da
+ * imagem de cada uma (`icons`).
+ * @param {boolean[]} got
+ * @param {string[]|null} [regions] regiões em ordem (ex.: ['johto', 'kanto'] no HG/SS), 8 insígnias cada
+ */
+export function badgeSummary(got, regions = null, confidence = 'confirmado') {
+  const icons = regions ? regions.flatMap(r => Array.from({ length: 8 }, (_, i) => BADGE_ICONS[r] + i)) : null;
+  return { count: got.filter(Boolean).length, total: got.length, confidence, got, ...(icons && icons.length === got.length ? { icons } : {}) };
+}
+
 /** Números das espécies com o bit ligado (bit n − 1 = espécie n), de 1 a total. */
 export function dexBits(u8, start, total) {
   const out = [];
