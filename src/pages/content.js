@@ -12,6 +12,10 @@ export const NEWS = [
       'Montar equipe: nova opção “Sem lendários e míticos” (Mewtwo, Kyogre, Calyrex…), para montar com o resto do PC. Quem você pedir no campo de cima entra mesmo sendo lendário.',
       'Montar equipe: golpes fracos do começo do jogo (Tackle, Ember, Quick Attack…) não contam mais como cobertura nem como prioridade. Antes, um Goomy ou um Dreepy de nível baixo entrava contando com a forma evoluída mesmo sem golpes para batalhar. Agora contam golpes de poder 70 ou mais, os que batem mais do que o número diz (Acrobatics, Knock Off…) e os de prioridade do próprio tipo. Agility não é mais sugerido para quem não ataca forte.',
       'Montar equipe: a habilidade agora conta junto com os golpes. Technician fortalece golpes fracos (Bullet Punch no Scizor), assim como Iron Fist, Strong Jaw, Mega Launcher, Sharpness, Aerilate e outras; com Contrary, Close Combat e Leaf Storm viram setup. Quem segura a megapedra conta também a habilidade de antes de megaevoluir (Lightning Rod no Raichu, Intimidate no Staraptor). Nova opção “Sem restrição de item”, no Quetzal, no Unbound e no SoulGold: conta com a megapedra de quem tem mega, mesmo que ele ainda não a segure (Mega Staraptor), e diz qual pedra dar.',
+      'Montar equipe: nova escolha de preparo. “Posso treinar” conta o que dá para conseguir evoluindo e ensinando golpes (como antes); “Prontos para usar” prefere quem já está pronto: evoluir, ensinar golpes e os níveis que faltam pesam mais, sem tirar quem ainda compensa. A nota mostra essa parte à parte (“Preparo”).',
+      'Montar equipe: até 3 opções por plano, com no máximo 3 Pokémon em comum e nota perto da melhor.',
+      'Montar equipe: um plano só aparece com sinergia de verdade. Rain Dance ou Sunny Day com golpes do tipo não bastam; precisa de quem aproveita pela habilidade (Swift Swim, Chlorophyll…), pela megapedra ou por golpe próprio (Thunder, Solar Beam…); golpes do tipo com STAB contam quando o clima vem sem gastar turno (Drizzle, Drought). Trick Room precisa de quem põe e mais 3 lentos que atacam.',
+      'Montar equipe: com duas megapedras, a nota conta que só uma megaevolui por batalha (antes, contava as duas juntas). O Raichu com Raichunite Y volta a segurar golpes Electric com Lightning Rod quando quem megaevolui é a outra.',
       'Montar equipe: quem tem menos de 2 golpes de dano completa com os que aprende por nível (os do próprio tipo primeiro, como o Brave Bird do Staraptor), e a tela diz o que ensinar e em que nível. Pedindo um Pokémon com a opção “Sem restrição de item”, entra a versão que rende mais (com ou sem a megapedra).',
       'Assistente: equipes com até duas megapedras (só uma megaevolui por batalha; a outra fica para outra batalha).',
       'Insígnias com as próprias imagens no card do treinador (as que faltam aparecem apagadas), no Quetzal, no SoulGold, na Gen 3 oficial e em Diamond/Pearl, Platinum e HG/SS. No Unbound e em Black/White continuam os pinos.',
@@ -26,6 +30,10 @@ export const NEWS = [
       'Build team: new “No legendaries or mythicals” option (Mewtwo, Kyogre, Calyrex…), to build with the rest of the PC. Pokémon you ask for in the field above still join even if legendary.',
       'Build team: weak early-game moves (Tackle, Ember, Quick Attack…) no longer count as coverage or priority. Before, a low-level Goomy or Dreepy joined on its evolved form even without moves to battle with. Now only moves with 70+ power, moves stronger than their number (Acrobatics, Knock Off…) and same-type priority moves count. Agility is no longer suggested for Pokémon that don’t hit hard.',
       'Build team: abilities now count together with moves. Technician powers up weak moves (Bullet Punch on Scizor), as do Iron Fist, Strong Jaw, Mega Launcher, Sharpness, Aerilate and others; with Contrary, Close Combat and Leaf Storm become setup. Mega Stone holders also count their ability before Mega Evolving (Lightning Rod on Raichu, Intimidate on Staraptor). New “No item restriction” option in Quetzal, Unbound and SoulGold: counts the Mega Stone of any Pokémon that has a Mega, even if it isn’t holding it yet (Mega Staraptor), and says which stone to give.',
+      'Build team: new preparation choice. “I can train” counts what you can get by evolving and teaching moves (as before); “Ready to use” prefers Pokémon that are already ready: evolving, teaching moves and missing levels weigh more, without dropping those still worth it. The score shows this as its own part (“Preparation”).',
+      'Build team: up to 3 options per plan, sharing at most 3 Pokémon and scoring close to the best.',
+      'Build team: a plan only shows up with real synergy. Rain Dance or Sunny Day plus moves of the type are not enough; it needs Pokémon that benefit through their ability (Swift Swim, Chlorophyll…), Mega Stone or signature move (Thunder, Solar Beam…); same-type moves count when the weather comes without spending a turn (Drizzle, Drought). Trick Room needs the setter plus 3 slow attackers.',
+      'Build team: with two Mega Stones, the score counts that only one Mega Evolves per battle (before, it counted both at once). Raichu holding Raichunite Y once again absorbs Electric moves with Lightning Rod when the other one Mega Evolves.',
       'Build team: Pokémon with fewer than 2 attacking moves are completed with moves they learn by level (same type first, like Staraptor’s Brave Bird), and the screen says what to teach and at which level. When you ask for a Pokémon with “No item restriction”, the version that does best joins (with or without the Mega Stone).',
       'Assistant: teams with up to two Mega Stones (only one Mega Evolves per battle; the other is for another battle).',
       'Badges with their own images on the trainer card (missing ones are faded), in Quetzal, SoulGold, official Gen 3 and Diamond/Pearl, Platinum and HG/SS. Unbound and Black/White keep the pins.',
@@ -225,7 +233,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e as opções do montador de equipes (sem lendários, sem restrição de item).</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e as opções do montador de equipes (preparo, sem lendários, sem restrição de item).</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -254,7 +262,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder options (no legendaries, no item restriction).</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder options (preparation, no legendaries, no item restriction).</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>

@@ -207,21 +207,21 @@ function teamTips(team, plan) {
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano']];
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo']];
 
 /**
  * Monta as equipes e prepara o que a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false } = {}) {
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false } = {}) {
   const types = attackTypes(T);
-  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem });
+  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready });
   return results.map(res => {
     const { plan, team } = res;
     const membros = team.map(e => describeMember(e, team, plan, types));
     const { good, bad } = teamPoints(team, plan, types);
     const r = {
-      nome: planName(plan), resumo: plan.field
+      nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: plan.field
         ? t('Plano: {plan}. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.', { plan: t(plan.field) })
         : t('Equilibrada: sem clima, terreno nem Trick Room. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.'),
       membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
