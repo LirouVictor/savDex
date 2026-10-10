@@ -3,11 +3,15 @@
 // (descontando o que o clima da equipe corta), cobertura ofensiva, papéis (pivô, prioridade, recuperação…),
 // atacantes físicos × especiais, stats base e quem põe/aproveita o plano. A busca é em feixe (beam search):
 // começa do núcleo do plano e vai completando uma vaga de cada vez, guardando as melhores equipes parciais.
-// O nível não conta (o jogador pode treinar depois); quem ainda não evoluiu conta pela forma evoluída final.
+// O nível não conta (o jogador pode treinar depois); quem ainda não evoluiu conta pela forma evoluída final e quem
+// segura a própria megapedra conta com os tipos, stats e habilidade da mega. Nos jogos com golpes por nível da ROM,
+// os golpes que o Pokémon aprende e ainda não sabe também contam (para pôr o plano, aproveitá-lo e para os papéis),
+// com peso menor, e a tela diz o que ensinar.
 
-import { strategyOf, rolesOf, weatherConflict, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS } from '../ai/strategy.js';
+import { strategyOf, rolesOf, weatherConflict, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, FIELD_MOVES } from '../ai/strategy.js';
 import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
-import { evolvedVersions } from '../ai/evolve.js';
+import { evolvedVersions, megaForm } from '../ai/evolve.js';
+import { moveInfo } from '../parser/describe.js';
 
 export const WEATHERS = ['sol', 'chuva', 'tempestade de areia', 'neve/granizo'];
 const TERRAINS = ['Electric Terrain', 'Psychic Terrain', 'Grassy Terrain', 'Misty Terrain'];
@@ -37,6 +41,14 @@ const SPEED_ABILITIES = new Set(['Swift Swim', 'Chlorophyll', 'Sand Rush', 'Slus
 // Habilidades que atrapalham o próprio Pokémon (ataca um turno sim, outro não; metade do Ataque por 5 turnos…)
 const BAD_ABILITIES = { Truant: 20, 'Slow Start': 20, Defeatist: 6, Klutz: 4, Stall: 4 };
 
+// Papéis que vale a pena ganhar ensinando um golpe, e golpes fracos demais para sugerir
+const TEACH_ROLES = ['pivô', 'prioridade', 'recuperação', 'controle de velocidade', 'setup', 'hazards', 'tira hazards'];
+const TEACH_SKIP = new Set(['String Shot', 'Scary Face', 'Cotton Spore', 'Low Sweep', 'Bulldoze', 'Rock Tomb', 'Nuzzle', 'Growth', 'Work Up',
+  'Hone Claws', 'Flame Charge', 'Power-Up Punch', 'Trailblaze', 'Quick Attack', 'Feint', 'Teleport', 'Baton Pass', 'Rest', 'Autotomize']);
+
+// Papel que só vem de golpe a ensinar vale menos que o de golpe que o Pokémon já sabe (ocupa um espaço de golpe)
+const LEARN_ROLE = 0.6;
+
 const popcount = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
 const damaging = mv => (mv.category === 0 || mv.category === 1) && !!mv.type;
 
@@ -46,11 +58,28 @@ export function attackTypes(T) {
 }
 
 /**
+ * Golpes por nível do Pokémon (tabela da ROM: `dex.learn[ID do jogo] = [versão, nível, golpe, nível, golpe…]`),
+ * com o nível em que aprende (0 = ao evoluir). [] sem a tabela.
+ */
+export function levelMoves(m, dex, T) {
+  const raw = dex && dex.rom ? dex.learn[m.speciesId] : null;
+  if (!raw) return [];
+  const out = [];
+  for (let i = 2; i < raw.length; i += 2) {
+    const info = typeof raw[i] === 'number' ? moveInfo(raw[i], T) : null;
+    const name = info ? (info.known ? info.name : null) : String(raw[i]);
+    if (name && !out.some(x => x.name === name)) out.push({ name, level: raw[i - 1] });
+  }
+  return out;
+}
+
+/**
  * Os Pokémon que o montador pode usar: um por espécie (o de nível mais alto, depois o de mais IVs), sem ovos,
  * mais a forma evoluída final de quem ainda não evoluiu (Quetzal, Unbound e SoulGold). Cada entrada já leva as
- * contas que a nota usa.
+ * contas que a nota usa, na forma de batalha (a mega, se segura a própria megapedra).
+ * @param {object|null} [dex] golpes por nível da ROM (os que o Pokémon aprende também contam)
  */
-export function prepare(all, T) {
+export function prepare(all, T, dex = null) {
   const types = attackTypes(T);
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
@@ -68,17 +97,26 @@ export function prepare(all, T) {
     add(m);
     for (const e of evolvedVersions(m, T)) add(e);
   }
-  return [...best.values()].map((m, id) => Object.assign(entry(m, T, types, mult), { id }));
+  return [...best.values()].map((m, id) => {
+    const known = new Set(m.moves.map(mv => mv.name));
+    const learn = levelMoves(m, dex, T).filter(x => !known.has(x.name));
+    return Object.assign(entry(m, megaForm(m, T) || m, T, types, mult, learn), { id });
+  });
 }
 
-function entry(m, T, types, mult) {
-  const b = m.species.baseStats;
+/**
+ * Contas de um Pokémon. `m` é o que a tela mostra (o do save, ou a forma evoluída); `bf`, a forma de batalha
+ * (a mega, se segura a própria megapedra): tipos, stats base e habilidade vêm dela. `learn`: golpes por nível
+ * que ele ainda não sabe.
+ */
+function entry(m, bf, T, types, mult, learn = []) {
+  const b = bf.species.baseStats;
   const moves = m.moves.filter(damaging);
-  const ab = m.ability && m.ability.name;
+  const ab = bf.ability && bf.ability.name;
   // Defesa: 2 = 4×, 1 = 2×, 0 neutro, -1 resiste ou imune pelo tipo, -2 anula pela habilidade (Lightning Rod…)
   const def = types.map(a => {
     if ((ABILITY_IMMUNE[ab] || []).includes(a)) return -2; // anula pela habilidade: entra no golpe no lugar dos outros
-    const x = mult(a, m.species.types) * ((ABILITY_HALVE[ab] || []).includes(a) ? 0.5 : 1);
+    const x = mult(a, bf.species.types) * ((ABILITY_HALVE[ab] || []).includes(a) ? 0.5 : 1);
     return x >= 4 ? 2 : x > 1 ? 1 : x < 1 ? -1 : 0;
   });
   // Cobertura: tipos (puros) que algum golpe de dano acerta em cheio
@@ -89,31 +127,54 @@ function entry(m, T, types, mult) {
   ROLES.forEach((r, i) => { if (roles.includes(r)) roleMask |= 1 << i; });
   const phys = moves.filter(mv => mv.category === 0).length, spec = moves.length - phys;
   // Põe o campo sozinho, sem gastar turno (habilidade ou megapedra), ou só pelo golpe (Sunny Day…)
-  const auto = new Set([FIELD[m.ability && m.ability.name], MEGA_FIELD[m.item && m.item.name]].filter(Boolean));
+  const auto = new Set([FIELD[ab], MEGA_FIELD[m.item && m.item.name]].filter(Boolean));
   // Aproveita de verdade: habilidade (Swift Swim, Chlorophyll…), megapedra ou golpe próprio do clima (Thunder,
   // Solar Beam…). Weather Ball e os golpes Fire/Water só ficam mais fortes: contam menos (e mais com STAB).
-  const strong = new Set([ABUSERS[m.ability && m.ability.name], MEGA_ABUSERS[m.item && m.item.name]].filter(Boolean));
+  const strong = new Set([ABUSERS[ab], MEGA_ABUSERS[m.item && m.item.name]].filter(Boolean));
   for (const mv of m.moves) if (mv.name !== 'Weather Ball') for (const f of MOVE_ABUSERS[mv.name] || []) strong.add(f);
   const stab = new Set();
-  for (const [f, w] of Object.entries(WEATHER)) if (m.species.types.includes(w.boosts) && moves.some(mv => mv.type === w.boosts)) stab.add(f);
+  for (const [f, w] of Object.entries(WEATHER)) if (bf.species.types.includes(w.boosts) && moves.some(mv => mv.type === w.boosts)) stab.add(f);
   // Quanto aproveita cada campo: habilidade de velocidade 16, outra habilidade ou megapedra 11, golpe do próprio
   // clima ou golpe com STAB fortalecido 6, outro golpe fortalecido (ou Weather Ball) 3
-  const strat = strategyOf(m);
+  const strat = strategyOf(bf);
+  // Golpes a ensinar: põem o campo (Trick Room, Rain Dance…), aproveitam (Thunder, Solar Beam…) ou dão um papel
+  const teach = new Map(); // golpe → nível em que aprende
+  const learnSet = new Set(), learnUse = new Set();
+  for (const x of learn) {
+    const f = FIELD_MOVES[x.name] || (x.name === 'Trick Room' ? 'Trick Room' : null);
+    if (f && !strat.set.has(f)) { learnSet.add(f); teach.set(x.name, x.level); }
+    if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); teach.set(x.name, x.level); }
+  }
+  const teachable = learn.filter(x => !TEACH_SKIP.has(x.name));
+  const learnRoles = rolesOf({ ...bf, moves: teachable.map(x => ({ name: x.name })) }).filter(r => TEACH_ROLES.includes(r) && !roles.includes(r));
+  let learnRoleMask = 0;
+  ROLES.forEach((r, i) => { if (learnRoles.includes(r)) learnRoleMask |= 1 << i; });
+  const roleMoves = new Map(); // papel → golpe a ensinar que o dá
+  for (const r of learnRoles) {
+    const x = teachable.find(l => rolesOf({ ...bf, moves: [{ name: l.name }] }).includes(r));
+    if (x) roleMoves.set(r, x);
+  }
   const value = {};
   for (const f of [...WEATHERS, ...TERRAINS]) {
     const sig = m.moves.some(mv => mv.name !== 'Weather Ball' && (MOVE_ABUSERS[mv.name] || []).includes(f));
     value[f] = Math.max(ABUSERS[ab] === f ? (SPEED_ABILITIES.has(ab) ? 16 : 11) : 0, MEGA_ABUSERS[m.item && m.item.name] === f ? 11 : 0,
-      sig || stab.has(f) ? 6 : 0, strat.use.has(f) || strat.boost.has(f) ? 3 : 0);
+      sig || stab.has(f) ? 6 : 0, learnUse.has(f) ? 5 : 0, strat.use.has(f) || strat.boost.has(f) ? 3 : 0);
   }
-  const typeIdx = m.species.types.map(ty => types.indexOf(ty)).filter(i => i >= 0);
+  const typeIdx = bf.species.types.map(ty => types.indexOf(ty)).filter(i => i >= 0);
+  const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
-    m, real: m.evolvedFrom || m, key: speciesKey(m), types: m.species.types, typeIdx, def, cov, roles, roleMask,
+    m, bf, real: m.evolvedFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask,
+    learnSet, learnUse, learnRoles, learnRoleMask, roleMoves, teach,
+    megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
     strat, auto, strong, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
     lean: b[1] >= b[3] ? (phys ? 'phys' : spec ? 'spec' : '') : (spec ? 'spec' : phys ? 'phys' : ''),
-    mega: isMegaStone(m.item),
+    mega: isMegaStone(m.item), megaKnown: bf !== m,
   };
 }
+
+/** Põe o campo: pela habilidade/megapedra/golpe que já sabe, ou por um golpe que aprende. */
+export const sets = (e, f) => e.strat.set.has(f) || e.learnSet.has(f);
 
 // Habilidades que seguram o que costuma ameaçar o clima (Electric/Grass na chuva, Water/Fire no sol)
 const ANSWERS = { chuva: ['Lightning Rod', 'Volt Absorb', 'Motor Drive', 'Sap Sipper'], sol: ['Storm Drain', 'Water Absorb', 'Flash Fire', 'Dry Skin'] };
@@ -126,11 +187,11 @@ const benefits = (e, f) => e.strat.use.has(f) || e.strat.boost.has(f);
 export function plans(pool) {
   const out = [];
   for (const f of [...WEATHERS, ...TERRAINS]) {
-    const setters = pool.filter(e => e.strat.set.has(f));
-    const users = pool.filter(e => benefits(e, f));
+    const setters = pool.filter(e => sets(e, f));
+    const users = pool.filter(e => benefits(e, f) || e.learnUse.has(f));
     if (setters.length && users.length >= 2) out.push({ kind: WEATHERS.includes(f) ? 'weather' : 'terrain', field: f, setters });
   }
-  const room = pool.filter(e => e.strat.set.has('Trick Room'));
+  const room = pool.filter(e => sets(e, 'Trick Room'));
   if (room.length && pool.filter(e => e.spe <= SLOW && e.dmg >= 2).length >= 3) out.push({ kind: 'room', field: 'Trick Room', setters: room });
   out.push({ kind: 'balance', field: null, setters: [] });
   return out;
@@ -162,22 +223,26 @@ export function scoreParts(team, plan, types) {
     p.defense -= (absorb ? 6 : 12) * Math.max(0, w - 2) + 4 * Math.max(0, w - r - 1) + 2 * q;
   }
   // Cobertura ofensiva e papéis (cada um conta uma vez)
-  let cov = 0, roles = 0;
-  for (const e of team) { cov |= e.cov; roles |= e.roleMask; }
+  let cov = 0, roles = 0, learnRoles = 0;
+  for (const e of team) { cov |= e.cov; roles |= e.roleMask; learnRoles |= e.learnRoleMask; }
   p.offense = 2.5 * popcount(cov);
-  ROLES.forEach((r, i) => { if (roles & (1 << i)) p.roles += ROLE_W[r]; });
+  // Papel que ninguém tem mas alguém aprende vale menos (é preciso ensinar o golpe)
+  ROLES.forEach((r, i) => { if (roles & (1 << i)) p.roles += ROLE_W[r]; else if (learnRoles & (1 << i)) p.roles += ROLE_W[r] * LEARN_ROLE; });
   // Cada membro: stats base; quem tem menos de 2 golpes de dano rende pouco
-  let phys = 0, spec = 0, fast = 0, slow = 0, megas = 0;
+  let phys = 0, spec = 0, fast = 0, slow = 0, megas = 0, gains = [];
   const typeCount = new Int8Array(types.length);
   for (const e of team) {
     p.members += (e.bst - 350) / 12 - e.bad; // 300 → −4, 450 → +8, 600 → +21
-    if (e.mega) p.members += megas++ ? 3 : 8; // a megaevolução sobe os stats; a 2ª é a opção para outra batalha
+    // A megaevolução sobe os stats (já contados na forma mega, quando o app a conhece); só uma por batalha
+    if (e.mega) { if (e.megaKnown) gains.push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
     if (e.dmg < 2) p.members -= 6;
     if (e.lean === 'phys') phys++; else if (e.lean === 'spec') spec++;
     if (e.spe >= FAST) fast++;
     if (e.spe <= SLOW && e.dmg >= 2) slow++;
     for (const i of e.typeIdx) typeCount[i]++;
   }
+  // Com 2 megas da forma conhecida, só uma megaevolui por batalha: metade do ganho da menor não conta
+  if (gains.length > 1) p.members -= Math.min(...gains) / 2;
   // Físicos × especiais (só faz sentido com a equipe quase pronta), tipos repetidos, velocidade
   if (n >= 4) p.balance -= 4 * Math.max(0, 2 - phys) + 4 * Math.max(0, 2 - spec);
   for (const c of typeCount) if (c > 1) p.balance -= 6 * Math.max(0, c - 2) + 1.5 * (c - 1);
@@ -191,7 +256,7 @@ export function scoreParts(team, plan, types) {
     for (const e of team) {
       if (e.value[f]) vals.push(e.value[f]);
       if (e.auto.has(f)) auto = true;
-      if (e.rock === f && e.strat.set.has(f)) p.plan += 4;
+      if (e.rock === f && sets(e, f)) p.plan += 4;
       if (e.conflict) conflicts++;
       if (e.risk) risks++;
       if ((ANSWERS[f] || []).includes(e.m.ability && e.m.ability.name)) answer = true;
@@ -219,10 +284,10 @@ function allowed(team, e, plan) {
 function solo(e, plan) {
   let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - (e.dmg < 2 ? 6 : 0);
   if (plan.field && plan.kind !== 'room') {
-    if (e.strat.set.has(plan.field)) v += e.auto.has(plan.field) ? 40 : 30;
+    if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
     v += (e.value[plan.field] || 0) * 1.2;
   }
-  if (plan.kind === 'room') v += e.strat.set.has('Trick Room') ? 30 : e.spe <= SLOW && e.dmg >= 2 ? 12 : e.spe >= FAST ? -8 : 0;
+  if (plan.kind === 'room') v += sets(e, 'Trick Room') ? (e.strat.set.has('Trick Room') ? 30 : 24) : e.spe <= SLOW && e.dmg >= 2 ? 12 : e.spe >= FAST ? -8 : 0;
   return v;
 }
 
@@ -279,24 +344,25 @@ export function bestTeam(pool, plan, types, forced = []) {
  */
 export function planHolds(team, plan) {
   if (plan.kind === 'balance') return true;
-  const setters = team.filter(e => e.strat.set.has(plan.field));
+  const setters = team.filter(e => sets(e, plan.field));
   if (!setters.length) return false;
   if (plan.kind === 'room') return team.filter(e => e.spe <= SLOW && e.dmg >= 2).length >= 3;
-  return team.filter(e => benefits(e, plan.field) && !(setters.length === 1 && e === setters[0] && !e.strat.use.has(plan.field))).length >= 2;
+  return team.filter(e => (benefits(e, plan.field) || e.learnUse.has(plan.field)) && !(setters.length === 1 && e === setters[0] && !e.strat.use.has(plan.field))).length >= 2;
 }
 
 /**
  * Equipes para todos os planos do save, da melhor nota para a pior, sem repetir a mesma equipe.
  * @param {object[]} all Pokémon do save (equipe + PC)
  * @param {object} T tabelas do jogo
- * @param {{ want?: object[] }} [opts] Pokémon que o jogador quer na equipe (do save)
+ * @param {{ want?: object[], dex?: object|null }} [opts] Pokémon que o jogador quer na equipe (do save) e os golpes por
+ *   nível da ROM (os que aprendem também contam)
  */
-export function buildTeams(all, T, { want = [] } = {}) {
+export function buildTeams(all, T, { want = [], dex = null } = {}) {
   const types = attackTypes(T);
-  const pool = prepare(all, T);
+  const pool = prepare(all, T, dex);
   for (const e of pool) {
     e.conflictBy = {};
-    for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.m, f, T);
+    for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.bf, f, T);
   }
   const forced = want.map(m => pool.find(e => e.real === m || e.m === m) || pool.find(e => e.key === speciesKey(m))).filter(Boolean)
     .filter((e, i, a) => a.indexOf(e) === i).slice(0, 6);

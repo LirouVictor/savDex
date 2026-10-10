@@ -1,6 +1,7 @@
 import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
 import { buildTeams, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
+import { megaForm } from '../src/ai/evolve.js';
 import { runBuilder, resultsHtml, wantedMons } from '../src/builder/index.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
@@ -110,6 +111,36 @@ suite('Montador de equipes (sem IA)', () => {
     expect(sun.r.membros.some(x => /^põe sol$/.test(x.papel))).toBe(true);
     expect(sun.r.pontos_fortes.join(' ')).toMatch(/sol: posto por/);
     expect(resultsHtml([], 0, T)).toContain('Não deu para montar');
+  });
+
+  it('megapedra da própria espécie: conta com os tipos, stats e habilidade da mega (tabela da ROM)', () => {
+    const ty = n => T.types.indexOf(n);
+    // Golisopod-Mega no Quetzal: Bug/Steel, Tough Claws (só fraco a Fire, que a chuva corta)
+    const TQ = { ...T, quetzal: { evolutions: {}, species: { 1510: ['Golisopod', [ty('bug'), ty('steel')], [75, 150, 175, 70, 120, 40], ['Tough Claws', 'Tough Claws', 'Tough Claws'], 4, 768, 'golisopod-mega', 10316, 0, 'Mega', 'Golisopod-Mega', 0] } } };
+    const golisopod = mon('Golisopod', ['bug', 'water'], [75, 125, 140, 60, 90, 40], { ab: 'Emergency Exit', item: 'Golisopite', moves: [atk('First Impression', 'bug'), atk('Liquidation', 'water')] });
+    const mega = megaForm(golisopod, TQ);
+    expect(mega.species.types).toEqual(['bug', 'steel']);
+    expect(mega.ability.name).toBe('Tough Claws');
+    expect(megaForm({ ...golisopod, item: { name: 'Charizardite Y' } }, TQ)).toBe(null); // pedra de outra espécie
+    expect(megaForm({ ...golisopod, species: { ...golisopod.species, form: 'Hisui' } }, TQ)).toBe(null); // forma regional
+    const e = prepare([golisopod], TQ)[0];
+    const types = attackTypes(T);
+    expect(e.megaKnown).toBe(true);
+    expect(types.filter((x, a) => e.def[a] > 0)).toEqual(['fire']); // como mega, só Fire
+  });
+
+  it('golpes que aprende: quem aprende Trick Room abre o plano e a tela diz o que ensinar', () => {
+    const trId = T.moves.findIndex(r => r && r[0] === 'Trick Room');
+    const slowpoke = (sp, types) => mon(sp, types, [100, 120, 100, 90, 90, 30], { moves: [atk('A', types[0]), atk('B', types[types.length - 1], 1), atk('Earthquake', 'ground')] });
+    const all = [...pool(), slowpoke('Snorlax', ['normal']), slowpoke('Conkeldurr', ['fighting']), slowpoke('Rhyperior', ['ground', 'rock']),
+      mon('Reuniclus', ['psychic'], [110, 65, 75, 125, 85, 30], { id: 579, moves: [atk('Psychic', 'psychic', 1), atk('Focus Blast', 'fighting', 1)] })];
+    const dex = { rom: true, learn: { 579: [0, 41, trId] } };
+    expect(plans(prepare(all, T)).some(p => p.kind === 'room')).toBe(false); // sem a tabela, ninguém põe
+    const res = runBuilder(all, T, '', dex);
+    const room = res.find(x => x.plan.kind === 'room');
+    expect(room.team.map(m => m.species.name)).toContain('Reuniclus');
+    expect(room.r.dicas.join(' ')).toContain('Ensine Trick Room a C1-');
+    expect(room.r.dicas.join(' ')).toContain('aprende no Nv. 41');
   });
 
   it('rápido o bastante com um PC grande', () => {

@@ -341,8 +341,11 @@ function setupBuilder(out) {
     bOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${t('Montando as equipes')}</span><span class="dots" aria-hidden="true"></span></p>`;
     try {
       mod = await import('./builder/index.js');
+      // Quetzal/Unbound/SoulGold: golpes por nível da ROM (o montador conta também os golpes que cada um aprende)
+      const game = state.data.game;
+      const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);

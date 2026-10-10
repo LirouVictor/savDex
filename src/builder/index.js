@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, scoreParts, attackTypes } from './build.js';
+import { buildTeams, scoreParts, attackTypes, sets } from './build.js';
 import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
@@ -52,18 +52,39 @@ function whyUses(m, f) {
   return why;
 }
 
+/** "aprende no Nv. 41" / "aprende ao evoluir" */
+const learnAt = level => (level ? t('aprende no Nv. {n}', { n: level }) : t('aprende ao evoluir'));
+/** Golpe a ensinar que põe ou aproveita o campo f. */
+const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
+  ? FIELD_MOVES[name] === f || (f === 'Trick Room' && name === 'Trick Room')
+  : (MOVE_ABUSERS[name] || []).includes(f)));
+
 /** Função de cada membro na equipe e o porquê, pelas contas (em português; os nomes viram referências E1/C3-12). */
 function describeMember(e, team, plan, types) {
-  const m = e.m, f = plan.field;
+  const m = e.m, bf = e.bf, f = plan.field;
   const reasons = [];
   let role = '';
+  if (bf !== m) {
+    reasons.push(t('Com a megapedra vira {name} ({types}; {ability}): a conta é com a mega.', { name: `${bf.species.name} ${bf.species.form || 'Mega'}`, types: bf.species.types.map(cap).join('/'), ability: bf.ability.name }));
+  }
   if (f && e.strat.set.has(f)) {
     role = t('põe {field}', { field: t(f) });
-    reasons.push(t('Põe {field} com {how}.', { field: t(f), how: howSets(m, f) }));
+    reasons.push(t('Põe {field} com {how}.', { field: t(f), how: howSets(bf, f) }));
+  } else if (f && e.learnSet.has(f)) {
+    const [mv, lv] = teachFor(e, f, 'set') || [];
+    role = t('pode pôr {field}', { field: t(f) });
+    if (mv) reasons.push(t('Ensinando {move} ({when}), põe {field}.', { move: mv, when: learnAt(lv), field: t(f) }));
+  }
+  if (plan.kind !== 'room' && f && !e.strong.has(f) && e.learnUse.has(f) && !(e.stab.has(f))) {
+    const [mv, lv] = teachFor(e, f, 'use') || [];
+    if (mv) {
+      if (!role) role = t('aproveita {field}', { field: t(f) });
+      reasons.push(t('Ensinando {move} ({when}), aproveita {field}.', { move: mv, when: learnAt(lv), field: t(f) }));
+    }
   }
   if (plan.kind !== 'room' && f && e.strong.has(f)) {
     if (!role) role = t('aproveita {field}', { field: t(f) });
-    const why = whyUses(m, f);
+    const why = whyUses(bf, f);
     if (why.length) reasons.push(t('Aproveita {field}: {list}.', { field: t(f), list: list(why) }));
   } else if (plan.kind === 'weather' && WEATHER[f] && (e.stab.has(f) || e.strat.boost.has(f))) {
     if (!role) role = t('golpes {type} mais fortes', { type: cap(WEATHER[f].boosts) });
@@ -86,6 +107,9 @@ function describeMember(e, team, plan, types) {
   if (only.length) reasons.push(t('Único da equipe que acerta {list} em cheio.', { list: list(only.map(cap)) }));
   const roles = ROLE_ORDER.filter(r => e.roles.includes(r));
   if (roles.length) reasons.push(t('Papéis: {list}.', { list: list(roles.map(r => t(r))) }));
+  // Papel que a equipe não tem e ele aprende
+  const extra = ROLE_ORDER.filter(r => e.roleMoves.has(r) && !team.some(o => o.roles.includes(r)));
+  if (extra.length) reasons.push(t('Pode ganhar: {list}.', { list: list(extra.map(r => `${t(r)} (${e.roleMoves.get(r).name}, ${learnAt(e.roleMoves.get(r).level)})`)) }));
   if (!role) role = roles.length ? t(roles[0]) : t('cobertura');
   if (m.evolvedFrom) reasons.push(t('Evolua {from} para {to}: a conta é com a forma evoluída.', { from: m.evolvedFrom.species.name, to: m.species.name }));
   return { ref: refOf(m), papel: role, motivo: reasons.join(' ') };
@@ -97,8 +121,8 @@ function teamPoints(team, plan, types) {
   const good = [], bad = [];
   const f = plan.field;
   if (f) {
-    const setters = team.filter(e => e.strat.set.has(f));
-    const users = plan.kind === 'room' ? team.filter(e => e.spe <= 50 && e.dmg >= 2) : team.filter(e => e.strong.has(f) || e.stab.has(f) || e.strat.boost.has(f));
+    const setters = team.filter(e => sets(e, f));
+    const users = plan.kind === 'room' ? team.filter(e => e.spe <= 50 && e.dmg >= 2) : team.filter(e => e.strong.has(f) || e.stab.has(f) || e.strat.boost.has(f) || e.learnUse.has(f));
     good.push(t('{field}: posto por {setters}; aproveitam {users}.', { field: t(f), setters: list(setters.map(ref)), users: list(users.map(ref)) }));
   }
   let cov = 0;
@@ -126,9 +150,29 @@ function teamPoints(team, plan, types) {
   return { good, bad };
 }
 
-/** Próximos passos: evoluir, escolher a megaevolução, usar o item do clima. */
+/** Próximos passos: evoluir, ensinar golpes, escolher a megaevolução, usar o item do clima. */
 function teamTips(team, plan) {
   const tips = [];
+  // Até 3 golpes a ensinar, sem repetir golpe nem Pokémon
+  const taught = new Set();
+  const teach = (e, mv, lv, why) => {
+    if (taught.size >= 3 || taught.has(mv) || taught.has(e)) return;
+    taught.add(mv); taught.add(e);
+    tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: mv, ref: refOf(e.m), when: learnAt(lv), why }));
+  };
+  // O plano depende de golpe a ensinar quando ninguém o põe com o que já sabe
+  const f = plan.field;
+  if (f && !team.some(e => e.strat.set.has(f))) {
+    const e = team.find(x => x.learnSet.has(f));
+    const [mv, lv] = (e && teachFor(e, f, 'set')) || [];
+    if (mv) teach(e, mv, lv, t('põe {field}', { field: t(f) }));
+  }
+  // Papéis que a equipe só tem ensinando um golpe (os mais importantes primeiro)
+  for (const r of ['prioridade', 'recuperação', 'controle de velocidade', 'pivô', 'setup', 'hazards', 'tira hazards']) {
+    if (team.some(e => e.roles.includes(r))) continue;
+    const e = team.find(x => x.roleMoves.has(r));
+    if (e) teach(e, e.roleMoves.get(r).name, e.roleMoves.get(r).level, t(r));
+  }
   for (const e of team) if (e.m.evolvedFrom) tips.push(t('Evolua {ref} ({from} → {to}).', { ref: refOf(e.m), from: e.m.evolvedFrom.species.name, to: e.m.species.name }));
   const megas = team.filter(e => e.mega);
   if (megas.length > 1) {
@@ -138,7 +182,7 @@ function teamTips(team, plan) {
       : t('Duas megapedras: só uma megaevolui por batalha; escolha a que rende mais contra cada adversário.'));
   }
   const rock = { sol: 'Heat Rock', chuva: 'Damp Rock', 'tempestade de areia': 'Smooth Rock', 'neve/granizo': 'Icy Rock' }[plan.field];
-  const setter = rock && team.find(e => e.strat.set.has(plan.field) && e.auto.has(plan.field) && !e.mega);
+  const setter = rock && team.find(e => e.auto.has(plan.field) && !e.mega);
   if (setter && setter.rock !== plan.field) tips.push(t('Dê {item} a {ref}: o clima dura 8 turnos em vez de 5.', { item: rock, ref: refOf(setter.m) }));
   return tips;
 }
@@ -149,9 +193,9 @@ const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'
  * Monta as equipes e prepara o que a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '') {
+export function runBuilder(all, T, note = '', dex = null) {
   const types = attackTypes(T);
-  const results = buildTeams(all, T, { want: wantedMons(all, note) });
+  const results = buildTeams(all, T, { want: wantedMons(all, note), dex });
   return results.map(res => {
     const { plan, team } = res;
     const membros = team.map(e => describeMember(e, team, plan, types));

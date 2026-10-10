@@ -53,3 +53,42 @@ export function evolvedVersions(m, T) {
     .filter(([, s]) => s && s.types && s.types.length && s.baseStats)
     .map(([id, s]) => evolveMon(m, id, s));
 }
+
+const megaIndex = new WeakMap();
+/** Megas do jogo (tabela da ROM): nome da espécie → [{ id, form }]. */
+function megas(T) {
+  const R = T.quetzal || T.unbound || T.soulgold;
+  if (!R || !R.species) return null;
+  if (!megaIndex.has(R)) {
+    const idx = new Map();
+    const formOf = row => (T.quetzal ? row[9] : row[1]);
+    for (const [id, row] of Object.entries(R.species)) {
+      if (!row || !/^Mega( [XYZ])?$/.test(formOf(row) || '')) continue;
+      if (!idx.has(row[0])) idx.set(row[0], []);
+      idx.get(row[0]).push({ id: +id, form: formOf(row) });
+    }
+    megaIndex.set(R, idx);
+  }
+  return megaIndex.get(R);
+}
+
+/**
+ * A forma mega do Pokémon, se ele segura a própria megapedra (Charizardite Y → Charizard Mega Y): tipos, stats
+ * base e habilidade da mega, pela tabela da ROM (Quetzal, Unbound, SoulGold). Só na forma comum da espécie (uma
+ * forma regional, como o Raichu de Alola, não usa a megapedra da forma comum). null se não há.
+ */
+export function megaForm(m, T) {
+  const item = m.item && m.item.name;
+  if (!item || m.species.form) return null;
+  const list = megas(T) && megas(T).get(m.species.name);
+  if (!list) return null;
+  // A pedra é desta espécie (as 4 primeiras letras: Charizardite, Golisopite, Lucarionite…)
+  if (!item.toLowerCase().startsWith(m.species.name.toLowerCase().slice(0, 4))) return null;
+  const suffix = (item.match(/ ([XYZ])$/) || [])[1];
+  const hit = list.find(x => x.form === (suffix ? `Mega ${suffix}` : 'Mega')) || (list.length === 1 ? list[0] : null);
+  if (!hit) return null;
+  const sp = speciesFn(T)(hit.id);
+  if (!sp || !sp.types.length || !sp.baseStats) return null;
+  const name = sp.abilities.find(Boolean) || (m.ability && m.ability.name);
+  return { ...m, species: sp, ability: m.ability ? { ...m.ability, name } : { num: 0, name }, megaOf: m };
+}
