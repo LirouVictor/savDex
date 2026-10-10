@@ -25,7 +25,7 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null, fr
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
     learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
-    hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode).length > 0, // clima/terreno/Trick Room
+    hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode, T).length > 0, // clima/terreno/Trick Room
     free: !!mode,
   };
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)

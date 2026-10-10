@@ -402,6 +402,7 @@ export default {
   '- O Quetzal pode ter mudado algumas espécies e golpes; confie nos tipos e dados enviados, não na sua memória.':
     '- Quetzal may have changed some species and moves; trust the types and data sent, not your memory.',
   '- Só uma megaevolução pode ser usada por batalha.': '- Only one Mega Evolution can be used per battle.',
+  '- Há Terastalização (uma por batalha). Nas dicas, pode sugerir o tipo Tera de um membro e dizer por quê: reforçar o golpe principal (ex.: Tera Normal com Double-Edge ou Extreme Speed) ou tirar fraquezas. O tipo Tera atual de cada Pokémon não vem do save.': '- Terastallization exists (once per battle). In the tips, you may suggest a member’s Tera type and say why: to power up its main move (e.g. Tera Normal with Double-Edge or Extreme Speed) or to remove weaknesses. Each Pokémon’s current Tera type is not in the save.',
   'um jogo oficial da Geração 3': 'an official Generation 3 game',
   '(sem tipo Fairy, sem megaevoluções; na Gen 3 a categoria física/especial depende do TIPO do golpe: Normal, Fighting, Flying, Poison, Ground, Rock, Bug, Ghost e Steel são físicos; os demais, especiais).':
     '(no Fairy type, no Mega Evolutions; in Gen 3 the physical/special category depends on the move’s TYPE: Normal, Fighting, Flying, Poison, Ground, Rock, Bug, Ghost and Steel are physical; the rest are special).',
@@ -447,7 +448,24 @@ export default {
   'Velocidade base (maior primeiro): {list}.': 'Base Speed (highest first): {list}.',
   'Tipos repetidos: {list}.': 'Repeated types: {list}.',
   'Megapedras: {list} (só uma megaevolução por batalha).': 'Mega Stones: {list} (only one Mega Evolution per battle).',
-  'Clima/terreno: {list}.': 'Weather/terrain: {list}.',
+  'Põem clima/terreno/Trick Room: {list}.': 'Set weather/terrain/Trick Room: {list}.',
+  'Alertas de sinergia: {list}.': 'Synergy warnings: {list}.',
+  'Papéis': 'Roles',
+  'setup': 'setup',
+  'pivô': 'pivot',
+  'prioridade': 'priority',
+  'controle de velocidade': 'speed control',
+  'recuperação': 'recovery',
+  'status': 'status',
+  'hazards': 'hazards',
+  'tira hazards': 'hazard removal',
+  'telas': 'screens',
+  'lento (Trick Room)': 'slow (Trick Room)',
+  'tanque': 'tank',
+  'climas diferentes na mesma equipe ({list}): um apaga o outro': 'different weathers on the same team ({list}): one overrides the other',
+  '{who} põe {field}, mas só {n} membro(s) aproveita(m)': '{who} sets {field}, but only {n} member(s) benefit',
+  'com {field}, {type} fica mais forte, e é fraqueza de {list}': 'in {field}, {type} gets stronger, and it is a weakness of {list}',
+  'com {field}, golpes {type} perdem metade da força: {list}': 'in {field}, {type} moves lose half their power: {list}',
   'chuva': 'rain',
   'sol': 'sun',
   'tempestade de areia': 'sandstorm',
@@ -459,10 +477,24 @@ export default {
   'Aprende por nível (lista dos jogos oficiais recentes; este jogo pode ser diferente):': 'Learns by level (list from the recent official games; this game may differ):',
   'Monte a MELHOR EQUIPE de 6 Pokémon com os disponíveis abaixo (equipe atual + PC), sem repetir espécie.':
     'Build the BEST TEAM of 6 Pokémon from the ones available below (current party + PC), without repeating a species.',
-  'Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Prioridades, nesta ordem:':
-    'Build the best WHOLE, not the 6 strongest on their own. Priorities, in this order:',
-  '1. Uma estratégia que funcione junto (clima, terreno ou Trick Room), só se ela aparecer nas pistas de estratégia abaixo, com quem a ponha e quem a aproveite; não force uma estratégia fraca.':
-    '1. A strategy that works together (weather, terrain or Trick Room), only if it appears in the strategy hints below, with someone who sets it and someone who benefits from it; do not force a weak strategy.',
+  'Monte o melhor CONJUNTO, não os 6 mais fortes sozinhos. Escolha UM plano e monte em volta dele:':
+    'Build the best WHOLE, not the 6 strongest on their own. Choose ONE plan and build around it:',
+  '- Clima ou terreno: 1 ou 2 que põem (ex.: Torkoal e Mega Charizard Y no sol) + 2 ou mais que aproveitam + quem o clima protege (no sol, os fracos a Water; na chuva, os fracos a Fire) + quem segura o que ameaça o clima.':
+    '- Weather or terrain: 1 or 2 setters (e.g. Torkoal and Mega Charizard Y in sun) + 2 or more abusers + those the weather protects (in sun, those weak to Water; in rain, those weak to Fire) + someone who handles what threatens the weather.',
+  '- Trick Room: 1 ou 2 que põem + atacantes lentos e fortes; evite os rápidos.':
+    '- Trick Room: 1 or 2 setters + slow, strong attackers; avoid fast ones.',
+  '- Ofensivo com setup: quem abre o caminho (hazards ou telas) + 1 ou 2 que sobem stats (setup) + prioridade.':
+    '- Setup offense: someone who paves the way (hazards or screens) + 1 or 2 who boost their stats (setup) + priority.',
+  '- Equilibrado: núcleo de 2 ou 3 que cobrem as fraquezas uns dos outros + pivô (U-turn, Volt Switch…) + quem aguenta pancada + quem fecha a luta.':
+    '- Balance: a core of 2 or 3 that cover each other’s weaknesses + a pivot (U-turn, Volt Switch…) + someone who can take hits + a win condition.',
+  'Cada membro precisa de uma função no plano (põe, aproveita, protegido pelo plano, segura o que ameaça o plano, pivô, setup, controle de velocidade, tanque); no máximo 2 só para cobertura. Escreva a função no campo papel. Use os "Papéis" de cada linha, calculados pelo app pelos golpes e stats.':
+    'Each member needs a function in the plan (sets it, abuses it, protected by the plan, handles what threatens the plan, pivot, setup, speed control, tank); at most 2 only for coverage. Write the function in the role field. Use the "Roles" on each line, calculated by the app from moves and stats.',
+  'Evite quem tem a fraqueza que o plano fortalece (ex.: fraco a Fire num time de sol) e quem depende de golpes que o plano enfraquece (ex.: golpes Water no sol).':
+    'Avoid members with the weakness the plan strengthens (e.g. weak to Fire on a sun team) and members that rely on moves the plan weakens (e.g. Water moves in sun).',
+  'Prioridades, nesta ordem:':
+    'Priorities, in this order:',
+  '1. Um plano que funcione junto. Clima, terreno ou Trick Room, só se aparecer nas pistas de estratégia abaixo, com quem ponha e 2 ou mais que aproveitem; não force um plano fraco.':
+    '1. A plan that works together. Weather, terrain or Trick Room only if it appears in the strategy hints below, with a setter and 2 or more abusers; do not force a weak plan.',
   'Nenhum disponível põe clima, terreno nem Trick Room (pela habilidade ou por um golpe): não monte a equipe em volta disso.':
     'No available Pokémon sets weather, terrain or Trick Room (by ability or move): do not build the team around that.',
   '- A habilidade de cada Pokémon é a da linha dele ("Hab:"), não a que a espécie costuma ter (ex.: um Torkoal com White Smoke não põe sol).':
@@ -488,9 +520,13 @@ export default {
   'EQUIPE:': 'TEAM:',
   'Inclua os tipos que acertam muitos membros e os tipos sem golpe super efetivo, pelos cálculos do app': 'Include the types that hit many members and the types with no super effective move, from the app calculations',
   'Até 5 ajustes concretos (golpe, item, natureza, EVs) que atacam os pontos fracos, cada um com o motivo': 'Up to 5 concrete adjustments (move, item, nature, EVs) that address the weaknesses, each with its reason',
-  'Pistas de estratégia (habilidades e golpes dos disponíveis):': 'Strategy hints (abilities and moves of the available ones):',
   'põem {list}': 'set by {list}',
-  'aproveitam {list}': 'used by {list}',
+  'Pistas de estratégia (habilidades, golpes e megapedras dos disponíveis; a mais forte primeiro):': 'Strategy hints (abilities, moves and Mega Stones of the available ones; strongest first):',
+  'aproveitam ({n}): {list}': 'abused by ({n}): {list}',
+  'o clima corta a fraqueza a {type} de {list}': 'the weather cuts the {type} weakness of {list}',
+  'seguram o que ameaça o clima: {list}': 'handle what threatens the weather: {list}',
+  'lentos que aproveitam ({n}): {list}': 'slow ones that benefit ({n}): {list}',
+  'nenhum lento para aproveitar': 'no slow Pokémon to benefit',
   'ninguém aproveita (habilidade ou golpe)': 'no one benefits (ability or move)',
   'Não afirme fraquezas, resistências nem contagens da equipe final (ex.: "sem fraquezas triplas"): o app calcula e mostra isso ao lado. Nos pontos fortes e fracos, fale de papéis, estratégia e sets.':
     'Do not state weaknesses, resistances or counts for the final team (e.g. "no triple weaknesses"): the app calculates and shows them alongside. In strengths and weaknesses, talk about roles, strategy and sets.',
@@ -514,7 +550,7 @@ export default {
   'Nome curto e criativo para a equipe': 'Short, creative name for the team',
   'Estratégia em até 3 frases': 'Strategy in up to 3 sentences',
   'Exatamente 6 Pokémon diferentes': 'Exactly 6 different Pokémon',
-  'Papel em 1 a 3 palavras (ex.: atacante físico)': 'Role in 1 to 3 words (e.g. physical attacker)',
+  'Função no plano em 1 a 3 palavras (ex.: põe o sol, aproveita a chuva, pivô, tanque, cobertura)': 'Function in the plan in 1 to 3 words (e.g. sets sun, abuses rain, pivot, tank, coverage)',
   'O que ele traz que os outros não têm (tipo, cobertura, velocidade, estratégia)': 'What it brings that the others lack (type, coverage, speed, strategy)',
   'Ajustes concretos (golpe, item, natureza, EVs), cada um com o motivo': 'Concrete adjustments (move, item, nature, EVs), each with its reason',
 
