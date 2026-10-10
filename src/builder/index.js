@@ -13,7 +13,7 @@ const PLAN_NAME = {
   sol: 'Sol', chuva: 'Chuva', 'tempestade de areia': 'Areia', 'neve/granizo': 'Neve', 'Trick Room': 'Trick Room',
   'Electric Terrain': 'Electric Terrain', 'Psychic Terrain': 'Psychic Terrain', 'Grassy Terrain': 'Grassy Terrain', 'Misty Terrain': 'Misty Terrain',
 };
-const ROLE_ORDER = ['pivô', 'prioridade', 'recuperação', 'controle de velocidade', 'setup', 'hazards', 'tira hazards', 'telas', 'status', 'tanque'];
+const ROLE_ORDER = ['pivô', 'prioridade', 'recuperação', 'controle de velocidade', 'setup', 'intimidação', 'hazards', 'tira hazards', 'telas', 'status', 'tanque'];
 const KEY_ROLES = ['prioridade', 'recuperação', 'controle de velocidade', 'pivô'];
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const list = a => a.join(', ');
@@ -64,8 +64,12 @@ function describeMember(e, team, plan, types) {
   const m = e.m, bf = e.bf, f = plan.field;
   const reasons = [];
   let role = '';
+  if (e.given) reasons.push(t('Sem restrição de item: o app contou com {stone} (dê a ele).', { stone: e.given }));
   if (bf !== m) {
-    reasons.push(t('Com a megapedra vira {name} ({types}; {ability}): a conta é com a mega.', { name: `${bf.species.name} ${bf.species.form || 'Mega'}`, types: bf.species.types.map(cap).join('/'), ability: bf.ability.name }));
+    const mega = { name: `${bf.species.name} ${bf.species.form || 'Mega'}`, types: bf.species.types.map(cap).join('/'), ability: bf.ability.name };
+    reasons.push(e.abBase && e.abBase !== bf.ability.name
+      ? t('Com a megapedra vira {name} ({types}; {ability}); antes de megaevoluir, tem {base}: as duas contam.', { ...mega, base: e.abBase })
+      : t('Com a megapedra vira {name} ({types}; {ability}): a conta é com a mega.', mega));
   }
   if (f && e.strat.set.has(f)) {
     role = t('põe {field}', { field: t(f) });
@@ -101,7 +105,14 @@ function describeMember(e, team, plan, types) {
     reasons.push(t('Resiste a {list}, que acerta(m) outros membros em cheio.', { list: list(holds.map(cap)) }));
   }
   const absorbs = types.filter((ty, a) => e.def[a] === -2);
-  if (absorbs.length) reasons.push(t('{ability} anula golpes {type}.', { ability: m.ability.name, type: list(absorbs.map(cap)) }));
+  if (absorbs.length) reasons.push(t('{ability} anula golpes {type}.', { ability: bf.ability.name, type: list(absorbs.map(cap)) }));
+  if (e.preImmune && e.preImmune.length) reasons.push(t('Antes de megaevoluir, {ability} anula golpes {type}.', { ability: e.abBase, type: list(e.preImmune.map(cap)) }));
+  // Habilidade que fortalece os golpes (Technician, Iron Fist…) e Contrary com golpes que baixam stats
+  const byAb = new Map();
+  for (const mv of e.boosted || []) byAb.set(mv.by, [...(byAb.get(mv.by) || []), mv.name]);
+  for (const [ab, mvs] of byAb) reasons.push(t('{ability} fortalece {moves}.', { ability: ab, moves: list(mvs) }));
+  if (e.teachAtk && e.teachAtk.length) reasons.push(t('Golpes de dano a ensinar: {list}.', { list: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)) }));
+  if (e.contrary && e.contrary.length) reasons.push(t('Contrary: com {moves}, os stats sobem em vez de baixar.', { moves: list(e.contrary) }));
   // Único que acerta um tipo em cheio
   const only = types.filter((ty, a) => (e.cov & (1 << a)) && !team.some(o => o !== e && (o.cov & (1 << a))));
   if (only.length) reasons.push(t('Único da equipe que acerta {list} em cheio.', { list: list(only.map(cap)) }));
@@ -111,6 +122,10 @@ function describeMember(e, team, plan, types) {
   const extra = ROLE_ORDER.filter(r => e.roleMoves.has(r) && !team.some(o => o.roles.includes(r)));
   if (extra.length) reasons.push(t('Pode ganhar: {list}.', { list: list(extra.map(r => `${t(r)} (${e.roleMoves.get(r).name}, ${learnAt(e.roleMoves.get(r).level)})`)) }));
   if (!role) role = roles.length ? t(roles[0]) : t('cobertura');
+  // Sem outro motivo: entra pela força (stats base) e pelos golpes que acertam bem
+  if (!reasons.length) {
+    reasons.push(t('Atacante {kind} com stats base {bst}.', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
+  }
   if (m.evolvedFrom) reasons.push(t('Evolua {from} para {to}: a conta é com a forma evoluída.', { from: m.evolvedFrom.species.name, to: m.species.name }));
   return { ref: refOf(m), papel: role, motivo: reasons.join(' ') };
 }
@@ -160,6 +175,10 @@ function teamTips(team, plan) {
     taught.add(mv); taught.add(e);
     tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: mv, ref: refOf(e.m), when: learnAt(lv), why }));
   };
+  // Golpes de dano que faltam (o app contou com eles): sempre aparecem
+  for (const e of team) {
+    if (e.teachAtk && e.teachAtk.length) tips.push(t('Ensine {moves} a {ref}: golpes de dano.', { moves: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)), ref: refOf(e.m) }));
+  }
   // O plano depende de golpe a ensinar quando ninguém o põe com o que já sabe
   const f = plan.field;
   if (f && !team.some(e => e.strat.set.has(f))) {
@@ -173,6 +192,7 @@ function teamTips(team, plan) {
     const e = team.find(x => x.roleMoves.has(r));
     if (e) teach(e, e.roleMoves.get(r).name, e.roleMoves.get(r).level, t(r));
   }
+  for (const e of team) if (e.given) tips.push(t('Dê {stone} a {ref} (o app contou com a mega).', { stone: e.given, ref: refOf(e.m) }));
   for (const e of team) if (e.m.evolvedFrom) tips.push(t('Evolua {ref} ({from} → {to}).', { ref: refOf(e.m), from: e.m.evolvedFrom.species.name, to: e.m.species.name }));
   const megas = team.filter(e => e.mega);
   if (megas.length > 1) {
@@ -193,9 +213,9 @@ const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'
  * Monta as equipes e prepara o que a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '', dex = null, { noLegends = false } = {}) {
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false } = {}) {
   const types = attackTypes(T);
-  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends });
+  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem });
   return results.map(res => {
     const { plan, team } = res;
     const membros = team.map(e => describeMember(e, team, plan, types));
@@ -210,7 +230,7 @@ export function runBuilder(all, T, note = '', dex = null, { noLegends = false } 
     return {
       name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r,
       // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
-      byRef: new Map(mons.map(m => [refOf(m), m.evolvedFrom || m])),
+      byRef: new Map(mons.map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),
       shown: new Map(mons.map(m => [refOf(m), m])),
       evolved: new Map(mons.filter(m => m.evolvedFrom).map(m => [refOf(m), m])),
     };

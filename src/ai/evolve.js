@@ -72,23 +72,64 @@ function megas(T) {
   return megaIndex.get(R);
 }
 
+// Comprimento do começo comum de dois nomes (sem diferenciar maiúsculas)
+function prefixLen(a, b) {
+  a = a.toLowerCase(); b = b.toLowerCase();
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i;
+}
+
+const isStoneName = n => /ite( [XYZ])?$/.test(n) && !/^(Eviolite|Meteorite)$/.test(n);
+
+/**
+ * De que espécie é a megapedra: a espécie com mega cujo nome tem o maior começo em comum com o da pedra, com
+ * pelo menos 5 letras e 60% do nome (Abomasite → Abomasnow, Mawilite → Mawile). Staraptite → Staraptor, e
+ * Starminite nunca vira Staraptor (só "Star" em comum), mesmo num jogo sem o Mega Starmie.
+ */
+export function stoneSpecies(item, T) {
+  const idx = megas(T);
+  if (!idx || !item || !isStoneName(item)) return null;
+  let best = null, len = 0;
+  for (const name of idx.keys()) {
+    const l = prefixLen(item, name);
+    if (l > len && l >= Math.max(5, Math.ceil(name.length * 0.6))) { best = name; len = l; }
+  }
+  return best;
+}
+
+/** O que muda ao megaevoluir com a pedra `item`: a forma mega na tabela da ROM (com X/Y/Z pela pedra). */
+function megaHit(name, item, T) {
+  const list = megas(T) && megas(T).get(name);
+  if (!list || stoneSpecies(item, T) !== name) return null;
+  const suffix = (item.match(/ ([XYZ])$/) || [])[1];
+  return list.find(x => x.form === (suffix ? `Mega ${suffix}` : 'Mega')) || (list.length === 1 && !suffix ? list[0] : null);
+}
+
 /**
  * A forma mega do Pokémon, se ele segura a própria megapedra (Charizardite Y → Charizard Mega Y): tipos, stats
  * base e habilidade da mega, pela tabela da ROM (Quetzal, Unbound, SoulGold). Só na forma comum da espécie (uma
  * forma regional, como o Raichu de Alola, não usa a megapedra da forma comum). null se não há.
+ * `item` (opcional) conta com outra pedra no lugar da que ele segura (modo sem restrição de item).
  */
-export function megaForm(m, T) {
-  const item = m.item && m.item.name;
+export function megaForm(m, T, item = m.item && m.item.name) {
   if (!item || m.species.form) return null;
-  const list = megas(T) && megas(T).get(m.species.name);
-  if (!list) return null;
-  // A pedra é desta espécie (as 4 primeiras letras: Charizardite, Golisopite, Lucarionite…)
-  if (!item.toLowerCase().startsWith(m.species.name.toLowerCase().slice(0, 4))) return null;
-  const suffix = (item.match(/ ([XYZ])$/) || [])[1];
-  const hit = list.find(x => x.form === (suffix ? `Mega ${suffix}` : 'Mega')) || (list.length === 1 ? list[0] : null);
+  const hit = megaHit(m.species.name, item, T);
   if (!hit) return null;
   const sp = speciesFn(T)(hit.id);
   if (!sp || !sp.types.length || !sp.baseStats) return null;
   const name = sp.abilities.find(Boolean) || (m.ability && m.ability.name);
   return { ...m, species: sp, ability: m.ability ? { ...m.ability, name } : { num: 0, name }, megaOf: m };
+}
+
+/** Megapedras do jogo que servem para esta espécie (na forma comum): nomes da tabela de itens da ROM. */
+export function megaStonesFor(m, T) {
+  const R = T.quetzal || T.unbound || T.soulgold;
+  if (!R || !R.items || m.species.form || !(megas(T) && megas(T).has(m.species.name))) return [];
+  const out = [];
+  for (const it of R.items) {
+    const n = Array.isArray(it) ? it[0] : it;
+    if (typeof n === 'string' && !out.includes(n) && megaHit(m.species.name, n, T)) out.push(n);
+  }
+  return out;
 }

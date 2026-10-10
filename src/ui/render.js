@@ -365,13 +365,18 @@ export function analysisWin(d, T) {
 }
 
 /** Montador de equipes do app (sem IA): fechado até o usuário abrir; o pacote só carrega ao tocar no botão. */
-export function builderWin() {
+// Jogos com a tabela de megas da ROM (o modo sem restrição de item conta com megapedras que o Pokémon não segura)
+const MEGA_GAMES = ['quetzal', 'unbound', 'soulgold'];
+
+export function builderWin(d) {
+  const megas = d && d.game && MEGA_GAMES.includes(d.game.id);
   return `<details class="win win-fold" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('sem IA')}</small></summary>
     <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.')}</p>
     <label class="ai-label" for="builder-note">${t('Quero na equipe (opcional)')}</label>
     <input id="builder-note" class="ai-input" type="text" maxlength="200" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario')}">
     <label class="ai-skip"><input type="checkbox" id="builder-nolegend"> ${t('Sem lendários e míticos (menos os que você pedir acima)')}</label>
+    ${megas ? `<label class="ai-skip"><input type="checkbox" id="builder-anyitem"> ${t('Sem restrição de item: conta com a megapedra de quem tem mega, mesmo sem ela')}</label>` : ''}
     <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
   </details>`;

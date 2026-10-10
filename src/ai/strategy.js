@@ -101,6 +101,8 @@ const MOVE_ROLES = {
   'tira hazards': ['Rapid Spin', 'Defog', 'Mortal Spin', 'Court Change', 'Tidy Up'],
   telas: ['Reflect', 'Light Screen', 'Aurora Veil'],
 };
+/** Golpes de prioridade (o montador só conta os que batem de verdade). */
+export const PRIORITY_MOVES = new Set(MOVE_ROLES.prioridade);
 const ROLE_OF_MOVE = new Map();
 for (const [role, moves] of Object.entries(MOVE_ROLES)) for (const mv of moves) ROLE_OF_MOVE.set(mv, [...(ROLE_OF_MOVE.get(mv) || []), role]);
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe

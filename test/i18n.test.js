@@ -62,7 +62,7 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
   function renderAll(data, T2) {
     const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
     let html = R.trainerWin(data, 'x.sav') + R.warningsWin(data.warnings) + R.partyWin(data, { canSave: true }) + R.pcWin(data)
-      + R.analysisWin(data, T2) + R.builderWin() + R.aiWin(data, Object.values(PROVIDERS)) + R.searchWin(data, T2) + R.exportWin();
+      + R.analysisWin(data, T2) + R.builderWin(data) + R.aiWin(data, Object.values(PROVIDERS)) + R.searchWin(data, T2) + R.exportWin();
     // Montador de equipes (sem IA): todas as equipes que o save comporta
     const built = runBuilder([...data.party, ...data.pc.boxes.flatMap(b => b.slots)], T2);
     built.forEach((x, i) => { html += resultsHtml(built, i, T2); });
