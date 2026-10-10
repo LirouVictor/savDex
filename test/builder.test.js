@@ -155,6 +155,42 @@ suite('Montador de equipes (sem IA)', () => {
     expect(types.filter((x, a) => e.def[a] > 0)).toEqual(['fire']); // como mega, só Fire
   });
 
+  it('habilidade × golpes: Technician fortalece Bullet Punch; Contrary com Close Combat vira setup', () => {
+    slot = 0;
+    const scizor = mon('Scizor', ['bug', 'steel'], [70, 130, 100, 55, 80, 65], { ab: 'Technician', moves: [['Bullet Punch', 'steel', 0, 40], ['Bug Bite', 'bug', 0, 60], ['Swords Dance', 'normal', 2, 0]] });
+    const plain = { ...scizor, ability: { num: 0, name: 'Swarm' } };
+    const serperior = mon('Serperior', ['grass'], [75, 75, 95, 75, 95, 113], { ab: 'Contrary', moves: [['Leaf Storm', 'grass', 1, 130], ['Dragon Pulse', 'dragon', 1, 85]] });
+    const [a, c] = prepare([scizor, serperior], T);
+    const [b] = prepare([plain], T);
+    expect(a.dmg).toBe(2); // Bug Bite 60 × 1,5 = 90 passa a contar
+    expect(a.boosted.map(mv => mv.name)).toEqual(['Bullet Punch', 'Bug Bite']);
+    expect(b.dmg).toBe(1); // sem Technician, só o Bullet Punch (prioridade com STAB)
+    expect([c.contrary, c.roles.includes('setup')]).toEqual([['Leaf Storm'], true]);
+  });
+
+  it('antes e depois de megaevoluir; sem restrição de item conta com a megapedra que ele não segura', () => {
+    slot = 0;
+    const ty = n => T.types.indexOf(n);
+    const row = (name, types, stats, ab, sprite) => [name, types.map(ty), stats, [ab, ab, ab], 4, 0, null, sprite, 0, 'Mega Y', name, 0];
+    const TQ = { ...T, quetzal: { evolutions: {}, items: [null, 'Raichunite Y', 'Staraptite', 'Starminite'], species: {
+      1501: row('Raichu', ['electric'], [60, 85, 50, 130, 95, 140], 'No Guard', 1),
+      1502: [...row('Staraptor', ['fighting', 'flying'], [85, 140, 90, 100, 50, 110], 'Contrary', 2).slice(0, 9), 'Mega', 'Staraptor', 0],
+    } } };
+    const raichu = mon('Raichu', ['electric'], [60, 90, 55, 110, 80, 90], { ab: 'Lightning Rod', item: 'Raichunite Y', moves: [atk('Thunder', 'electric', 1), atk('Surf', 'water', 1)] });
+    const staraptor = mon('Staraptor', ['normal', 'flying'], [85, 120, 70, 100, 50, 60], { ab: 'Intimidate', moves: [atk('Close Combat', 'fighting'), atk('Brave Bird', 'flying')] });
+    const types = attackTypes(T);
+    const [r] = prepare([raichu], TQ);
+    expect(r.bf.ability.name).toBe('No Guard');
+    expect(r.def[types.indexOf('ground')]).toBe(1); // a mega continua fraca a Ground
+    expect(r.preImmune).toEqual(['electric']); // antes de megaevoluir, Lightning Rod anula Electric
+    expect(prepare([staraptor], TQ)).toHaveLength(1); // sem a pedra, só ele mesmo
+    const pool = prepare([staraptor], TQ, null, { anyItem: true });
+    expect(pool.map(e => e.given)).toEqual([null, 'Staraptite']); // Starminite é do Starmie
+    const mega = pool[1];
+    expect([mega.real, mega.bf.ability.name]).toEqual([staraptor, 'Contrary']);
+    expect(mega.roles).toEqual(expect.arrayContaining(['intimidação', 'setup'])); // Intimidate antes, Contrary depois
+  });
+
   it('golpes que aprende: quem aprende Trick Room abre o plano e a tela diz o que ensinar', () => {
     const trId = T.moves.findIndex(r => r && r[0] === 'Trick Room');
     const slowpoke = (sp, types) => mon(sp, types, [100, 120, 100, 90, 90, 30], { moves: [atk('A', types[0]), atk('B', types[types.length - 1], 1), atk('Earthquake', 'ground')] });

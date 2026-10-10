@@ -10,7 +10,7 @@
 
 import { strategyOf, rolesOf, weatherConflict, PRIORITY_MOVES, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, FIELD_MOVES } from '../ai/strategy.js';
 import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
-import { evolvedVersions, megaForm } from '../ai/evolve.js';
+import { evolvedVersions, megaForm, megaStonesFor } from '../ai/evolve.js';
 import { moveInfo } from '../parser/describe.js';
 import speciesData from '../data/species.json';
 
@@ -27,7 +27,7 @@ const BEAM = 24; // equipes parciais guardadas a cada vaga
 const CANDS = 110; // candidatos por plano (os melhores para ele)
 
 // Peso de cada papel (o primeiro membro com o papel conta; repetir não soma)
-const ROLE_W = { pivô: 5, prioridade: 5, recuperação: 4, 'controle de velocidade': 4, setup: 4, tanque: 3, hazards: 3, 'tira hazards': 3, status: 2, telas: 2 };
+const ROLE_W = { pivô: 5, prioridade: 5, recuperação: 4, 'controle de velocidade': 4, setup: 4, tanque: 3, intimidação: 3, hazards: 3, 'tira hazards': 3, status: 2, telas: 2 };
 const ROLES = Object.keys(ROLE_W);
 const KEY_ROLES = ['prioridade', 'recuperação', 'controle de velocidade', 'pivô'];
 
@@ -63,6 +63,57 @@ const STRONG_LOW = new Set(['Acrobatics', 'Weather Ball', 'Last Respects', 'Rage
   'Pin Missile', 'Tail Slap', 'Bone Rush', 'Dragon Darts', 'Twin Beam', 'Gear Grind', 'Dual Chop', 'Triple Dive', 'Water Shuriken',
   'Knock Off', 'Facade', 'Hex', 'Venoshock', 'Storm Throw', 'Grassy Glide', 'Stored Power', 'Power Trip', 'Brine', 'Payback',
   'Avalanche', 'Revenge', 'Stomping Tantrum', 'Lash Out', 'Rising Voltage', 'Expanding Force', 'Terrain Pulse']);
+
+// Habilidades que fortalecem golpes: Technician (poder 60 ou menos), Iron Fist (socos), Strong Jaw (mordidas)…
+// O golpe conta com o poder que tem com a habilidade (Bullet Punch no Scizor com Technician; Quick Attack com
+// Aerilate vira Flying). Os tipos de golpe vêm das listas abaixo.
+const PUNCH = new Set(['Bullet Punch', 'Mach Punch', 'Drain Punch', 'Ice Punch', 'Fire Punch', 'Thunder Punch', 'Shadow Punch', 'Mega Punch',
+  'Dynamic Punch', 'Focus Punch', 'Hammer Arm', 'Meteor Mash', 'Power-Up Punch', 'Sky Uppercut', 'Comet Punch', 'Dizzy Punch', 'Plasma Fists',
+  'Double Iron Bash', 'Jet Punch', 'Rage Fist', 'Surging Strikes', 'Wicked Blow', 'Headlong Rush', 'Ice Hammer']);
+const BITE = new Set(['Bite', 'Crunch', 'Fire Fang', 'Ice Fang', 'Thunder Fang', 'Poison Fang', 'Psychic Fangs', 'Hyper Fang', 'Jaw Lock', 'Fishious Rend']);
+const PULSE = new Set(['Water Pulse', 'Dark Pulse', 'Dragon Pulse', 'Aura Sphere', 'Origin Pulse', 'Terrain Pulse']);
+const SLICE = new Set(['Aerial Ace', 'Air Cutter', 'Air Slash', 'Aqua Cutter', 'Behemoth Blade', 'Bitter Blade', 'Ceaseless Edge', 'Cross Poison',
+  'Cut', 'Fury Cutter', 'Kowtow Cleave', 'Leaf Blade', 'Night Slash', 'Psycho Cut', 'Razor Leaf', 'Razor Shell', 'Sacred Sword', 'Secret Sword',
+  'Slash', 'Solar Blade', 'Stone Axe', 'X-Scissor', 'Population Bomb', 'Tachyon Cutter', 'Mighty Cleave', 'Psyblade']);
+const RECOIL = new Set(['Brave Bird', 'Double-Edge', 'Flare Blitz', 'Head Smash', 'Wood Hammer', 'Wild Charge', 'Take Down', 'Volt Tackle',
+  'Head Charge', 'Wave Crash', 'Submission', 'High Jump Kick', 'Jump Kick', 'Light of Ruin']);
+const SOUND = new Set(['Hyper Voice', 'Boomburst', 'Bug Buzz', 'Snarl', 'Overdrive', 'Clanging Scales', 'Sparkling Aria', 'Echoed Voice', 'Round',
+  'Disarming Voice', 'Psychic Noise', 'Torch Song', 'Alluring Voice']);
+const ATE = { Aerilate: 'flying', Pixilate: 'fairy', Refrigerate: 'ice', Galvanize: 'electric' };
+const TYPE_BOOST = { 'Water Bubble': ['water', 2], Steelworker: ['steel', 1.5], 'Steely Spirit': ['steel', 1.5], Transistor: ['electric', 1.3],
+  "Dragon's Maw": ['dragon', 1.5], 'Rocky Payload': ['rock', 1.5] };
+const MOVE_BOOST = { 'Iron Fist': [PUNCH, 1.2], 'Strong Jaw': [BITE, 1.5], 'Mega Launcher': [PULSE, 1.5], Sharpness: [SLICE, 1.5], Reckless: [RECOIL, 1.2],
+  'Punk Rock': [SOUND, 1.3] };
+// Com Contrary, golpes que baixam os próprios stats passam a subir: viram setup (Leaf Storm no Serperior)
+const DROP_MOVES = new Set(['Close Combat', 'Leaf Storm', 'Draco Meteor', 'Overheat', 'Superpower', 'V-create', 'Psycho Boost', 'Fleur Cannon',
+  'Make It Rain', 'Hammer Arm', 'Clanging Scales', 'Spin Out', 'Armor Cannon', 'Headlong Rush', 'Ice Hammer', 'Dragon Ascent']);
+// Papéis que vêm da habilidade
+const ABILITY_ROLES = { Intimidate: 'intimidação' };
+
+/** O golpe com a habilidade: tipo (Aerilate…) e poder (Technician…). `by` = a habilidade que mudou algo. */
+function withAbility(mv, ab, types) {
+  if (!damaging(mv) || !ab) return mv;
+  const p = mv.power || 0;
+  if (ATE[ab] && mv.type === 'normal') return { ...mv, type: ATE[ab], power: p * 1.2, by: ab };
+  let k = 1;
+  if (ab === 'Technician' && p > 0 && p <= 60) k = 1.5;
+  else if (MOVE_BOOST[ab] && MOVE_BOOST[ab][0].has(mv.name)) k = MOVE_BOOST[ab][1];
+  else if (TYPE_BOOST[ab] && TYPE_BOOST[ab][0] === mv.type) k = TYPE_BOOST[ab][1];
+  else if (ab === 'Adaptability' && types.includes(mv.type)) k = 4 / 3; // STAB 2× em vez de 1,5×
+  else if ((ab === 'Huge Power' || ab === 'Pure Power') && mv.category === 0) k = 2;
+  else if (ab === 'Hustle' && mv.category === 0) k = 1.5;
+  return k > 1 && p > 0 ? { ...mv, power: p * k, by: ab } : mv;
+}
+/** O melhor que o golpe fica com as habilidades do Pokémon (a da forma comum e a da mega). */
+function boostMove(mv, abs, types) {
+  let best = mv;
+  for (const ab of abs) {
+    const x = withAbility(mv, ab, types);
+    if (x !== mv && (x.power > (best.power || 0) || x.type !== best.type)) best = x;
+  }
+  return best;
+}
+
 const realMove = (mv, types) => damaging(mv) && (PRIORITY_MOVES.has(mv.name)
   ? types.includes(mv.type) || mv.power >= 70
   : !mv.power || mv.power >= 70 || STRONG_LOW.has(mv.name));
@@ -97,7 +148,7 @@ export function levelMoves(m, dex, T) {
  * contas que a nota usa, na forma de batalha (a mega, se segura a própria megapedra).
  * @param {object|null} [dex] golpes por nível da ROM (os que o Pokémon aprende também contam)
  */
-export function prepare(all, T, dex = null) {
+export function prepare(all, T, dex = null, { anyItem = false } = {}) {
   const types = attackTypes(T);
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
@@ -115,7 +166,14 @@ export function prepare(all, T, dex = null) {
     add(m);
     for (const e of evolvedVersions(m, T)) add(e);
   }
-  return [...best.values()].map((m, id) => {
+  const chosen = [...best.values()];
+  // Sem restrição de item: quem tem mega no jogo entra também segurando a megapedra (uma entrada por pedra)
+  if (anyItem) {
+    for (const m of [...chosen]) {
+      for (const stone of megaStonesFor(m, T)) if (stone !== (m.item && m.item.name)) chosen.push({ ...m, item: { id: null, name: stone, confidence: 'confirmado' }, stoneFrom: m });
+    }
+  }
+  return chosen.map((m, id) => {
     const known = new Set(m.moves.map(mv => mv.name));
     const learn = levelMoves(m, dex, T).filter(x => !known.has(x.name));
     return Object.assign(entry(m, megaForm(m, T) || m, T, types, mult, learn), { id });
@@ -129,34 +187,52 @@ export function prepare(all, T, dex = null) {
  */
 function entry(m, bf, T, types, mult, learn = []) {
   const b = bf.species.baseStats;
-  const moves = m.moves.filter(mv => realMove(mv, bf.species.types));
-  // Os golpes fracos ficam de fora das contas (cobertura, clima); os de efeito (Icy Wind, Nuzzle…) continuam
-  const useful = m.moves.filter(mv => !damaging(mv) || moves.includes(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
+  // Habilidades: a da forma de batalha (a mega) e, antes de megaevoluir, a da forma comum (Lightning Rod no Raichu,
+  // Intimidate no Staraptor): as duas contam
   const ab = bf.ability && bf.ability.name;
+  const abBase = m.ability && m.ability.name;
+  const abs = [...new Set([abBase, ab].filter(Boolean))];
+  const pairs = m.moves.map(mv => [mv, boostMove(mv, abs, bf.species.types)]);
+  const real = pairs.filter(([, x]) => realMove(x, bf.species.types));
+  const moves = real.map(([, x]) => x);
+  const boosted = real.filter(([o, x]) => x !== o).map(([, x]) => x);
+  const realSet = new Set(real.map(([o]) => o));
+  // Os golpes fracos ficam de fora das contas (cobertura, clima); os de efeito (Icy Wind, Nuzzle…) continuam
+  const useful = m.moves.filter(mv => !damaging(mv) || realSet.has(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
   // Defesa: 2 = 4×, 1 = 2×, 0 neutro, -1 resiste ou imune pelo tipo, -2 anula pela habilidade (Lightning Rod…)
+  const preImmune = abBase !== ab ? ABILITY_IMMUNE[abBase] || [] : [];
   const def = types.map(a => {
     if ((ABILITY_IMMUNE[ab] || []).includes(a)) return -2; // anula pela habilidade: entra no golpe no lugar dos outros
     const x = mult(a, bf.species.types) * ((ABILITY_HALVE[ab] || []).includes(a) ? 0.5 : 1);
-    return x >= 4 ? 2 : x > 1 ? 1 : x < 1 ? -1 : 0;
+    const d = x >= 4 ? 2 : x > 1 ? 1 : x < 1 ? -1 : 0;
+    // Antes de megaevoluir, a habilidade da forma comum ainda anula o tipo: conta como resistência
+    return preImmune.includes(a) ? Math.min(d, -1) : d;
   });
   // Cobertura: tipos (puros) que algum golpe de dano acerta em cheio
   let cov = 0;
   types.forEach((d, i) => { if (moves.some(mv => mult(mv.type, [d]) > 1)) cov |= 1 << i; });
   const roles = rolesOf({ ...m, moves: useful });
+  for (const a of abs) if (ABILITY_ROLES[a] && !roles.includes(ABILITY_ROLES[a])) roles.push(ABILITY_ROLES[a]);
+  const contrary = abs.includes('Contrary') ? m.moves.filter(mv => DROP_MOVES.has(mv.name)).map(mv => mv.name) : [];
+  if (contrary.length && !roles.includes('setup')) roles.push('setup');
   let roleMask = 0;
   ROLES.forEach((r, i) => { if (roles.includes(r)) roleMask |= 1 << i; });
   const phys = moves.filter(mv => mv.category === 0).length, spec = moves.length - phys;
   // Põe o campo sozinho, sem gastar turno (habilidade ou megapedra), ou só pelo golpe (Sunny Day…)
-  const auto = new Set([FIELD[ab], MEGA_FIELD[m.item && m.item.name]].filter(Boolean));
+  const auto = new Set([...abs.map(a => FIELD[a]), MEGA_FIELD[m.item && m.item.name]].filter(Boolean));
   // Aproveita de verdade: habilidade (Swift Swim, Chlorophyll…), megapedra ou golpe próprio do clima (Thunder,
   // Solar Beam…). Weather Ball e os golpes Fire/Water só ficam mais fortes: contam menos (e mais com STAB).
-  const strong = new Set([ABUSERS[ab], MEGA_ABUSERS[m.item && m.item.name]].filter(Boolean));
+  const strong = new Set([...abs.map(a => ABUSERS[a]), MEGA_ABUSERS[m.item && m.item.name]].filter(Boolean));
   for (const mv of useful) if (mv.name !== 'Weather Ball') for (const f of MOVE_ABUSERS[mv.name] || []) strong.add(f);
   const stab = new Set();
   for (const [f, w] of Object.entries(WEATHER)) if (bf.species.types.includes(w.boosts) && moves.some(mv => mv.type === w.boosts)) stab.add(f);
   // Quanto aproveita cada campo: habilidade de velocidade 16, outra habilidade ou megapedra 11, golpe do próprio
   // clima ou golpe com STAB fortalecido 6, outro golpe fortalecido (ou Weather Ball) 3
   const strat = strategyOf({ ...bf, moves: useful });
+  if (abBase !== ab) {
+    const pre = strategyOf({ ...m, moves: useful });
+    for (const k of ['set', 'use', 'boost']) for (const f of pre[k]) strat[k].add(f);
+  }
   // Golpes a ensinar: põem o campo (Trick Room, Rain Dance…), aproveitam (Thunder, Solar Beam…) ou dão um papel
   const teach = new Map(); // golpe → nível em que aprende
   const learnSet = new Set(), learnUse = new Set();
@@ -179,13 +255,14 @@ function entry(m, bf, T, types, mult, learn = []) {
   const value = {};
   for (const f of [...WEATHERS, ...TERRAINS]) {
     const sig = useful.some(mv => mv.name !== 'Weather Ball' && (MOVE_ABUSERS[mv.name] || []).includes(f));
-    value[f] = Math.max(ABUSERS[ab] === f ? (SPEED_ABILITIES.has(ab) ? 16 : 11) : 0, MEGA_ABUSERS[m.item && m.item.name] === f ? 11 : 0,
+    value[f] = Math.max(...abs.map(a => (ABUSERS[a] === f ? (SPEED_ABILITIES.has(a) ? 16 : 11) : 0)), MEGA_ABUSERS[m.item && m.item.name] === f ? 11 : 0,
       sig || stab.has(f) ? 6 : 0, learnUse.has(f) ? 5 : 0, strat.use.has(f) || strat.boost.has(f) ? 3 : 0);
   }
   const typeIdx = bf.species.types.map(ty => types.indexOf(ty)).filter(i => i >= 0);
   const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
-    m, bf, real: m.evolvedFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask,
+    m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask,
+    given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary,
     learnSet, learnUse, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
@@ -376,17 +453,17 @@ export function planHolds(team, plan) {
  * Equipes para todos os planos do save, da melhor nota para a pior, sem repetir a mesma equipe.
  * @param {object[]} all Pokémon do save (equipe + PC)
  * @param {object} T tabelas do jogo
- * @param {{ want?: object[], dex?: object|null, noLegends?: boolean }} [opts] Pokémon que o jogador quer na equipe
- *   (do save), os golpes por nível da ROM (os que aprendem também contam) e se deixa de fora lendários e míticos
- *   (menos os que o jogador pediu)
+ * @param {{ want?: object[], dex?: object|null, noLegends?: boolean, anyItem?: boolean }} [opts] Pokémon que o jogador
+ *   quer na equipe (do save), os golpes por nível da ROM (os que aprendem também contam), se deixa de fora lendários e
+ *   míticos (menos os que o jogador pediu) e se conta com megapedras que o Pokémon ainda não segura
  */
-export function buildTeams(all, T, { want = [], dex = null, noLegends = false } = {}) {
+export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false } = {}) {
   const types = attackTypes(T);
   if (noLegends) {
     const asked = new Set(want.map(speciesKey));
     all = all.filter(m => !isLegendary(m) || asked.has(speciesKey(m)));
   }
-  const pool = prepare(all, T, dex);
+  const pool = prepare(all, T, dex, { anyItem });
   for (const e of pool) {
     e.conflictBy = {};
     for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.bf, f, T);
