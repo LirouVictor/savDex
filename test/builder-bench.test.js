@@ -1,5 +1,8 @@
 // Comparação do montador de equipes com os saves reais (opcional; não roda no `npm test` normal).
 // Uso: BUILDER_BENCH=1 BENCH_OUT=/caminho/saida.json npx vitest run test/builder-bench.test.js
+// Opcionais: BENCH_STAT_MODEL (um de STAT_MODELS em build.js; padrão 'bst') e BENCH_TIERS (JSON { id do Showdown:
+// { nat, sv } } com os tiers competitivos, tirado do formats-data do Pokémon Showdown; não versionado), para a média
+// de tier dos membros como medida externa
 // Saves: os de fixtures/ (não versionados) e, se existir, o de BENCH_USER_SAVE. Para cada save e plano mede a nota
 // e as partes, a pior fraqueza em comum, a cobertura real (contra os dois tipos dos Pokémon com stats base 450+),
 // o trabalho pendente (evoluir, ensinar, nível), a diversidade entre as equipes, o tempo e quanto uma busca local
@@ -21,6 +24,9 @@ import * as B from '../src/builder/build.js';
 import { MAX_MEGAS } from '../src/ai/prompt.js';
 
 const RUN = !!process.env.BUILDER_BENCH;
+// Opcional: tiers competitivos por espécie ({ id do Showdown: { nat, sv } }), só como medida externa nas comparações
+const TIERS = process.env.BENCH_TIERS && existsSync(process.env.BENCH_TIERS) ? JSON.parse(readFileSync(process.env.BENCH_TIERS, 'utf8')) : null;
+const sdId = m => String((m.species && (m.species.showdown || m.species.name)) || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const FILES = ['quetzal-7ins.sav', 'quetzal-en.sav', 'quetzal-en2.sav', 'unbound-a.sav', 'unbound-c.sav', 'soulgold-b.sav', 'emerald.sav', 'hgss.duc', 'b2w2.duc'];
 const r1 = x => Math.round(x * 10) / 10;
 const popc = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
@@ -64,6 +70,11 @@ function localGain(team, pool, plan, types, opts) {
   return gain;
 }
 
+function avgTier(team, k) {
+  const v = team.map(e => TIERS[sdId(e.m)]).filter(x => x && x[k] !== null && x[k] !== undefined).map(x => x[k]);
+  return v.length ? { avg: Math.round(100 * v.reduce((a, b) => a + b, 0) / v.length) / 100, n: v.length } : null;
+}
+
 function teamMetrics(team, plan, T, types, refLevel, opts) {
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const eff = (a, ds) => ds.reduce((x, d) => x * (idx.has(d) && idx.has(a) ? T.typechart[idx.get(a)][idx.get(d)] : 1), 1);
@@ -85,6 +96,10 @@ function teamMetrics(team, plan, T, types, refLevel, opts) {
     evolve: team.filter(e => e.m.evolvedFrom).length, teach: team.reduce((x, e) => x + (e.teachAtk || []).length, 0),
     belowLevel: team.filter(e => (e.real.level || 0) < refLevel - 15).length,
     legends: team.filter(e => B.isLegendary(e.m)).length, megas: team.filter(e => e.mega).length,
+    bst: Math.round(team.reduce((x, e) => x + e.bst, 0) / team.length),
+    // Ataque que os golpes dele não usam, em % dos stats base (o Dragonite só com golpes especiais desperdiça o Ataque)
+    waste: Math.round(100 * team.reduce((x, e) => { const b = e.bf.species.baseStats; const n = (e.nPhys || 0) + (e.nSpec || 0); const unused = !n ? Math.min(b[1], b[3]) : (e.nPhys ? 0 : b[1]) + (e.nSpec ? 0 : b[3]); return x + unused / e.bst; }, 0) / team.length),
+    tierNat: TIERS ? avgTier(team, 'nat') : null, tierSv: TIERS ? avgTier(team, 'sv') : null,
   };
 }
 
@@ -103,11 +118,11 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
       const types = B.attackTypes(T);
       const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
-      const opts = { dex, ...extra };
+      const opts = { dex, ...extra, statModel: process.env.BENCH_STAT_MODEL || 'bst' };
       const t0 = performance.now();
       const teams = B.buildTeams(all, T, opts);
       const ms = Math.round(performance.now() - t0);
-      const pool = teams.pool || B.prepare(all, T, dex, extra);
+      const pool = teams.pool || B.prepare(all, T, dex, { ...extra, statModel: opts.statModel });
       const rows = [];
       for (const r of teams) {
         setFlags(r.team, r.plan);
@@ -125,7 +140,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       res.push(save);
       // A equipe do jogador como referência (o time de chuva do autor guiou os pesos)
       if (name === 'user.sav' && mode === 'train') {
-        const pp = B.prepare(all, T, dex, extra);
+        const pp = B.prepare(all, T, dex, { ...extra, statModel: opts.statModel });
         const team = d.party.map(m => pp.find(e => e.real === m)).filter(Boolean);
         const plan = B.plans(pp).find(x => x.field === 'chuva');
         if (plan) {

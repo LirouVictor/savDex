@@ -68,6 +68,30 @@ const TEACH_ATK = 3;
 // de preparo ainda entra se compensar
 const READY = { evolve: 6, teach: 5, stone: 3, perLevels: 5, maxLevels: 10 };
 
+// Valor dos stats base na parte "Pokémon" da nota. 'bst' (padrão): o total. Os outros só existem para o teste de
+// comparação (test/builder-bench.test.js), que mede o efeito de cada um nos saves reais antes de qualquer troca:
+// 'half500': metade do valor acima de 500; 'useful': sem o stat de ataque que os golpes dele não usam;
+// 'bulk': como 'useful', com HP × defesas combinados (defesa alta com HP baixo vale menos)
+export const STAT_MODELS = ['bst', 'half500', 'useful', 'bulk', 'role'];
+const SUPPORT_ROLES = ['recuperação', 'status', 'hazards', 'telas', 'tanque'];
+function statValue(e, model) {
+  const [hp, atk, def, spa, spd, spe] = e.bf.species.baseStats;
+  if (model === 'half500') return (Math.min(e.bst, 500) - 350) / 12 + Math.max(0, e.bst - 500) / 24;
+  if (model === 'useful' || model === 'bulk' || model === 'role') {
+    // O ataque que os golpes de dano usam (os dois, na proporção dos golpes); sem golpe de dano, o maior
+    const n = e.nPhys + e.nSpec;
+    const used = n ? (e.nPhys * atk + e.nSpec * spa) / n : Math.max(atk, spa);
+    if (model === 'useful') return (hp + def + spd + spe + used - 290) / 10;
+    const bulk = Math.sqrt(hp * (def + spd) / 2);
+    const attacker = (used + spe + 3 * bulk - 290) / 10;
+    if (model === 'bulk') return attacker;
+    // 'role': quem tem papel de apoio (recuperação, status, hazards, telas, tanque) também vale pela resistência
+    if (!e.roles.some(r => SUPPORT_ROLES.includes(r))) return attacker;
+    return Math.max(attacker, (4 * bulk + 0.5 * used + 0.5 * spe - 290) / 10);
+  }
+  return (e.bst - 350) / 12; // 300 → −4, 450 → +8, 600 → +21
+}
+
 /** Quanto falta para o Pokémon estar pronto, em pontos da nota (parte "Preparo"). */
 function readyCost(e, ready, refLevel) {
   if (!ready) return TEACH_ATK * e.teachAtk.length;
@@ -172,7 +196,7 @@ export function levelMoves(m, dex, T) {
  * contas que a nota usa, na forma de batalha (a mega, se segura a própria megapedra).
  * @param {object|null} [dex] golpes por nível da ROM (os que o Pokémon aprende também contam)
  */
-export function prepare(all, T, dex = null, { anyItem = false } = {}) {
+export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst' } = {}) {
   const types = attackTypes(T);
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
@@ -203,9 +227,11 @@ export function prepare(all, T, dex = null, { anyItem = false } = {}) {
     const mf = megaForm(m, T);
     const e = Object.assign(entry(m, mf || m, T, types, mult, learn), { id });
     e.cost = readyCost(e, false, 0);
+    e.statVal = statValue(e, statModel);
     // A forma comum de quem segura a megapedra: com duas megas na equipe, só uma megaevolui por batalha, e a outra
     // luta assim (habilidade, tipos e stats da forma comum)
     if (mf) e.base = Object.assign(entry(m, m, T, types, mult, learn), { id, real: e.real, key: e.key, given: e.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: e.cost });
+    if (mf) e.base.statVal = statValue(e.base, statModel);
     return e;
   });
 }
@@ -321,7 +347,7 @@ function entry(m, bf, T, types, mult, learn = []) {
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
     strat, auto, strong, core, wball, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
-    lean: b[1] >= b[3] ? (phys ? 'phys' : spec ? 'spec' : '') : (spec ? 'spec' : phys ? 'phys' : ''),
+    lean: b[1] >= b[3] ? (phys ? 'phys' : spec ? 'spec' : '') : (spec ? 'spec' : phys ? 'phys' : ''), nPhys: phys, nSpec: spec,
     mega: isMegaStone(m.item), megaKnown: bf !== m,
   };
 }
@@ -421,7 +447,7 @@ function partsOf(team, plan, types) {
   let phys = 0, spec = 0, fast = 0, slow = 0, megas = 0, gains = [];
   const typeCount = new Int8Array(types.length);
   for (const e of team) {
-    p.members += (e.bst - 350) / 12 - e.bad; // 300 → −4, 450 → +8, 600 → +21
+    p.members += e.statVal - e.bad; // stats base (statValue): 300 → −4, 450 → +8, 600 → +21
     // A megaevolução sobe os stats (já contados na forma mega, quando o app a conhece); só uma por batalha
     if (e.mega) { if (e.megaKnown) gains.push(e.megaGain); else p.members += megas ? 3 : 8; megas++; }
     if (e.dmg < 2) p.members -= 6 * (2 - e.dmg); // sem golpes de dano que contam, ele não segura uma batalha
@@ -472,7 +498,7 @@ function allowed(team, e, plan) {
 
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
 function solo(e, plan) {
-  let v = (e.bst - 350) / 12 - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - e.cost;
+  let v = e.statVal - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - e.cost;
   if (plan.field && plan.kind !== 'room') {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
     v += (e.value[plan.field] || 0) * 1.2;
@@ -554,13 +580,13 @@ export function planHolds(team, plan) {
  *   lendários e míticos (menos os que o jogador pediu), se conta com megapedras que o Pokémon ainda não segura e o modo
  *   "Prontos para usar" (o trabalho que falta pesa mais; senão, "Posso treinar")
  */
-export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false } = {}) {
+export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst' } = {}) {
   const types = attackTypes(T);
   if (noLegends) {
     const asked = new Set(want.map(speciesKey));
     all = all.filter(m => !isLegendary(m) || asked.has(speciesKey(m)));
   }
-  const pool = prepare(all, T, dex, { anyItem });
+  const pool = prepare(all, T, dex, { anyItem, statModel });
   // Modo "Prontos para usar": nível de referência = o do 6º Pokémon mais forte do save (a equipe que ele já tem)
   if (ready) {
     const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
