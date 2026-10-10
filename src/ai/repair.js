@@ -5,6 +5,7 @@
 
 import { isMegaStone, strategyOf, speciesKey } from './prompt.js';
 import { benefits, teamWeathers, weatherConflict, WEATHER } from './strategy.js';
+import { evolvedVersions } from './evolve.js';
 
 /** Candidatos testados (os que resistem aos tipos problemáticos, de maior total de stats base). */
 const CANDIDATES = 40;
@@ -68,8 +69,10 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
 
   const out = team.map((m, i) => i).filter(i => !keep.has(team[i]));
   const inTeam = new Set(team.map(speciesKey));
-  const cands = pool
-    .filter(m => !inTeam.has(speciesKey(m)) && m.species.types.length)
+  // Quem ainda não evoluiu também entra contando com a forma evoluída (a tela avisa "evolua")
+  const real = m => m.evolvedFrom || m;
+  const cands = pool.flatMap(m => [m, ...evolvedVersions(m, T)])
+    .filter(m => !inTeam.has(speciesKey(m)) && !team.includes(real(m)) && m.species.types.length)
     .filter(m => !weathers.some(f => weatherConflict(m, f, T)))
     .filter(m => problem.some(ty => mult(ty, m.species.types) < 1) && !problem.some(ty => mult(ty, m.species.types) > 1))
     .map(m => [m, problem.filter(ty => mult(ty, m.species.types) < 1).length * 100 + bst(m)])
@@ -79,7 +82,7 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
   let best = null;
   const consider = (removed, added) => {
     const next = team.map((m, i) => (removed.includes(i) ? added[removed.indexOf(i)] : m));
-    if (added.length === 2 && speciesKey(added[0]) === speciesKey(added[1])) return;
+    if (added.length === 2 && (speciesKey(added[0]) === speciesKey(added[1]) || real(added[0]) === real(added[1]))) return;
     if (added.some(m => isMegaStone(m.item)) && next.filter(m => isMegaStone(m.item)).length > 1) return;
     const score = [excess(next), added.length,
       removed.filter((i, k) => lean(team[i]) !== lean(added[k])).length,

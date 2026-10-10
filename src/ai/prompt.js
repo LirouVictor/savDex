@@ -535,7 +535,8 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES, { free = nu
 export function refinePrompt(team, T, note = '', { dex = null, game = null, swaps = [], free = null } = {}) {
   const issues = buildIssues(team, T);
   const wishLine = wish(note);
-  const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })).join('; ');
+  const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })
+    + (s.in.evolvedFrom ? ` (${t('evolua {from} para {to}', { from: s.in.evolvedFrom.species.name, to: s.in.species.name })})` : '')).join('; ');
   return [
     t('Esta é a equipe escolhida. Não troque membros: escreva o resumo da estratégia, pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).'),
     ...(swaps.length ? [t('O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.', { list: swapped })] : []),

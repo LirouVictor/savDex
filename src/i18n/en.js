@@ -748,6 +748,9 @@ export default {
   // Conserto da equipe montada (app)
   'troca do app': 'app swap',
   'Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.': 'Took the place of {ref}: resists the types that hit many members.',
+  'Evolua {from} para {to}: a conta é com a forma evoluída.': 'Evolve {from} into {to}: the math uses the evolved form.',
+  'Evolua: hoje é {name}{lv}': 'Evolve: currently {name}{lv}',
+  'evolua {from} para {to}': 'evolve {from} into {to}',
   '{out} saiu e {in} entrou': '{out} left and {in} joined',
   'O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.':
     'The app swapped members of the previous choice so that no type hits 3 or more super effectively ({list}): write for the team as it is now.',

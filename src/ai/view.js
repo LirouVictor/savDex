@@ -124,15 +124,19 @@ export function analysisView(r, byRef, model, opts = null) {
 }
 
 export function buildView(r, byRef, model, T, opts = null) {
-  const mons = r.membros.map(x => byRef.get(x.ref));
+  // Quem o app contou já evoluído (conserto da equipe) aparece com a forma evoluída e o aviso "evolua"
+  const evolved = (opts && opts.evolved) || new Map();
+  const mons = r.membros.map(x => evolved.get(x.ref) || byRef.get(x.ref));
   const cards = r.membros.map((x, i) => {
     const m = mons[i];
+    const from = m && m.evolvedFrom;
     return `<li><button class="ai-member${typeClass(m)}" type="button" data-ref="${esc(x.ref)}" aria-label="${esc(t('Ver {name}', { name: monShort(m) }))}">
       <span class="ai-member-art">${sprite(m, 80)}<span class="ai-num">${i + 1}</span></span>
       <span class="ai-member-body">
         ${x.papel ? `<span class="ai-role">${esc(x.papel)}</span>` : ''}
         <b class="ai-member-name">${monShort(m)}</b>
         <small>${esc(where(m))}</small>
+        ${from ? `<small class="ai-evolve">${esc(t('Evolua: hoje é {name}{lv}', { name: from.species.name, lv: from.level ? ` (${t('Nv.')} ${from.level})` : '' }))}</small>` : ''}
         ${typeChips(m.species.types)}
         <span class="ai-why">${rich(x.motivo, byRef)}</span>
       </span>
@@ -144,7 +148,8 @@ export function buildView(r, byRef, model, T, opts = null) {
   const gap = levelGap(mons);
   const check = mons.length ? warn + bullets([...teamFacts(mons, T).split('\n'), ...(gap ? [gap] : [])], byRef) : '';
   // Trocas feitas pelo app (critério que a IA furou): quem saiu, quem entrou e como ficaram os tipos
-  const fixed = r.fix ? `<p class="ai-fix"><b>${t('Ajuste do app:')}</b> ${r.fix.swaps.map(s => t('{out} saiu, {in} entrou', { out: `<b>${monShort(s.out)}</b>`, in: `<b>${monShort(s.in)}</b>` })).join('; ')}.
+  const fixed = r.fix ? `<p class="ai-fix"><b>${t('Ajuste do app:')}</b> ${r.fix.swaps.map(s => t('{out} saiu, {in} entrou', { out: `<b>${monShort(s.out)}</b>`, in: `<b>${monShort(s.in)}</b>` })
+      + (s.in.evolvedFrom ? ` (${esc(t('evolua {from} para {to}', { from: s.in.evolvedFrom.species.name, to: s.in.species.name }))})` : '')).join('; ')}.
     ${t('Membros fracos a cada tipo: {list}.', { list: r.fix.counts.map(c => `${esc(c.type[0].toUpperCase() + c.type.slice(1))} ${c.before} → ${c.after}`).join(', ') })}</p>` : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}${checksHtml(x, byRef, opts && { ...opts, T })}</li>`).join('')}</ol>` : '';

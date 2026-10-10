@@ -679,6 +679,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-role { justify-self: start; padding: 2px 6px; font: .62rem/1.4 var(--pixel); text-transform: uppercase; background: var(--accent); color: var(--accent-ink); }
 .ai-member-name { font-size: 1.02rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-member-body small { color: var(--muted); font-size: .78rem; }
+.ai-member-body .ai-evolve { color: var(--accent-2); font-weight: 600; }
 .ai-why { font-size: .88rem; line-height: 1.4; }
 .ai-foot { font-size: .8rem; }
 /* Confirmação antes de enviar à IA */

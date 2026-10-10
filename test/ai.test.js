@@ -718,6 +718,36 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(fix.counts.map(c => c.type)).not.toContain('water');
   });
 
+  it('conserto conta com a forma evoluída de quem ainda não evoluiu e avisa "evolua" (jogos com evoluções da ROM)', () => {
+    const L = (sp, slot, types, base, level, o) => Object.assign(S(sp, slot, types, base, o), { level });
+    const team = [
+      L('Charizard', 21, ['fire', 'flying'], [78, 84, 78, 109, 85, 100], 93, { ab: 'Solar Power', item: 'Charizardite Y', moves: [['Solar Beam', 'grass', 1, 120]] }),
+      L('Blaziken', 22, ['fire', 'fighting'], [80, 120, 70, 110, 70, 80], 92, { moves: [['Flare Blitz', 'fire', 0, 120]] }),
+      L('Arcanine', 23, ['fire', 'rock'], [95, 115, 80, 95, 80, 90], 100, { moves: [['Flare Blitz', 'fire', 0, 120]] }),
+      L('Torkoal', 24, ['fire'], [70, 85, 140, 85, 70, 20], 30, { ab: 'White Smoke', moves: [['Lava Plume', 'fire', 1, 80]] }),
+      L('Ceruledge', 25, ['fire', 'ghost'], [75, 125, 80, 60, 100, 85], 29, { moves: [['Flame Charge', 'fire', 0, 50]] }),
+      L('Corviknight', 26, ['flying', 'steel'], [98, 87, 105, 53, 85, 67], 100, { moves: [['Brave Bird', 'flying', 0, 120]] }),
+    ];
+    // Golett (622, Ground/Ghost, Nv. 10) evolui para Golurk (623) pela tabela "da ROM" (aqui, de mentira)
+    const golett = Object.assign(mon({ sp: 'Golett', id: 622, box: 2, slot: 1, types: ['ground', 'ghost'], base: [59, 74, 50, 35, 50, 35], ab: 'Iron Fist', moves: [['Shadow Punch', 'ghost', 0, 60]] }),
+      { level: 10, ability: { num: 0, name: 'Iron Fist' } });
+    const TQ = { ...T, quetzal: { evolutions: { 622: [[4, 43, 623]] }, species: {} } };
+    const fix = repairTeam(team, [...team, golett], TQ);
+    const inn = fix.swaps.map(x => x.in).find(m => m.evolvedFrom);
+    expect(inn.species.name).toBe('Golurk');
+    expect(inn.evolvedFrom).toBe(golett);
+    expect(inn.level).toBe(10); // o nível continua o do Pokémon real
+    // Sem a tabela de evoluções (jogos oficiais), nada muda
+    expect((repairTeam(team, [...team, golett], T) || { swaps: [] }).swaps.some(x => x.in.evolvedFrom)).toBe(false);
+    // A tela mostra a forma evoluída com o aviso; o detalhe continua o Pokémon real
+    const ref = refOf(golett);
+    const html = buildView({ nome: 'Sol', resumo: '', pontos_fortes: [], pontos_fracos: [], dicas: [], membros: [{ ref, papel: 'troca do app', motivo: '' }], fix, dropped: [] },
+      new Map([[ref, golett]]), 'Gemini', TQ, { evolved: new Map([[ref, inn]]) });
+    expect(html).toContain('Evolua: hoje é Golett (Nv. 10)');
+    expect(html).toContain('(evolua Golett para Golurk)');
+    expect(refinePrompt(fix.team, TQ, '', { swaps: fix.swaps })).toContain('evolua Golett para Golurk');
+  });
+
   it('pedido: planos de referência, função de cada membro e Tera no Quetzal', () => {
     const b = buildPrompt([tork, zard, venu, corv, swam, pel], T);
     expect(b).toContain('Escolha UM plano');
