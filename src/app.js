@@ -335,6 +335,10 @@ function setupBuilder(out) {
     bOut.innerHTML = mod.resultsHtml(state.builder.results, i, T);
     if (!state.persist) bOut.querySelector('[data-ai-save]')?.remove();
   };
+  // Preparo (posso treinar / prontos para usar): a escolha fica neste aparelho
+  const readySel = $('#builder-ready');
+  try { if (localStorage.getItem('builder-ready') === 'ready') readySel.value = 'ready'; } catch { /* sem armazenamento */ }
+  readySel.addEventListener('change', () => { try { if (readySel.value === 'ready') localStorage.setItem('builder-ready', 'ready'); else localStorage.removeItem('builder-ready'); } catch { /* sem armazenamento */ } });
   // As caixas do montador (sem lendários; sem restrição de item): a escolha fica neste aparelho
   for (const [id, key] of [['#builder-nolegend', 'builder-nolegend'], ['#builder-anyitem', 'builder-anyitem']]) {
     const box = $(id);
@@ -352,8 +356,8 @@ function setupBuilder(out) {
       const game = state.data.game;
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
-      const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked;
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem }), i: 0 };
+      const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
@@ -367,6 +371,18 @@ function setupBuilder(out) {
     if (!cur) return;
     const tab = e.target.closest('[data-plan]');
     if (tab) { show(+tab.dataset.plan); return; }
+    // Alternativas do plano: só calcula quando o jogador pede (no celular, a busca de cada plano leva alguns segundos)
+    const more = e.target.closest('[data-more]');
+    if (more) {
+      const b = state.builder, i = b.i;
+      more.disabled = true;
+      more.innerHTML = `${t('Procurando outras opções')}<span class="dots" aria-hidden="true"></span>`;
+      await new Promise(r => setTimeout(r, 30)); // deixa a espera aparecer antes das contas
+      if (state.builder !== b) return; // montou de novo enquanto isso
+      const k = mod.moreOptions(b.results, i, T);
+      show(k >= 0 ? k : i);
+      return;
+    }
     const card = e.target.closest('[data-ref]');
     if (card) { const m = cur.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
     const copy = e.target.closest('[data-ai-copy]');

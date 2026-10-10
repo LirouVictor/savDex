@@ -375,6 +375,11 @@ export function builderWin(d) {
     <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.')}</p>
     <label class="ai-label" for="builder-note">${t('Quero na equipe (opcional)')}</label>
     <input id="builder-note" class="ai-input" type="text" maxlength="200" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario')}">
+    <label class="ai-label" for="builder-ready">${t('Preparo')}</label>
+    <select id="builder-ready" class="ai-input">
+      <option value="train">${t('Posso treinar: conta o que dá para conseguir evoluindo e ensinando golpes')}</option>
+      <option value="ready">${t('Prontos para usar: prefere quem já está pronto (o resto ainda entra, se compensar)')}</option>
+    </select>
     <label class="ai-skip"><input type="checkbox" id="builder-nolegend"> ${t('Sem lendários e míticos (menos os que você pedir acima)')}</label>
     ${megas ? `<label class="ai-skip"><input type="checkbox" id="builder-anyitem"> ${t('Sem restrição de item: conta com a megapedra de quem tem mega, mesmo sem ela')}</label>` : ''}
     <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>

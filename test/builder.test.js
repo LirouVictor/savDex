@@ -1,8 +1,8 @@
 import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
-import { buildTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
+import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
 import { megaForm } from '../src/ai/evolve.js';
-import { runBuilder, resultsHtml, wantedMons } from '../src/builder/index.js';
+import { runBuilder, moreOptions, resultsHtml, shownParts, wantedMons } from '../src/builder/index.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
 let slot = 0;
@@ -201,6 +201,145 @@ suite('Montador de equipes (sem IA)', () => {
     expect(e.teachAtk.map(x => x.name)).toEqual(['Brave Bird']); // do próprio tipo e físico, como ele ataca
     expect(e.dmg).toBe(2);
     expect(prepare([staraptor], T)[0].dmg).toBe(1); // sem a tabela, só o que ele sabe
+  });
+
+  it('duas megas: só uma megaevolui por batalha (o Lightning Rod do Raichu vale quando quem megaevolui é o Golisopod)', () => {
+    slot = 0;
+    const ty = n => T.types.indexOf(n);
+    const row = (name, types, stats, ab, form) => [name, types.map(ty), stats, [ab, ab, ab], 4, 0, null, 1, 0, form, name, 0];
+    const TQ = { ...T, quetzal: { evolutions: {}, items: [null, 'Raichunite Y', 'Golisopite'], species: {
+      1501: row('Raichu', ['electric'], [60, 85, 50, 130, 95, 140], 'No Guard', 'Mega Y'),
+      1502: row('Golisopod', ['bug', 'steel'], [75, 150, 175, 70, 120, 40], 'Tough Claws', 'Mega'),
+    } } };
+    const team = (golisopite) => {
+      slot = 0;
+      return [
+        mon('Pelipper', ['water', 'flying'], [60, 50, 100, 95, 70, 65], { ab: 'Drizzle', moves: [atk('Hurricane', 'flying', 1), atk('Scald', 'water', 1)] }),
+        mon('Golisopod', ['bug', 'water'], [75, 125, 140, 60, 90, 40], { ab: 'Emergency Exit', item: golisopite ? 'Golisopite' : 'Leftovers', moves: [atk('First Impression', 'bug'), atk('Liquidation', 'water')] }),
+        mon('Basculegion', ['water', 'ghost'], [120, 112, 65, 80, 75, 78], { ab: 'Adaptability', moves: [atk('Wave Crash', 'water'), atk('Shadow Claw', 'ghost')] }),
+        mon('Corviknight', ['flying', 'steel'], [98, 87, 105, 53, 85, 67], { moves: [atk('Brave Bird', 'flying'), atk('Body Press', 'fighting')] }),
+        mon('Raichu', ['electric'], [60, 90, 55, 90, 80, 110], { ab: 'Lightning Rod', item: 'Raichunite Y', moves: [atk('Thunder', 'electric', 1), atk('Surf', 'water', 1)] }),
+        mon('Rillaboom', ['grass'], [100, 125, 90, 60, 70, 85], { moves: [atk('Wood Hammer', 'grass'), atk('Knock Off', 'dark')] }),
+      ];
+    };
+    const types = attackTypes(T);
+    const elec = types.indexOf('electric');
+    const plan = { kind: 'weather', field: 'chuva', setters: [] };
+    const two = prepare(team(true), TQ), one = prepare(team(false), TQ);
+    expect(two.filter(e => e.mega).length).toBe(2);
+    // Só o Raichu megaevolui: Electric acerta 4 em cheio (o Golisopod comum é Bug/Water) e o Raichu Mega só resiste
+    expect(one.filter(e => e.def[elec] > 0).length).toBe(4);
+    const pTwo = scoreParts(two, plan, types), pOne = scoreParts(one, plan, types);
+    // Com o Golisopod como opção de mega, o Raichu fica com Lightning Rod: a defesa contra Electric melhora
+    expect(pTwo.defense).toBeGreaterThan(pOne.defense);
+    // Os stats contam a média dos cenários (um de cada vez), não as duas megas juntas
+    const both = two.reduce((x, e) => x + (e.bst - 350) / 12, 0);
+    expect(pTwo.members).toBeLessThan(both);
+  });
+
+  it('plano só com sinergia real: Rain Dance + golpes Water não basta; Drizzle + STAB ou quem aproveita pela habilidade, sim', () => {
+    slot = 0;
+    const filler = () => [mon('Snorlax', ['normal'], [160, 110, 65, 65, 110, 30], { moves: [atk('Body Slam', 'normal'), atk('Earthquake', 'ground')] })];
+    const pika = () => mon('Pikachu', ['electric'], [35, 55, 40, 50, 50, 90], { ab: 'Lightning Rod', moves: [['Rain Dance', 'water', 2, 0], atk('Thunderbolt', 'electric', 1)] });
+    const lapras = () => mon('Lapras', ['water', 'ice'], [130, 85, 80, 85, 95, 60], { ab: 'Water Absorb', moves: [atk('Surf', 'water', 1), atk('Ice Beam', 'ice', 1)] });
+    const blastoise = () => mon('Blastoise', ['water'], [79, 83, 100, 85, 105, 78], { ab: 'Torrent', moves: [atk('Hydro Pump', 'water', 1), atk('Ice Beam', 'ice', 1)] });
+    const fields = list => plans(prepare(list, T)).map(p => p.field);
+    expect(fields([pika(), lapras(), blastoise(), ...filler()])).not.toContain('chuva'); // só Rain Dance + golpes Water
+    const pelipper = mon('Pelipper', ['water', 'flying'], [60, 50, 100, 95, 70, 65], { ab: 'Drizzle', moves: [atk('Hurricane', 'flying', 1), atk('Scald', 'water', 1)] });
+    expect(fields([pelipper, lapras(), blastoise(), ...filler()])).toContain('chuva'); // Drizzle: STAB Water conta
+    const kingdra = mon('Kingdra', ['water', 'dragon'], [75, 95, 95, 95, 95, 85], { ab: 'Swift Swim', moves: [atk('Hydro Pump', 'water', 1), atk('Draco Meteor', 'dragon', 1)] });
+    const zapdos = mon('Zapdos', ['electric', 'flying'], [90, 90, 85, 125, 90, 100], { moves: [atk('Thunder', 'electric', 1), atk('Hurricane', 'flying', 1)] });
+    expect(fields([pika(), kingdra, zapdos, ...filler()])).toContain('chuva'); // Rain Dance + Swift Swim e Thunder
+  });
+
+  it('Trick Room de verdade: quem põe e mais 3 lentos que atacam', () => {
+    slot = 0;
+    const setter = () => mon('Oranguru', ['normal', 'psychic'], [90, 60, 80, 90, 110, 60], { moves: [['Trick Room', 'psychic', 2, 0], atk('Psychic', 'psychic', 1)] });
+    const slow = n => mon(n, ['ground'], [100, 120, 100, 60, 80, 30], { moves: [atk('Earthquake', 'ground'), atk('Rock Slide', 'rock')] });
+    const has = list => plans(prepare(list, T)).some(p => p.kind === 'room');
+    expect(has([setter(), slow('Golem'), slow('Rhyperior')])).toBe(false);
+    expect(has([setter(), slow('Golem'), slow('Rhyperior'), slow('Hippowdon')])).toBe(true);
+  });
+
+  it('modos: "Posso treinar" dá a nota de sempre; "Prontos para usar" pesa o nível que falta', () => {
+    const lowKingdra = () => pool().map(m => (m.species.name === 'Kingdra' ? { ...m, level: 5 } : m));
+    const rain = rs => rs.find(r => r.plan.field === 'chuva');
+    const train = rain(buildTeams(lowKingdra(), T));
+    const ready = rain(buildTeams(lowKingdra(), T, { ready: true }));
+    expect(scoreParts(train.team, train.plan, attackTypes(T)).ready).toBe(0); // ninguém precisa ensinar golpe
+    expect(names(train)).toContain('Kingdra');
+    expect(names(ready)).not.toContain('Kingdra'); // Nv. 5 contra os outros no 50: no modo pronto, sai
+  });
+
+  it('alternativas por plano (sob demanda): no máximo 3 membros iguais e nota perto da melhor', () => {
+    const rs = buildTeams(pool(), T);
+    expect(rs.some(x => x.alt)).toBe(false); // a busca inicial só faz a melhor de cada plano
+    const keys = new Set(rs.map(r => r.team.map(e => e.id).sort().join()));
+    let found = 0;
+    for (const first of rs) {
+      const alts = altTeams(rs, first);
+      alts.forEach((r, k) => {
+        expect(r.alt).toBe(k + 1);
+        expect(r.plan).toBe(first.plan);
+        expect(planHolds(r.team, r.plan)).toBe(true);
+        for (const other of [first, ...alts.slice(0, k)]) expect(r.team.filter(e => other.team.some(f => f.real === e.real)).length).toBeLessThanOrEqual(3);
+        expect(r.score).toBeGreaterThanOrEqual(first.score * 0.9);
+        expect(keys.has(r.team.map(e => e.id).sort().join())).toBe(false); // não repete uma equipe já mostrada
+      });
+      found += alts.length;
+    }
+    expect(found).toBeGreaterThan(0);
+  });
+
+  it('tela: as partes mostradas somam a nota no plano de sol com quem é fraco ao Fire (Venusaur)', () => {
+    // O Venusaur aproveita o sol (Chlorophyll) mas é fraco ao Fire, que o sol fortalece: entra com pena de 4 na parte
+    // "Plano". As partes eram calculadas depois da busca do último plano (equilibrada, sem a pena) e somavam 4 a mais
+    const rs = runBuilder(pool(), T);
+    const sun = rs.find(r => r.plan.field === 'sol');
+    expect(sun.team.map(m => m.species.name)).toContain('Venusaur');
+    expect(sun.src.team.some(e => e.conflictBy.sol === 'weak' && e.strong.has('sol'))).toBe(true); // o caso da pena
+    for (const r of rs) {
+      const { total, ...parts } = r.parts;
+      expect(total).toBeCloseTo(r.score, 9);
+      expect(Object.values(parts).reduce((a, b) => a + b, 0)).toBeCloseTo(r.score, 9);
+    }
+    // As alternativas pedidas depois também (a busca delas marca as flags do plano de novo)
+    for (let i = rs.length - 1; i >= 0; i--) moreOptions(rs, i, T);
+    for (const r of rs) expect(r.parts.total).toBeCloseTo(r.score, 9);
+    // Na tela: a linha "Nota N: Defesa … · Ataque …" soma N (as partes são arredondadas juntas, não uma a uma)
+    rs.forEach((r, i) => {
+      const line = resultsHtml(rs, i, T).match(/builder-score">([^<]*)</)[1];
+      const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
+      expect(nota).toBe(Math.round(r.score));
+      expect(parts).toHaveLength(7);
+      expect(parts.reduce((a, b) => a + b, 0)).toBe(nota);
+    });
+  });
+
+  it('partes na tela: arredondadas juntas somam a nota (42,5 e 4,5 não viram 43 e 5)', () => {
+    const parts = { defense: -2, offense: 42.5, roles: 22, members: 130.83, balance: 1.5, plan: 38, ready: 0 };
+    const score = Object.values(parts).reduce((a, b) => a + b, 0); // 232,83 → 233
+    const shown = shownParts(parts, score);
+    expect(Object.values(shown).reduce((a, b) => a + b, 0)).toBe(233);
+    for (const k of Object.keys(parts)) expect(Math.abs(shown[k] - parts[k])).toBeLessThan(1);
+    const neg = { defense: -6.5, offense: 40, roles: 13, members: -4.5, balance: 0, plan: 0, ready: -3 }; // 39 (arredondando cada uma: 40)
+    const sn = shownParts(neg, 39);
+    expect(Object.values(sn).reduce((a, b) => a + b, 0)).toBe(39);
+    for (const k of Object.keys(neg)) expect(Math.abs(sn[k] - neg[k])).toBeLessThan(1);
+  });
+
+  it('tela: o botão pede as alternativas do plano e elas entram logo depois da melhor', () => {
+    const rs = runBuilder(pool(), T);
+    const n = rs.length;
+    expect(resultsHtml(rs, 0, T)).toContain('data-more');
+    const k = moreOptions(rs, 0, T);
+    expect(k).toBe(1);
+    expect(rs.length).toBeGreaterThan(n);
+    expect(rs[1].plan).toBe(rs[0].plan);
+    expect(rs[1].name).toContain('opção 2');
+    expect(resultsHtml(rs, 0, T)).not.toContain('data-more'); // já pediu
+    expect(resultsHtml(rs, 1, T)).not.toContain('data-more');
+    expect(moreOptions(rs, 0, T)).toBe(-1); // não busca de novo
   });
 
   it('golpes que aprende: quem aprende Trick Room abre o plano e a tela diz o que ensinar', () => {
