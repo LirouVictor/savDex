@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, attackTypes, sets } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets } from './build.js';
 import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
@@ -217,7 +217,7 @@ const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'
 export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false } = {}) {
   const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready });
   const types = attackTypes(T);
-  const results = raw.map(res => describeTeam(res, types));
+  const results = raw.map(res => describeTeam(res, types, raw.pool));
   Object.defineProperty(results, 'raw', { value: raw });
   return results;
 }
@@ -230,15 +230,18 @@ export function moreOptions(results, i, T) {
   const main = results[i];
   if (!main || main.alt || main.alts) return -1;
   const types = attackTypes(T);
-  const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types));
+  const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types, results.raw.pool));
   main.alts = { count: alts.length };
   if (!alts.length) return -1;
   results.splice(i + 1, 0, ...alts);
   return i + 1;
 }
 
-function describeTeam(res, types) {
+function describeTeam(res, types, pool) {
   const { plan, team } = res;
+  // As partes com as marcas do plano desta equipe (quem atrapalha o clima ou é fraco ao tipo que ele fortalece), como
+  // na busca: sem isso valiam as do último plano buscado, e as partes não somavam a nota
+  setPlanFlags(pool, plan);
   const membros = team.map(e => describeMember(e, team, plan, types));
   const { good, bad } = teamPoints(team, plan, types);
   const r = {
@@ -257,12 +260,30 @@ function describeTeam(res, types) {
   };
 }
 
+/**
+ * As partes arredondadas para a tela, somando a nota mostrada (arredondar cada uma sozinha dava 1 a mais ou a menos:
+ * 42,5 + 4,5 viravam 43 + 5): cada parte fica com o valor inteiro de baixo, e o que falta vai para as de maior fração.
+ */
+export function shownParts(parts, score) {
+  const keys = PARTS.map(([k]) => k);
+  const out = Object.fromEntries(keys.map(k => [k, Math.floor(parts[k])]));
+  let left = Math.round(score) - keys.reduce((a, k) => a + out[k], 0);
+  const order = [...keys].sort((a, b) => (parts[b] - out[b]) - (parts[a] - out[a]));
+  for (let i = 0; left !== 0 && i < 2 * keys.length; i++) {
+    const k = left > 0 ? order[i % keys.length] : order[keys.length - 1 - (i % keys.length)];
+    out[k] += left > 0 ? 1 : -1;
+    left += left > 0 ? -1 : 1;
+  }
+  return out;
+}
+
 /** Abas (uma por plano) e a equipe escolhida. */
 export function resultsHtml(results, i, T) {
   if (!results.length) return `<p class="hint">${t('Não deu para montar uma equipe de 6 com os Pokémon deste save.')}</p>`;
   const cur = results[i] || results[0];
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
-  const parts = PARTS.map(([k, label]) => `${t(label)} ${Math.round(cur.parts[k]) > 0 ? '+' : ''}${Math.round(cur.parts[k])}`).join(' · ');
+  const shown = shownParts(cur.parts, cur.score);
+  const parts = PARTS.map(([k, label]) => `${t(label)} ${shown[k] > 0 ? '+' : ''}${shown[k]}`).join(' · ');
   // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`

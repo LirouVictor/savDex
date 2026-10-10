@@ -2,7 +2,7 @@ import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
 import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
 import { megaForm } from '../src/ai/evolve.js';
-import { runBuilder, moreOptions, resultsHtml, wantedMons } from '../src/builder/index.js';
+import { runBuilder, moreOptions, resultsHtml, shownParts, wantedMons } from '../src/builder/index.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
 let slot = 0;
@@ -289,6 +289,43 @@ suite('Montador de equipes (sem IA)', () => {
       found += alts.length;
     }
     expect(found).toBeGreaterThan(0);
+  });
+
+  it('tela: as partes mostradas somam a nota no plano de sol com quem é fraco ao Fire (Venusaur)', () => {
+    // O Venusaur aproveita o sol (Chlorophyll) mas é fraco ao Fire, que o sol fortalece: entra com pena de 4 na parte
+    // "Plano". As partes eram calculadas depois da busca do último plano (equilibrada, sem a pena) e somavam 4 a mais
+    const rs = runBuilder(pool(), T);
+    const sun = rs.find(r => r.plan.field === 'sol');
+    expect(sun.team.map(m => m.species.name)).toContain('Venusaur');
+    expect(sun.src.team.some(e => e.conflictBy.sol === 'weak' && e.strong.has('sol'))).toBe(true); // o caso da pena
+    for (const r of rs) {
+      const { total, ...parts } = r.parts;
+      expect(total).toBeCloseTo(r.score, 9);
+      expect(Object.values(parts).reduce((a, b) => a + b, 0)).toBeCloseTo(r.score, 9);
+    }
+    // As alternativas pedidas depois também (a busca delas marca as flags do plano de novo)
+    for (let i = rs.length - 1; i >= 0; i--) moreOptions(rs, i, T);
+    for (const r of rs) expect(r.parts.total).toBeCloseTo(r.score, 9);
+    // Na tela: a linha "Nota N: Defesa … · Ataque …" soma N (as partes são arredondadas juntas, não uma a uma)
+    rs.forEach((r, i) => {
+      const line = resultsHtml(rs, i, T).match(/builder-score">([^<]*)</)[1];
+      const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
+      expect(nota).toBe(Math.round(r.score));
+      expect(parts).toHaveLength(7);
+      expect(parts.reduce((a, b) => a + b, 0)).toBe(nota);
+    });
+  });
+
+  it('partes na tela: arredondadas juntas somam a nota (42,5 e 4,5 não viram 43 e 5)', () => {
+    const parts = { defense: -2, offense: 42.5, roles: 22, members: 130.83, balance: 1.5, plan: 38, ready: 0 };
+    const score = Object.values(parts).reduce((a, b) => a + b, 0); // 232,83 → 233
+    const shown = shownParts(parts, score);
+    expect(Object.values(shown).reduce((a, b) => a + b, 0)).toBe(233);
+    for (const k of Object.keys(parts)) expect(Math.abs(shown[k] - parts[k])).toBeLessThan(1);
+    const neg = { defense: -6.5, offense: 40, roles: 13, members: -4.5, balance: 0, plan: 0, ready: -3 }; // 39 (arredondando cada uma: 40)
+    const sn = shownParts(neg, 39);
+    expect(Object.values(sn).reduce((a, b) => a + b, 0)).toBe(39);
+    for (const k of Object.keys(neg)) expect(Math.abs(sn[k] - neg[k])).toBeLessThan(1);
   });
 
   it('tela: o botão pede as alternativas do plano e elas entram logo depois da melhor', () => {
