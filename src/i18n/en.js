@@ -449,6 +449,9 @@ export default {
   'Velocidade base (maior primeiro): {list}.': 'Base Speed (highest first): {list}.',
   'Tipos repetidos: {list}.': 'Repeated types: {list}.',
   'Megapedras: {list} (só uma megaevolução por batalha).': 'Mega Stones: {list} (only one Mega Evolution per battle).',
+  'Megapedras: {list} (só uma megaevolução por batalha: megaevolua {ref}, que põe {field} para a equipe, e troque as outras megapedras por outro item).':
+    'Mega Stones: {list} (only one Mega Evolution per battle: Mega Evolve {ref}, which sets {field} for the team, and swap the other Mega Stones for another item).',
+  'com {field}, cai pela metade': 'halved in {field}',
   'Põem clima/terreno/Trick Room: {list}.': 'Set weather/terrain/Trick Room: {list}.',
   'Alertas de sinergia: {list}.': 'Synergy warnings: {list}.',
   'Papéis': 'Roles',
@@ -524,6 +527,7 @@ export default {
   'põem {list}': 'set by {list}',
   'Pistas de estratégia (habilidades, golpes e megapedras dos disponíveis; a mais forte primeiro):': 'Strategy hints (abilities, moves and Mega Stones of the available ones; strongest first):',
   'aproveitam ({n}): {list}': 'abused by ({n}): {list}',
+  'golpes {type} 1,5× mais fortes ({n}): {list}': '{type} moves 1.5× stronger ({n}): {list}',
   'o clima corta a fraqueza a {type} de {list}': 'the weather cuts the {type} weakness of {list}',
   'seguram o que ameaça o clima: {list}': 'handle what threatens the weather: {list}',
   'lentos que aproveitam ({n}): {list}': 'slow ones that benefit ({n}): {list}',
@@ -744,6 +748,9 @@ export default {
   // Conserto da equipe montada (app)
   'troca do app': 'app swap',
   'Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.': 'Took the place of {ref}: resists the types that hit many members.',
+  'Evolua {from} para {to}: a conta é com a forma evoluída.': 'Evolve {from} into {to}: the math uses the evolved form.',
+  'Evolua: hoje é {name}{lv}': 'Evolve: currently {name}{lv}',
+  'evolua {from} para {to}': 'evolve {from} into {to}',
   '{out} saiu e {in} entrou': '{out} left and {in} joined',
   'O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.':
     'The app swapped members of the previous choice so that no type hits 3 or more super effectively ({list}): write for the team as it is now.',

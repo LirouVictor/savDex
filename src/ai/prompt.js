@@ -5,7 +5,7 @@ import { STAT_LABEL, SHOWDOWN_ORDER } from '../export.js';
 import { analyzeTeam } from '../analysis.js';
 import { moveInfo } from '../parser/describe.js';
 import { t } from '../i18n.js';
-import { strategyOf as fieldsOf, strategyReport, rolesOf, synergyWarnings } from './strategy.js';
+import { strategyOf as fieldsOf, strategyReport, rolesOf, synergyWarnings, halvedTypes, benefits, MEGA_FIELD } from './strategy.js';
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
 /** Limite de candidatos enviados (ver buildPool e analysisPool para quem entra). */
@@ -252,7 +252,9 @@ const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 export function teamFacts(party, T) {
   const a = analyzeTeam(party, { types: T.types, chart: T.typechart });
   const count = r => t('{weak} fracos, {resist} resistem/imunes', { weak: r.weak.length, resist: r.resist.length + r.immune.length });
-  const alert = a.defense.filter(r => r.alert).map(r => `${cap(r.type)} (${count(r)})`);
+  // Fraqueza que o clima da equipe corta pela metade (Water no sol): aparece, com a observação
+  const halved = halvedTypes(party);
+  const alert = a.defense.filter(r => r.alert).map(r => `${cap(r.type)} (${count(r)}${halved.has(r.type) ? '; ' + t('com {field}, cai pela metade', { field: t(halved.get(r.type)) }) : ''})`);
   const uncovered = a.defense.filter(r => r.weak.length && !r.resist.length && !r.immune.length && !r.alert).map(r => `${cap(r.type)} (${count(r)})`);
   const dmg = party.flatMap(m => m.moves).filter(mv => mv.category === 0 || mv.category === 1);
   const status = party.flatMap(m => m.moves).filter(mv => mv.category === 2).length;
@@ -262,6 +264,7 @@ export function teamFacts(party, T) {
   const speed = party.filter(m => m.species.baseStats).sort((x, y) => y.species.baseStats[SPE] - x.species.baseStats[SPE])
     .map(m => `${refOf(m)} ${m.species.baseStats[SPE]}`);
   const megas = party.filter(m => isMegaStone(m.item)).map(m => `${refOf(m)} (${m.item.name})`);
+  const mega = megaPick(party);
   const field = party.map(m => [m, [...fieldsOf(m).set]]).filter(([, f]) => f.length).map(([m, f]) => `${refOf(m)} (${f.map(x => t(x)).join(', ')})`);
   const synergy = synergyWarnings(party, T, refOf);
   const none = t('nenhum');
@@ -272,16 +275,32 @@ export function teamFacts(party, T) {
     t('Golpes de dano: {phys} físicos, {spec} especiais; {status} de status.', { phys: dmg.filter(mv => mv.category === 0).length, spec: dmg.filter(mv => mv.category === 1).length, status }),
     t('Velocidade base (maior primeiro): {list}.', { list: speed.join(', ') || none }),
     t('Tipos repetidos: {list}.', { list: repeated.join(', ') || none }),
-    t('Megapedras: {list} (só uma megaevolução por batalha).', { list: megas.join(', ') || none }),
+    mega
+      ? t('Megapedras: {list} (só uma megaevolução por batalha: megaevolua {ref}, que põe {field} para a equipe, e troque as outras megapedras por outro item).', { list: megas.join(', '), ref: refOf(mega.m), field: t(mega.field) })
+      : t('Megapedras: {list} (só uma megaevolução por batalha).', { list: megas.join(', ') || none }),
     t('Põem clima/terreno/Trick Room: {list}.', { list: field.join(', ') || none }),
     t('Alertas de sinergia: {list}.', { list: synergy.join('; ') || none }),
   ].join('\n');
 }
 
+/**
+ * Com 2 ou mais megapedras: a que põe o clima que a equipe aproveita é a que deve megaevoluir
+ * (Charizardite Y num time de sol). null se não há essa escolha óbvia.
+ */
+export function megaPick(team) {
+  const megas = team.filter(m => isMegaStone(m.item));
+  if (megas.length < 2) return null;
+  const roles = team.map(m => fieldsOf(m));
+  const m = megas.find(x => MEGA_FIELD[x.item.name] && roles.some(r => benefits(r, MEGA_FIELD[x.item.name])));
+  return m ? { m, field: MEGA_FIELD[m.item.name] } : null;
+}
+
 /** Critérios fixos da montagem que a equipe sugerida não cumpre (conferidos pelo app, não pela IA). */
 export function buildIssues(team, T) {
   const a = analyzeTeam(team, { types: T.types, chart: T.typechart });
-  const out = a.defense.filter(r => r.weak.length >= 3)
+  // Fraqueza que o clima da equipe corta pela metade (Water no sol, Fire na chuva) não fura o critério
+  const halved = halvedTypes(team);
+  const out = a.defense.filter(r => r.weak.length >= 3 && !halved.has(r.type))
     .map(r => t('{type} acerta {n} membros em cheio (o pedido era nenhum tipo acertando 3 ou mais).', { type: cap(r.type), n: r.weak.length }));
   const megas = team.filter(m => isMegaStone(m.item)).length;
   if (megas > 1) out.push(t('{n} Pokémon com megapedra (o pedido era no máximo um).', { n: megas }));
@@ -516,7 +535,8 @@ export function buildPrompt(all, T, note = '', max = MAX_CANDIDATES, { free = nu
 export function refinePrompt(team, T, note = '', { dex = null, game = null, swaps = [], free = null } = {}) {
   const issues = buildIssues(team, T);
   const wishLine = wish(note);
-  const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })).join('; ');
+  const swapped = swaps.map(s => t('{out} saiu e {in} entrou', { out: refOf(s.out), in: refOf(s.in) })
+    + (s.in.evolvedFrom ? ` (${t('evolua {from} para {to}', { from: s.in.evolvedFrom.species.name, to: s.in.species.name })})` : '')).join('; ');
   return [
     t('Esta é a equipe escolhida. Não troque membros: escreva o resumo da estratégia, pontos fortes, pontos fracos e dicas para ELA, usando os cálculos do app abaixo (fonte de verdade).'),
     ...(swaps.length ? [t('O app trocou membros da escolha anterior para nenhum tipo acertar 3 ou mais em cheio ({list}): escreva para a equipe como ela está agora.', { list: swapped })] : []),

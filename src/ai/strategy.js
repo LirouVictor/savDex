@@ -37,16 +37,23 @@ export const MEGA_FIELD = { 'Charizardite Y': 'sol', Tyranitarite: 'tempestade d
 export const MEGA_ABUSERS = { Houndoominite: 'sol', Swampertite: 'chuva', Garchompite: 'tempestade de areia' };
 
 // O que cada clima fortalece e enfraquece (dano dos golpes desse tipo, dos dois lados)
-const WEATHER = { sol: { boosts: 'fire', weakens: 'water' }, chuva: { boosts: 'water', weakens: 'fire' } };
+export const WEATHER = { sol: { boosts: 'fire', weakens: 'water' }, chuva: { boosts: 'water', weakens: 'fire' } };
 // Habilidades que seguram o que ameaça o clima (absorvem o tipo que costuma bater nos membros)
 const ANSWERS = {
   chuva: ['Lightning Rod', 'Volt Absorb', 'Motor Drive', 'Sap Sipper'],
   sol: ['Storm Drain', 'Water Absorb', 'Flash Fire'],
 };
 
-/** Põe e aproveita clima, terreno ou Trick Room: habilidade (e as trocáveis no modo livre), golpe ou megapedra. */
+const damaging = mv => mv.category === 0 || mv.category === 1;
+
+/**
+ * Põe e aproveita clima, terreno ou Trick Room: habilidade (e as trocáveis no modo livre), golpe ou megapedra.
+ * `boost`: climas que deixam 1,5× mais forte algum golpe de dano dele (golpe Fire no sol, Water na chuva). Fica
+ * separado de `use` para a seleção dos candidatos não encher de atacantes Fire/Water; conta como "aproveita"
+ * nas contas da equipe (alertas de sinergia, quem sustenta o clima).
+ */
 export function strategyOf(m, alts = []) {
-  const set = new Set(), use = new Set();
+  const set = new Set(), use = new Set(), boost = new Set();
   for (const ab of [m.ability && m.ability.name, ...alts]) {
     if (ab && FIELD[ab]) set.add(FIELD[ab]);
     if (ab && ABUSERS[ab]) use.add(ABUSERS[ab]);
@@ -58,8 +65,23 @@ export function strategyOf(m, alts = []) {
     if (FIELD_MOVES[mv.name]) set.add(FIELD_MOVES[mv.name]);
     if (mv.name === 'Trick Room') set.add('Trick Room');
     for (const f of MOVE_ABUSERS[mv.name] || []) use.add(f);
+    for (const [f, w] of Object.entries(WEATHER)) if (damaging(mv) && mv.type === w.boosts) boost.add(f);
   }
-  return { set, use };
+  return { set, use, boost };
+}
+
+/** Aproveita o campo: pela habilidade, golpe ou megapedra, ou por ter golpe que o clima fortalece. */
+export const benefits = (r, f) => r.use.has(f) || r.boost.has(f);
+
+/** Climas que a equipe põe e algum membro aproveita (o plano dela). */
+export function teamWeathers(team, roles = team.map(m => strategyOf(m))) {
+  const set = new Set(roles.flatMap(r => [...r.set]).filter(f => WEATHER[f]));
+  return [...set].filter(f => roles.some(r => benefits(r, f)));
+}
+
+/** Tipos cujo dano o clima da equipe corta pela metade (Water no sol, Fire na chuva): tipo → clima. */
+export function halvedTypes(team, roles) {
+  return new Map(teamWeathers(team, roles).map(f => [WEATHER[f].weakens, f]));
 }
 
 // Papéis pelos golpes (nomes dos golpes em inglês, como no save)
@@ -93,6 +115,18 @@ export function rolesOf(m) {
     if (b[0] + b[2] + b[4] >= 270 && Math.max(b[1], b[3]) <= 105) roles.add('tanque');
   }
   return [...roles];
+}
+
+/**
+ * O Pokémon atrapalha o clima `f` da equipe: tem a fraqueza que o clima fortalece, ou é do tipo que o clima
+ * enfraquece e tem golpe de dano desse tipo (fora os que o próprio clima ajuda, como Hydro Steam no sol).
+ */
+export function weatherConflict(m, f, T, idx = new Map(T.types.map((ty, i) => [ty, i]))) {
+  const w = WEATHER[f];
+  if (!w) return null;
+  if (isWeak(T, idx, w.boosts, m.species.types)) return 'weak';
+  if (m.species.types.includes(w.weakens) && m.moves.some(mv => damaging(mv) && mv.type === w.weakens && !(MOVE_ABUSERS[mv.name] || []).includes(f))) return 'moves';
+  return null;
 }
 
 const isWeak = (T, idx, atk, types) => types.length && types.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1) > 1;
@@ -129,9 +163,13 @@ export function strategyReport(pool, T, ref, altsOf = () => []) {
     }
   }
   const out = [...fields].filter(([, x]) => x.set.length).sort((a, b) => b[1].use.size - a[1].use.size).map(([f, x]) => {
-    const parts = [t('põem {list}', { list: x.set.join(', ') }),
-      x.use.size ? t('aproveitam ({n}): {list}', { n: x.use.size, list: names([...x.use], ([m, why]) => `${ref(m)} (${why})`) }) : t('ninguém aproveita (habilidade ou golpe)')];
     const w = WEATHER[f];
+    // Atacantes com golpe que o clima fortalece (1,5×), além dos que aproveitam pela habilidade ou golpe próprio
+    const boosted = w ? pool.filter(m => !x.use.has(m) && m.moves.some(mv => damaging(mv) && mv.type === w.boosts)) : [];
+    const parts = [t('põem {list}', { list: x.set.join(', ') })];
+    if (x.use.size) parts.push(t('aproveitam ({n}): {list}', { n: x.use.size, list: names([...x.use], ([m, why]) => `${ref(m)} (${why})`) }));
+    if (boosted.length) parts.push(t('golpes {type} 1,5× mais fortes ({n}): {list}', { type: cap(w.boosts), n: boosted.length, list: names(boosted, ref) }));
+    if (!x.use.size && !boosted.length) parts.push(t('ninguém aproveita (habilidade ou golpe)'));
     if (w) {
       const covered = pool.filter(m => isWeak(T, idx, w.weakens, m.species.types));
       if (covered.length) parts.push(t('o clima corta a fraqueza a {type} de {list}', { type: cap(w.weakens), list: names(covered, ref, 6) }));
@@ -162,14 +200,13 @@ export function synergyWarnings(team, T, ref) {
   if (onTeam.length > 1) out.push(t('climas diferentes na mesma equipe ({list}): um apaga o outro', { list: onTeam.map(f => t(f)).join(', ') }));
   for (const [f, setters] of set) {
     if (f === 'Trick Room') continue;
-    const users = team.filter((m, i) => roles[i].use.has(f));
+    const users = team.filter((m, i) => benefits(roles[i], f));
     if (users.length < 2) out.push(t('{who} põe {field}, mas só {n} membro(s) aproveita(m)', { who: setters.map(ref).join(', '), field: t(f), n: users.length }));
     const w = WEATHER[f];
     if (w) {
-      const hurt = team.filter(m => isWeak(T, idx, w.boosts, m.species.types));
+      const hurt = team.filter(m => weatherConflict(m, f, T, idx) === 'weak');
       if (hurt.length) out.push(t('com {field}, {type} fica mais forte, e é fraqueza de {list}', { field: t(f), type: cap(w.boosts), list: hurt.map(ref).join(', ') }));
-      const weakened = mv => mv.type === w.weakens && (mv.category === 0 || mv.category === 1) && !(MOVE_ABUSERS[mv.name] || []).includes(f);
-      const lose = team.filter(m => m.species.types.includes(w.weakens) && m.moves.some(weakened));
+      const lose = team.filter(m => weatherConflict(m, f, T, idx) === 'moves');
       if (lose.length) out.push(t('com {field}, golpes {type} perdem metade da força: {list}', { field: t(f), type: cap(w.weakens), list: lose.map(ref).join(', ') }));
     }
   }

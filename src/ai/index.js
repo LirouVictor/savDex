@@ -40,6 +40,8 @@ export function confirmHtml(prep) {
 }
 
 const isLite = m => /lite/i.test(m || '');
+/** Membros que o app contou já evoluídos (conserto da equipe): referência → a forma evoluída. */
+const evolvedRefs = team => new Map(team.filter(m => m && m.evolvedFrom).map(m => [refOf(m), m]));
 
 /**
  * Envia o pedido preparado e devolve a tela do resultado.
@@ -67,7 +69,8 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
     team = fix.team;
     for (const s of fix.swaps) {
       const x = r.membros.find(m => m.ref === refOf(s.out));
-      Object.assign(x, { ref: refOf(s.in), papel: t('troca do app'), motivo: t('Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.', { ref: refOf(s.out) }) });
+      Object.assign(x, { ref: refOf(s.in), papel: t('troca do app'), motivo: t('Entrou no lugar de {ref}: resiste aos tipos que acertavam muitos membros.', { ref: refOf(s.out) })
+        + (s.in.evolvedFrom ? ' ' + t('Evolua {from} para {to}: a conta é com a forma evoluída.', { from: s.in.evolvedFrom.species.name, to: s.in.species.name }) : '') });
     }
     r.fix = fix;
   }
@@ -86,7 +89,7 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
       console.warn(e); // fica com os pontos e dicas da primeira etapa
     }
   }
-  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite, liteWhy }), byRef, team, name: r.nome };
+  return { html: buildView(r, byRef, `${P.service} (${models.join(' + ')})`, T, { dex, refine, lite, liteWhy, evolved: evolvedRefs(team) }), byRef, team, name: r.nome };
 }
 
 /** Prepara e envia direto (sem confirmação). */

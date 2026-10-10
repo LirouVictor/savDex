@@ -12,6 +12,7 @@ export const NEWS = [
       'Quetzal: corrigida a contagem de insígnias, que podia mostrar uma a mais (7 num save com 6). Agora é a mesma da tela do jogo, conferida no emulador com vários saves.',
       'O ícone da Pokédex voltou a aparecer no card do treinador.',
       'Assistente (Gemini): quando a cota grátis do dia acaba, o app passa sozinho para um modelo Lite, que tem cota própria, e avisa na resposta. Antes, ele só pedia para esperar um minuto.',
+      'Assistente: em times de clima, golpes Fire contam como quem aproveita o sol (e Water, a chuva); a fraqueza a Water num time de sol (ou a Fire num de chuva) não conta mais como problema, porque o clima corta pela metade; o ajuste do app não coloca quem atrapalha o clima e, no Quetzal, no Unbound e no SoulGold, conta com a forma evoluída de quem ainda não evoluiu, avisando “evolua”; e, com duas megapedras, o app diz para megaevoluir a que põe o clima.',
       'Assistente: a montagem de equipe agora parte de um plano (clima ou terreno, Trick Room, ofensivo com setup ou equilibrado) e dá uma função a cada membro. O app calcula os papéis de cada Pokémon (pivô, setup, prioridade, tanque…), quem põe e quem aproveita cada clima (inclusive pela megapedra, como o Mega Charizard Y), quem o clima protege e avisa quando algo atrapalha (ex.: um membro fraco a Fire num time de sol). No Quetzal, as dicas podem sugerir o tipo Tera.',
     ],
     en: [
@@ -19,6 +20,7 @@ export const NEWS = [
       'Quetzal: fixed the badge count, which could show one too many (7 on a save with 6). It now matches the game’s screen, checked in the emulator with several saves.',
       'The Pokédex icon shows on the trainer card again.',
       'Assistant (Gemini): when the daily free quota runs out, the app switches on its own to a Lite model, which has its own quota, and says so in the answer. Before, it only asked you to wait a minute.',
+      'Assistant: on weather teams, Fire moves count as benefiting from sun (and Water moves from rain); a Water weakness on a sun team (or Fire on a rain team) no longer counts as a problem, since the weather halves it; the app’s adjustment no longer brings in members that hurt the weather and, in Quetzal, Unbound and SoulGold, counts the evolved form of members that haven’t evolved yet, with an “evolve” note; and with two Mega Stones, the app says to Mega Evolve the one that sets the weather.',
       'Assistant: team building now starts from a plan (weather or terrain, Trick Room, setup offense or balance) and gives each member a function. The app works out each Pokémon’s roles (pivot, setup, priority, tank…), who sets and who abuses each weather (Mega Stones included, like Mega Charizard Y), who the weather protects, and warns when something gets in the way (e.g. a Fire-weak member on a sun team). In Quetzal, the tips can suggest a Tera type.',
     ],
   },
