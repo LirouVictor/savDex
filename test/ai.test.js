@@ -6,7 +6,7 @@ import { abilityAlts, freeAbilityMode, strategyOf } from '../src/ai/prompt.js';
 import { rolesOf, synergyWarnings } from '../src/ai/strategy.js';
 import * as groq from '../src/ai/groq.js';
 import { provider, providerId, setProviderId } from '../src/ai/providers.js';
-import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel } from '../src/ai/gemini.js';
+import { generateJSON, errorMessage, pickModel, listFlashModels, fallbackOrder, setModel, getModel, quotaKind, resetQuota } from '../src/ai/gemini.js';
 import { analysisView, buildView, rich } from '../src/ai/view.js';
 import T from '../src/data/tables.js';
 
@@ -298,6 +298,14 @@ suite('IA: montagem em duas etapas', () => {
     expect(res.html).toContain('Ver o texto do segundo envio');
     expect(res.html).toContain('veio de um modelo mais leve (gemini-x-lite)');
     expect(res.html).toContain('Gemini (gemini-x + gemini-x-lite)');
+    expect(res.html).toContain('estava sobrecarregado');
+    // Cota do dia esgotada: o aviso diz isso, não sobrecarga
+    let n = 0;
+    const Q = { service: 'Gemini', generateJSON: async () => (++n === 1 ? { data: first, model: 'gemini-x-lite', fallback: 'quota' }
+      : { data: { pontos_fortes: ['f'], pontos_fracos: ['w'], dicas: ['d'] }, model: 'gemini-x-lite', fallback: 'quota' }) };
+    const q = await sendAi(prep(Q));
+    expect(q.html).toContain('A cota grátis de hoje do modelo escolhido acabou: a resposta veio de um modelo mais leve (gemini-x-lite)');
+    expect(q.html).not.toContain('sobrecarregado');
     expect(res.team.map(refOf)).toEqual(['E1', 'C1-4']);
   });
   it('se a segunda etapa falhar, ficam os pontos e as dicas da primeira', async () => {
@@ -370,7 +378,7 @@ suite('IA: cliente do Gemini', () => {
     };
     const r = await generateJSON({ system: 's', prompt: 'p', schema: {}, key: 'K', model: 'gemini-flash-latest', fetchImpl, sleep: () => Promise.resolve() });
     expect(r.model).toBe('gemini-2.5-flash');
-    expect(r.fallback).toBe(true); // a tela avisa quando a resposta veio de um modelo lite por sobrecarga
+    expect(r.fallback).toBe('overload'); // a tela avisa quando a resposta veio de um modelo lite por sobrecarga
     expect(calls).toEqual(['models/gemini-flash-latest:generateContent', 'models/gemini-flash-latest:generateContent', 'models?pageSize=200', 'models/gemini-2.5-flash:generateContent']);
     expect(getModel()).toBe('gemini-flash-latest');
   });
@@ -392,6 +400,47 @@ suite('IA: cliente do Gemini', () => {
       : json(503, { error: { code: 503, message: 'The model is overloaded.' } });
     await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'm', fetchImpl, sleep: () => Promise.resolve() }))
       .rejects.toMatchObject({ code: 'server', message: expect.stringContaining('503: The model is overloaded.') });
+  });
+  // Erro 429 como o Google manda: QuotaFailure com o quotaId da cota que acabou
+  const quota429 = (id, model) => json(429, { error: { code: 429, status: 'RESOURCE_EXHAUSTED', message: `Quota exceeded for metric: generate_content_free_tier_requests, model: ${model}`,
+    details: [{ '@type': 'type.googleapis.com/google.rpc.QuotaFailure', violations: [{ quotaId: id, quotaDimensions: { model } }] }, { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '25s' }] } });
+  const flashList = () => json(200, { models: ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.9-flash-lite-preview'].map(n => ({ name: 'models/' + n, supportedGenerationMethods: ['generateContent'] })) });
+  it('cota do dia esgotada: vai sozinho para um modelo Lite e os próximos pedidos já começam nele', async () => {
+    resetQuota();
+    const calls = [];
+    const fetchImpl = (url) => {
+      calls.push(url.replace('https://generativelanguage.googleapis.com/v1beta/', ''));
+      if (url.includes('/models?')) return flashList();
+      if (url.includes('/gemini-3.8-flash:')) return quota429('GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'gemini-3.8-flash');
+      return ok({ ok: true });
+    };
+    const r = await generateJSON({ system: 's', prompt: 'p', schema: {}, key: 'K', model: 'gemini-3.8-flash', fetchImpl });
+    expect(r).toMatchObject({ model: 'gemini-3.5-flash-lite', fallback: 'quota' });
+    expect(calls).toEqual(['models/gemini-3.8-flash:generateContent', 'models?pageSize=200', 'models/gemini-3.5-flash-lite:generateContent']);
+    expect(getModel()).not.toBe('gemini-3.5-flash-lite'); // a escolha do usuário não muda
+    // Segunda etapa da montagem: não gasta outro pedido no modelo sem cota
+    calls.length = 0;
+    const r2 = await generateJSON({ system: 's', prompt: 'p', schema: {}, key: 'K', model: 'gemini-3.8-flash', fetchImpl });
+    expect(r2).toMatchObject({ model: 'gemini-3.5-flash-lite', fallback: 'quota' });
+    expect(calls).toEqual(['models?pageSize=200', 'models/gemini-3.5-flash-lite:generateContent']);
+    resetQuota();
+  });
+  it('cota por minuto: não troca de modelo, pede para esperar um minuto', async () => {
+    resetQuota();
+    const calls = [];
+    const fetchImpl = (url) => { calls.push(url); return url.includes('/models?') ? flashList() : quota429('GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'gemini-3.8-flash'); };
+    await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'gemini-3.8-flash', fetchImpl }))
+      .rejects.toMatchObject({ code: 'quota', message: expect.stringContaining('Espere um minuto') });
+    expect(calls.length).toBe(1);
+    expect(quotaKind({ error: { details: [{ violations: [{ quotaId: 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier' }] }] } })).toBe('minute');
+    expect(quotaKind({})).toBe(null);
+  });
+  it('cota do dia esgotada também nos Lite: diz que volta no dia seguinte', async () => {
+    resetQuota();
+    const fetchImpl = (url) => (url.includes('/models?') ? flashList() : quota429('GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'x'));
+    await expect(generateJSON({ system: '', prompt: '', schema: {}, key: 'K', model: 'gemini-3.8-flash', fetchImpl }))
+      .rejects.toMatchObject({ code: 'quota', message: expect.stringContaining('volta no dia seguinte') });
+    resetQuota();
   });
   it('sem chave ou sem conexão', async () => {
     await expect(generateJSON({ system: '', prompt: '', schema: {}, key: '' })).rejects.toMatchObject({ code: 'key' });

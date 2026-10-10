@@ -35,11 +35,28 @@ export function errorMessage(status, body) {
   const msg = String(e.message || '');
   if (reason === 'API_KEY_INVALID' || /API key not valid/i.test(msg)) return new AiError(t('A chave do Gemini não é válida. Confira se copiou a chave inteira.'), 'key');
   if (status === 403) return new AiError(t('A chave não tem permissão para usar o Gemini. Crie uma chave nova no Google AI Studio.'), 'key');
+  if (status === 429 && quotaKind(body) === 'day') return new AiError(t('A cota grátis de hoje do Gemini acabou (também nos modelos Lite). Ela volta no dia seguinte.'), 'quota');
   if (status === 429) return new AiError(t('Limite do plano grátis do Gemini atingido. Espere um minuto e tente de novo.'), 'quota');
   if (status === 404) return new AiError(t('O modelo não foi encontrado ({msg}).', { msg: msg || t('erro {status}', { status: 404 }) }), 'model');
   if (status >= 500) return new AiError(t('O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. ({detail})', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'server');
   return new AiError(t('O Gemini recusou o pedido ({detail}).', { detail: `${status}${msg ? ': ' + msg : ''}` }), 'other');
 }
+
+/**
+ * Que cota acabou num erro 429: 'day' (pedidos por dia), 'minute' (por minuto) ou null (não diz).
+ * O Google manda em `details` um QuotaFailure com o quotaId, ex.: GenerateRequestsPerDayPerProjectPerModel-FreeTier.
+ */
+export function quotaKind(body) {
+  const e = body && body.error ? body.error : {};
+  const ids = (e.details || []).flatMap(d => (d.violations || []).map(v => String(v.quotaId || '')));
+  if (ids.some(id => /PerDay/i.test(id))) return 'day';
+  if (ids.some(id => /PerMinute/i.test(id))) return 'minute';
+  return null;
+}
+
+/** Modelos cuja cota do dia acabou nesta visita: os próximos pedidos vão direto para um Lite. */
+const outOfQuota = new Set();
+export const resetQuota = () => outOfQuota.clear();
 
 /**
  * Modelos "flash" disponíveis para a chave, na ordem de preferência:
@@ -93,14 +110,17 @@ async function request({ system, prompt, schema, key, model, fetchImpl }) {
  * Gera uma resposta em JSON seguindo `schema`.
  * Modelo inexistente (404): troca por outro "flash" e guarda a escolha.
  * Sobrecarga/erro interno (5xx): tenta de novo e depois até 3 outros modelos "flash" (sem guardar).
- * @returns {Promise<{ data: object, model: string, fallback: boolean }>} fallback = veio de outro modelo (sobrecarga)
+ * Cota do dia esgotada (429 que não é só por minuto): tenta até 2 modelos Lite, que têm cota própria (bem maior).
+ * @returns {Promise<{ data: object, model: string, fallback: false|'overload'|'quota' }>} fallback = veio de outro
+ *   modelo, e por quê (sobrecarga ou cota do dia)
  */
 export async function generateJSON({ system, prompt, schema, key = getKey(), model = getModel(), fetchImpl = (...a) => fetch(...a), sleep = wait }) {
   if (!key) throw new AiError(t('Cole sua chave do Gemini primeiro.'), 'key');
   const args = { system, prompt, schema, key, fetchImpl };
   const tried = [model];
-  let fallback = false; // a resposta veio de outro modelo, porque o escolhido estava sobrecarregado
-  let r = await request({ ...args, model });
+  let fallback = false; // a resposta veio de outro modelo: 'overload' (sobrecarga) ou 'quota' (cota do dia)
+  // Cota do dia já esgotada neste modelo: nem tenta (o 429 voltaria na hora)
+  let r = outOfQuota.has(model) ? { status: 429, ok: false, body: null } : await request({ ...args, model });
   if (r.status === 404) {
     model = await pickModel(key, fetchImpl, tried);
     setModel(model);
@@ -117,8 +137,22 @@ export async function generateJSON({ system, prompt, schema, key = getKey(), mod
     for (const other of others) {
       tried.push(other);
       const r2 = await request({ ...args, model: other });
-      if (r2.ok || !transient(r2.status)) { r = r2; model = other; fallback = true; break; }
+      if (r2.ok || !transient(r2.status)) { r = r2; model = other; fallback = 'overload'; break; }
     }
+  }
+  if (r.status === 429 && quotaKind(r.body) !== 'minute') {
+    if (quotaKind(r.body) === 'day') outOfQuota.add(model); // só guarda quando o Google diz que é a cota do dia
+    let lites = [];
+    try { lites = (await listFlashModels(key, fetchImpl)).filter(n => /lite/.test(n) && !tried.includes(n) && !outOfQuota.has(n)).slice(0, 2); } catch { /* fica com o erro original */ }
+    for (const other of lites) {
+      tried.push(other);
+      const r2 = await request({ ...args, model: other });
+      if (r2.ok) { r = r2; model = other; fallback = 'quota'; break; }
+      if (r2.status === 429) { if (quotaKind(r2.body) === 'day') outOfQuota.add(other); r = r2; continue; }
+      if (!transient(r2.status)) { r = r2; break; }
+    }
+    // Todos sem cota: a mensagem é a da cota do dia, mesmo que o último erro não diga qual cota foi
+    if (!r.ok && r.status === 429 && quotaKind(r.body) !== 'minute') r = { ...r, body: { error: { details: [{ violations: [{ quotaId: 'PerDay' }] }] } } };
   }
   if (!r.ok) {
     const err = errorMessage(r.status, r.body);

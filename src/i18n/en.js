@@ -369,6 +369,7 @@ export default {
   'A chave do Gemini não é válida. Confira se copiou a chave inteira.': 'The Gemini key is not valid. Check that you copied the whole key.',
   'A chave não tem permissão para usar o Gemini. Crie uma chave nova no Google AI Studio.': 'The key is not allowed to use Gemini. Create a new key in Google AI Studio.',
   'Limite do plano grátis do Gemini atingido. Espere um minuto e tente de novo.': 'Gemini free tier limit reached. Wait a minute and try again.',
+  'A cota grátis de hoje do Gemini acabou (também nos modelos Lite). Ela volta no dia seguinte.': 'Today’s free Gemini quota is used up (Lite models included). It resets the next day.',
   'O modelo não foi encontrado ({msg}).': 'Model not found ({msg}).',
   'erro {status}': 'error {status}',
   'O Gemini está sobrecarregado ou fora do ar. Tente de novo daqui a pouco. ({detail})': 'Gemini is overloaded or down. Try again in a little while. ({detail})',
@@ -576,6 +577,8 @@ export default {
   'Conferência do app': 'App check',
   'Fora dos critérios pedidos:': 'Outside the requested criteria:',
   'O modelo escolhido estava sobrecarregado: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. Vale tentar de novo mais tarde.': 'The chosen model was overloaded: the answer came from a lighter model ({list}), which may be less accurate. Worth trying again later.',
+  'A cota grátis de hoje do modelo escolhido acabou: a resposta veio de um modelo mais leve ({list}), que pode ser menos preciso. A cota volta no dia seguinte.':
+    'Today’s free quota for the chosen model is used up: the answer came from a lighter model ({list}), which may be less accurate. The quota resets the next day.',
   'A segunda etapa (pontos e dicas com as contas do app) não respondeu; os pontos e as dicas são os da escolha da equipe.': 'The second step (points and tips with the app calculations) did not answer; the points and tips are the ones from the team choice.',
   'Ver o texto do segundo envio ({n} caracteres)': 'See the text of the second request ({n} characters)',
   'Depois que a IA escolher os 6, um segundo envio, bem menor: só essa equipe, as contas do app sobre ela e os golpes que cada um aprende por nível, para os pontos fracos e as dicas.': 'After the AI picks the 6, a second, much smaller request: only that team, the app calculations about it and the moves each one learns by level, for the weaknesses and tips.',
