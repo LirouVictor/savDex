@@ -357,7 +357,7 @@ function setupBuilder(out) {
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
       const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: state.data.game }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);

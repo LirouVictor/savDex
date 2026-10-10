@@ -5,6 +5,7 @@
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets } from './build.js';
+import { teamThreats, variantOf } from './threats.js';
 import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
@@ -207,17 +208,17 @@ function teamTips(team, plan) {
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo']];
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças']];
 
 /**
  * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
  * a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false } = {}) {
-  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready });
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null } = {}) {
+  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game });
   const types = attackTypes(T);
-  const results = raw.map(res => describeTeam(res, types, raw.pool));
+  const results = raw.map(res => describeTeam(res, types, raw.pool, raw.ctx.threats));
   Object.defineProperty(results, 'raw', { value: raw });
   return results;
 }
@@ -230,14 +231,14 @@ export function moreOptions(results, i, T) {
   const main = results[i];
   if (!main || main.alt || main.alts) return -1;
   const types = attackTypes(T);
-  const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types, results.raw.pool));
+  const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types, results.raw.pool, results.raw.ctx.threats));
   main.alts = { count: alts.length };
   if (!alts.length) return -1;
   results.splice(i + 1, 0, ...alts);
   return i + 1;
 }
 
-function describeTeam(res, types, pool) {
+function describeTeam(res, types, pool, threats = null) {
   const { plan, team } = res;
   // As partes com as marcas do plano desta equipe (quem atrapalha o clima ou é fraco ao tipo que ele fortalece), como
   // na busca: sem isso valiam as do último plano buscado, e as partes não somavam a nota
@@ -249,6 +250,7 @@ function describeTeam(res, types, pool) {
       ? t('Plano: {plan}. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.', { plan: t(plan.field) })
       : t('Equilibrada: sem clima, terreno nem Trick Room. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.'),
     membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
+    ameacas: threats ? threatsHtml(res, threats) : null,
   };
   const mons = team.map(e => e.m);
   return {
@@ -260,15 +262,53 @@ function describeTeam(res, types, pool) {
   };
 }
 
+const threatName = x => (x.form ? `${x.name} (${x.form})` : x.name);
+const names = (xs, max) => list(xs.slice(0, max).map(threatName)) + (xs.length > max ? ' ' + t('e mais {n}', { n: xs.length - max }) : '');
+
+/**
+ * Ameaças do jogo: cobertura, dano e resposta separados (a resposta é entrar no campo e vencer o 1 contra 1, não só
+ * ter golpe super efetivo), e o que a estimativa não sabe. Com duas megapedras, vale a forma que responde a cada uma.
+ */
+function threatsHtml(res, c) {
+  const megas = res.team.filter(e => e.mega && e.base);
+  const team = megas.length >= 2 ? [...res.team, ...megas.map(e => e.base)] : res.team;
+  const tt = teamThreats(team, c.threats, c.mult, variantOf(res.plan));
+  const n = tt.n, only = tt.wins - tt.safe;
+  const lines = [
+    t('Cobertura: algum golpe acerta {k} de {n} em cheio.', { k: tt.se, n }),
+    t('Dano: alguém tira metade ou mais de {k} de {n} com um golpe.', { k: tt.hit2, n }),
+    t('Resposta: alguém entra no golpe e vence {safe}; mais {only} só vindo de graça (depois que um aliado cai); {none} sem resposta.', { safe: tt.safe, only, none: tt.none.length }),
+  ];
+  if (tt.none.length) lines.push(t('Sem resposta: {list}.', { list: names(tt.none, 8) }));
+  if (tt.seNoAnswer) lines.push(t('{k} delas levam golpe super efetivo, mas ninguém vence o 1 contra 1: só a cobertura de tipos não basta.', { k: tt.seNoAnswer }));
+  // Quem é a única resposta (sai e a equipe fica sem ela)
+  const unique = new Map();
+  for (const p of tt.per) {
+    const who = [...new Set(p.wins.map(e => e.real))];
+    if (who.length === 1) { const k = refOf(res.team.find(e => e.real === who[0]).m); unique.set(k, [...(unique.get(k) || []), p.x]); }
+  }
+  for (const [ref, xs] of [...unique].sort((a, b) => b[1].length - a[1].length).slice(0, 3)) lines.push(t('Só {ref} responde a {list}.', { ref, list: names(xs, 4) }));
+  const how = c.learned
+    ? t('A ameaça usa o golpe mais forte contra cada membro: um de 80 de poder de cada tipo dela ou os de dano que aprende por nível (tabela da ROM).')
+    : t('A ameaça usa um golpe de 90 de poder de cada tipo dela (o app não tem a tabela de golpes deste jogo).');
+  const note = [
+    t('Contra {n} Pokémon fortes do jogo (stats base 500 ou mais, sem lendários). Estimativa, não simulação: os dois lados no nível 50, sem itens, EVs, naturezas nem mudanças de stats.', { n }),
+    how, t('Conta o clima do plano (golpes Water e Fire, habilidades de velocidade) e o Trick Room; terrenos, não. O app não sabe os times dos treinadores do jogo nem os golpes de TM.'),
+    c.modernAbilities ? t('Habilidades das ameaças: as atuais (PokeAPI), que podem ter mudado desde este jogo.') : '',
+  ].filter(Boolean).join(' ');
+  return { lines, note };
+}
+
 /**
  * As partes arredondadas para a tela, somando a nota mostrada (arredondar cada uma sozinha dava 1 a mais ou a menos:
  * 42,5 + 4,5 viravam 43 + 5): cada parte fica com o valor inteiro de baixo, e o que falta vai para as de maior fração.
  */
 export function shownParts(parts, score) {
   const keys = PARTS.map(([k]) => k);
-  const out = Object.fromEntries(keys.map(k => [k, Math.floor(parts[k])]));
+  const v = k => parts[k] || 0;
+  const out = Object.fromEntries(keys.map(k => [k, Math.floor(v(k))]));
   let left = Math.round(score) - keys.reduce((a, k) => a + out[k], 0);
-  const order = [...keys].sort((a, b) => (parts[b] - out[b]) - (parts[a] - out[a]));
+  const order = [...keys].sort((a, b) => (v(b) - out[b]) - (v(a) - out[a]));
   for (let i = 0; left !== 0 && i < 2 * keys.length; i++) {
     const k = left > 0 ? order[i % keys.length] : order[keys.length - 1 - (i % keys.length)];
     out[k] += left > 0 ? 1 : -1;

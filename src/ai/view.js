@@ -174,6 +174,7 @@ export function buildView(r, byRef, model, T, opts = null) {
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
+    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + `<p class="hint ai-threat-note">${esc(r.ameacas.note)}</p>`) : ''}
     ${panel('Conferência do app', 'info', check)}
     ${panel('Próximos passos', 'swap', dicas)}
     ${footer(model, r.dropped, opts)}

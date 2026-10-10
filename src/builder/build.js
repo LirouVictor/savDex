@@ -11,6 +11,7 @@
 import { strategyOf, rolesOf, weatherConflict, PRIORITY_MOVES, WEATHER, FIELD, MEGA_FIELD, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, FIELD_MOVES } from '../ai/strategy.js';
 import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
 import { evolvedVersions, megaForm, megaStonesFor } from '../ai/evolve.js';
+import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
 import speciesData from '../data/species.json';
 
@@ -37,11 +38,11 @@ const KEY_ROLES = ['prioridade', 'recuperação', 'controle de velocidade', 'piv
 
 // Habilidades que anulam um tipo de ataque (o Pokémon entra no golpe e não sofre nada; Lightning Rod numa equipe
 // de chuva, que tem muitos fracos a Electric) e as que o cortam pela metade
-const ABILITY_IMMUNE = {
+export const ABILITY_IMMUNE = {
   Levitate: ['ground'], 'Earth Eater': ['ground'], 'Lightning Rod': ['electric'], 'Volt Absorb': ['electric'], 'Motor Drive': ['electric'],
   'Storm Drain': ['water'], 'Water Absorb': ['water'], 'Dry Skin': ['water'], 'Flash Fire': ['fire'], 'Well-Baked Body': ['fire'], 'Sap Sipper': ['grass'],
 };
-const ABILITY_HALVE = { 'Thick Fat': ['fire', 'ice'], Heatproof: ['fire'], 'Water Bubble': ['fire'], 'Purifying Salt': ['ghost'] };
+export const ABILITY_HALVE = { 'Thick Fat': ['fire', 'ice'], Heatproof: ['fire'], 'Water Bubble': ['fire'], 'Purifying Salt': ['ghost'] };
 // Item que faz o clima durar 8 turnos em vez de 5 (vale em quem põe o clima do plano)
 const WEATHER_ROCK = { 'Heat Rock': 'sol', 'Damp Rock': 'chuva', 'Smooth Rock': 'tempestade de areia', 'Icy Rock': 'neve/granizo' };
 
@@ -341,7 +342,7 @@ function entry(m, bf, T, types, mult, learn = []) {
   const typeIdx = bf.species.types.map(ty => types.indexOf(ty)).filter(i => i >= 0);
   const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
-    m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask,
+    m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
     given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
     learnSet, learnUse, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
@@ -419,9 +420,11 @@ export function scoreParts(team, plan, types) {
   const scen = megas.map(mg => partsOf(team.map(e => (e.base && e !== mg ? e.base : e)), plan, types, true));
   const avg = key => { let x = 0; for (const q of scen) x += q[key]; return x / scen.length; };
   const max = key => { let x = -Infinity; for (const q of scen) if (q[key] > x) x = q[key]; return x; };
-  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), total: 0 };
+  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), threats: 0, total: 0 };
   for (let a = 0; a < types.length; a++) { let x = -Infinity; for (const q of scen) if (q.defByType[a] > x) x = q.defByType[a]; p.defense += x; }
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready;
+  // Ameaças: cada uma vale o cenário que a responde (as duas formas de quem segura a megapedra)
+  p.threats = threatPart([...team, ...megas.map(e => e.base)], plan);
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats;
   return p;
 }
 
@@ -433,7 +436,7 @@ export function scoreParts(team, plan, types) {
 function partsOf(team, plan, types, byType) {
   const n = team.length;
   const halved = halvedIndex(plan, types);
-  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, total: 0 };
+  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, threats: 0, total: 0 };
   if (byType) p.defByType = new Array(types.length).fill(0);
   // Fraquezas em comum: 3 ou mais fracos ao mesmo tipo pesa muito; mais fracos que resistentes, um pouco
   for (let a = 0; a < types.length; a++) {
@@ -492,8 +495,38 @@ function partsOf(team, plan, types, byType) {
     if (auto) p.plan += 16;
     if (plan.kind === 'weather') p.plan -= 10 * conflicts + 4 * risks;
   }
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready;
+  if (!byType) p.threats = threatPart(team, plan);
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats;
   return p;
+}
+
+// Ameaças (threats.js): cada ponto percentual das ameaças do jogo que ninguém da equipe vence vale TH_NONE; das que
+// alguém só vence vindo de graça (ninguém entra no golpe dela com segurança), TH_ONLY
+const TH_NONE = 2, TH_ONLY = 0.2;
+const pop32 = x => { x -= (x >>> 1) & 0x55555555; x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); return Math.imul((x + (x >>> 4)) & 0x0F0F0F0F, 0x01010101) >>> 24; };
+
+/** Quais ameaças o Pokémon vence (wins) e quais ele também segura na troca (safe), em bits; calculado uma vez por plano. */
+function threatMasks(e, variant) {
+  if (e.thrV === variant) return e.thrM;
+  const cache = e.thr || (e.thr = {});
+  e.thrV = variant;
+  return (e.thrM = cache[variant] || (cache[variant] = threatBits(e, e.tctx, variant)));
+}
+
+/** A parte "Ameaças" da nota (0 sem a lista de ameaças do jogo). */
+function threatPart(team, plan) {
+  const c = team.length && team[0].tctx;
+  if (!c || !c.threats.length || plan.noThreats) return 0;
+  const v = variantOf(plan);
+  for (const e of team) threatMasks(e, v);
+  let none = 0, only = 0;
+  for (let w = 0; w < c.words; w++) {
+    let s = 0, wn = 0;
+    for (const e of team) { s |= e.thrM.safe[w]; wn |= e.thrM.wins[w]; }
+    none += pop32(~wn & c.valid[w]);
+    only += pop32(wn & ~s);
+  }
+  return -(c.w[0] * none + c.w[1] * only) * 100 / c.threats.length;
 }
 
 /** Pode entrar: não repete Pokémon nem espécie, até 2 megapedras e, num plano de clima, nenhum outro clima. */
@@ -594,7 +627,7 @@ export function planHolds(team, plan) {
  *   lendários e míticos (menos os que o jogador pediu), se conta com megapedras que o Pokémon ainda não segura e o modo
  *   "Prontos para usar" (o trabalho que falta pesa mais; senão, "Posso treinar")
  */
-export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst' } = {}) {
+export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst', game = null, threats = null, threatWeights = [TH_NONE, TH_ONLY] } = {}) {
   const types = attackTypes(T);
   if (noLegends) {
     const asked = new Set(want.map(speciesKey));
@@ -606,8 +639,17 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
     for (const e of pool) { e.cost = readyCost(e, true, refLevel); if (e.base) e.base.cost = e.cost; }
   }
+  // Ameaças do jogo (com o jogo do save, ou a lista dada nos testes): a parte "Ameaças" da nota
+  const list = threats || (game ? threatList(T, game, dex) : null);
+  const tctx = list && list.length ? { threats: list, mult: typeMult(T), words: (list.length + 31) >>> 5, valid: null, w: threatWeights,
+    learned: list.some(x => x.learned), modernAbilities: !!T.nds } : null;
+  if (tctx) {
+    tctx.valid = new Uint32Array(tctx.words).fill(0xFFFFFFFF);
+    if (list.length & 31) tctx.valid[tctx.words - 1] = (2 ** (list.length & 31)) - 1;
+  }
   for (const x of pool) {
     for (const e of x.base ? [x, x.base] : [x]) {
+      e.tctx = tctx;
       e.conflictBy = {};
       for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.bf, f, T);
     }
@@ -631,7 +673,13 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   const out = [];
   for (const plan of plans(pool)) {
     setPlanFlags(pool, plan);
-    const r = bestTeam(pool, plan, types, forcedFor(plan));
+    let r = bestTeam(pool, plan, types, forcedFor(plan));
+    // Salvaguarda do plano: se a busca com as ameaças não guardou nenhuma equipe que sustente o plano (as que
+    // respondem mais ameaças podem não ter os lentos do Trick Room), vale a busca sem elas; a nota conta as ameaças
+    if (tctx && !(r && r.team.length === 6 && planHolds(r.team, plan))) {
+      const r0 = bestTeam(pool, { ...plan, noThreats: true }, types, forcedFor(plan));
+      if (r0 && r0.team.length === 6 && planHolds(r0.team, plan)) r = { plan, team: r0.team, score: score(r0.team, plan, types) };
+    }
     if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(r);
   }
   // Os planos da melhor nota para a pior, sem repetir a mesma equipe
@@ -640,7 +688,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
   // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
   Object.defineProperty(result, 'pool', { value: pool }); // também para conferências (busca local nos testes de comparação)
-  Object.defineProperty(result, 'ctx', { value: { types, forcedFor } });
+  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx } });
   return result;
 }
 

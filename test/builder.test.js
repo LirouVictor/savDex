@@ -311,7 +311,7 @@ suite('Montador de equipes (sem IA)', () => {
       const line = resultsHtml(rs, i, T).match(/builder-score">([^<]*)</)[1];
       const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
       expect(nota).toBe(Math.round(r.score));
-      expect(parts).toHaveLength(7);
+      expect(parts).toHaveLength(8);
       expect(parts.reduce((a, b) => a + b, 0)).toBe(nota);
     });
   });
