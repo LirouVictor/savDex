@@ -12,6 +12,12 @@ import { strategyOf, rolesOf, weatherConflict, WEATHER, FIELD, MEGA_FIELD, ABUSE
 import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
 import { evolvedVersions, megaForm } from '../ai/evolve.js';
 import { moveInfo } from '../parser/describe.js';
+import speciesData from '../data/species.json';
+
+// Lendários e míticos (PokeAPI), pelo nome sem pontuação: o mesmo em todos os jogos (Ho-Oh → hooh)
+const LEGENDARY = new Set(speciesData.legendary);
+/** Lendário ou mítico (as formas e megas contam pela espécie: Mewtwo Mega X, Calyrex Shadow…). */
+export const isLegendary = m => LEGENDARY.has(String(m.species.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
 
 export const WEATHERS = ['sol', 'chuva', 'tempestade de areia', 'neve/granizo'];
 const TERRAINS = ['Electric Terrain', 'Psychic Terrain', 'Grassy Terrain', 'Misty Terrain'];
@@ -354,11 +360,16 @@ export function planHolds(team, plan) {
  * Equipes para todos os planos do save, da melhor nota para a pior, sem repetir a mesma equipe.
  * @param {object[]} all Pokémon do save (equipe + PC)
  * @param {object} T tabelas do jogo
- * @param {{ want?: object[], dex?: object|null }} [opts] Pokémon que o jogador quer na equipe (do save) e os golpes por
- *   nível da ROM (os que aprendem também contam)
+ * @param {{ want?: object[], dex?: object|null, noLegends?: boolean }} [opts] Pokémon que o jogador quer na equipe
+ *   (do save), os golpes por nível da ROM (os que aprendem também contam) e se deixa de fora lendários e míticos
+ *   (menos os que o jogador pediu)
  */
-export function buildTeams(all, T, { want = [], dex = null } = {}) {
+export function buildTeams(all, T, { want = [], dex = null, noLegends = false } = {}) {
   const types = attackTypes(T);
+  if (noLegends) {
+    const asked = new Set(want.map(speciesKey));
+    all = all.filter(m => !isLegendary(m) || asked.has(speciesKey(m)));
+  }
   const pool = prepare(all, T, dex);
   for (const e of pool) {
     e.conflictBy = {};

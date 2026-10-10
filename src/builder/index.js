@@ -193,9 +193,9 @@ const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'
  * Monta as equipes e prepara o que a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '', dex = null) {
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false } = {}) {
   const types = attackTypes(T);
-  const results = buildTeams(all, T, { want: wantedMons(all, note), dex });
+  const results = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends });
   return results.map(res => {
     const { plan, team } = res;
     const membros = team.map(e => describeMember(e, team, plan, types));

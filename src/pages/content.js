@@ -9,6 +9,7 @@ export const NEWS = [
     date: '2026-10-10',
     pt: [
       'Novo em Ferramentas: “Montar equipe”, sem IA. O próprio app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta (sol, chuva, areia, neve, terreno, Trick Room ou equilibrada) e mostra a nota de cada uma, de onde ela vem e a função de cada membro. Conta habilidades que anulam tipos (Lightning Rod…), quem ainda não evoluiu pela forma evoluída, quem segura a megapedra pelos tipos e pela habilidade da mega (Quetzal, Unbound e SoulGold) e os golpes que cada um aprende por nível (ex.: quem aprende Trick Room abre o plano de Trick Room, e a tela diz o que ensinar). Aceita até duas megapedras. Funciona sem chave, sem internet e sem cota; dá para pedir Pokémon que você quer na equipe.',
+      'Montar equipe: nova opção “Sem lendários e míticos” (Mewtwo, Kyogre, Calyrex…), para montar com o resto do PC. Quem você pedir no campo de cima entra mesmo sendo lendário.',
       'Assistente: equipes com até duas megapedras (só uma megaevolui por batalha; a outra fica para outra batalha).',
       'Insígnias com as próprias imagens no card do treinador (as que faltam aparecem apagadas), no Quetzal, no SoulGold, na Gen 3 oficial e em Diamond/Pearl, Platinum e HG/SS. No Unbound e em Black/White continuam os pinos.',
       'Quetzal: corrigida a contagem de insígnias, que podia mostrar uma a mais (7 num save com 6). Agora é a mesma da tela do jogo, conferida no emulador com vários saves.',
@@ -19,6 +20,7 @@ export const NEWS = [
     ],
     en: [
       'New in Tools: “Build team”, without AI. The app itself searches all your Pokémon (party and PC) for the best team for each plan the save supports (sun, rain, sand, snow, terrain, Trick Room or balanced) and shows each team’s score, where it comes from and each member’s function. It counts abilities that nullify types (Lightning Rod…), unevolved Pokémon by their evolved form, Mega Stone holders by the Mega’s types and ability (Quetzal, Unbound and SoulGold) and the moves each one learns by level (e.g. a Pokémon that learns Trick Room opens the Trick Room plan, and the screen says what to teach). Allows up to two Mega Stones. Works with no key, no internet and no quota; you can ask for Pokémon you want on the team.',
+      'Build team: new “No legendaries or mythicals” option (Mewtwo, Kyogre, Calyrex…), to build with the rest of the PC. Pokémon you ask for in the field above still join even if legendary.',
       'Assistant: teams with up to two Mega Stones (only one Mega Evolves per battle; the other is for another battle).',
       'Badges with their own images on the trainer card (missing ones are faded), in Quetzal, SoulGold, official Gen 3 and Diamond/Pearl, Platinum and HG/SS. Unbound and Black/White keep the pins.',
       'Quetzal: fixed the badge count, which could show one too many (7 on a save with 6). It now matches the game’s screen, checked in the emulator with several saves.',
@@ -217,7 +219,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas e as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado).</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e se o montador de equipes deixa de fora os lendários.</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -246,7 +248,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language, which panels (Assistant, Search) stay open and the assistant settings (service, model and whether to show what will be sent).</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and whether the team builder leaves out legendaries.</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>

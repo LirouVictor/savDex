@@ -274,7 +274,11 @@ async function main() {
   };
   const write = (file, data) => writeFile(path.join(OUT, file), JSON.stringify(data) + '\n');
   await write('types.json', types);
-  await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames, genderRates: speciesGender, baseStats: speciesBase });
+  // Lendários e míticos da Dex Nacional inteira (o montador pode deixá-los de fora), pelo nome sem pontuação,
+  // que é o que todos os jogos têm em comum (Ho-Oh → hooh, Type: Null → typenull)
+  const legendary = csv(pSpecies).filter(r => +r.id <= 1025 && (r.is_legendary === '1' || r.is_mythical === '1'))
+    .map(r => r.identifier.replace(/[^a-z0-9]/g, ''));
+  await write('species.json', { meta, species, abilities: speciesAbilities, abilityNames, genderRates: speciesGender, baseStats: speciesBase, legendary });
   await write('moves.json', { meta, moves, details: moveDetails });
   // Descrições ficam num arquivo à parte, carregado sob demanda pela UI
   await write('move-text.json', moveText);
