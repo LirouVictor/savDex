@@ -12,6 +12,7 @@ import { toCSV, toShowdown } from '../src/export.js';
 import { PROVIDERS } from '../src/ai/providers.js';
 import { prepareAi, confirmHtml } from '../src/ai/index.js';
 import { analysisView, buildView } from '../src/ai/view.js';
+import { runBuilder, resultsHtml } from '../src/builder/index.js';
 import { refOf } from '../src/ai/prompt.js';
 import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
@@ -61,7 +62,10 @@ suite('telas em inglês (nenhum texto sem tradução)', () => {
   function renderAll(data, T2) {
     const all = [...data.party, ...data.pc.boxes.flatMap(b => b.slots)];
     let html = R.trainerWin(data, 'x.sav') + R.warningsWin(data.warnings) + R.partyWin(data, { canSave: true }) + R.pcWin(data)
-      + R.analysisWin(data, T2) + R.aiWin(data, Object.values(PROVIDERS)) + R.searchWin(data, T2) + R.exportWin();
+      + R.analysisWin(data, T2) + R.builderWin() + R.aiWin(data, Object.values(PROVIDERS)) + R.searchWin(data, T2) + R.exportWin();
+    // Montador de equipes (sem IA): todas as equipes que o save comporta
+    const built = runBuilder([...data.party, ...data.pc.boxes.flatMap(b => b.slots)], T2);
+    built.forEach((x, i) => { html += resultsHtml(built, i, T2); });
     for (const box of data.pc.boxes) html += R.boxGrid(box);
     all.forEach((m, i) => {
       html += R.monDetail(m, T2) + R.resultRow(m, i) + R.monTile(m);

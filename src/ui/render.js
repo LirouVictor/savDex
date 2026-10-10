@@ -364,6 +364,18 @@ export function analysisWin(d, T) {
   </section>`;
 }
 
+/** Montador de equipes do app (sem IA): fechado até o usuário abrir; o pacote só carrega ao tocar no botão. */
+export function builderWin() {
+  return `<details class="win win-fold" id="builder-win">
+    <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('sem IA')}</small></summary>
+    <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.')}</p>
+    <label class="ai-label" for="builder-note">${t('Quero na equipe (opcional)')}</label>
+    <input id="builder-note" class="ai-input" type="text" maxlength="200" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario')}">
+    <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
+    <div id="builder-out" class="ai-out" aria-live="polite"></div>
+  </details>`;
+}
+
 /**
  * Assistente com IA: a chave é do usuário e fica só neste aparelho.
  * Os textos que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.

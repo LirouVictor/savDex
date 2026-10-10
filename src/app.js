@@ -90,6 +90,7 @@ function render() {
       ${R.searchWin(data, T)}
     </div>
     <div class="grp" id="grp-tools">
+      ${R.builderWin()}
       ${R.aiWin(data, Object.values(PROVIDERS))}
       <div id="teams-slot"></div>
       ${R.exportWin()}
@@ -144,6 +145,7 @@ function render() {
   });
 
   setupAi(out);
+  setupBuilder(out);
 
   // Busca
   let timer = 0;
@@ -176,7 +178,7 @@ function render() {
   });
 
   // Assistente e Busca ficam fechados até o usuário abrir; a lista só é montada quando a Busca abre
-  for (const id of ['ai-win', 'search-win']) {
+  for (const id of ['builder-win', 'ai-win', 'search-win']) {
     const det = out.querySelector('#' + id);
     det.addEventListener('toggle', () => {
       setFoldOpen(id, det.open);
@@ -320,6 +322,53 @@ function setupAi(out) {
     }
     const save = e.target.closest('[data-ai-save]');
     if (save && state.ai && state.ai.team) saveTeam(state.ai.team, state.ai.name || t('Equipe da IA'), 'ai', save);
+  });
+}
+
+// Montador de equipes (sem IA): o pacote só carrega ao tocar no botão; as contas rodam neste aparelho
+function setupBuilder(out) {
+  const $ = s => out.querySelector(s);
+  const bOut = $('#builder-out');
+  let mod = null;
+  const show = i => {
+    state.builder.i = i;
+    bOut.innerHTML = mod.resultsHtml(state.builder.results, i, T);
+    if (!state.persist) bOut.querySelector('[data-ai-save]')?.remove();
+  };
+  $('#builder-run').addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    bOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${t('Montando as equipes')}</span><span class="dots" aria-hidden="true"></span></p>`;
+    try {
+      mod = await import('./builder/index.js');
+      // Quetzal/Unbound/SoulGold: golpes por nível da ROM (o montador conta também os golpes que cada um aprende)
+      const game = state.data.game;
+      const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
+      await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex), i: 0 };
+      show(0);
+    } catch (err) {
+      console.error(err);
+      bOut.innerHTML = `<p class="error">${t('Não consegui montar as equipes.')}</p>`;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  bOut.addEventListener('click', async e => {
+    const cur = state.builder && state.builder.results[state.builder.i];
+    if (!cur) return;
+    const tab = e.target.closest('[data-plan]');
+    if (tab) { show(+tab.dataset.plan); return; }
+    const card = e.target.closest('[data-ref]');
+    if (card) { const m = cur.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
+    const copy = e.target.closest('[data-ai-copy]');
+    if (copy) {
+      const ok = await copyText(showdownTeam(cur.team));
+      copy.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
+      return;
+    }
+    const save = e.target.closest('[data-ai-save]');
+    if (save) saveTeam(cur.team, t('Equipe {plan}', { plan: cur.name }), 'app', save);
   });
 }
 

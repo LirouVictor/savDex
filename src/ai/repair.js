@@ -3,7 +3,7 @@
 // disponíveis que resolvam, mexendo o mínimo. A IA continua escolhendo a ideia da equipe; o app só conserta
 // o que dá para medir. Sem chamada a mais: a segunda etapa da IA escreve os textos já para a equipe final.
 
-import { isMegaStone, strategyOf, speciesKey } from './prompt.js';
+import { isMegaStone, strategyOf, speciesKey, MAX_MEGAS } from './prompt.js';
 import { benefits, teamWeathers, weatherConflict, WEATHER } from './strategy.js';
 import { evolvedVersions } from './evolve.js';
 
@@ -83,7 +83,7 @@ export function repairTeam(team, pool, T, { note = '', free = null } = {}) {
   const consider = (removed, added) => {
     const next = team.map((m, i) => (removed.includes(i) ? added[removed.indexOf(i)] : m));
     if (added.length === 2 && (speciesKey(added[0]) === speciesKey(added[1]) || real(added[0]) === real(added[1]))) return;
-    if (added.some(m => isMegaStone(m.item)) && next.filter(m => isMegaStone(m.item)).length > 1) return;
+    if (added.some(m => isMegaStone(m.item)) && next.filter(m => isMegaStone(m.item)).length > MAX_MEGAS) return;
     const score = [excess(next), added.length,
       removed.filter((i, k) => lean(team[i]) !== lean(added[k])).length,
       -(added.reduce((s, m) => s + bst(m), 0) - removed.reduce((s, i) => s + bst(team[i]), 0))];

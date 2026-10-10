@@ -79,6 +79,7 @@ function checksHtml(text, byRef, opts, owner = null) {
 }
 
 function footer(model, dropped, opts = null) {
+  if (opts && opts.app) return `<p class="hint ai-foot">${esc(t('Montada pelo app, sem IA: só contas de tipos, golpes, habilidades, itens e stats base (o nível não conta). Confira golpes e itens antes de seguir.'))}</p>`;
   const lost = dropped.length
     ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
     : '';
@@ -156,7 +157,7 @@ export function buildView(r, byRef, model, T, opts = null) {
   return `<div class="ai-result">
     <div class="ai-hero build">
       <div class="ai-hero-text">
-        <p class="ai-kicker">${t('Equipe sugerida')}</p>
+        <p class="ai-kicker">${opts && opts.app ? t('Equipe montada pelo app') : t('Equipe sugerida')}</p>
         <p class="ai-team-name">${esc(r.nome)}</p>
       </div>
       <div class="export-btns">
