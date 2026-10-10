@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-09';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-10',
+    pt: [
+      'Quetzal: corrigida a contagem de insígnias, que podia mostrar uma a mais (7 num save com 6). Agora é a mesma da tela do jogo, conferida no emulador com vários saves.',
+    ],
+    en: [
+      'Quetzal: fixed the badge count, which could show one too many (7 on a save with 6). It now matches the game’s screen, checked in the emulator with several saves.',
+    ],
+  },
+  {
     date: '2026-10-09',
     pt: [
       'Assistente: “Modo livre” no Quetzal, no SoulGold (Ability Capsule e Ability Patch) e no Unbound (Ability Capsule). Ligado, a IA pode contar com as outras habilidades de cada Pokémon (ex.: um Torkoal que vira Drought) e diz nas dicas qual habilidade usar e com qual item.',

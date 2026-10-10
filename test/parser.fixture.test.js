@@ -24,7 +24,7 @@ suite.skipIf(!has)('save real (fixtures/PokemonQuetzalPtBrAlpha9v0.sav)', () => 
     // Tempo de jogo: cresce na ordem dos 3 saves (ver os testes dos outros dois)
     expect(raw.summary).toEqual({
       playTime: { h: 51, m: 55, s: 16, confidence: 'confirmado' }, money: { value: 1315986, confidence: 'confirmado' },
-      badges: { count: 5, total: 8, confidence: 'confirmado' }, dex: expect.objectContaining({ owned: 63, total: 1025, confidence: 'confirmado' }),
+      badges: { count: 6, total: 8, confidence: 'confirmado' }, dex: expect.objectContaining({ owned: 63, total: 1025, confidence: 'confirmado' }),
     });
   });
 
@@ -323,5 +323,14 @@ suite.skipIf(!ROM_CHECK.length)('tabelas da ROM contra os saves reais', () => {
         expect(Object.keys(calc).filter(k => calc[k] !== m.stats[k]), `${f} ${m.species.name}`).toEqual([]);
       }
     }
+  });
+});
+
+// Save de 68h: o jogo mostra 6 insígnias (a posição antiga dava 7) e Pokédex 80
+const INS7 = process.env.QUETZAL_SAVE_68H || 'fixtures/quetzal-7ins.sav';
+suite.skipIf(!existsSync(INS7))('save real do Quetzal com 68h (insígnias conferidas no jogo)', () => {
+  it('insígnias e Pokédex como na tela de continuar', () => {
+    const raw = parseSave(readFileSync(INS7));
+    expect(raw.summary).toMatchObject({ playTime: { h: 68, m: 1 }, badges: { count: 6, total: 8 }, dex: expect.objectContaining({ owned: 80 }) });
   });
 });

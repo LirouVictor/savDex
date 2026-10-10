@@ -26,10 +26,13 @@ export const TRAINER = { name: 0x00, nameLen: 7, tid: 0x0A, sid: 0x0C };
  * zerar/preencher os bytes de cada região muda os números na tela (Johto: 0xFF em 0xE2 dá 6 insígnias, em 0xE3
  * dá 2; Pokédex de 0x1CC a 0x24D).
  * O jogo conta 1034 bits da Pokédex: os 1025 da Dex Nacional e 9 espécies próprias do Quetzal.
+ * Insígnias de Hoenn: bit 7 de 0x14F e bits 0–6 de 0x150 (como no Emerald, que também começa num bit 7). Conferido
+ * no jogo: apagar cada bit numa cópia tira uma insígnia da tela; o bit 1 de 0x14F é o da Pokédex. A posição antiga
+ * (bit 6 de 0x151) só batia por coincidência e dava 7 num save com 6.
  */
 export const SUMMARY = {
   hours: 0x10, minutes: 0x14, seconds: 0x15, key: 0x2C, money: 0x918,
-  badgeBit: 0x151 * 8 + 6, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBits: 1034,
+  badgeBit: 0x14F * 8 + 7, dexTag: 0x9B4, dex: 0x9D0, dexTotal: 1025, dexBits: 1034,
   mapGroup: 0x474, regTag: 0xA8,
   regions: [
     { id: 'johto', groups: [34, 35], dex: 0x1CC, badgeBit: 0xE2 * 8 + 2 },
