@@ -17,6 +17,7 @@ import N from '../src/data/nds.json';
 import Q from '../src/data/quetzal.json';
 import SG from '../src/data/soulgold.json';
 import QL from '../src/data/quetzal-learn.json';
+import QT from '../src/data/quetzal-teach.json';
 import UL from '../src/data/unbound-learn.json';
 import SL from '../src/data/soulgold-learn.json';
 import { quetzalLearnDex, unboundLearnDex, soulgoldLearnDex } from '../src/ui/dex.js';
@@ -74,7 +75,7 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
     const mons = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const g = d.game.id;
-    const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
     const types = B.attackTypes(T);
     const fmt = formatsFor(d.game);
     const sdex = Dex.forFormat(fmt.battle);
@@ -190,7 +191,7 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
     const mons = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const g = d.game.id;
-    const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
     const types = B.attackTypes(T);
     const fmt = formatsFor(d.game);
     const sdex = Dex.forFormat(fmt.battle);
@@ -237,6 +238,55 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
     const m = k => r2(xs.reduce((a, x) => a + x[k], 0) / xs.length);
     lines.push(`RESUMO ${v}: ${xs.length} planos mudam; nota +${m('dScore')}; frente a frente ${Math.round(100 * m('h2h'))}% (venceu mais em ${xs.filter(x => x.h2h > 0.5).length}); aleatórios ${m('dRand') >= 0 ? '+' : ''}${Math.round(100 * m('dRand'))} pontos`);
   }
+  console.log(lines.join('\n'));
+  if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
+}, 7200000);
+
+// Tutor (opcional: SIM_TUTOR=1; SIM_AB_N batalhas para cada lado): no Quetzal, a equipe montada contando os golpes do
+// tutor (quetzal-teach.json) contra a montada só com os golpes por nível, no mesmo plano, frente a frente e contra os
+// times do random battle. Os conjuntos levam os golpes que o app manda ensinar (os do tutor, na equipe com tutor).
+it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: os golpes do tutor fazem equipes mais fortes?', () => {
+  if (!showdown()) throw new Error('Instale o simulador: npm i --no-save pokemon-showdown@0.11.11');
+  const { Dex } = showdown();
+  const K = +(process.env.SIM_AB_N || 40), NOPP = +(process.env.SIM_N || 40);
+  let files = FILES.filter(f => f.startsWith('quetzal')).map(f => ['fixtures/' + f, f]);
+  if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
+  if (process.env.SIM_ONLY) files = files.filter(([, n]) => process.env.SIM_ONLY.split(',').includes(n));
+  const lines = [], rows = [];
+  const label = plan => plan.field || (plan.kind === 'offense' ? 'hiperofensiva' : 'equilibrada');
+  for (const [p, name] of files) {
+    if (!existsSync(p)) continue;
+    const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
+    const mons = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+    const fmt = formatsFor(d.game);
+    const sdex = Dex.forFormat(fmt.battle);
+    const comp = compIndex(d.game);
+    const A = B.buildTeams(mons, T, { dex: quetzalLearnDex(QL), comp });
+    const Bt = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), useTutor: true }, comp });
+    const opp = opponents(fmt.opp, NOPP, 5);
+    const setsOf = r => { const s = leadOrder(r.team, r.plan).map(e => toSet(e, r.plan, sdex)); return s.some(x => !x) ? null : s; };
+    for (const rb of Bt) {
+      const ra = A.find(r => label(r.plan) === label(rb.plan));
+      if (!ra) { lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} só existe com o tutor: ${rb.team.map(e => e.m.species.name).join(', ')}`); continue; }
+      const sa = setsOf(ra), sb = setsOf(rb);
+      if (!sa || !sb) continue;
+      let w = 0;
+      for (let k = 0; k < K; k++) {
+        w += battle(fmt.battle, sb, sa, rb.plan, [51, k + 1, 3, 5], ra.plan);
+        w += 1 - battle(fmt.battle, sa, sb, ra.plan, [53, k + 1, 3, 5], rb.plan);
+      }
+      const h2h = w / (2 * K);
+      let wa = 0, wb = 0;
+      opp.forEach((o, i) => { wa += battle(fmt.battle, sa, o, ra.plan, [57, i + 1, 3, 5]); wb += battle(fmt.battle, sb, o, rb.plan, [57, i + 1, 3, 5]); });
+      const same = ra.team.map(e => e.real).sort().join() === rb.team.map(e => e.real).sort().join();
+      rows.push({ save: name, plan: label(rb.plan), h2h, dRand: (wb - wa) / opp.length, same });
+      const fmtSet = s => s.map(x => `${x.species} (${x.moves.join('/')})`).join('; ');
+      lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} ${same ? 'mesmos membros' : 'membros mudam'}: frente a frente ${Math.round(100 * h2h)}% (±${Math.round(100 * 1.96 * Math.sqrt(h2h * (1 - h2h) / (2 * K)))}), aleatórios ${Math.round(100 * wb / opp.length)}% × ${Math.round(100 * wa / opp.length)}%`);
+      lines.push(`    sem tutor: ${fmtSet(sa)}\n    com tutor: ${fmtSet(sb)}`);
+    }
+  }
+  const m = (xs, k) => (xs.length ? xs.reduce((a, x) => a + x[k], 0) / xs.length : 0);
+  lines.push(`RESUMO: ${rows.length} planos; frente a frente ${Math.round(100 * m(rows, 'h2h'))}% para a equipe com tutor (venceu mais em ${rows.filter(x => x.h2h > 0.5).length}); aleatórios ${Math.round(100 * m(rows, 'dRand'))} pontos`);
   console.log(lines.join('\n'));
   if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
 }, 7200000);

@@ -206,6 +206,29 @@ export function levelMoves(m, dex, T) {
   return out;
 }
 
+/** O "nível" de um golpe que o Pokémon aprende pelo tutor (sem nível: qualquer um, a qualquer momento). */
+export const TUTOR = -1;
+
+/**
+ * Os golpes que o Pokémon pode aprender: os por nível (levelMoves) e, no Quetzal, os do tutor (`dex.tutor`: o menu
+ * NOVO MOV. → TUTOR do jogo ensina qualquer um, a qualquer momento), com o nível TUTOR. Os de ovo ficam de fora (só no
+ * cruzamento). Um golpe que ele aprende pelos dois aparece uma vez, com o nível.
+ */
+export function learnableMoves(m, dex, T) {
+  const out = levelMoves(m, dex, T);
+  // Em avaliação: só com dex.useTutor (os testes de comparação ligam; o app ainda não)
+  const tutor = dex && dex.tutor && dex.useTutor ? dex.tutor[m.speciesId] : null;
+  if (!tutor) return out;
+  const have = new Set(out.map(x => x.name));
+  for (const id of tutor) {
+    const info = moveInfo(id, T);
+    if (!info || !info.known || have.has(info.name)) continue;
+    have.add(info.name);
+    out.push({ name: info.name, level: TUTOR, type: info.type, power: info.power, category: info.category });
+  }
+  return out;
+}
+
 /**
  * Os Pokémon que o montador pode usar: um por espécie (o de nível mais alto, depois o de mais IVs), sem ovos,
  * mais a forma evoluída final de quem ainda não evoluiu (Quetzal, Unbound e SoulGold). Cada entrada já leva as
@@ -239,7 +262,7 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
   }
   return chosen.map((m, id) => {
     const known = new Set(m.moves.map(mv => mv.name));
-    const learn = levelMoves(m, dex, T).filter(x => !known.has(x.name));
+    const learn = learnableMoves(m, dex, T).filter(x => !known.has(x.name));
     const mf = megaForm(m, T);
     const e = Object.assign(entry(m, mf || m, T, types, mult, learn), { id });
     e.cost = readyCost(e, false, 0);
@@ -897,7 +920,7 @@ export function outsiderEntry(spec, T, dex, like, plan) {
   const ab = spec.abilities.find(a => f && (ABUSERS[a] === f || FIELD[a] === f)) || spec.abilities[0] || null;
   const species = { name: spec.name, form: spec.form, showdown: spec.showdown, types: spec.types, baseStats: spec.stats, abilities: spec.abilities };
   const m = { species, speciesId: spec.id, ability: ab ? { name: ab, num: Math.max(0, spec.abilities.indexOf(ab)) } : null, item: null, moves: [], level: 100, outsider: true };
-  const learn = levelMoves(m, dex, T);
+  const learn = learnableMoves(m, dex, T);
   if (!learn.length) {
     const physical = spec.stats[1] >= spec.stats[3];
     m.moves = spec.types.map(ty => ({ name: null, type: ty, power: 90, category: T.gen3 ? (SPECIAL_G3.has(ty) ? 1 : 0) : physical ? 0 : 1 }));

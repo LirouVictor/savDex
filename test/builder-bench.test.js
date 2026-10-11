@@ -7,6 +7,7 @@
 // Opcionais: BENCH_STAT_MODEL (um de STAT_MODELS em build.js; padrão 'bst') e BENCH_TIERS (JSON { id do Showdown:
 // { nat, sv } } com os tiers competitivos, tirado do formats-data do Pokémon Showdown; não versionado), para a média
 // de tier dos membros como medida externa
+// Quetzal: o montador conta os golpes do tutor (quetzal-teach.json); BENCH_NO_TUTOR=1 tira, para comparar.
 // Saves: os de fixtures/ (não versionados) e, se existir, o de BENCH_USER_SAVE. Para cada save e plano mede a nota
 // e as partes, a pior fraqueza em comum, a cobertura real (contra os dois tipos dos Pokémon com stats base 450+),
 // o trabalho pendente (evoluir, ensinar, nível), a diversidade entre as equipes, o tempo (o inicial e o das alternativas
@@ -22,6 +23,7 @@ import N from '../src/data/nds.json';
 import Q from '../src/data/quetzal.json';
 import SG from '../src/data/soulgold.json';
 import QL from '../src/data/quetzal-learn.json';
+import QT from '../src/data/quetzal-teach.json';
 import UL from '../src/data/unbound-learn.json';
 import SL from '../src/data/soulgold-learn.json';
 import { quetzalLearnDex, unboundLearnDex, soulgoldLearnDex } from '../src/ui/dex.js';
@@ -163,7 +165,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
       const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
       const g = d.game.id;
-      const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+      const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
       const types = B.attackTypes(T);
       const threats = threatList(T, d.game, dex);
       const comp = compIndex(d.game);
@@ -287,7 +289,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const g = d.game.id;
-    const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
     const types = B.attackTypes(T);
     const mains = B.buildTeams(all, T, { dex, game: process.env.BENCH_NO_THREATS ? null : d.game, comp: compIndex(d.game) });
     const pool = mains.pool;

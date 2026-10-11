@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, TUTOR } from './build.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
 import { buildView } from '../ai/view.js';
@@ -82,7 +82,7 @@ function whyUses(m, f) {
 }
 
 /** "aprende no Nv. 41" / "aprende ao evoluir" */
-const learnAt = level => (level ? t('aprende no Nv. {n}', { n: level }) : t('aprende ao evoluir'));
+const learnAt = level => (level === TUTOR ? t('pelo tutor') : level ? t('aprende no Nv. {n}', { n: level }) : t('aprende ao evoluir'));
 /** Golpe a ensinar que põe ou aproveita o campo f. */
 const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
   ? FIELD_MOVES[name] === f || (f === 'Trick Room' && name === 'Trick Room')

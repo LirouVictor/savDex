@@ -836,6 +836,7 @@ export default {
   'especial': 'Special',
   'Montar equipes': 'Build teams',
   'aprende no Nv. {n}': 'learns at Lv. {n}',
+  'pelo tutor': 'from the tutor',
   'aprende ao evoluir': 'learns on evolving',
   'pode pôr {field}': 'can set {field}',
   'Ensine {move} a {ref} ({when}): {why}.': 'Teach {move} to {ref} ({when}): {why}.',
