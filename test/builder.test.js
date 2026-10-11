@@ -3,6 +3,7 @@ import T from '../src/data/tables.js';
 import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes } from '../src/builder/build.js';
 import { megaForm } from '../src/ai/evolve.js';
 import { runBuilder, moreOptions, resultsHtml, shownParts, wantedMons } from '../src/builder/index.js';
+import { builderWin } from '../src/ui/render.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
 let slot = 0;
@@ -87,6 +88,13 @@ suite('Montador de equipes (sem IA)', () => {
     for (const r of buildTeams(all, T, { want })) expect(names(r)).toEqual(expect.arrayContaining(['Corviknight', 'Slaking']));
   });
 
+  it('pedido em frase (o mesmo campo da IA): acha os nomes no meio do texto, sem confundir palavras comuns', () => {
+    const all = pool();
+    expect(wantedMons(all, 'quero o Slaking e o corviknight; time de chuva').map(m => m.species.name)).toEqual(['Slaking', 'Corviknight']);
+    expect(wantedMons(all, 'chuva, sol, sem lendários')).toEqual([]);
+    expect(wantedMons(all, 'corvi').map(m => m.species.name)).toEqual(['Corviknight']); // começo do nome com 5+ letras
+  });
+
   it('golpes fracos do começo do jogo não contam (cobertura, prioridade, clima)', () => {
     slot = 0;
     const weak = mon('Dragapult', ['dragon', 'ghost'], [88, 120, 75, 100, 75, 142], { moves: [['Quick Attack', 'normal', 0, 40], ['Astonish', 'ghost', 0, 30], ['Bite', 'dark', 0, 60], ['Infestation', 'bug', 1, 20]] });
@@ -137,6 +145,19 @@ suite('Montador de equipes (sem IA)', () => {
     expect(sun.r.membros.some(x => /^põe sol$/.test(x.papel))).toBe(true);
     expect(sun.r.pontos_fortes.join(' ')).toMatch(/sol: posto por/);
     expect(resultsHtml([], 0, T)).toContain('Não deu para montar');
+  });
+
+  it('uma janela só: o app monta, a IA (opcional) comenta a equipe do app, avalia a atual ou monta do jeito dela', () => {
+    const html = builderWin({ party: [{}], game: { id: 'quetzal' } }, [{ id: 'gemini', label: 'Gemini' }]);
+    expect(html.match(/id="builder-note"/g)).toHaveLength(1); // o mesmo pedido para os dois
+    expect(html).not.toContain('id="ai-note"');
+    expect(html).toMatch(/id="builder-run"[\s\S]*id="builder-out"[\s\S]*<details class="fold ai-fold" id="ai-win">/);
+    expect(html).toContain('data-ai="analyze"');
+    expect(html).toContain('Montar com IA');
+    expect(html).toContain('id="ai-free"');
+    // O resultado do app tem o botão para a IA comentar a equipe, com o lugar do comentário
+    const res = runBuilder(pool(), T);
+    expect(resultsHtml(res, 0, T)).toMatch(/data-ai-review[\s\S]*class="builder-ai-out"/);
   });
 
   it('megapedra da própria espécie: conta com os tipos, stats e habilidade da mega (tabela da ROM)', () => {

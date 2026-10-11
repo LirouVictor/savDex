@@ -784,6 +784,13 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .dex-filters small, .dex-gens small { opacity: .75; }
 .builder-more { margin: 8px 0 0; }
 .builder-more .btn { line-height: 1.5; }
+/* Montar equipe: o mesmo pedido para o app e para a IA; a parte com IA no fim; o comentário da IA embaixo da equipe do app */
+.builder-note-hint { margin: 4px 0 10px; }
+.ai-fold { margin-top: 14px; }
+.ai-fold > summary small { margin-left: auto; font: .62rem var(--pixel); opacity: .8; text-transform: none; }
+.builder-ai { margin-top: 14px; padding-top: 12px; border-top: 3px dashed var(--hi); }
+.builder-ai > .btn { margin: 3px; }
+.builder-ai > .hint { margin: 6px 3px 0; }
 .dex-grid { list-style: none; padding: 0; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
 .dex-mon { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 0; padding: 4px 4px 6px; text-align: center; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
 .dex-mon img { width: 68px; height: 44px; object-fit: contain; }

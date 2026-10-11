@@ -364,17 +364,26 @@ export function analysisWin(d, T) {
   </section>`;
 }
 
-/** Montador de equipes do app (sem IA): fechado até o usuário abrir; o pacote só carrega ao tocar no botão. */
 // Jogos com a tabela de megas da ROM (o modo sem restrição de item conta com megapedras que o Pokémon não segura)
 const MEGA_GAMES = ['quetzal', 'unbound', 'soulgold'];
 
-export function builderWin(d) {
+/**
+ * Montar equipe, numa janela só: o app monta sozinho (sem IA; o pacote só carrega ao tocar no botão) e, no fim, a
+ * parte opcional com IA (a chave é do usuário e fica só neste aparelho): comentar a equipe que o app montou, avaliar
+ * a equipe atual ou montar do jeito da IA. O pedido é o mesmo para os dois. Fechada até o usuário abrir; os textos
+ * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
+ */
+export function builderWin(d, providers = []) {
   const megas = d && d.game && MEGA_GAMES.includes(d.game.id);
+  const noParty = !(d && d.party && d.party.length);
+  const free = freeAbilityMode(d && d.game);
+  const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   return `<details class="win win-fold" id="builder-win">
-    <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('sem IA')}</small></summary>
+    <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
     <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.')}</p>
-    <label class="ai-label" for="builder-note">${t('Quero na equipe (opcional)')}</label>
-    <input id="builder-note" class="ai-input" type="text" maxlength="200" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario')}">
+    <label class="ai-label" for="builder-note">${t('Pedido (opcional)')}</label>
+    <input id="builder-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario; time de chuva')}">
+    <p class="hint builder-note-hint">${t('O app coloca na equipe os Pokémon que você citar pelo nome; a IA lê o pedido inteiro.')}</p>
     <label class="ai-label" for="builder-ready">${t('Preparo')}</label>
     <select id="builder-ready" class="ai-input">
       <option value="train">${t('Posso treinar: conta o que dá para conseguir evoluindo e ensinando golpes')}</option>
@@ -385,64 +394,51 @@ export function builderWin(d) {
     <label class="ai-skip"><input type="checkbox" id="builder-threats"> ${t('Considerar as ameaças do jogo: prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta)')}</label>
     <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
-  </details>`;
-}
-
-/**
- * Assistente com IA: a chave é do usuário e fica só neste aparelho.
- * Os textos que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
- */
-export function aiWin(d, providers) {
-  const noParty = !d.party.length;
-  const free = freeAbilityMode(d.game);
-  const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
-  // Fechada até o usuário abrir (app.js lembra a escolha neste aparelho)
-  return `<details class="win win-fold" id="ai-win">
-    <summary class="win-title"><h2 id="ai-h">${t('Assistente')}</h2><small id="ai-svc">${t('IA')}</small></summary>
-    <p class="ai-intro">${t('A IA avalia sua equipe e monta uma equipe com os Pokémon que você tem.')}</p>
-    <div class="ai-form ai-provider">
-      <label class="ai-label" for="ai-provider">${t('Serviço de IA')}</label>
-      <select id="ai-provider" class="ai-input">${opts}</select>
-    </div>
-    <div id="ai-setup" class="hidden">
-      <p class="ai-intro">${t('Para usar, crie uma chave grátis:')}</p>
-      <ol class="ai-steps">
-        <li>${t('Abra')} <a id="ai-key-link" href="#" target="_blank" rel="noopener"></a> ${t('e')} <span id="ai-key-steps"></span>.</li>
-        <li>${t('Copie a chave e cole abaixo.')}</li>
-      </ol>
-      <div class="ai-form">
-        <label class="sr" for="ai-key">${t('Chave')}</label>
-        <input id="ai-key" type="password" autocomplete="off" spellcheck="false">
-        <button class="btn" type="button" id="ai-save">${t('Salvar chave')}</button>
+    <details class="fold ai-fold" id="ai-win">
+      <summary>${t('Com IA (opcional)')} <small id="ai-svc">${t('IA')}</small></summary>
+      <p class="ai-intro">${t('Com a sua chave grátis, a IA comenta a equipe que o app montou (botão no resultado), avalia a sua equipe atual ou monta uma do jeito dela, seguindo o pedido acima.')}</p>
+      <div class="ai-form ai-provider">
+        <label class="ai-label" for="ai-provider">${t('Serviço de IA')}</label>
+        <select id="ai-provider" class="ai-input">${opts}</select>
       </div>
-      <p class="hint">${t('A chave fica guardada só neste aparelho.')}</p>
-    </div>
-    <div id="ai-main" class="hidden">
-      <label class="ai-label" for="ai-note">${t('Pedido (opcional)')}</label>
-      <input id="ai-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: quero usar o Lucario; sem lendários')}">
-      ${free ? `<label class="ai-skip ai-free"><input type="checkbox" id="ai-free"> ${free === 'patch'
+      <div id="ai-setup" class="hidden">
+        <p class="ai-intro">${t('Para usar, crie uma chave grátis:')}</p>
+        <ol class="ai-steps">
+          <li>${t('Abra')} <a id="ai-key-link" href="#" target="_blank" rel="noopener"></a> ${t('e')} <span id="ai-key-steps"></span>.</li>
+          <li>${t('Copie a chave e cole abaixo.')}</li>
+        </ol>
+        <div class="ai-form">
+          <label class="sr" for="ai-key">${t('Chave')}</label>
+          <input id="ai-key" type="password" autocomplete="off" spellcheck="false">
+          <button class="btn" type="button" id="ai-save">${t('Salvar chave')}</button>
+        </div>
+        <p class="hint">${t('A chave fica guardada só neste aparelho.')}</p>
+      </div>
+      <div id="ai-main" class="hidden">
+        ${free ? `<label class="ai-skip ai-free"><input type="checkbox" id="ai-free"> ${free === 'patch'
     ? t('Modo livre: considerar trocar a habilidade (Ability Capsule e Ability Patch)')
     : t('Modo livre: considerar trocar entre a 1ª e a 2ª habilidade (Ability Capsule)')}</label>` : ''}
-      <div class="export-btns ai-actions">
-        <button class="btn" type="button" data-ai="analyze"${noParty ? ' disabled' : ''}>${t('Analisar minha equipe')}</button>
-        <button class="btn" type="button" data-ai="build">${t('Montar equipe')}</button>
-      </div>
-      <p class="hint" id="ai-privacy"></p>
-      <details class="ai-settings fold">
-        <summary>${t('Configurações da IA')}</summary>
-        <div class="ai-form">
-          <label class="ai-label" for="ai-model">${t('Modelo')}</label>
-          <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" list="ai-models" placeholder="${t('automático')}">
-          <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">${t('Salvar modelo')}</button>
-          <datalist id="ai-models"></datalist>
+        <div class="export-btns ai-actions">
+          <button class="btn" type="button" data-ai="analyze"${noParty ? ' disabled' : ''}>${t('Analisar minha equipe')}</button>
+          <button class="btn" type="button" data-ai="build">${t('Montar com IA')}</button>
         </div>
-        <label class="ai-skip"><input type="checkbox" id="ai-ask" checked> ${t('Mostrar o que vai ser enviado antes de enviar')}</label>
-        <button class="btn btn-ghost btn-small" type="button" id="ai-list">${t('Ver modelos da chave')}</button>
-        <p class="hint" id="ai-models-out" role="status"></p>
-        <button class="btn btn-ghost btn-small" type="button" id="ai-forget">${t('Apagar chave deste aparelho')}</button>
-      </details>
-    </div>
-    <div id="ai-out" class="ai-out" aria-live="polite"></div>
+        <p class="hint" id="ai-privacy"></p>
+        <details class="ai-settings fold">
+          <summary>${t('Configurações da IA')}</summary>
+          <div class="ai-form">
+            <label class="ai-label" for="ai-model">${t('Modelo')}</label>
+            <input id="ai-model" class="ai-input" type="text" autocomplete="off" spellcheck="false" list="ai-models" placeholder="${t('automático')}">
+            <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">${t('Salvar modelo')}</button>
+            <datalist id="ai-models"></datalist>
+          </div>
+          <label class="ai-skip"><input type="checkbox" id="ai-ask" checked> ${t('Mostrar o que vai ser enviado antes de enviar')}</label>
+          <button class="btn btn-ghost btn-small" type="button" id="ai-list">${t('Ver modelos da chave')}</button>
+          <p class="hint" id="ai-models-out" role="status"></p>
+          <button class="btn btn-ghost btn-small" type="button" id="ai-forget">${t('Apagar chave deste aparelho')}</button>
+        </details>
+      </div>
+      <div id="ai-out" class="ai-out" aria-live="polite"></div>
+    </details>
   </details>`;
 }
 

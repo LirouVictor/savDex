@@ -107,7 +107,7 @@ export function analysisView(r, byRef, model, opts = null) {
     <div class="ai-hero">
       <div class="ai-medal" role="img" aria-label="${t('Nota {n} de 10', { n: r.nota })}"><b>${r.nota}</b><small>/10</small></div>
       <div class="ai-hero-text">
-        <p class="ai-kicker">${t('Avaliação da equipe')}</p>
+        <p class="ai-kicker">${opts && opts.review ? t('Comentário da IA sobre a equipe do app') : t('Avaliação da equipe')}</p>
         <p class="ai-verdict">${VERDICT(r.nota)}</p>
         <div class="ai-pips" aria-hidden="true">${pips}</div>
       </div>
@@ -185,9 +185,11 @@ export function buildView(r, byRef, model, T, opts = null) {
 export function confirmView(prep) {
   const { P, counts, note, kind, system, prompt } = prep;
   const model = P.getModel() || t('escolhido automaticamente');
-  const analyze = kind === 'analyze';
+  // O comentário sobre a equipe do app vai como a análise (candidatos que mais ajudam, cálculos, um envio só)
+  const review = kind === 'review';
+  const analyze = kind === 'analyze' || review;
   const pc = counts.pc
-    ? t('{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t(analyze
+    ? t(review ? '{n} de fora dela' : '{n} do PC', { n: counts.pc }) + (counts.pc < counts.pcTotal ? ' ' + t(analyze
       ? '(de {total}: os que mais ajudam a equipe, resistindo às fraquezas dela ou cobrindo tipos sem golpe super efetivo, depois os de maior total de stats base)'
       : '(de {total}: um por espécie; quando não cabem todos, primeiro quem põe ou aproveita clima, terreno e Trick Room e os melhores de cada tipo, depois os de maior total de stats base)', { total: counts.pcTotal }) : '')
     : t('nenhum do PC');
@@ -197,9 +199,10 @@ export function confirmView(prep) {
   <div class="ai-cols">
     <section class="ai-panel good"><h3><span class="ai-ico" aria-hidden="true"></span>${t('Vai junto')}</h3>
       <ul class="ai-list">
-        <li>${esc(t('{n} Pokémon da equipe e {pc}.', { n: counts.party, pc }))}</li>
+        <li>${esc(t(review ? '{n} Pokémon da equipe montada pelo app e {pc}.' : '{n} Pokémon da equipe e {pc}.', { n: counts.party, pc }))}</li>
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
         ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
+        ${review ? `<li>${t('O plano da equipe e a função de cada membro, calculados pelo app.')}</li>` : ''}
         ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
         ${counts.free ? `<li>${t('Modo livre: as outras habilidades que cada um pode ter, trocando por item.')}</li>` : ''}
         ${analyze ? '' : `<li>${counts.learn2

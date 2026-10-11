@@ -757,3 +757,43 @@ suite('IA: plano, papéis e sinergia (strategy.js)', () => {
     expect(systemPrompt({ id: 'unbound' })).not.toContain('Terastalização');
   });
 });
+
+suite('IA: comentário sobre a equipe montada pelo app', () => {
+  // Equipe do app: Lucario (equipe atual) e o Garchomp do PC contado com a megapedra que ainda não segura
+  const given = { ...all[2], item: { name: 'Garchompite' }, stoneFrom: all[2] };
+  const team = [all[0], given];
+  const roles = new Map([['E1', 'aproveita sol'], ['C3-12', 'cobertura']]);
+  it('pedido com o plano, a função de cada membro e quem está fora da equipe (inclusive a equipe atual)', async () => {
+    const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
+    const prep = prepareAi('review', { all, T, team, plan: 'Sol', roles, note: 'quero o Lucario' });
+    expect(prep.prompt).toContain('plano Sol');
+    expect(prep.prompt).toMatch(/EQUIPE MONTADA PELO APP:\nE1 \| Lucario[^\n]*Função no plano: aproveita sol/);
+    expect(prep.prompt).toMatch(/\nC3-12 \| Garchomp[^\n]*Item: Garchompite[^\n]*ainda não segura Garchompite; o app contou com ela/);
+    const outside = prep.prompt.split('Fora da equipe')[1];
+    expect(outside).toContain('E2 | Pelipper');
+    expect(outside).not.toContain('C3-12 |');
+    expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
+    expect(prep.prompt).not.toMatch(/Nv\.? \d/);
+    expect(prep.counts).toMatchObject({ party: 2, pc: 3, pcTotal: 4 });
+    const html = confirmHtml(prep);
+    expect(html).toContain('2 Pokémon da equipe montada pelo app e 3 de fora dela');
+    expect(html).toContain('O plano da equipe e a função de cada membro, calculados pelo app.');
+    expect(html).not.toContain('segundo envio');
+  });
+  it('trocas: sai um membro da equipe montada, entra alguém de fora dela; a tela mostra a equipe como o app contou', async () => {
+    const { prepareAi, sendAi } = await import('../src/ai/index.js');
+    const r = checkAnalysis({ nota: 7, resumo: '', pontos_fortes: [], pontos_fracos: [], sinergias: [], dicas: [],
+      trocas: [{ sai: 'C3-12', entra: 'E2', motivo: 'ok' }, { sai: 'E2', entra: 'C1-1', motivo: 'fora da equipe' }, { sai: 'E1', entra: 'C3-12', motivo: 'já está' }] }, byRef, new Set(team.map(refOf)));
+    expect(r.trocas.map(x => `${x.sai}>${x.entra}`)).toEqual(['C3-12>E2']);
+    expect(r.dropped).toEqual(['E2 → C1-1', 'E1 → C3-12']);
+    const P = { service: 'Gemini', maxCandidates: 250, getModel: () => '', generateJSON: async () => ({ model: 'gemini-x', fallback: false, data: {
+      nota: 8, resumo: 'C3-12 abre o sol para E1.', pontos_fortes: ['E1 aproveita'], pontos_fracos: [], sinergias: [], dicas: [{ ref: 'C3-12', texto: 'Dê Garchompite.' }],
+      trocas: [{ sai: 'C3-12', entra: 'E2', motivo: 'E2 resiste a Ice' }] } }) };
+    const prep = { ...prepareAi('review', { all, T, team, plan: 'Sol', roles }), P };
+    const res = await sendAi(prep);
+    expect(res.html).toContain('Comentário da IA sobre a equipe do app');
+    expect(res.html).toContain('data-ref="E2"'); // a troca sugerida, com alguém da equipe atual
+    expect(res.byRef.get('C3-12')).toBe(all[2]); // o toque abre o Pokémon real
+    expect(res.team).toBe(null);
+  });
+});

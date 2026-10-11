@@ -3,35 +3,45 @@
 // sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
-import { refOf, freeAbilityMode, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
+import { refOf, freeAbilityMode, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, REVIEW_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, reviewPrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
 import { repairTeam } from './repair.js';
 import { t } from '../i18n.js';
 
 /**
  * Monta o pedido sem enviar nada.
- * @param {'analyze'|'build'} kind
- * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object, free?: boolean }} ctx dex = golpes por nível
- *   (dex.json), opcional; free = modo livre (habilidade trocável por item, nos jogos em que o item existe)
+ * @param {'analyze'|'build'|'review'} kind review = comentário sobre a equipe montada pelo app (`team`, `plan`, `roles`)
+ * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object, free?: boolean, team?: object[], plan?: string, roles?: Map }} ctx
+ *   dex = golpes por nível (dex.json), opcional; free = modo livre (habilidade trocável por item, nos jogos em que o item existe)
  */
-export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false }) {
+export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false, team = null, plan = '', roles = new Map() }) {
   const P = provider();
   const system = systemPrompt(game);
   const mode = free ? freeAbilityMode(game) : null;
-  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game, free: mode }) : buildPrompt(all, T, note, P.maxCandidates, { free: mode });
+  const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game, free: mode })
+    : kind === 'review' ? reviewPrompt(all, T, team, note, P.maxCandidates, { dex, game, free: mode, plan, roles })
+      : buildPrompt(all, T, note, P.maxCandidates, { free: mode });
   const lines = prompt.split('\n');
-  const counts = {
+  const refs = lines.filter(l => /^(E\d|C\d+-\d+) \|/.test(l)).length;
+  const counts = kind === 'review' ? {
+    party: team.length,
+    pc: refs - team.length,
+    pcTotal: all.length - team.length,
+  } : {
     party: lines.filter(l => /^E\d \|/.test(l)).length,
     pc: lines.filter(l => /^C\d+-\d+ \|/.test(l)).length,
     pcTotal: all.filter(m => m.location !== 'party').length,
-    learn: lines.some(l => /^E\d: /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
+  };
+  Object.assign(counts, {
+    learn: lines.some(l => /^(E\d|C\d+-\d+): /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
     hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode, T).length > 0, // clima/terreno/Trick Room
     free: !!mode,
-  };
+  });
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
   // Montagem do Quetzal/Unbound: a segunda etapa leva os golpes por nível dos 6 escolhidos
   counts.learn2 = kind === 'build' && !!dex && !!game && ['quetzal', 'unbound', 'soulgold'].includes(game.id);
-  return { kind, P, system, prompt, schema: localizedSchema(kind === 'analyze' ? ANALYSIS_SCHEMA : BUILD_SCHEMA), all, T, dex, game, note: note.trim(), counts, free: mode };
+  const schema = kind === 'analyze' ? ANALYSIS_SCHEMA : kind === 'review' ? REVIEW_SCHEMA : BUILD_SCHEMA;
+  return { kind, P, system, prompt, schema: localizedSchema(schema), all, T, dex, game, note: note.trim(), counts, free: mode, team };
 }
 
 /** HTML da janela de confirmação ("o que vai ser enviado"). */
@@ -60,6 +70,13 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
   let liteWhy = first.fallback === 'quota' ? 'quota' : 'overload';
   if (kind === 'analyze') {
     return { html: analysisView(checkAnalysis(first.data, byRef), byRef, `${P.service} (${first.model})`, { dex, T, lite, liteWhy }), byRef, team: null };
+  }
+  if (kind === 'review') {
+    // Nos textos, a equipe como o app contou (forma evoluída, megapedra a dar); o toque abre o Pokémon real (byRef)
+    const shown = new Map(byRef);
+    for (const m of prep.team) shown.set(refOf(m), m);
+    const r = checkAnalysis(first.data, shown, new Set(prep.team.map(refOf)));
+    return { html: analysisView(r, shown, `${P.service} (${first.model})`, { dex, T, lite, liteWhy, review: true }), byRef, team: null };
   }
   const r = checkBuild(first.data, byRef);
   let team = r.membros.map(x => byRef.get(x.ref));
