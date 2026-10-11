@@ -573,6 +573,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .lm { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 4px 8px 4px 12px; background: var(--win-2); box-shadow: inset 4px 0 0 var(--t, var(--hi)); }
 .lm-lv { display: grid; justify-items: center; font: .8rem/1 var(--pixel); color: var(--accent); }
 .lm-lv small { font-size: .55rem; color: var(--muted); }
+.lm.lm-nolv { grid-template-columns: minmax(0, 1fr) auto; }
 .lm-main { display: grid; min-width: 0; }
 .lm-main b { font-size: .9rem; overflow-wrap: anywhere; }
 .lm-main small { color: var(--muted); font-size: .76rem; }

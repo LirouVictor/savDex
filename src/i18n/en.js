@@ -305,6 +305,10 @@ export default {
   'e outros': 'and others',
   'Evo.': 'Evo.',
   'Já conhece': 'Already known',
+  'Golpes por tutor': 'Tutor moves',
+  'Golpes de ovo': 'Egg moves',
+  'No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.': 'In the game: Pokémon menu → NEW MOVE → TUTOR (any of them, at any time). ✓ = already known.',
+  'Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.': 'Passed to the offspring when breeding (list from the ROM; the game does not teach them in the NEW MOVE menu). ✓ = already known.',
   'Golpes por nível': 'Level-up moves',
   'jogo oficial': 'the official game',
 

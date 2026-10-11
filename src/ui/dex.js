@@ -81,10 +81,18 @@ export function evolutionHtml(m, dex, T) {
  * Golpes por nível do Quetzal (src/data/quetzal-learn.json, tirados da ROM) no mesmo formato do dex.json:
  * learn[ID do Quetzal] = [versão, nível, golpe, …]. `rom: true` faz as funções usarem o ID do save.
  */
-export function quetzalLearnDex(L) {
+export function quetzalLearnDex(L, TC = null) {
   const learn = {};
   L.species.forEach((set, id) => { if (id && L.sets[set]) learn[id] = [0, ...L.sets[set]]; });
-  return { rom: true, versions: ['Pokémon Quetzal'], learn };
+  const dex = { rom: true, versions: ['Pokémon Quetzal'], learn };
+  // Golpes por tutor (o menu NOVO MOV. → TUTOR do jogo: qualquer um, a qualquer momento) e de ovo (da primeira da linha)
+  if (TC) {
+    dex.tutor = {};
+    TC.tutor.species.forEach((set, id) => { if (id && TC.tutor.sets[set] && TC.tutor.sets[set].length) dex.tutor[id] = TC.tutor.sets[set]; });
+    dex.egg = {};
+    TC.eggOf.forEach((base, id) => { if (id && base && TC.egg[base]) dex.egg[id] = TC.egg[base]; });
+  }
+  return dex;
 }
 
 /**
@@ -130,6 +138,27 @@ export function learnsetHtml(m, dex, T) {
   }
   return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.rom ? '' : probable()}<span class="learn-count">${count}</span></summary>
     <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
+    <ul class="learn-list">${items.join('')}</ul>
+  </details>${dex.tutor ? moveListHtml(m, dex.tutor[m.speciesId], T, t('Golpes por tutor'), t('No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.')) : ''}${
+  dex.egg ? moveListHtml(m, dex.egg[m.speciesId], T, t('Golpes de ovo'), t('Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.')) : ''}`;
+}
+
+/** Uma lista de golpes sem nível (tutor, ovo), em ordem alfabética, com o tipo, a categoria e o poder. */
+function moveListHtml(m, ids, T, title, hint) {
+  if (!ids || !ids.length) return '';
+  const known = new Set(m.moves.map(mv => mv.id));
+  const rows = ids.map(id => ({ id, info: moveInfo(id, T) })).filter(x => x.info && x.info.name)
+    .sort((a, b) => a.info.name.localeCompare(b.info.name));
+  const items = rows.map(({ id, info }) => {
+    const has = known.has(id);
+    const meta = [categoryName(info.category), info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
+    return `<li class="lm lm-nolv${info.type ? ` t-${esc(info.type)}` : ''}${has ? ' has' : ''}">
+      <span class="lm-main"><b>${esc(info.name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
+      ${info.type ? typeChip(info.type) : ''}
+    </li>`;
+  });
+  return `<details class="dsec learn fold"><summary><span>${esc(title)}</span><span class="learn-count">${rows.length}</span></summary>
+    <p class="hint">${esc(hint)}</p>
     <ul class="learn-list">${items.join('')}</ul>
   </details>`;
 }

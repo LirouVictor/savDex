@@ -95,4 +95,28 @@ suite('Quetzal: golpes por nível da ROM', () => {
     expect(lines[2]).toMatch(/^E1: /);
     expect(lines[2]).not.toMatch(/Rage Fist/); // já conhece
   });
+  it('golpes por tutor (menu NOVO MOV. → TUTOR) e de ovo, da ROM', async () => {
+    const L = (await import('../src/data/quetzal-learn.json')).default;
+    const TC = (await import('../src/data/quetzal-teach.json')).default;
+    const { quetzalLearnDex, learnsetHtml } = await import('../src/ui/dex.js');
+    const dex = quetzalLearnDex(L, TC);
+    const names = ids => ids.map(id => R.move({ id, pp: 1 }).name);
+    // Conferido no jogo: a lista TUTOR do Pelipper tem 90 golpes, de Acrobatics a Wing Attack
+    const pel = names(dex.tutor[279]).sort((a, b) => a.localeCompare(b));
+    expect(pel).toHaveLength(90);
+    expect(pel[0]).toBe('Acrobatics');
+    expect(pel[89]).toBe('Wing Attack');
+    expect(pel).toEqual(expect.arrayContaining(['Hurricane', 'Roost', 'U-turn', 'Scald', 'Knock Off', 'Tailwind']));
+    // Ovo: a lista é da primeira da linha (Bulbasaur) e vale para as evoluções (Venusaur)
+    expect(names(dex.egg[1])).toEqual(expect.arrayContaining(['Leaf Storm', 'Power Whip', 'Curse']));
+    expect(dex.egg[3]).toEqual(dex.egg[1]);
+    const mon = (speciesId, moves = []) => ({ speciesId, level: 50, species: R.species(speciesId), moves: moves.map(name => ({ name })) });
+    const html = learnsetHtml(mon(279), dex, TQ);
+    expect(html).toContain('Golpes por tutor');
+    expect(html).toContain('NOVO MOV.');
+    const tutor = html.slice(html.indexOf('Golpes por tutor'), html.indexOf('Golpes de ovo'));
+    expect(tutor.indexOf('Acrobatics')).toBeLessThan(tutor.indexOf('Wing Attack')); // em ordem alfabética
+    // Sem o arquivo de tutor (ou fora do Quetzal), só os golpes por nível
+    expect(learnsetHtml(mon(279), quetzalLearnDex(L), TQ)).not.toContain('Golpes por tutor');
+  });
 });
