@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs } from './build.js';
+import { buildTeams, altTeams, scoreParts, shownScore, setPlanFlags, attackTypes, sets, compPairs } from './build.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
 import { buildView } from '../ai/view.js';
@@ -255,7 +255,8 @@ function teamTips(team, plan) {
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo']];
+// As partes da nota mostrada (sem a parte "Plano": ela só serve para a busca; ver shownScore em build.js)
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo']];
 
 /**
  * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
@@ -305,7 +306,7 @@ function describeTeam(res, types, pool, ctx) {
   if (ideal) r.ideal = ideal;
   const mons = team.map(e => e.m);
   return {
-    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
+    name: r.nome, plan, score: res.shown ?? shownScore(team, plan, types), parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
     // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
     // (as alternativas do "ideal × o que você tem" também: os textos citam o Pokémon pela referência)
     byRef: new Map([...(ideal ? ideal.alts : []), ...mons].map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),

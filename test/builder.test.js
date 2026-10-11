@@ -323,21 +323,25 @@ suite('Montador de equipes (sem IA)', () => {
     const sun = rs.find(r => r.plan.field === 'sol');
     expect(sun.team.map(m => m.species.name)).toContain('Venusaur');
     expect(sun.src.team.some(e => e.conflictBy.sol === 'weak' && e.strong.has('sol'))).toBe(true); // o caso da pena
+    // A nota mostrada é a da busca sem a parte "Plano" (compara planos diferentes)
     for (const r of rs) {
-      const { total, ...parts } = r.parts;
-      expect(total).toBeCloseTo(r.score, 9);
+      const { total, plan, ...parts } = r.parts;
+      expect(total - plan).toBeCloseTo(r.score, 9);
       expect(Object.values(parts).reduce((a, b) => a + b, 0)).toBeCloseTo(r.score, 9);
     }
+    // As abas vão da maior nota mostrada para a menor
+    for (let i = 1; i < rs.length; i++) expect(rs[i - 1].score).toBeGreaterThanOrEqual(rs[i].score);
     // As alternativas pedidas depois também (a busca delas marca as flags do plano de novo)
     for (let i = rs.length - 1; i >= 0; i--) moreOptions(rs, i, T);
-    for (const r of rs) expect(r.parts.total).toBeCloseTo(r.score, 9);
+    for (const r of rs) expect(r.parts.total - r.parts.plan).toBeCloseTo(r.score, 9);
     // Na tela: a linha "Nota N: Defesa … · Ataque …" soma N (as partes são arredondadas juntas, não uma a uma)
     rs.forEach((r, i) => {
       const line = resultsHtml(rs, i, T).match(/class="builder-score">([\s\S]*?)<\/div>/)[1].replace(/<[^>]+>/g, ' ');
       const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
       expect(nota).toBe(Math.round(r.score));
-      // Só as partes que não são 0 aparecem (sem o jogo, nunca a parte "Ameaças")
-      expect(parts.length).toBeLessThanOrEqual(7);
+      // Só as partes que não são 0 aparecem (sem o jogo, nunca a parte "Ameaças"; a parte "Plano" nunca)
+      expect(parts.length).toBeLessThanOrEqual(6);
+      expect(line).not.toContain('Plano');
       expect(parts.every(x => x !== 0)).toBe(true);
       expect(line).not.toContain('Ameaças');
       expect(parts.reduce((a, b) => a + b, 0)).toBe(nota);
@@ -345,12 +349,12 @@ suite('Montador de equipes (sem IA)', () => {
   });
 
   it('partes na tela: arredondadas juntas somam a nota (42,5 e 4,5 não viram 43 e 5)', () => {
-    const parts = { defense: -2, offense: 42.5, roles: 22, members: 130.83, balance: 1.5, plan: 38, ready: 0 };
+    const parts = { defense: -2, offense: 42.5, roles: 22, members: 168.83, balance: 1.5, ready: 0 };
     const score = Object.values(parts).reduce((a, b) => a + b, 0); // 232,83 → 233
     const shown = shownParts(parts, score);
     expect(Object.values(shown).reduce((a, b) => a + b, 0)).toBe(233);
     for (const k of Object.keys(parts)) expect(Math.abs(shown[k] - parts[k])).toBeLessThan(1);
-    const neg = { defense: -6.5, offense: 40, roles: 13, members: -4.5, balance: 0, plan: 0, ready: -3 }; // 39 (arredondando cada uma: 40)
+    const neg = { defense: -6.5, offense: 40, roles: 13, members: -4.5, balance: 0, ready: -3 }; // 39 (arredondando cada uma: 40)
     const sn = shownParts(neg, 39);
     expect(Object.values(sn).reduce((a, b) => a + b, 0)).toBe(39);
     for (const k of Object.keys(neg)) expect(Math.abs(sn[k] - neg[k])).toBeLessThan(1);
@@ -416,9 +420,10 @@ suite('Montador de equipes (sem IA)', () => {
   });
 
   it('ideal do competitivo × o que você tem: quem falta no save, em qual vaga, e o mais parecido que o jogador tem', () => {
-    // Tabela inventada: Kyogre (lendário) e Kingdra (o jogador tem) jogam com o Pelipper mais que o Barraskewda
+    // Tabela inventada: Kyogre (lendário) e Kingdra (o jogador tem) jogam com o Pelipper; o Barraskewda (que falta) também,
+    // forte o bastante para a nota mostrada (sem a parte "Plano") subir: sem a tabela de golpes, a estimativa dele é fraca
     const fake = smogonIndex([{ format: 'gen9nationaldex', ids: ['pelipper', 'kyogre', 'kingdra', 'barraskewda', 'swampert'],
-      pairs: [[0, 1, 6], [0, 2, 5], [0, 3, 4]] }]);
+      pairs: [[0, 1, 30], [0, 2, 25], [0, 3, 20]] }]);
     const res = buildTeams(pool(), T, { comp: fake });
     const rain = res.find(r => r.plan.field === 'chuva');
     setPlanFlags(res.pool, rain.plan);
@@ -439,14 +444,17 @@ suite('Montador de equipes (sem IA)', () => {
     expect(idealSwaps(r2.team, r2.plan, asked.pool, asked.ctx, T, { id: 'quetzal' })).toEqual([]);
     // Tela: o painel com o ideal, o porquê, a nota estimada e a alternativa (ou que ninguém faz o papel); a IA recebe as linhas
     const comp = smogonIndex([G9, G9U]);
-    // (com um Floatzel no PC: entra na chuva, e o Venusaur vira a alternativa do Ludicolo)
+    // (com um Floatzel no PC: entra na chuva)
     const pc = [...pool(), mon('Floatzel', ['water'], [85, 105, 55, 85, 50, 115], { ab: 'Swift Swim', moves: [atk('Liquidation', 'water'), ['Aqua Jet', 'water', 0, 40]] })];
     const ui = runBuilder(pc, T, '', null, { comp, saveGame: { id: 'quetzal' } });
     const k = ui.findIndex(r => r.plan.field === 'chuva');
     const html = resultsHtml(ui, k, T);
     expect(html).toContain('Ideal do competitivo × o que você tem');
     expect(html).toMatch(/<b>[^<]+<\/b> → Basculegion \(Water\/Ghost\), que você não tem: joga com <b>Pelipper<\/b> \(9×\)[^.]* no competitivo; nota \d+ → \d+\./);
-    expect(html).toMatch(/<b>Raichu<\/b> → Ludicolo [^<]*<b>Pelipper<\/b>[^<]*No seu save: <b>Venusaur<\/b> \(Grass\), nota \d+\./);
+    // A alternativa do save (ou que ninguém faz o papel); a nota do ideal sobe na nota mostrada (sem a parte "Plano")
+    expect(html).toMatch(/joga com <b>Pelipper<\/b>[^.]* no competitivo; nota \d+ → \d+\. (No seu save: <b>[^<]+<\/b> \([^)]*\), nota \d+\.|Ninguém do seu save faz esse papel\.)/);
+    const [, a, b] = html.match(/nota (\d+) → (\d+)\./);
+    expect(+b).toBeGreaterThan(+a);
     expect(html).not.toMatch(/No seu save: C\d/); // a alternativa aparece pelo nome
     expect(ui[k].r.ideal.lines[0]).toMatch(/^C\d+-\d+ → Basculegion/); // referências, para a IA
     // Sem a referência competitiva (ou sem o jogo), sem o painel

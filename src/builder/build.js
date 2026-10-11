@@ -26,7 +26,11 @@ const TERRAINS = ['Electric Terrain', 'Psychic Terrain', 'Grassy Terrain', 'Mist
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 const SLOW = 50, FAST = 90;
 const BEAM = 24; // equipes parciais guardadas a cada vaga
-const CANDS = 110; // candidatos por plano (os melhores para ele)
+// Candidatos por plano (os melhores sozinhos para ele): 110, ou 220 nos PCs grandes (mais de BIG_PC na busca). Com 110,
+// nos PCs de 700+ Pokémon ficavam de fora membros que deixam a equipe mais forte (os lendários levam as vagas pelo valor
+// sozinho): em batalhas simuladas (test/builder-sim.test.js), a equipe com 220 venceu a de 110 nos 6 planos em que mudou
+// (68% frente a frente), o mesmo que sem corte nenhum. Nos PCs de 230 a 380, 220 não mudou nenhuma equipe e dobrava o tempo
+const CANDS = 110, CANDS_BIG = 220, BIG_PC = 500;
 const ALTS = 3; // equipes por plano: a melhor e até 2 alternativas
 const ALT_SHARED = 3; // uma alternativa divide no máximo 3 membros com cada equipe anterior do mesmo plano
 const ALT_MIN = 0.9; // e só aparece com 90% ou mais da nota da melhor
@@ -435,6 +439,15 @@ function halvedIndex(plan, types) {
   return plan.kind === 'weather' && WEATHER[plan.field] ? types.indexOf(WEATHER[plan.field].weakens) : -1;
 }
 
+/**
+ * A nota que a tela mostra e que compara planos diferentes: a nota sem a parte "Plano" (que só serve para a busca montar
+ * quem põe e quem aproveita o plano; somada, ela dava vantagem a um plano pela escala da fórmula).
+ */
+export function shownScore(team, plan, types) {
+  const p = scoreParts(team, plan, types);
+  return p.total - p.plan;
+}
+
 /** Nota da equipe (também das parciais, durante a busca). Maior é melhor. */
 export const score = (team, plan, types, inc = null) => scoreParts(team, plan, types, inc).total;
 
@@ -694,17 +707,18 @@ export function solo(e, plan) {
  * @param {Set[]} [prev] equipes já escolhidas para o plano (os Pokémon reais de cada uma): a nova divide no máximo
  *   ALT_SHARED membros com cada uma (ou os que o jogador pediu, se forem mais)
  * @param {number} [beamSize] equipes parciais guardadas a cada vaga
- * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano); os testes de comparação mudam os dois
+ * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano; CANDS ou CANDS_BIG); os testes de comparação mudam os dois
  * @returns {{ plan, team: object[], score: number } | null}
  */
-export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = CANDS) {
+export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = pool.length > BIG_PC ? CANDS_BIG : CANDS) {
   const maxShared = Math.max(ALT_SHARED, forced.length);
   const tooClose = team => prev.some(p => team.filter(e => p.has(e.real)).length > maxShared);
   // Num plano de clima: fora quem tem a fraqueza que o clima fortalece ou depende de golpes que ele enfraquece
   // (e.conflict, marcado em buildTeams); quem o jogador pediu entra mesmo assim
   const usable = pool.filter(e => forced.includes(e) || !e.conflict);
-  const cands = usable.filter(e => !forced.includes(e))
-    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, candLimit).map(([e]) => e);
+  const ranked = usable.filter(e => !forced.includes(e))
+    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]);
+  const cands = ranked.slice(0, candLimit).map(([e]) => e);
   // Sementes: o que o jogador pediu, mais quem põe o plano (até 2 opções de quem põe, uma busca para cada)
   const seeds = [];
   if (plan.setters.length) {
@@ -826,8 +840,11 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     }
     if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(r);
   }
-  // Os planos da melhor nota para a pior, sem repetir a mesma equipe
-  out.sort((a, b) => b.score - a.score);
+  // Os planos da melhor nota para a pior, sem repetir a mesma equipe. Entre planos vale a nota sem a parte "Plano"
+  // (shown): ela só serve para a busca montar quem sustenta o plano. Em batalhas simuladas (test/builder-sim.test.js), a
+  // ordem pela nota inteira não acompanhava as vitórias (Spearman −0,16 e 0,02 em duas rodadas); sem a parte, 0,36 e 0,22
+  for (const r of out) { setPlanFlags(pool, r.plan); r.shown = shownScore(r.team, r.plan, types); }
+  out.sort((a, b) => b.shown - a.shown);
   const seen = new Set();
   const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
   // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
@@ -855,7 +872,7 @@ export function altTeams(results, main) {
     const a = bestTeam(pool, plan, types, forced, prev, ALT_BEAM);
     if (!a || a.team.length < 6 || !planHolds(a.team, plan) || a.score < main.score - (1 - ALT_MIN) * Math.abs(main.score)) break;
     prev.push(new Set(a.team.map(e => e.real)));
-    if (!seen.has(teamKey(a.team)) && seen.add(teamKey(a.team))) out.push({ ...a, alt: out.length + 1 });
+    if (!seen.has(teamKey(a.team)) && seen.add(teamKey(a.team))) out.push({ ...a, alt: out.length + 1, shown: shownScore(a.team, plan, types) });
   }
   return out;
 }

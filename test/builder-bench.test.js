@@ -315,7 +315,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
         const x = B.bestTeam(pool, plan, types, [], [], beam, cands);
         return { team: x && x.team, s: x && B.planHolds(x.team, plan) ? B.score(x.team, plan, types) : null, ms: Math.round(performance.now() - t) };
       };
-      const base = run(24, undefined), wide = run(96, undefined), nocut = run(24, Infinity);
+      const base = run(24, undefined), wide = run(96, undefined), nocut = run(24, Infinity); // undefined = o padrão do app
       const row = {
         save: name, plan: label, pool: pool.length, K: R.length, combos: ex.n,
         exGap: ex.s !== undefined && sBeamR !== null ? r1(ex.s - sBeamR) : null, exDiff: ex.team && beamR ? diff(beamR.team, ex.team) : null,
