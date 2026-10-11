@@ -140,6 +140,15 @@ const DROP_MOVES = new Set(['Close Combat', 'Leaf Storm', 'Draco Meteor', 'Overh
 // Papéis que vêm da habilidade
 const ABILITY_ROLES = { Intimidate: 'intimidação' };
 
+// Hiperofensiva (o arquétipo mais comum no competitivo de singles): quem abre o caminho com hazards ou telas e 3+
+// atacantes que sobem os stats e varrem. Só os golpes de setup de verdade (Growth, Work Up, Flame Charge… não)
+const SWEEP_MOVES = new Set(['Swords Dance', 'Dragon Dance', 'Nasty Plot', 'Calm Mind', 'Quiver Dance', 'Shell Smash', 'Bulk Up', 'Coil',
+  'Shift Gear', 'Victory Dance', 'Tail Glow', 'Belly Drum', 'Geomancy', 'No Retreat', 'Clangorous Soul', 'Tidy Up', 'Fillet Away',
+  'Agility', 'Rock Polish']);
+const SUPPORT_MOVES = new Set(['Stealth Rock', 'Spikes', 'Toxic Spikes', 'Sticky Web', 'Stone Axe', 'Ceaseless Edge', 'Reflect', 'Light Screen', 'Aurora Veil']);
+// Na nota: cada um dos 4 melhores atacantes com setup e quem abre o caminho (golpe a ensinar vale LEARN_ROLE)
+const HO_SWEEP = 9, HO_SUPPORT = 12;
+
 /** O golpe com a habilidade: tipo (Aerilate…) e poder (Technician…). `by` = a habilidade que mudou algo. */
 function withAbility(mv, ab, types) {
   if (!damaging(mv) || !ab) return mv;
@@ -300,6 +309,13 @@ function entry(m, bf, T, types, mult, learn = []) {
   const roles = rolesOf({ ...m, moves: useful });
   for (const a of abs) if (ABILITY_ROLES[a] && !roles.includes(ABILITY_ROLES[a])) roles.push(ABILITY_ROLES[a]);
   const contrary = abs.includes('Contrary') ? m.moves.filter(mv => DROP_MOVES.has(mv.name)).map(mv => mv.name) : [];
+  // Hiperofensiva: varre com setup (quem ataca forte: Ataque ou Ataque Especial base 100+, 2+ golpes de dano) e abre o
+  // caminho (hazards ou telas); o que já sabe vale 1, o que aprende por nível vale LEARN_ROLE
+  const strongAtk = Math.max(b[1], b[3]) >= 100 && moves.length >= 2;
+  const sweepKnown = strongAtk ? m.moves.find(mv => SWEEP_MOVES.has(mv.name)) || (contrary.length ? { name: contrary[0] } : null) : null;
+  const sweepTeach = strongAtk && !sweepKnown ? learn.find(x => SWEEP_MOVES.has(x.name)) || null : null;
+  const supKnown = m.moves.find(mv => SUPPORT_MOVES.has(mv.name)) || null;
+  const supTeach = supKnown ? null : learn.find(x => SUPPORT_MOVES.has(x.name)) || null;
   if (contrary.length && !roles.includes('setup')) roles.push('setup');
   let roleMask = 0;
   ROLES.forEach((r, i) => { if (roles.includes(r)) roleMask |= 1 << i; });
@@ -360,6 +376,8 @@ function entry(m, bf, T, types, mult, learn = []) {
     strat, auto, strong, core, wball, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
     lean: b[1] >= b[3] ? (phys ? 'phys' : spec ? 'spec' : '') : (spec ? 'spec' : phys ? 'phys' : ''), nPhys: phys, nSpec: spec,
     mega: isMegaStone(m.item), megaKnown: bf !== m,
+    sweep: sweepKnown ? 1 : sweepTeach ? LEARN_ROLE : 0, sweepMove: sweepKnown || sweepTeach,
+    hoSup: supKnown ? 1 : supTeach ? LEARN_ROLE : 0, supMove: supKnown || supTeach,
   };
 }
 
@@ -380,6 +398,7 @@ export function plans(pool) {
   }
   const room = pool.filter(e => sets(e, 'Trick Room'));
   if (room.length && roomHolds(pool)) out.push({ kind: 'room', field: 'Trick Room', setters: room });
+  if (offenseHolds(pool)) out.push({ kind: 'offense', field: null, setters: pool.filter(e => e.hoSup) });
   out.push({ kind: 'balance', field: null, setters: [] });
   return out;
 }
@@ -398,6 +417,12 @@ function coreHolds(list, f) {
   const auto = setters.some(e => e.auto.has(f));
   const users = list.filter(e => realUse(e, f, auto));
   return users.length >= 2 && users.some(e => !setters.includes(e) || setters.length > 1);
+}
+
+/** Hiperofensiva de verdade: quem abre o caminho (hazards ou telas) e, além dele, 3 ou mais atacantes com setup. */
+function offenseHolds(list) {
+  const sweepers = list.filter(e => e.sweep);
+  return list.some(s => s.hoSup && sweepers.filter(e => e !== s).length >= 3);
 }
 
 /** Trick Room de verdade: quem põe e, além dele, 3 ou mais lentos que atacam (quem põe não conta como um deles). */
@@ -485,6 +510,16 @@ function partsOf(team, plan, types, byType, inc = null) {
   for (const c of typeCount) if (c > 1) p.balance -= 6 * Math.max(0, c - 2) + 1.5 * (c - 1);
   if (plan.kind === 'room') p.plan += 5 * Math.min(slow, 4) - 4 * fast;
   else p.balance += 2 * Math.min(fast, 3);
+  if (plan.kind === 'offense') {
+    // Os 4 melhores atacantes com setup (o que já sabe vale mais) e o melhor que abre o caminho
+    let s1 = 0, s2 = 0, s3 = 0, s4 = 0, sup = 0;
+    for (const e of team) {
+      const v = e.sweep;
+      if (v > s1) { s4 = s3; s3 = s2; s2 = s1; s1 = v; } else if (v > s2) { s4 = s3; s3 = s2; s2 = v; } else if (v > s3) { s4 = s3; s3 = v; } else if (v > s4) s4 = v;
+      if (e.hoSup > sup) sup = e.hoSup;
+    }
+    p.plan += HO_SWEEP * (s1 + s2 + s3 + s4) + HO_SUPPORT * sup;
+  }
   if (plan.kind === 'weather' || plan.kind === 'terrain') {
     const f = plan.field;
     // Quem aproveita pela habilidade, golpe próprio ou megapedra vale mais que quem só tem golpe Fire/Water
@@ -646,6 +681,7 @@ function solo(e, plan) {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
     v += (e.value[plan.field] || 0) * 1.2;
   }
+  if (plan.kind === 'offense') v += 20 * e.sweep + 24 * e.hoSup + (e.sweep && e.spe >= FAST ? 4 : 0);
   if (plan.kind === 'room') v += sets(e, 'Trick Room') ? (e.strat.set.has('Trick Room') ? 30 : 24) : e.spe <= SLOW && e.dmg >= 2 ? 12 : e.spe >= FAST ? -8 : 0;
   return v;
 }
@@ -717,6 +753,7 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
 export function planHolds(team, plan) {
   if (plan.kind === 'balance') return true;
   if (plan.kind === 'room') return roomHolds(team);
+  if (plan.kind === 'offense') return offenseHolds(team);
   return coreHolds(team, plan.field);
 }
 

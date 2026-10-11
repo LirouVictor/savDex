@@ -193,7 +193,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
         const pl = pool;
         if (pl) setFlags(pl, r.plan);
         m.lsGain = pl ? r1(localGain(r.team, pl, r.plan, types, extra)) : null;
-        rows.push({ plan: r.plan.field || 'equilibrada', alt: r.alt || 0, ...m });
+        rows.push({ plan: r.plan.field || (r.plan.kind === 'offense' ? 'hiperofensiva' : 'equilibrada'), alt: r.alt || 0, ...m });
       }
       const first = rows.filter(x => !x.alt);
       const cnt = new Map();

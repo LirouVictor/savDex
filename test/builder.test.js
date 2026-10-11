@@ -454,6 +454,33 @@ suite('Montador de equipes (sem IA)', () => {
     expect(resultsHtml(runBuilder(pool(), T, '', null, { comp }), 0, T)).not.toContain('Ideal do competitivo');
   });
 
+  it('hiperofensiva: quem abre o caminho (hazards ou telas) e 3+ atacantes fortes com setup', () => {
+    slot = 0;
+    const ho = [
+      mon('Glimmora', ['rock', 'poison'], [83, 55, 90, 130, 81, 86], { ab: 'Toxic Debris', moves: [['Stealth Rock', 'rock', 2, 0], atk('Power Gem', 'rock', 1), atk('Sludge Wave', 'poison', 1)] }),
+      mon('Dragonite', ['dragon', 'flying'], [91, 134, 95, 100, 100, 80], { ab: 'Multiscale', moves: [['Dragon Dance', 'dragon', 2, 0], atk('Outrage', 'dragon'), atk('Earthquake', 'ground'), ['Extreme Speed', 'normal', 0, 80]] }),
+      mon('Volcarona', ['bug', 'fire'], [85, 60, 65, 135, 105, 100], { ab: 'Flame Body', moves: [['Quiver Dance', 'bug', 2, 0], atk('Fiery Dance', 'fire', 1), atk('Bug Buzz', 'bug', 1), atk('Giga Drain', 'grass', 1)] }),
+      mon('Kingambit', ['dark', 'steel'], [100, 135, 120, 60, 85, 50], { ab: 'Supreme Overlord', moves: [['Swords Dance', 'normal', 2, 0], atk('Kowtow Cleave', 'dark'), atk('Iron Head', 'steel'), ['Sucker Punch', 'dark', 0, 70]] }),
+      mon('Clefable', ['fairy'], [95, 70, 73, 95, 90, 60], { ab: 'Magic Guard', moves: [atk('Moonblast', 'fairy', 1), ['Moonlight', 'fairy', 2, 0], atk('Flamethrower', 'fire', 1)] }),
+      mon('Corviknight', ['flying', 'steel'], [98, 87, 105, 53, 85, 67], { ab: 'Mirror Armor', moves: [atk('Brave Bird', 'flying'), atk('Body Press', 'fighting'), ['Roost', 'flying', 2, 0], ['U-turn', 'bug', 0, 70]] }),
+      mon('Gholdengo', ['steel', 'ghost'], [87, 60, 95, 133, 91, 84], { ab: 'Good as Gold', moves: [['Nasty Plot', 'dark', 2, 0], atk('Make It Rain', 'steel', 1), atk('Shadow Ball', 'ghost', 1)] }),
+    ];
+    const kinds = plans(prepare(ho, T)).map(p => p.kind);
+    expect(kinds).toContain('offense');
+    // Sem quem abra o caminho, não há o plano
+    expect(plans(prepare(ho.filter(m => m.species.name !== 'Glimmora'), T)).map(p => p.kind)).not.toContain('offense');
+    const res = runBuilder(ho, T);
+    const off = res.find(r => r.plan.kind === 'offense');
+    expect(off.name).toBe('Hiperofensiva');
+    expect(planHolds(off.src.team, off.plan)).toBe(true);
+    const roles = new Map(off.team.map((m, i) => [m.species.name, off.r.membros[i]]));
+    expect(roles.get('Glimmora').papel).toBe('abre o caminho');
+    expect(roles.get('Glimmora').motivo).toContain('Stealth Rock');
+    expect(['Dragonite', 'Volcarona', 'Kingambit', 'Gholdengo'].filter(n => roles.get(n) && roles.get(n).papel === 'varre com setup').length).toBeGreaterThanOrEqual(3);
+    expect(roles.get('Dragonite').motivo).not.toMatch(/setup/); // o selo já diz
+    expect(off.r.pontos_fortes[0]).toMatch(/^Hiperofensiva: C\d+-\d+ abre o caminho; .+ varrem com setup\.$/);
+  });
+
   it('rápido o bastante com um PC grande', () => {
     const many = [];
     const TYPES = attackTypes(T);

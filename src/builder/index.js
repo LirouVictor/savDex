@@ -23,7 +23,13 @@ const KEY_ROLES = ['prioridade', 'recuperação', 'controle de velocidade', 'piv
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const list = a => a.join(', ');
 
-export const planName = plan => t(plan.field ? PLAN_NAME[plan.field] || plan.field : 'Equilibrada');
+export const planName = plan => {
+  if (plan.field) return t(PLAN_NAME[plan.field] || plan.field);
+  return plan.kind === 'offense' ? t('Hiperofensiva') : t('Equilibrada');
+};
+
+/** O golpe que já sabe, ou "ensine X (Nv. N)". */
+const moveOrTeach = (mv, known) => (known ? mv.name : t('ensine {move} ({when})', { move: mv.name, when: learnAt(mv.level) }));
 
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -117,6 +123,14 @@ function describeMember(e, team, plan, types) {
     role = t('golpes {type} mais fortes', { type: cap(WEATHER[f].boosts) });
   }
   if (plan.kind === 'room' && e.spe <= 50 && e.dmg >= 2 && !role) role = t('atacante lento');
+  // Hiperofensiva: quem abre o caminho (hazards, telas) e quem varre com setup
+  if (plan.kind === 'offense' && e.hoSup && !team.some(o => o !== e && o.hoSup > e.hoSup)) {
+    role = t('abre o caminho');
+    why.push(moveOrTeach(e.supMove, e.hoSup === 1));
+  } else if (plan.kind === 'offense' && e.sweep) {
+    role = t('varre com setup');
+    why.push(moveOrTeach(e.sweepMove, e.sweep === 1));
+  }
   // A mega, se o plano não a citou (Dragonite: Multiscale)
   if (bf !== m && !e.given && !why.some(x => x.includes(m.item.name))) why.push(t('mega: {ability}', { ability: bf.ability.name }));
   // O que segura pela equipe: resiste ao que acerta 2+ colegas em cheio, anula pela habilidade
@@ -132,7 +146,8 @@ function describeMember(e, team, plan, types) {
   const only = types.filter((ty, a) => (e.cov & (1 << a)) && !team.some(o => o !== e && (o.cov & (1 << a)))).map(cap);
   if (only.length) why.push(t('único que acerta {list}', { list: list(only.slice(0, 2)) }));
   if (e.contrary && e.contrary.length) why.push(t('Contrary + {move}', { move: e.contrary[0] }));
-  const roles = ROLE_ORDER.filter(r => e.roles.includes(r) && t(r) !== role).map(r => t(r));
+  // Sem repetir o selo (quem "varre com setup" não precisa do papel "setup" de novo)
+  const roles = ROLE_ORDER.filter(r => e.roles.includes(r) && t(r) !== role && !(r === 'setup' && role === t('varre com setup'))).map(r => t(r));
   if (roles.length) why.push(list(roles.slice(0, 2)));
   const byAb = new Map();
   for (const mv of e.boosted || []) byAb.set(mv.by, [...(byAb.get(mv.by) || []), mv.name]);
@@ -147,6 +162,10 @@ function teamPoints(team, plan, types) {
   const ref = e => refOf(e.m);
   const good = [], bad = [];
   const f = plan.field;
+  if (plan.kind === 'offense') {
+    const sup = team.filter(e => e.hoSup), sweepers = team.filter(e => e.sweep && !sup.includes(e));
+    good.push(t('Hiperofensiva: {sup} abre o caminho; {list} varrem com setup.', { sup: list(sup.map(ref)), list: list(sweepers.map(ref)) }));
+  }
   if (f) {
     const setters = team.filter(e => sets(e, f));
     const users = plan.kind === 'room' ? team.filter(e => e.spe <= 50 && e.dmg >= 2) : team.filter(e => e.strong.has(f) || e.stab.has(f) || e.strat.boost.has(f) || e.learnUse.has(f));
@@ -208,6 +227,14 @@ function teamTips(team, plan) {
     if (mv) teach(e, mv, lv, t('põe {field}', { field: t(f) }));
   }
   // Papéis que a equipe só tem ensinando um golpe (os mais importantes primeiro)
+  // Hiperofensiva: o golpe de setup (ou de hazards/telas) que falta aprender
+  if (plan.kind === 'offense') {
+    if (!team.some(e => e.hoSup === 1)) {
+      const e = team.find(x => x.hoSup);
+      if (e) teach(e, e.supMove.name, e.supMove.level, t('abre o caminho'));
+    }
+    for (const e of team) if (e.sweep && e.sweep < 1) teach(e, e.sweepMove.name, e.sweepMove.level, t('setup'));
+  }
   for (const r of ['prioridade', 'recuperação', 'controle de velocidade', 'pivô', 'setup', 'hazards', 'tira hazards']) {
     if (team.some(e => e.roles.includes(r))) continue;
     const e = team.find(x => x.roleMoves.has(r));
