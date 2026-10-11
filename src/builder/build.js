@@ -1,4 +1,4 @@
-// Montador de equipes do app, sem IA. Para cada plano que o save comporta (clima, terreno, Trick Room ou
+// Montador de equipes do app, sem IA. Para cada plano que o save comporta (clima, terreno, Trick Room, Hiperofensiva ou
 // equilibrado), procura no PC inteiro a melhor equipe de 6 por uma nota feita só de contas: fraquezas em comum
 // (descontando o que o clima da equipe corta), cobertura ofensiva, papéis (pivô, prioridade, recuperação…),
 // atacantes físicos × especiais, stats base, quem põe/aproveita o plano e quanto as duplas da equipe jogam juntas nos
@@ -26,7 +26,12 @@ const TERRAINS = ['Electric Terrain', 'Psychic Terrain', 'Grassy Terrain', 'Mist
 const SPE = 5; // stats base na ordem HP/Atk/Def/SpA/SpD/Spe
 const SLOW = 50, FAST = 90;
 const BEAM = 24; // equipes parciais guardadas a cada vaga
-const CANDS = 110; // candidatos por plano (os melhores para ele)
+// Candidatos por plano (os melhores sozinhos para ele): 110, ou 220 nos PCs grandes (mais de BIG_PC na busca). Com 110,
+// nos PCs de 700+ Pokémon ficavam de fora membros que deixam a equipe mais forte (os lendários levam as vagas pelo valor
+// sozinho): em batalhas simuladas (test/builder-sim.test.js), a equipe com 220 venceu a de 110 do mesmo plano nos 6 planos
+// em que mudou (68% frente a frente), o mesmo que sem corte nenhum. Nos PCs de 230 a 380, 220 não mudava nenhuma equipe
+// e dobrava o tempo
+const CANDS = 110, CANDS_BIG = 220, BIG_PC = 500;
 const ALTS = 3; // equipes por plano: a melhor e até 2 alternativas
 const ALT_SHARED = 3; // uma alternativa divide no máximo 3 membros com cada equipe anterior do mesmo plano
 const ALT_MIN = 0.9; // e só aparece com 90% ou mais da nota da melhor
@@ -675,7 +680,7 @@ export function allowed(team, e, plan) {
 }
 
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
-function solo(e, plan) {
+export function solo(e, plan) {
   let v = e.statVal - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - e.cost;
   if (plan.field && plan.kind !== 'room') {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
@@ -693,16 +698,18 @@ function solo(e, plan) {
  * @param {object[]} forced entradas que o jogador quer na equipe
  * @param {Set[]} [prev] equipes já escolhidas para o plano (os Pokémon reais de cada uma): a nova divide no máximo
  *   ALT_SHARED membros com cada uma (ou os que o jogador pediu, se forem mais)
+ * @param {number} [beamSize] equipes parciais guardadas a cada vaga
+ * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano; CANDS ou CANDS_BIG); os testes de comparação mudam os dois
  * @returns {{ plan, team: object[], score: number } | null}
  */
-export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM) {
+export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = pool.length > BIG_PC ? CANDS_BIG : CANDS) {
   const maxShared = Math.max(ALT_SHARED, forced.length);
   const tooClose = team => prev.some(p => team.filter(e => p.has(e.real)).length > maxShared);
   // Num plano de clima: fora quem tem a fraqueza que o clima fortalece ou depende de golpes que ele enfraquece
   // (e.conflict, marcado em buildTeams); quem o jogador pediu entra mesmo assim
   const usable = pool.filter(e => forced.includes(e) || !e.conflict);
   const cands = usable.filter(e => !forced.includes(e))
-    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, CANDS).map(([e]) => e);
+    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, candLimit).map(([e]) => e);
   // Sementes: o que o jogador pediu, mais quem põe o plano (até 2 opções de quem põe, uma busca para cada)
   const seeds = [];
   if (plan.setters.length) {
