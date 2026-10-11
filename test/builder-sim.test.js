@@ -278,7 +278,7 @@ it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: os golpes do tutor fazem eq
       const h2h = w / (2 * K);
       let wa = 0, wb = 0;
       opp.forEach((o, i) => { wa += battle(fmt.battle, sa, o, ra.plan, [57, i + 1, 3, 5]); wb += battle(fmt.battle, sb, o, rb.plan, [57, i + 1, 3, 5]); });
-      const same = ra.team.map(e => e.real).sort().join() === rb.team.map(e => e.real).sort().join();
+      const same = ra.team.map(e => e.m.species.name).sort().join() === rb.team.map(e => e.m.species.name).sort().join();
       rows.push({ save: name, plan: label(rb.plan), h2h, dRand: (wb - wa) / opp.length, same });
       const fmtSet = s => s.map(x => `${x.species} (${x.moves.join('/')})`).join('; ');
       lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} ${same ? 'mesmos membros' : 'membros mudam'}: frente a frente ${Math.round(100 * h2h)}% (±${Math.round(100 * 1.96 * Math.sqrt(h2h * (1 - h2h) / (2 * K)))}), aleatórios ${Math.round(100 * wb / opp.length)}% × ${Math.round(100 * wa / opp.length)}%`);
