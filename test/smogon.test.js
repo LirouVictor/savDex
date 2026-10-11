@@ -43,6 +43,32 @@ suite('Referência competitiva (Smogon)', () => {
     expect(idx.find(sp('Baxcalibur', 'Mega', 'Baxcalibur-Mega'))).toBe('baxcalibur');
   });
 
+  it('regras do Smogon que o app não tem ficam de fora: duas megas, duas formas da mesma espécie', () => {
+    const mega = id => /(mega[xyz]?|primal)$/.test(id) && id !== 'yanmega';
+    for (const t of [G9, G9U, G8]) expect(t.pairs.filter(([i, j]) => mega(t.ids[i]) && mega(t.ids[j])).length).toBe(0);
+    const g9 = smogonIndex([G9, G9U]);
+    expect(g9.pair('charizardmegay', 'lopunnymega')).toBe(0); // era 1/48 só porque o time leva uma mega
+    expect(smogonIndex([G8]).pair('garchomp', 'garchompmega')).toBe(0); // cláusula de espécie
+  });
+
+  it('formatos juntos: vale a primeira tabela que conhece as duas espécies; a matriz bate com pair', () => {
+    const A = { format: 'gen9nationaldex', ids: ['a', 'b', 'c'], pairs: [[0, 1, 2]] };
+    const B = { format: 'gen9nationaldexubers', ids: ['a', 'c', 'd'], pairs: [[0, 1, 3], [0, 2, 1.5], [1, 2, -1]] };
+    const idx = smogonIndex([A, B]);
+    expect(idx.label).toBe('Smogon, Gen 9 National Dex + National Dex Ubers');
+    expect(idx.pair('a', 'b')).toBe(2);
+    expect(idx.pair('a', 'c')).toBe(0); // a primeira tabela conhece as duas: acaso, mesmo com 3 na segunda
+    expect(idx.pair('d', 'a')).toBe(1.5); // só a segunda conhece o d
+    const ids = ['d', 'c', 'x', 'a', 'b'];
+    const M = idx.matrix(ids);
+    for (let i = 0; i < ids.length; i++) for (let j = 0; j < ids.length; j++) if (i !== j) expect(M[i * ids.length + j]).toBe(idx.pair(ids[i], ids[j]));
+    // Nas tabelas reais também
+    const g9 = smogonIndex([G9, G9U]);
+    const some = [...G9.ids.slice(0, 40), ...G9U.ids.slice(0, 40)].filter((x, i, a) => a.indexOf(x) === i);
+    const R = g9.matrix(some);
+    for (let i = 0; i < some.length; i++) for (let j = 0; j < some.length; j++) if (i !== j) expect(R[i * some.length + j]).toBeCloseTo(g9.pair(some[i], some[j]), 5);
+  });
+
   it('sinergia de uma equipe: média do log2 do lift nas duplas conhecidas', () => {
     const idx = smogonIndex([G9, G9U]);
     const rain = pairSynergy([sp('Pelipper'), sp('Barraskewda'), sp('Kingdra')], idx);

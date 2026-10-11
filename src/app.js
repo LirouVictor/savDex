@@ -405,11 +405,13 @@ function setupBuilder(out) {
       // Quetzal/Unbound/SoulGold: golpes por nível da ROM (o montador conta também os golpes que cada um aprende)
       const game = state.data.game;
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
+      // Referência competitiva (duplas dos times do Smogon): sem o pacote (offline na primeira vez), monta sem ela
+      const comp = await mod.loadSmogon(game);
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
       const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
       // Ameaças do jogo só com a caixa marcada (a busca fica 35–60% mais lenta no celular)
       const threats = $('#builder-threats').checked;
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);

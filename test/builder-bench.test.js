@@ -1,7 +1,7 @@
 // Comparação do montador de equipes com os saves reais (opcional; não roda no `npm test` normal).
 // Uso: BUILDER_BENCH=1 BENCH_OUT=/caminho/saida.json [BENCH_LOG=/caminho/texto.txt] npx vitest run test/builder-bench.test.js
-// Referência competitiva: cada equipe sai com a sinergia das duplas nos times do Smogon (src/builder/smogon.js; só medida,
-// a nota não usa)
+// Referência competitiva: cada equipe sai com a sinergia das duplas nos times do Smogon (src/builder/smogon.js), e a nota
+// conta a parte "Competitivo"; BENCH_COMP_W troca o peso (0 tira a parte), para comparar
 // Ameaças: a nota conta as do jogo (threats.js) e cada equipe sai com cobertura, dano e resposta contra elas; BENCH_NO_THREATS=1
 // tira a parte da nota e BENCH_THREAT_W='[2,0.2]' troca os pesos (sem resposta, só vindo de graça), para comparar.
 // Opcionais: BENCH_STAT_MODEL (um de STAT_MODELS em build.js; padrão 'bst') e BENCH_TIERS (JSON { id do Showdown:
@@ -136,7 +136,7 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null, comp 
   const parts = B.scoreParts(team, plan, types);
   return {
     names: team.map(e => e.m.species.name + (e.given ? '@' + e.given : '') + (e.m.evolvedFrom ? '(de ' + e.m.evolvedFrom.species.name + ')' : '')),
-    score: r1(parts.total), parts: Object.fromEntries(Object.entries(parts).filter(([k]) => k !== 'total').map(([k, v]) => [k, r1(v)])),
+    score: r1(parts.total), noComp: r1(parts.total - (parts.comp || 0)), parts: Object.fromEntries(Object.entries(parts).filter(([k]) => k !== 'total').map(([k, v]) => [k, r1(v)])),
     worst, critical, pureCov: popc(team.reduce((x, e) => x | e.cov, 0)), realCov: Math.round(100 * hit / OPP.length), walls: Math.round(100 * wall / OPP.length),
     evolve: team.filter(e => e.m.evolvedFrom).length, teach: team.reduce((x, e) => x + (e.teachAtk || []).length, 0),
     belowLevel: team.filter(e => (e.real.level || 0) < refLevel - 15).length,
@@ -169,7 +169,8 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const comp = compIndex(d.game);
       const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
       // Com o jogo, a nota conta as ameaças dele (BENCH_NO_THREATS=1 tira, para comparar)
-      const opts = { dex, ...extra, statModel: process.env.BENCH_STAT_MODEL || 'bst', game: process.env.BENCH_NO_THREATS ? null : d.game,
+      const opts = { dex, ...extra, statModel: process.env.BENCH_STAT_MODEL || 'bst', game: process.env.BENCH_NO_THREATS ? null : d.game, comp,
+        ...(process.env.BENCH_COMP_W ? { compWeight: +process.env.BENCH_COMP_W } : {}),
         ...(process.env.BENCH_THREAT_W ? { threatWeights: JSON.parse(process.env.BENCH_THREAT_W) } : {}) };
       const t0 = performance.now();
       const mains = B.buildTeams(all, T, opts);
@@ -233,7 +234,11 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
     const measured = mains.filter(r => r.comp.withData >= 3);
     const avg = xs => (xs.length ? Math.round(100 * xs.reduce((a, b) => a + b, 0) / xs.length) / 100 : null);
     const ceil = res.filter(s => s.compCeiling).map(s => s.compCeiling.mean);
-    lines.push(`  COMPETITIVO (${mode}): teto médio dos saves ${avg(ceil)}; ${mains.length} equipes principais; com 3+ duplas conhecidas ${measured.length}; média do log2 do lift ${avg(measured.map(r => r.comp.mean))}; duplas fortes por equipe ${avg(measured.map(r => r.comp.strong))}; espécies conhecidas por equipe ${avg(mains.map(r => r.comp.known))}`);
+    lines.push(`  COMPETITIVO (${mode}): teto médio dos saves ${avg(ceil)}; ${mains.length} equipes principais; com 3+ duplas conhecidas ${measured.length}; média do log2 do lift ${avg(measured.map(r => r.comp.mean))}; duplas fortes por equipe ${avg(measured.map(r => r.comp.strong))}; se evitam ${avg(measured.map(r => r.comp.avoid))}; espécies conhecidas por equipe ${avg(mains.map(r => r.comp.known))}`);
+    // O que a parte competitiva custa nas outras medidas (equipes principais)
+    const all = res.flatMap(s => s.plans.filter(r => !r.alt));
+    const thr = all.filter(r => r.thr);
+    lines.push(`  RESUMO (${mode}): ${all.length} equipes; nota ${avg(all.map(r => r.score))}, sem a parte competitiva ${avg(all.map(r => r.noComp))}; críticos ${all.reduce((a, r) => a + r.critical, 0)}; pior fraqueza ${avg(all.map(r => r.worst.w))}; cobertura real ${avg(all.map(r => r.realCov))}%; ameaças sem resposta ${avg(thr.map(r => 100 * r.thr.none / r.thr.n))}%; ensinar ${avg(all.map(r => r.teach))}; evoluir ${avg(all.map(r => r.evolve))}${TIERS ? `; tier nat ${avg(all.filter(r => r.tierNat).map(r => r.tierNat.avg))}` : ''}; tempo ${res.reduce((a, s) => a + s.ms, 0)} ms`);
   }
   if (out.ref) lines.push(`\nREFERÊNCIA (equipe do jogador, chuva): ${out.ref.score} ${JSON.stringify(out.ref.parts)} pior ${out.ref.worst.type} ${out.ref.worst.w}/${out.ref.worst.r}${out.ref.comp ? `; competitivo: média ${out.ref.comp.mean}, fortes ${out.ref.comp.strong} (${out.ref.comp.top.join('; ')})` : ''}`);
   console.log(lines.join('\n'));

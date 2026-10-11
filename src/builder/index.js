@@ -4,11 +4,14 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs } from './build.js';
 import { teamThreats, variantOf } from './threats.js';
 import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
+
+// A referência competitiva do jogo (tabelas do Smogon em pacotes à parte): app.js carrega antes de montar
+export { loadSmogon } from './smogon.js';
 
 const PLAN_NAME = {
   sol: 'Sol', chuva: 'Chuva', 'tempestade de areia': 'Areia', 'neve/granizo': 'Neve', 'Trick Room': 'Trick Room',
@@ -175,6 +178,16 @@ function teamPoints(team, plan, types) {
       ? t('{type} acerta {n} membros em cheio; {ref} anula com {ability}.', { type: cap(ty), n: weak.length, ref: ref(absorber), ability: absorber.m.ability.name })
       : t('{type} acerta {n} membros em cheio.', { type: cap(ty), n: weak.length }));
   });
+  // Referência competitiva: as duplas que jogam juntas (ou se evitam) nos times do Smogon
+  const pairs = compPairs(team);
+  if (pairs) {
+    const label = team[0].sctx.label;
+    const duo = x => `${ref(x.a)} + ${ref(x.b)} (${x.v > 0 ? `${Math.round(2 ** x.v)}×` : `1/${Math.round(2 ** -x.v)}`})`;
+    const strong = pairs.filter(x => x.v >= 1).slice(0, 3);
+    const avoid = pairs.filter(x => x.v <= -1).reverse().slice(0, 2);
+    if (strong.length) good.push(t('No competitivo ({format}), jogam juntos bem mais que o acaso: {list}.', { format: label, list: list(strong.map(duo)) }));
+    if (avoid.length) bad.push(t('No competitivo ({format}), quase não jogam juntos: {list}.', { format: label, list: list(avoid.map(duo)) }));
+  }
   const missing = KEY_ROLES.filter(r => !roles.includes(r));
   if (missing.length) bad.push(t('Falta na equipe: {list}.', { list: list(missing.map(r => t(r))) }));
   const gaps = types.filter((ty, a) => !(cov & (1 << a)));
@@ -226,15 +239,15 @@ function teamTips(team, plan) {
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças']];
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo']];
 
 /**
  * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
  * a tela precisa de cada uma.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
  */
-export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null } = {}) {
-  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game });
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null, comp = null } = {}) {
+  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game, comp });
   const types = attackTypes(T);
   const results = raw.map(res => describeTeam(res, types, raw.pool, raw.ctx.threats));
   Object.defineProperty(results, 'raw', { value: raw });
@@ -272,7 +285,7 @@ function describeTeam(res, types, pool, threats = null) {
   };
   const mons = team.map(e => e.m);
   return {
-    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0,
+    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
     // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
     byRef: new Map(mons.map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),
     shown: new Map(mons.map(m => [refOf(m), m])),
@@ -341,8 +354,8 @@ export function resultsHtml(results, i, T) {
   const cur = results[i] || results[0];
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
   const shown = shownParts(cur.parts, cur.score);
-  // A parte "Ameaças" só aparece com a caixa marcada (sem ela, a linha é a de antes)
-  const parts = PARTS.filter(([k]) => k !== 'threats' || cur.r.ameacas)
+  // A parte "Ameaças" só aparece com a caixa marcada; a "Competitivo", com a referência do jogo carregada
+  const parts = PARTS.filter(([k]) => (k !== 'threats' || cur.r.ameacas) && (k !== 'comp' || cur.comp))
     .map(([k, label]) => `<span class="part${shown[k] > 0 ? ' up' : shown[k] < 0 ? ' down' : ''}">${esc(t(label))} <b>${shown[k] > 0 ? '+' : ''}${shown[k]}</b></span>`).join('');
   // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt ? '' : !cur.alts

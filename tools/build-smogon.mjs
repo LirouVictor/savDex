@@ -30,6 +30,14 @@ const MIN_LOG = Math.log2(1.5); // duplas guardadas: 1,5× ou mais (ou 1/1,5 ou 
 const TOP_POS = 15, TOP_NEG = 5; // por espécie: as duplas mais fortes e as que mais se evitam
 
 const toId = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Regras do Smogon que o app não tem: um time leva uma mega só (no app podem ser duas, e só uma megaevolui por batalha)
+// e nunca duas formas da mesma espécie (Zapdos e Zapdos de Galar; Garchomp e Garchomp-Mega). Essas duplas se evitam
+// por regra, não por falta de sinergia (Lopunny-Mega + Charizard-Mega-Y 1/45), e ficam de fora da tabela
+const MEGA = /-(Mega(-[XYZ])?|Primal)$/;
+const HYPHEN_BASE = ['Ho-Oh', 'Porygon-Z', 'Jangmo-o', 'Hakamo-o', 'Kommo-o', 'Chi-Yu', 'Ting-Lu', 'Wo-Chien', 'Chien-Pao', 'Nidoran-F', 'Nidoran-M'];
+const baseOf = n => HYPHEN_BASE.find(b => n === b || n.startsWith(b + '-')) || n.split('-')[0];
+const byRule = (a, b) => (MEGA.test(a) && MEGA.test(b)) || baseOf(a) === baseOf(b);
 const r2 = x => Math.round(x * 100) / 100;
 
 async function get(url) {
@@ -66,7 +74,7 @@ function build(format, month, chaos) {
   for (const a of names) {
     const scored = [];
     for (const b of names) {
-      if (b === a) continue;
+      if (b === a || byRule(a, b)) continue;
       const expected = N * data[a].usage * data[b].usage;
       const v = Math.log2((together(a, b) + PRIOR) / (expected + PRIOR));
       if (Math.abs(v) >= MIN_LOG) scored.push([b, v]);
