@@ -244,3 +244,102 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
   console.log(lines.join('\n'));
   if (process.env.BENCH_LOG) writeFileSync(process.env.BENCH_LOG, lines.join('\n') + '\n');
 }, 600000);
+
+// Busca (opcional: BENCH_SEARCH=1; mais BENCH_SEARCH_K, padrão 22; BENCH_NO_THREATS e BENCH_OUT/BENCH_LOG como acima): quanto a
+// busca em feixe deixa escapar, para cada save e plano, no modo "Posso treinar".
+// - exaustiva: todas as equipes com quem põe o plano (as mesmas sementes do feixe) e os K melhores candidatos sozinhos, contra o
+//   feixe no mesmo conjunto (mede o erro do feixe, separado do corte de candidatos);
+// - no conjunto inteiro: o feixe de 24 contra o de 96 e contra a busca sem o corte de 110 candidatos (mede o "descartar cedo").
+function exhaustive(R, seeds, plan, types) {
+  let best = null, n = 0;
+  for (const seed of seeds) {
+    const rest = R.filter(e => !seed.includes(e));
+    const team = [...seed];
+    const rec = start => {
+      if (team.length === 6) {
+        if (!B.planHolds(team, plan)) return;
+        n++;
+        const s = B.score(team, plan, types);
+        if (!best || s > best.s) best = { s, team: [...team] };
+        return;
+      }
+      for (let i = start; i <= rest.length - (6 - team.length); i++) {
+        if (!B.allowed(team, rest[i], plan)) continue;
+        team.push(rest[i]);
+        rec(i + 1);
+        team.pop();
+      }
+    };
+    rec(0);
+  }
+  return { ...best, n };
+}
+
+it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa escapar', () => {
+  const K = +(process.env.BENCH_SEARCH_K || 22);
+  const files = FILES.map(f => ['fixtures/' + f, f]);
+  if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
+  const rows = [], lines = [];
+  const names = t => t.map(e => e.m.species.name + (e.given ? '@' + e.given : ''));
+  const diff = (a, b) => { const s = new Set(a.map(e => e.real)); return b.filter(e => !s.has(e.real)).length; };
+  for (const [p, name] of files) {
+    if (!existsSync(p)) continue;
+    const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
+    const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+    const g = d.game.id;
+    const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const types = B.attackTypes(T);
+    const mains = B.buildTeams(all, T, { dex, game: process.env.BENCH_NO_THREATS ? null : d.game, comp: compIndex(d.game) });
+    const pool = mains.pool;
+    for (const r of mains) {
+      const plan = r.plan;
+      B.setPlanFlags(pool, plan);
+      const label = plan.field || (plan.kind === 'offense' ? 'hiperofensiva' : 'equilibrada');
+      const usable = pool.filter(e => !e.conflict);
+      const setters = plan.setters.filter(e => usable.includes(e)).sort((a, b) => B.solo(b, plan) - B.solo(a, plan)).slice(0, 2);
+      const seeds = setters.length ? setters.map(s => [s]) : [[]];
+      // Conjunto pequeno: quem põe + os K melhores sozinhos
+      const top = usable.slice().sort((a, b) => B.solo(b, plan) - B.solo(a, plan)).slice(0, K);
+      const R = [...new Set([...setters, ...top])];
+      const sub = { ...plan, setters };
+      let t0 = performance.now();
+      const beamR = B.bestTeam(R, sub, types, [], [], undefined, Infinity);
+      const beamRms = performance.now() - t0;
+      t0 = performance.now();
+      const ex = exhaustive(R, seeds, plan, types);
+      const exMs = performance.now() - t0;
+      const sBeamR = beamR && B.planHolds(beamR.team, plan) ? B.score(beamR.team, plan, types) : null;
+      // Conjunto inteiro: feixe de 24 (o do app), de 96, e sem o corte de candidatos
+      const run = (beam, cands) => {
+        const t = performance.now();
+        const x = B.bestTeam(pool, plan, types, [], [], beam, cands);
+        return { team: x && x.team, s: x && B.planHolds(x.team, plan) ? B.score(x.team, plan, types) : null, ms: Math.round(performance.now() - t) };
+      };
+      const base = run(24, 110), wide = run(96, 110), nocut = run(24, Infinity);
+      const row = {
+        save: name, plan: label, pool: pool.length, K: R.length, combos: ex.n,
+        exGap: ex.s !== undefined && sBeamR !== null ? r1(ex.s - sBeamR) : null, exDiff: ex.team && beamR ? diff(beamR.team, ex.team) : null,
+        exMs: Math.round(exMs), beamRms: Math.round(beamRms),
+        base: r1(base.s), wideGap: wide.s !== null ? r1(wide.s - base.s) : null, wideDiff: diff(base.team, wide.team),
+        nocutGap: nocut.s !== null ? r1(nocut.s - base.s) : null, nocutDiff: diff(base.team, nocut.team),
+        ms: base.ms, wideMs: wide.ms, nocutMs: nocut.ms,
+        exTeam: ex.team ? names(ex.team) : null, beamTeam: beamR ? names(beamR.team) : null,
+        wideTeam: names(wide.team), nocutTeam: names(nocut.team), baseTeam: names(base.team),
+      };
+      rows.push(row);
+      lines.push(`${name.padEnd(16)} ${label.padEnd(20)} pool ${String(pool.length).padStart(3)} | exaustiva ${row.combos} equipes em ${row.exMs} ms: +${row.exGap} (${row.exDiff} membros) | feixe 96: +${row.wideGap} (${row.wideDiff}) ${row.wideMs} ms | sem corte: +${row.nocutGap} (${row.nocutDiff}) ${row.nocutMs} ms | app ${row.ms} ms`);
+      if (row.exGap > 0) lines.push(`    feixe ${row.beamTeam.join(', ')}\n    exaust ${row.exTeam.join(', ')}`);
+      if (row.wideGap > 0) lines.push(`    app    ${row.baseTeam.join(', ')}\n    96     ${names(wide.team).join(', ')}`);
+      if (row.nocutGap > 0) lines.push(`    s/corte ${row.nocutTeam.join(', ')}`);
+    }
+  }
+  const avg = xs => (xs.length ? Math.round(100 * xs.reduce((a, b) => a + b, 0) / xs.length) / 100 : null);
+  const miss = k => rows.filter(r => r[k] > 0.05).length;
+  lines.push(`RESUMO: ${rows.length} planos; exaustiva acima do feixe em ${miss('exGap')} (média +${avg(rows.map(r => r.exGap || 0))}, máx +${Math.max(...rows.map(r => r.exGap || 0))}); `
+    + `feixe 96 acima em ${miss('wideGap')} (média +${avg(rows.map(r => r.wideGap || 0))}, máx +${Math.max(...rows.map(r => r.wideGap || 0))}); `
+    + `sem corte acima em ${miss('nocutGap')} (média +${avg(rows.map(r => r.nocutGap || 0))}, máx +${Math.max(...rows.map(r => r.nocutGap || 0))}); `
+    + `tempo: app ${rows.reduce((a, r) => a + r.ms, 0)} ms, feixe 96 ${rows.reduce((a, r) => a + r.wideMs, 0)} ms, sem corte ${rows.reduce((a, r) => a + r.nocutMs, 0)} ms`);
+  console.log(lines.join('\n'));
+  if (process.env.BENCH_OUT) writeFileSync(process.env.BENCH_OUT, JSON.stringify(rows, null, 1));
+  if (process.env.BENCH_LOG) writeFileSync(process.env.BENCH_LOG, lines.join('\n') + '\n');
+}, 3600000);

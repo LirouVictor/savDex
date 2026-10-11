@@ -675,7 +675,7 @@ export function allowed(team, e, plan) {
 }
 
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
-function solo(e, plan) {
+export function solo(e, plan) {
   let v = e.statVal - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - e.cost;
   if (plan.field && plan.kind !== 'room') {
     if (sets(e, plan.field)) v += e.auto.has(plan.field) ? 40 : e.strat.set.has(plan.field) ? 30 : 24;
@@ -693,16 +693,18 @@ function solo(e, plan) {
  * @param {object[]} forced entradas que o jogador quer na equipe
  * @param {Set[]} [prev] equipes já escolhidas para o plano (os Pokémon reais de cada uma): a nova divide no máximo
  *   ALT_SHARED membros com cada uma (ou os que o jogador pediu, se forem mais)
+ * @param {number} [beamSize] equipes parciais guardadas a cada vaga
+ * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano); os testes de comparação mudam os dois
  * @returns {{ plan, team: object[], score: number } | null}
  */
-export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM) {
+export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = CANDS) {
   const maxShared = Math.max(ALT_SHARED, forced.length);
   const tooClose = team => prev.some(p => team.filter(e => p.has(e.real)).length > maxShared);
   // Num plano de clima: fora quem tem a fraqueza que o clima fortalece ou depende de golpes que ele enfraquece
   // (e.conflict, marcado em buildTeams); quem o jogador pediu entra mesmo assim
   const usable = pool.filter(e => forced.includes(e) || !e.conflict);
   const cands = usable.filter(e => !forced.includes(e))
-    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, CANDS).map(([e]) => e);
+    .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, candLimit).map(([e]) => e);
   // Sementes: o que o jogador pediu, mais quem põe o plano (até 2 opções de quem põe, uma busca para cada)
   const seeds = [];
   if (plan.setters.length) {
