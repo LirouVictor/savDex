@@ -9,9 +9,11 @@ export const NEWS = [
     date: '2026-10-11',
     pt: [
       'Montar equipe: nova caixa “Considerar as ameaças do jogo” (desligada por padrão). Marcada, a nota ganha a parte “Ameaças” e a tela mostra os Pokémon fortes do jogo (do próprio jogo ou da ROM do hack): quantos a equipe acerta em cheio, quantos derruba em dois golpes e, o que mais importa, contra quantos alguém entra no campo e vence o 1 contra 1. Golpe super efetivo sozinho não conta como resposta. É uma estimativa (nível 50, sem itens nem EVs, golpes que as ameaças aprendem por nível), e o painel diz o que ela não sabe. A montagem fica mais lenta com a caixa marcada.',
+      'Detalhe do Pokémon: a linha evolutiva virou uma árvore, com cada ramo na sua fileira e setas entre os estágios. Linhas com forma regional (Goomy → Sliggoo → Goodra e, embaixo, Sliggoo de Hisui → Goodra de Hisui) ou com vários ramos (Eevee, Wurmple) não ficam mais embaralhadas; em tela estreita, a árvore rola para o lado em vez de quebrar.',
     ],
     en: [
       'Build team: a new “Consider the game’s threats” box (off by default). When checked, the score gets a “Threats” part and the screen shows the strong Pokémon in the game (from the game itself or the hack’s ROM): how many the team hits super effectively, how many it takes down in two hits and, most importantly, how many someone can switch into and beat one-on-one. A super effective move alone does not count as an answer. It is an estimate (level 50, no items or EVs, moves the threats learn by level), and the panel says what it does not know. Building takes longer with the box checked.',
+      'Pokémon details: the evolution line is now a tree, with each branch on its own row and arrows between stages. Lines with a regional form (Goomy → Sliggoo → Goodra and, below, Hisuian Sliggoo → Hisuian Goodra) or several branches (Eevee, Wurmple) are no longer jumbled; on a narrow screen the tree scrolls sideways instead of wrapping.',
     ],
   },
   {

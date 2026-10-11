@@ -539,14 +539,14 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .mu-x.resist { background: var(--accent); color: var(--accent-ink); }
 .mu-x.immune { background: var(--edge); color: var(--win); }
 .mu-types { display: flex; flex-wrap: wrap; gap: 4px; }
-.evo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
-.evo-stage { display: grid; gap: 6px; }
-.evo-node { display: grid; justify-items: center; gap: 2px; min-width: 84px; max-width: 150px; padding: 4px 6px; text-align: center; background: var(--win); box-shadow: inset 0 -3px 0 var(--hi); }
+/* Árvore: cada ramo numa fileira (colunas e fileiras vêm de evoGridHtml); rola para o lado em vez de quebrar */
+.evo { display: grid; justify-content: start; align-items: center; gap: 6px 4px; padding: 8px; overflow-x: auto; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.evo-node { display: grid; justify-items: center; align-self: center; gap: 2px; max-width: 150px; padding: 4px 6px; text-align: center; background: var(--win); box-shadow: inset 0 -3px 0 var(--hi); }
 .evo-node.here { box-shadow: inset 0 0 0 2px var(--accent), inset 0 -3px 0 var(--accent); }
 .evo-node img { width: 48px; height: 40px; object-fit: contain; }
-.evo-node b { font-size: .85rem; }
+.evo-node b { min-width: 72px; font-size: .85rem; } /* largura mínima aqui e não na caixa: assim a coluna nunca fica mais estreita que o nome */
 .evo-node small { color: var(--muted); font-size: .72rem; line-height: 1.25; }
-.evo-arrow { width: 0; height: 0; border: 7px solid transparent; border-left: 9px solid var(--accent-2); border-right: 0; }
+.evo-arrow { width: 0; height: 0; align-self: center; justify-self: center; border: 7px solid transparent; border-left: 9px solid var(--accent-2); border-right: 0; }
 /* Golpes por nível: botão que abre a lista (estilo .fold) e cartões no estilo dos golpes do Pokémon */
 .dsec.fold > summary { margin: 10px 3px 3px; font: .78rem var(--pixel); text-transform: uppercase; }
 .dsec.fold[open] > summary { margin-bottom: 10px; }

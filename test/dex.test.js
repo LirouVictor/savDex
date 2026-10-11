@@ -1,6 +1,6 @@
 import { describe as suite, it, expect } from 'vitest';
 import { defenseMatchups } from '../src/analysis.js';
-import { stages, dexIds, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
+import { evoTree, dexIds, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
 import T from '../src/data/tables.js';
 import dex from '../src/data/dex.json';
 
@@ -21,11 +21,24 @@ suite('Detalhe: dano recebido', () => {
 });
 
 suite('Detalhe: evolução e golpes (dados dos jogos oficiais)', () => {
-  it('estágios em ordem, com ramificação (Eevee)', () => {
+  it('árvore com ramificação (Eevee): um ramo por fileira, Eevee ocupa todas', () => {
     const chain = dex.chains[dex.speciesChain[133]];
-    const s = stages(chain);
-    expect(s[0].map(n => n[0])).toEqual([133]);
-    expect(s[1].map(n => n[0])).toEqual(expect.arrayContaining([134, 135, 136, 196, 197, 470, 471, 700]));
+    const { cells, rows, cols } = evoTree(chain);
+    const eevee = cells.find(c => c.n[0] === 133);
+    expect(cols).toBe(2);
+    expect(eevee).toMatchObject({ depth: 0, row: 0, span: rows });
+    expect(cells.filter(c => c.depth === 1).map(c => c.n[0])).toEqual(expect.arrayContaining([134, 135, 136, 196, 197, 470, 471, 700]));
+    expect(new Set(cells.filter(c => c.depth === 1).map(c => c.row)).size).toBe(rows); // cada evolução na sua fileira
+  });
+  it('árvore com formas em ramos (Goomy → Sliggoo → Goodra e → Sliggoo de Hisui → Goodra de Hisui)', () => {
+    const chain = [[704, 0], [705, 704], [10241, 704], [706, 705], [10242, 10241]];
+    const { cells, rows, cols } = evoTree(chain);
+    const at = id => cells.find(c => c.n[0] === id);
+    expect([rows, cols]).toEqual([2, 3]);
+    expect(at(704)).toMatchObject({ depth: 0, row: 0, span: 2 });
+    expect(at(705).row).toBe(at(706).row); // o Goodra comum na fileira do Sliggoo comum
+    expect(at(10241).row).toBe(at(10242).row); // e o de Hisui na do Sliggoo de Hisui
+    expect(at(705).row).not.toBe(at(10241).row);
   });
   it('forma regional usa a espécie para a linha (Raichu de Alola → linha do Pikachu)', () => {
     expect(dexIds(mon({ dexId: 10100 }), dex)).toEqual({ pid: 10100, sid: 26 });

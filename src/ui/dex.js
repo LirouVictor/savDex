@@ -20,31 +20,51 @@ export function dexIds(m, dex) {
 
 const speciesName = (id, dex, T) => (id <= 905 && T.species[id] ? T.species[id][0] : dex.names[id] || `#${id}`);
 
-/** Estágios da linha: [[nó…], [nó…], …], cada nó = [espécie, de quem evolui, método]. */
-export function stages(chain) {
-  const out = [];
-  let level = chain.filter(n => !n[1] || !chain.some(o => o[0] === n[1]));
-  const seen = new Set();
-  while (level.length) {
-    out.push(level);
-    level.forEach(n => seen.add(n[0]));
-    level = chain.filter(n => !seen.has(n[0]) && level.some(p => p[0] === n[1]));
-  }
-  return out;
+/**
+ * A linha evolutiva como árvore: cada ramo numa fileira, cada estágio numa coluna (Goomy → Sliggoo → Goodra e, na
+ * fileira de baixo, → Sliggoo de Hisui → Goodra de Hisui). Quem tem vários ramos ocupa as fileiras deles.
+ * @returns {{ cells: Array<{ n: Array, depth: number, row: number, span: number }>, rows: number, cols: number }}
+ */
+export function evoTree(chain) {
+  const roots = chain.filter(n => !n[1] || !chain.some(o => o[0] === n[1]));
+  const kids = new Map();
+  for (const n of chain) if (!roots.includes(n)) { if (!kids.has(n[1])) kids.set(n[1], []); kids.get(n[1]).push(n); }
+  const cells = [];
+  let row = 0, cols = 1;
+  const visit = (n, depth, above) => {
+    const start = row;
+    const next = (kids.get(n[0]) || []).filter(c => !above.has(c[0]));
+    if (!next.length) row++;
+    for (const c of next) visit(c, depth + 1, new Set([...above, c[0]]));
+    cells.push({ n, depth, row: start, span: Math.max(1, row - start) });
+    cols = Math.max(cols, depth + 1);
+  };
+  for (const r of roots) visit(r, 0, new Set([r[0]]));
+  return { cells: cells.sort((a, b) => a.row - b.row || a.depth - b.depth), rows: row, cols };
+}
+
+/** A árvore em grade (colunas: estágio, seta, estágio…); `node(n)` devolve o HTML de um Pokémon. */
+export function evoGridHtml(chain, node) {
+  const { cells, cols } = evoTree(chain);
+  const tmpl = ['auto', ...Array(cols - 1).fill('18px auto')].join(' ');
+  const at = c => `grid-row:${c.row + 1} / span ${c.span}`;
+  return `<div class="evo" style="grid-template-columns:${tmpl}">${cells.map(c =>
+    (c.depth ? `<span class="evo-arrow" aria-hidden="true" style="grid-column:${2 * c.depth};${at(c)}"></span>` : '')
+    + node(c.n).replace('class="evo-node', `style="grid-column:${2 * c.depth + 1};${at(c)}" class="evo-node`)).join('')}</div>`;
 }
 
 export function evolutionHtml(m, dex, T) {
   // Quetzal: linha evolutiva e métodos do próprio jogo (tabela da ROM)
-  if (T.quetzal && m.speciesId) return quetzalEvolutionHtml(m, T, stages);
-  if (T.unbound && m.speciesId) return unboundEvolutionHtml(m, T, stages);
-  if (T.soulgold && m.speciesId) return soulgoldEvolutionHtml(m, T, stages);
+  if (T.quetzal && m.speciesId) return quetzalEvolutionHtml(m, T, evoGridHtml);
+  if (T.unbound && m.speciesId) return unboundEvolutionHtml(m, T, evoGridHtml);
+  if (T.soulgold && m.speciesId) return soulgoldEvolutionHtml(m, T, evoGridHtml);
   const { pid, sid } = dexIds(m, dex);
   if (!pid) return '';
   const ci = dex.speciesChain[sid];
   if (ci === undefined) return `<section class="dsec"><h3>${t('Evolução')}</h3><p class="hint">${t('Não evolui (nos jogos oficiais).')}</p></section>`;
   const chain = dex.chains[ci];
   const en = getLang() === 'en';
-  const cols = stages(chain).map(level => `<div class="evo-stage">${level.map(([id, , pt, eng]) => {
+  const grid = evoGridHtml(chain, ([id, , pt, eng]) => {
     const how = en ? eng : pt;
     const icon = id <= LAST_GEN8_ICON ? iconUrl(id) : spriteUrl(id);
     return `<div class="evo-node${id === sid ? ' here' : ''}">
@@ -52,9 +72,9 @@ export function evolutionHtml(m, dex, T) {
       <b>${esc(speciesName(id, dex, T))}</b>
       ${how ? `<small>${esc(how)}</small>` : ''}
     </div>`;
-  }).join('')}</div>`).join('<span class="evo-arrow" aria-hidden="true"></span>');
+  });
   return `<section class="dsec"><h3>${t('Evolução')} ${probable()}</h3>
-    <div class="evo">${cols}</div></section>`;
+    ${grid}</section>`;
 }
 
 /**
