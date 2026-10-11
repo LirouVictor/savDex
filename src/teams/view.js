@@ -46,7 +46,7 @@ function teamBody(team, located, ti, T) {
       <button class="btn btn-ghost btn-small" type="button" data-team-copy="${ti}">${t('Copiar (Showdown)')}</button>
       ${found.length ? `<button class="btn btn-ghost btn-small" type="button" data-team-img="${ti}">${t('Imagem da equipe')}</button>` : ''}
       <button class="btn btn-ghost btn-small" type="button" data-team-rename="${ti}">${t('Renomear')}</button>
-      <button class="btn btn-ghost btn-small" type="button" data-team-del="${ti}">${t('Apagar')}</button>
+      <button class="btn btn-ghost btn-small btn-danger" type="button" data-team-del="${ti}">${t('Apagar')}</button>
     </div>`;
 }
 

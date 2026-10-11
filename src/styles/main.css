@@ -138,6 +138,9 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 /* Ponto ao lado de "Novidades" enquanto houver novidade não vista */
 .news-link.new::after { content: ""; width: 8px; height: 8px; margin-left: 6px; background: var(--accent-2); }
 .err-sheet { --hi: var(--accent-2); }
+/* Erro ao abrir: as duas saídas na largura toda, uma embaixo da outra */
+.err-sheet .export-btns { display: grid; gap: 8px; }
+.err-sheet .export-btns .btn { margin: 3px; justify-content: center; }
 .err-msg { margin: 0 0 14px; line-height: 1.5; }
 .page-sheet h2 { font-size: 1rem; min-height: 44px; display: flex; align-items: center; margin: 0 52px 8px 0; }
 .page-body h3 { font: .78rem var(--pixel); text-transform: uppercase; margin: 18px 0 6px; }
@@ -803,6 +806,10 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .team-icons img.gone, .team-gone img { opacity: .35; filter: grayscale(1); }
 .team-gone { cursor: default; }
 .team-actions { margin-top: 10px; }
+/* Ações da equipe salva em grade (como Exportar); Apagar em vermelho */
+.team-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.team-actions .btn { margin: 3px; line-height: 1.25; text-align: center; }
+.btn-danger { color: var(--accent-2); }
 
 /* Pokédex: o que falta (janela aberta pelo bloco da Pokédex) */
 .sum-more {

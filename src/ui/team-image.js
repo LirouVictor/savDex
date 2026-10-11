@@ -49,6 +49,15 @@ function fit(ctx, text, max) {
   return s + '…';
 }
 
+/** Diminui a fonte até o texto caber (nomes longos como BASCULEGION); só corta se nem no menor tamanho couber. */
+function fitSize(ctx, text, max, weight, size, min) {
+  for (let px = size; px >= min; px -= 2) {
+    ctx.font = `${weight} ${px}px ${FONT}`;
+    if (ctx.measureText(text).width <= max) return text;
+  }
+  return fit(ctx, text, max);
+}
+
 function box(ctx, x, y, w, h, fill, border = C.edge, bw = 4) {
   ctx.fillStyle = border;
   ctx.fillRect(x, y, w, h);
@@ -86,9 +95,8 @@ function card(ctx, m, img, x, y, w) {
   const tx = x + 16 + S + 16, tw = w - (tx - x) - 16;
   ctx.textBaseline = 'top';
   ctx.fillStyle = C.ink;
-  ctx.font = `700 30px ${FONT}`;
   const name = m.hasNickname ? m.nickname : sp.name;
-  ctx.fillText(fit(ctx, name.toUpperCase(), tw), tx, y + 20);
+  ctx.fillText(fitSize(ctx, name.toUpperCase(), tw, 700, 30, 20), tx, y + 20);
   ctx.font = `400 18px ${FONT}`;
   ctx.fillStyle = C.muted;
   let ly = y + 58;
