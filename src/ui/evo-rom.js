@@ -230,24 +230,25 @@ export function soulgoldChain(id, T) {
   return romChain(id, T.soulgold.evolutions, labelOf(species), evo => soulgoldEvoMethod(evo, T));
 }
 
-export function quetzalEvolutionHtml(m, T, stages) {
+export function quetzalEvolutionHtml(m, T, grid) {
   const R = makeResolver(T);
-  return chainHtml(m, quetzalChain(m.speciesId, T, R), R.species, stages, t('Não evolui no Quetzal.'), t('Métodos do próprio Quetzal (tabela do jogo).'));
+  return chainHtml(m, quetzalChain(m.speciesId, T, R), R.species, grid, t('Não evolui no Quetzal.'), t('Métodos do próprio Quetzal (tabela do jogo).'));
 }
 
-export function unboundEvolutionHtml(m, T, stages) {
-  return chainHtml(m, unboundChain(m.speciesId, T), s => unboundSpecies(s, T.unbound, T), stages,
+export function unboundEvolutionHtml(m, T, grid) {
+  return chainHtml(m, unboundChain(m.speciesId, T), s => unboundSpecies(s, T.unbound, T), grid,
     t('Não evolui no Unbound.'), t('Métodos do próprio Unbound (tabela do jogo).'));
 }
 
-export function soulgoldEvolutionHtml(m, T, stages) {
-  return chainHtml(m, soulgoldChain(m.speciesId, T), s => soulgoldSpecies(s, T.soulgold, T), stages,
+export function soulgoldEvolutionHtml(m, T, grid) {
+  return chainHtml(m, soulgoldChain(m.speciesId, T), s => soulgoldSpecies(s, T.soulgold, T), grid,
     t('Não evolui no SoulGold.'), t('Métodos do próprio SoulGold (tabela do jogo).'));
 }
 
-function chainHtml(m, chain, species, stages, none, hint) {
+/** `grid(chain, node)`: a árvore em grade (evoGridHtml em ui/dex.js, passada aqui para não importar de volta). */
+function chainHtml(m, chain, species, grid, none, hint) {
   if (!chain) return `<section class="dsec"><h3>${t('Evolução')}</h3><p class="hint">${none}</p></section>`;
-  const cols = stages(chain).map(level => `<div class="evo-stage">${level.map(([id, , how, ids]) => {
+  const html = grid(chain, ([id, , how, ids]) => {
     const sp = species(id);
     const icon = !sp.spriteId ? SILHOUETTE : sp.hasIcon ? iconUrl(sp.spriteId) : spriteUrl(sp.spriteId);
     const name = sp.form ? `${sp.name} (${sp.form})` : sp.name;
@@ -256,8 +257,8 @@ function chainHtml(m, chain, species, stages, none, hint) {
       <b>${esc(name)}</b>
       ${how ? `<small>${esc(how)}</small>` : ''}
     </div>`;
-  }).join('')}</div>`).join('<span class="evo-arrow" aria-hidden="true"></span>');
+  });
   return `<section class="dsec"><h3>${t('Evolução')}</h3>
-    <div class="evo">${cols}</div>
+    ${html}
     <p class="hint">${hint}</p></section>`;
 }

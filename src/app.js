@@ -90,8 +90,7 @@ function render() {
       ${R.searchWin(data, T)}
     </div>
     <div class="grp" id="grp-tools">
-      ${R.builderWin(data)}
-      ${R.aiWin(data, Object.values(PROVIDERS))}
+      ${R.builderWin(data, Object.values(PROVIDERS))}
       <div id="teams-slot"></div>
       ${R.exportWin()}
     </div>
@@ -177,7 +176,8 @@ function render() {
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
 
-  // Assistente e Busca ficam fechados até o usuário abrir; a lista só é montada quando a Busca abre
+  // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
+  // quando a Busca abre
   for (const id of ['builder-win', 'ai-win', 'search-win']) {
     const det = out.querySelector('#' + id);
     det.addEventListener('toggle', () => {
@@ -272,34 +272,11 @@ function setupAi(out) {
   buttons.forEach(b => b.addEventListener('click', async () => {
     const disabled = [...buttons].map(x => x.disabled);
     buttons.forEach(x => { x.disabled = true; });
-    $('#ai-provider').disabled = true;
     try {
-      const ai = await import('./ai/index.js');
-      // Quetzal/Unbound: golpes por nível (dex.json, o mesmo do detalhe). Na análise vão no pedido; nas duas,
-      // o app confere com eles os golpes que a IA citar
-      const game = state.data.game;
-      const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
-      // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
-      const prep = ai.prepareAi(b.dataset.ai, { all: state.all, T, game, note: $('#ai-note').value, dex, free: !!$('#ai-free')?.checked });
-      if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), b))) return;
-      aiOut.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${b.dataset.ai === 'analyze' ? t('Analisando a equipe') : t('Montando a equipe')}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
-      const res = await ai.sendAi(prep, {
-        // Montagem: na segunda etapa a IA escreve os pontos e as dicas com as contas do app sobre a equipe escolhida
-        onStep: () => { const w = aiOut.querySelector('.ai-wait .pixel'); if (w) w.textContent = t('Escrevendo as dicas'); },
-      });
-      state.ai = res;
-      aiOut.innerHTML = res.html;
-      if (!state.persist) aiOut.querySelector('[data-ai-save]')?.remove();
-      aiOut.scrollIntoView({ block: 'start' });
-      $('#ai-model').value = provider().getModel();
-    } catch (e) {
-      console.error(e);
-      const msg = e && e.name === 'AiError' ? e.message : t('Algo deu errado ao falar com o {service}. Tente de novo.', { service: provider().service });
-      aiOut.innerHTML = `<p class="error">${R.esc(msg)}</p>`;
-      if (e && e.code === 'key') { $('#ai-setup').classList.remove('hidden'); $('#ai-main').classList.add('hidden'); }
+      const res = await askAi(b.dataset.ai, aiOut, b);
+      if (res) state.ai = res;
     } finally {
       buttons.forEach((x, i) => { x.disabled = disabled[i]; });
-      $('#ai-provider').disabled = false;
     }
   }));
   // Modo livre (habilidade trocável por item): a escolha fica neste aparelho
@@ -325,6 +302,53 @@ function setupAi(out) {
   });
 }
 
+// Pedido da IA: o campo da janela (o mesmo do montador) e, com a caixa marcada, sem lendários
+function aiNote() {
+  const out = document.getElementById('out');
+  const note = out.querySelector('#builder-note').value.trim();
+  return out.querySelector('#builder-nolegend').checked ? [note, t('Sem lendários e míticos.')].filter(Boolean).join('; ') : note;
+}
+
+const AI_WAIT = { analyze: 'Analisando a equipe', build: 'Montando a equipe', review: 'Comentando a equipe' };
+
+/**
+ * Pede à IA (avaliar a equipe atual, montar uma equipe ou comentar a equipe que o app montou): monta o pedido, mostra
+ * o que vai ser enviado (se o usuário não desligou) e desenha a resposta em `outEl`.
+ * @returns {Promise<object|null>} o resultado de sendAi, ou null se o usuário cancelou ou deu erro
+ */
+async function askAi(kind, outEl, opener, extra = {}) {
+  const $ = s => document.getElementById('out').querySelector(s);
+  $('#ai-provider').disabled = true;
+  try {
+    const ai = await import('./ai/index.js');
+    // Quetzal/Unbound/SoulGold: golpes por nível (os mesmos do detalhe). Na análise e no comentário vão no pedido;
+    // em todos, o app confere com eles os golpes que a IA citar
+    const game = state.data.game;
+    const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
+    // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
+    const prep = ai.prepareAi(kind, { all: state.all, T, game, note: aiNote(), dex, free: !!$('#ai-free')?.checked, ...extra });
+    if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), opener))) return null;
+    outEl.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${t(AI_WAIT[kind])}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
+    const res = await ai.sendAi(prep, {
+      // Montagem: na segunda etapa a IA escreve os pontos e as dicas com as contas do app sobre a equipe escolhida
+      onStep: () => { const w = outEl.querySelector('.ai-wait .pixel'); if (w) w.textContent = t('Escrevendo as dicas'); },
+    });
+    outEl.innerHTML = res.html;
+    if (!state.persist) outEl.querySelector('[data-ai-save]')?.remove();
+    outEl.scrollIntoView({ block: 'start' });
+    $('#ai-model').value = provider().getModel();
+    return res;
+  } catch (e) {
+    console.error(e);
+    const msg = e && e.name === 'AiError' ? e.message : t('Algo deu errado ao falar com o {service}. Tente de novo.', { service: provider().service });
+    outEl.innerHTML = `<p class="error">${R.esc(msg)}</p>`;
+    if (e && e.code === 'key') { $('#ai-setup').classList.remove('hidden'); $('#ai-main').classList.add('hidden'); }
+    return null;
+  } finally {
+    $('#ai-provider').disabled = false;
+  }
+}
+
 // Montador de equipes (sem IA): o pacote só carrega ao tocar no botão; as contas rodam neste aparelho
 function setupBuilder(out) {
   const $ = s => out.querySelector(s);
@@ -334,6 +358,27 @@ function setupBuilder(out) {
     state.builder.i = i;
     bOut.innerHTML = mod.resultsHtml(state.builder.results, i, T);
     if (!state.persist) bOut.querySelector('[data-ai-save]')?.remove();
+    // O comentário da IA fica com a equipe dele (trocar de aba e voltar não perde)
+    const cur = state.builder.results[i], slot = bOut.querySelector('.builder-ai-out');
+    if (cur && cur.review && slot) slot.innerHTML = cur.review.html;
+  };
+  // Comentar com IA: a IA avalia e explica a equipe que o app montou, com o plano e a função de cada membro
+  const review = async (cur, btn) => {
+    const slot = btn.closest('.builder-ai').querySelector('.builder-ai-out');
+    if (!provider().getKey()) {
+      const fold = $('#ai-win');
+      fold.open = true;
+      slot.innerHTML = `<p class="hint">${t('Para a IA comentar, escolha o serviço e cole a sua chave grátis em “Com IA (opcional)”, no fim desta janela.')}</p>`;
+      fold.scrollIntoView({ block: 'start' });
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const res = await askAi('review', slot, btn, { team: cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])) });
+      if (res) cur.review = { html: res.html, byRef: res.byRef };
+    } finally {
+      btn.disabled = false;
+    }
   };
   // Preparo (posso treinar / prontos para usar): a escolha fica neste aparelho
   const readySel = $('#builder-ready');
@@ -385,8 +430,16 @@ function setupBuilder(out) {
       show(k >= 0 ? k : i);
       return;
     }
+    const ask = e.target.closest('[data-ai-review]');
+    if (ask) { review(cur, ask); return; }
     const card = e.target.closest('[data-ref]');
-    if (card) { const m = cur.byRef.get(card.dataset.ref); if (m) openDetail(m, card); return; }
+    if (card) {
+      // No comentário da IA aparecem também Pokémon de fora da equipe (trocas sugeridas)
+      const refs = card.closest('.builder-ai-out') && cur.review ? cur.review.byRef : cur.byRef;
+      const m = refs.get(card.dataset.ref);
+      if (m) openDetail(m, card);
+      return;
+    }
     const copy = e.target.closest('[data-ai-copy]');
     if (copy) {
       const ok = await copyText(showdownTeam(cur.team));

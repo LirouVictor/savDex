@@ -21,18 +21,36 @@ const list = a => a.join(', ');
 
 export const planName = plan => t(plan.field ? PLAN_NAME[plan.field] || plan.field : 'Equilibrada');
 
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
- * Quem o jogador pediu no campo "Quero na equipe": nomes separados por vírgula, comparados com a espécie e o
- * apelido (sem diferenciar maiúsculas). Da equipe primeiro, depois do PC.
+ * Quem o jogador pediu no campo "Pedido" (o mesmo da IA): nomes separados por vírgula, comparados com a espécie e o
+ * apelido (sem diferenciar maiúsculas; começo do nome vale com 5+ letras, ex.: "garch"), e os nomes citados no meio
+ * de uma frase ("quero o Lucario e o Charizard; time de chuva"). Da equipe primeiro, depois do PC.
  */
 export function wantedMons(all, text) {
-  const names = String(text || '').toLowerCase().split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+  const low = String(text || '').toLowerCase();
+  const names = low.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
   const out = [];
+  const add = m => { if (m && !out.includes(m)) out.push(m); };
   for (const n of names) {
-    const hit = all.find(m => m.species.name.toLowerCase() === n || (m.hasNickname && m.nickname.toLowerCase() === n))
-      || all.find(m => m.species.name.toLowerCase().startsWith(n));
-    if (hit && !out.includes(hit)) out.push(hit);
+    add(all.find(m => m.species.name.toLowerCase() === n || (m.hasNickname && m.nickname.toLowerCase() === n))
+      || (n.length >= 5 && !/\s/.test(n) ? all.find(m => m.species.name.toLowerCase().startsWith(n)) : null));
   }
+  // Nomes no meio do texto, na ordem em que aparecem (cada nome uma vez: o primeiro Pokémon com ele)
+  const byName = new Map();
+  for (const m of all) {
+    for (const name of [m.species.name, m.hasNickname ? m.nickname : null]) {
+      const k = name && name.toLowerCase();
+      if (k && k.length >= 3 && !byName.has(k)) byName.set(k, m);
+    }
+  }
+  const found = [];
+  for (const [k, m] of byName) {
+    const at = low.search(new RegExp(`(?<![\\p{L}\\p{N}])${reEsc(k)}(?![\\p{L}\\p{N}])`, 'u'));
+    if (at >= 0) found.push([at, m]);
+  }
+  found.sort((a, b) => a[0] - b[0]).forEach(([, m]) => add(m));
   return out;
 }
 
@@ -329,8 +347,15 @@ export function resultsHtml(results, i, T) {
   const more = cur.alt ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`
     : !cur.alts.count ? `<p class="hint builder-more">${t('Nenhuma outra opção deste plano com nota perto desta (90% ou mais).')}</p>` : '';
+  // Os dois métodos juntos: a IA (com a chave do jogador) comenta a equipe que o app montou; o comentário entra aqui
+  const ai = `<div class="builder-ai">
+      <button class="btn" type="button" data-ai-review>${t('Comentar com IA')}</button>
+      <p class="hint">${t('A IA explica como esta equipe joga o plano, aponta riscos e dá dicas de golpes e itens. A equipe e a nota continuam as do app.')}</p>
+      <div class="builder-ai-out" aria-live="polite"></div>
+    </div>`;
   return `<div class="dex-filters builder-tabs" role="group" aria-label="${esc(t('Planos'))}">${tabs}</div>
     <p class="hint builder-score">${t('Nota {n}', { n: Math.round(cur.score) })}: ${esc(parts)}</p>${more}
-    ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}`;
+    ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}
+    ${ai}`;
 }
 
