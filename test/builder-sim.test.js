@@ -171,8 +171,8 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
 }, 7200000);
 
 // A × B (opcional: SIM_AB=1; SIM_AB_N batalhas para cada lado, padrão 40): mudanças na busca que sobem a nota fazem equipes
-// mais fortes? Para cada save e plano, a equipe da busca de antes (A: feixe de 24, 110 candidatos, sem os parceiros
-// competitivos) contra as das buscas maiores (B: com os parceiros, sem o corte, feixe de 96), frente a frente e contra
+// mais fortes? Para cada save e plano, a equipe da busca de antes (A: feixe de 24, 110 candidatos) contra as das buscas
+// maiores (B: 220 candidatos, sem o corte, feixe de 96 com 220), frente a frente e contra
 // os times do random battle. Só os planos em que a equipe muda.
 it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes mais fortes?', () => {
   if (!showdown()) throw new Error('Instale o simulador: npm i --no-save pokemon-showdown@0.11.11');
@@ -182,9 +182,9 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
   if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
   if (process.env.SIM_ONLY) files = files.filter(([, n]) => process.env.SIM_ONLY.split(',').includes(n));
   const lines = [], rows = [];
-  // SIM_AB_VARIANTS='[["200",[24,200,false]]]' troca as buscas comparadas (nome, [feixe, candidatos, parceiros])
+  // SIM_AB_VARIANTS='[["200",[24,200]]]' troca as buscas comparadas (nome, [feixe, candidatos])
   const VARIANTS = process.env.SIM_AB_VARIANTS ? JSON.parse(process.env.SIM_AB_VARIANTS).map(([n, a]) => [n, a.map(x => (x === null ? Infinity : x))])
-    : [['parceiros', [24, 110, true]], ['sem corte', [24, Infinity, false]], ['feixe 96', [96, 110, false]]];
+    : [['220', [24, 220]], ['sem corte', [24, Infinity]], ['feixe 96', [96, 220]]];
   for (const [p, name] of files) {
     if (!existsSync(p)) continue;
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
@@ -201,7 +201,7 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
       const plan = r.plan;
       B.setPlanFlags(pool, plan);
       const label = plan.field || (plan.kind === 'offense' ? 'hiperofensiva' : 'equilibrada');
-      const A = B.bestTeam(pool, plan, types, [], [], 24, 110, false);
+      const A = B.bestTeam(pool, plan, types, [], [], 24, 110);
       if (!A || !B.planHolds(A.team, plan)) continue;
       const setsOf = t => { const s = leadOrder(t, plan).map(e => toSet(e, plan, sdex)); return s.some(x => !x) ? null : s; };
       const sA = setsOf(A.team);

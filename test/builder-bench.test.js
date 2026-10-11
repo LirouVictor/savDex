@@ -249,7 +249,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
 // busca em feixe deixa escapar, para cada save e plano, no modo "Posso treinar".
 // - exaustiva: todas as equipes com quem põe o plano (as mesmas sementes do feixe) e os K melhores candidatos sozinhos, contra o
 //   feixe no mesmo conjunto (mede o erro do feixe, separado do corte de candidatos);
-// - no conjunto inteiro: o feixe de 24 contra o de 96 e contra a busca sem o corte de 110 candidatos (mede o "descartar cedo").
+// - no conjunto inteiro: o feixe de 24 contra o de 96 e contra a busca sem o corte de candidatos (CANDS em build.js; mede o "descartar cedo").
 function exhaustive(R, seeds, plan, types) {
   let best = null, n = 0;
   for (const seed of seeds) {
@@ -315,7 +315,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
         const x = B.bestTeam(pool, plan, types, [], [], beam, cands);
         return { team: x && x.team, s: x && B.planHolds(x.team, plan) ? B.score(x.team, plan, types) : null, ms: Math.round(performance.now() - t) };
       };
-      const base = run(24, 110), wide = run(96, 110), nocut = run(24, Infinity);
+      const base = run(24, undefined), wide = run(96, undefined), nocut = run(24, Infinity);
       const row = {
         save: name, plan: label, pool: pool.length, K: R.length, combos: ex.n,
         exGap: ex.s !== undefined && sBeamR !== null ? r1(ex.s - sBeamR) : null, exDiff: ex.team && beamR ? diff(beamR.team, ex.team) : null,

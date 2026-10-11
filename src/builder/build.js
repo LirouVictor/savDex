@@ -674,15 +674,6 @@ export function allowed(team, e, plan) {
   return true;
 }
 
-/** Os do conjunto que formam dupla forte (2× o acaso ou mais) no competitivo com algum dos `anchors`. */
-function partnersOf(anchors, list) {
-  const c = anchors.length ? anchors[0].sctx : null;
-  if (!c) return [];
-  const rows = [...new Set(anchors.map(a => a.sx).filter(x => x >= 0))].map(x => x * c.K);
-  if (!rows.length) return [];
-  return list.filter(e => e.sx >= 0 && rows.some(r => c.M[r + e.sx] >= 1));
-}
-
 /** Valor de um Pokémon sozinho para o plano (para escolher os candidatos da busca). */
 export function solo(e, plan) {
   let v = e.statVal - e.bad + popcount(e.cov) * 0.8 + e.roles.filter(r => ROLE_W[r]).length * 1.5 - 6 * Math.max(0, 2 - e.dmg) - e.cost;
@@ -704,10 +695,9 @@ export function solo(e, plan) {
  *   ALT_SHARED membros com cada uma (ou os que o jogador pediu, se forem mais)
  * @param {number} [beamSize] equipes parciais guardadas a cada vaga
  * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano); os testes de comparação mudam os dois
- * @param {boolean} [partners] incluir os parceiros competitivos de quem põe o plano e de quem o jogador pediu (em avaliação nos testes; desligado no app)
  * @returns {{ plan, team: object[], score: number } | null}
  */
-export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = CANDS, partners = false) {
+export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = CANDS) {
   const maxShared = Math.max(ALT_SHARED, forced.length);
   const tooClose = team => prev.some(p => team.filter(e => p.has(e.real)).length > maxShared);
   // Num plano de clima: fora quem tem a fraqueza que o clima fortalece ou depende de golpes que ele enfraquece
@@ -715,9 +705,6 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
   const usable = pool.filter(e => forced.includes(e) || !e.conflict);
   const cands = usable.filter(e => !forced.includes(e))
     .map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1]).slice(0, candLimit).map(([e]) => e);
-  // Quem joga junto no competitivo com quem o jogador pediu ou com quem põe o plano entra mesmo fora dos melhores sozinho
-  // (Barraskewda com o Pelipper num PC cheio de lendários): o valor sozinho não conta a sinergia
-  if (partners) for (const e of partnersOf([...forced, ...plan.setters], usable)) if (!cands.includes(e) && !forced.includes(e)) cands.push(e);
   // Sementes: o que o jogador pediu, mais quem põe o plano (até 2 opções de quem põe, uma busca para cada)
   const seeds = [];
   if (plan.setters.length) {
