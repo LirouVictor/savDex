@@ -856,3 +856,5 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .dex-tag { margin-top: 2px; padding: 0 5px; font-size: .68rem; line-height: 1.5; overflow-wrap: anywhere; }
 .dex-seen { color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
 .dex-evo { color: var(--accent-ink); background: var(--accent); }
+/* Montador: as contas detalhadas da equipe, recolhidas no fim */
+.ai-facts { margin: 12px 0; }

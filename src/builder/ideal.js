@@ -128,7 +128,7 @@ export function idealSwaps(team, plan, pool, ctx, T, game) {
   const shortlist = [...cand].sort((x, y) => y[1] - x[1]).slice(0, SHORTLIST);
   const base = scoreParts(team, plan, types).total;
   // Vagas: quem o jogador pediu e quem põe o plano ficam
-  const open = team.filter(e => !forced.has(e) && !(plan.field && sets(e, plan.field)));
+  const open = team.filter(e => !forced.has(e) && !(plan.field && sets(e, plan.field)) && !(plan.kind === 'offense' && e.hoSup));
   const found = [];
   for (const [xid] of shortlist) {
     const spec = byId.get(xid);

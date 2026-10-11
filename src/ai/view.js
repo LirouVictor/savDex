@@ -67,6 +67,18 @@ function panel(title, kind, inner) {
   return `<section class="ai-panel ${kind}"><h3><span class="ai-ico" aria-hidden="true"></span>${t(title)}</h3>${inner}</section>`;
 }
 
+/**
+ * Equipe montada pelo app: o que fazer primeiro (próximos passos), depois o ideal do competitivo e as ameaças, e as contas
+ * detalhadas recolhidas (são as mesmas dos pontos fortes e fracos).
+ */
+function appPanels(r, byRef, check, dicas) {
+  const note = x => `<p class="hint ai-threat-note">${esc(x.note)}</p>`;
+  return `${panel('Próximos passos', 'swap', dicas)}
+    ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
+    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}
+    ${check ? `<details class="fold ai-facts"><summary>${t('Contas da equipe')}</summary>${check}</details>` : ''}`;
+}
+
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');
 
 /** Conferência do app dos golpes novos citados (Quetzal/Unbound: golpes por nível da ROM do jogo). */
@@ -79,7 +91,7 @@ function checksHtml(text, byRef, opts, owner = null) {
 }
 
 function footer(model, dropped, opts = null) {
-  if (opts && opts.app) return `<p class="hint ai-foot">${esc(t('Montada pelo app, sem IA: só contas de tipos, golpes, habilidades, itens e stats base (o nível não conta). Confira golpes e itens antes de seguir.'))}</p>`;
+  if (opts && opts.app) return `<p class="hint ai-foot">${esc(t('Montada pelo app, sem IA (o nível não conta). Confira golpes e itens antes de usar.'))}</p>`;
   const lost = dropped.length
     ? `<p class="hint">${esc(t('A IA citou Pokémon que não existem no save ({list}); essas partes foram ignoradas.', { list: dropped.join(', ') }))}</p>`
     : '';
@@ -174,10 +186,8 @@ export function buildView(r, byRef, model, T, opts = null) {
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
-    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + `<p class="hint ai-threat-note">${esc(r.ameacas.note)}</p>`) : ''}
-    ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + `<p class="hint ai-threat-note">${esc(r.ideal.note)}</p>`) : ''}
-    ${panel('Conferência do app', 'info', check)}
-    ${panel('Próximos passos', 'swap', dicas)}
+    ${opts && opts.app ? appPanels(r, byRef, check, dicas) : `${panel('Conferência do app', 'info', check)}
+    ${panel('Próximos passos', 'swap', dicas)}`}
     ${footer(model, r.dropped, opts)}
   </div>`;
 }
