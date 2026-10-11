@@ -339,8 +339,8 @@ function setupBuilder(out) {
   const readySel = $('#builder-ready');
   try { if (localStorage.getItem('builder-ready') === 'ready') readySel.value = 'ready'; } catch { /* sem armazenamento */ }
   readySel.addEventListener('change', () => { try { if (readySel.value === 'ready') localStorage.setItem('builder-ready', 'ready'); else localStorage.removeItem('builder-ready'); } catch { /* sem armazenamento */ } });
-  // As caixas do montador (sem lendários; sem restrição de item): a escolha fica neste aparelho
-  for (const [id, key] of [['#builder-nolegend', 'builder-nolegend'], ['#builder-anyitem', 'builder-anyitem']]) {
+  // As caixas do montador (sem lendários; sem restrição de item; ameaças do jogo): a escolha fica neste aparelho
+  for (const [id, key] of [['#builder-nolegend', 'builder-nolegend'], ['#builder-anyitem', 'builder-anyitem'], ['#builder-threats', 'builder-threats']]) {
     const box = $(id);
     if (!box) continue;
     try { box.checked = localStorage.getItem(key) === '1'; } catch { /* sem armazenamento */ }
@@ -357,7 +357,9 @@ function setupBuilder(out) {
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
       const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: state.data.game }), i: 0 };
+      // Ameaças do jogo só com a caixa marcada (a busca fica 35–60% mais lenta no celular)
+      const threats = $('#builder-threats').checked;
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);

@@ -1,10 +1,19 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-10';
+export const UPDATED = '2026-10-11';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-11',
+    pt: [
+      'Montar equipe: nova caixa “Considerar as ameaças do jogo” (desligada por padrão). Marcada, a nota ganha a parte “Ameaças” e a tela mostra os Pokémon fortes do jogo (do próprio jogo ou da ROM do hack): quantos a equipe acerta em cheio, quantos derruba em dois golpes e, o que mais importa, contra quantos alguém entra no campo e vence o 1 contra 1. Golpe super efetivo sozinho não conta como resposta. É uma estimativa (nível 50, sem itens nem EVs, golpes que as ameaças aprendem por nível), e o painel diz o que ela não sabe. A montagem fica mais lenta com a caixa marcada.',
+    ],
+    en: [
+      'Build team: a new “Consider the game’s threats” box (off by default). When checked, the score gets a “Threats” part and the screen shows the strong Pokémon in the game (from the game itself or the hack’s ROM): how many the team hits super effectively, how many it takes down in two hits and, most importantly, how many someone can switch into and beat one-on-one. A super effective move alone does not count as an answer. It is an estimate (level 50, no items or EVs, moves the threats learn by level), and the panel says what it does not know. Building takes longer with the box checked.',
+    ],
+  },
   {
     date: '2026-10-10',
     pt: [
@@ -16,7 +25,6 @@ export const NEWS = [
       'Montar equipe: até 3 opções por plano (toque em "Ver outras opções deste plano"), com no máximo 3 Pokémon em comum e nota perto da melhor. Elas só são calculadas quando você pede, e as equipes principais aparecem mais rápido.',
       'Montar equipe: um plano só aparece com sinergia de verdade. Rain Dance ou Sunny Day com golpes do tipo não bastam; precisa de quem aproveita pela habilidade (Swift Swim, Chlorophyll…), pela megapedra ou por golpe próprio (Thunder, Solar Beam…); golpes do tipo com STAB contam quando o clima vem sem gastar turno (Drizzle, Drought). Trick Room precisa de quem põe e mais 3 lentos que atacam.',
       'Montar equipe: com duas megapedras, a nota conta que só uma megaevolui por batalha (antes, contava as duas juntas). O Raichu com Raichunite Y volta a segurar golpes Electric com Lightning Rod quando quem megaevolui é a outra.',
-      'Montar equipe: nova parte “Ameaças” na nota e um painel com os Pokémon fortes do jogo (do próprio jogo ou da ROM do hack): quantos a equipe acerta em cheio, quantos derruba em dois golpes e, o que mais importa, contra quantos alguém entra no campo e vence o 1 contra 1. Golpe super efetivo sozinho não conta como resposta. É uma estimativa (nível 50, sem itens nem EVs, golpes que as ameaças aprendem por nível); o painel diz o que ela não sabe.',
       'Montar equipe: as partes da nota (Defesa, Ataque, Plano…) agora somam a nota mostrada. Nos planos de sol com quem é fraco ao Fire, como o Venusaur, elas somavam 4 ou 8 a mais; as equipes e as notas não mudam.',
       'Montar equipe: quem tem menos de 2 golpes de dano completa com os que aprende por nível (os do próprio tipo primeiro, como o Brave Bird do Staraptor), e a tela diz o que ensinar e em que nível. Pedindo um Pokémon com a opção “Sem restrição de item”, entra a versão que rende mais (com ou sem a megapedra).',
       'Assistente: equipes com até duas megapedras (só uma megaevolui por batalha; a outra fica para outra batalha).',
@@ -36,7 +44,6 @@ export const NEWS = [
       'Build team: up to 3 options per plan (tap "See other options for this plan"), sharing at most 3 Pokémon and scoring close to the best. They are only computed when you ask, so the main teams show up faster.',
       'Build team: a plan only shows up with real synergy. Rain Dance or Sunny Day plus moves of the type are not enough; it needs Pokémon that benefit through their ability (Swift Swim, Chlorophyll…), Mega Stone or signature move (Thunder, Solar Beam…); same-type moves count when the weather comes without spending a turn (Drizzle, Drought). Trick Room needs the setter plus 3 slow attackers.',
       'Build team: with two Mega Stones, the score counts that only one Mega Evolves per battle (before, it counted both at once). Raichu holding Raichunite Y once again absorbs Electric moves with Lightning Rod when the other one Mega Evolves.',
-      'Build team: a new “Threats” part in the score and a panel with the strong Pokémon in the game (from the game itself or the hack’s ROM): how many the team hits super effectively, how many it takes down in two hits and, most importantly, how many someone can switch into and beat one-on-one. A super effective move alone does not count as an answer. It is an estimate (level 50, no items or EVs, moves the threats learn by level); the panel says what it does not know.',
       'Build team: the score parts (Defense, Attack, Plan…) now add up to the score shown. In sun plans with a Fire-weak member, like Venusaur, they added up to 4 or 8 more; teams and scores are unchanged.',
       'Build team: Pokémon with fewer than 2 attacking moves are completed with moves they learn by level (same type first, like Staraptor’s Brave Bird), and the screen says what to teach and at which level. When you ask for a Pokémon with “No item restriction”, the version that does best joins (with or without the Mega Stone).',
       'Assistant: teams with up to two Mega Stones (only one Mega Evolves per battle; the other is for another battle).',
@@ -237,7 +244,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e as opções do montador de equipes (preparo, sem lendários, sem restrição de item).</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e as opções do montador de equipes (preparo, sem lendários, sem restrição de item, ameaças do jogo).</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -266,7 +273,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder options (preparation, no legendaries, no item restriction).</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder options (preparation, no legendaries, no item restriction, the game’s threats).</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>

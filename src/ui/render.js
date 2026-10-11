@@ -382,6 +382,7 @@ export function builderWin(d) {
     </select>
     <label class="ai-skip"><input type="checkbox" id="builder-nolegend"> ${t('Sem lendários e míticos (menos os que você pedir acima)')}</label>
     ${megas ? `<label class="ai-skip"><input type="checkbox" id="builder-anyitem"> ${t('Sem restrição de item: conta com a megapedra de quem tem mega, mesmo sem ela')}</label>` : ''}
+    <label class="ai-skip"><input type="checkbox" id="builder-threats"> ${t('Considerar as ameaças do jogo: prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta)')}</label>
     <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
   </details>`;

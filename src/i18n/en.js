@@ -797,6 +797,7 @@ export default {
   'Nota {n}': 'Score {n}',
   'Ver outras opções deste plano': 'See other options for this plan',
   'Ameaças': 'Threats',
+  'Considerar as ameaças do jogo: prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta)': 'Consider the game’s threats: prefers Pokémon that can switch in and beat the strong Pokémon in the game (an estimate; building takes longer)',
   'e mais {n}': 'and {n} more',
   'Ameaças do jogo (estimativa)': 'Threats in the game (estimate)',
   'Cobertura: algum golpe acerta {k} de {n} em cheio.': 'Coverage: some move hits {k} of {n} super effectively.',

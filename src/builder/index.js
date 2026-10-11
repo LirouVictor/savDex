@@ -323,7 +323,8 @@ export function resultsHtml(results, i, T) {
   const cur = results[i] || results[0];
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
   const shown = shownParts(cur.parts, cur.score);
-  const parts = PARTS.map(([k, label]) => `${t(label)} ${shown[k] > 0 ? '+' : ''}${shown[k]}`).join(' · ');
+  // A parte "Ameaças" só aparece com a caixa marcada (sem ela, a linha é a de antes)
+  const parts = PARTS.filter(([k]) => k !== 'threats' || cur.r.ameacas).map(([k, label]) => `${t(label)} ${shown[k] > 0 ? '+' : ''}${shown[k]}`).join(' · ');
   // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`

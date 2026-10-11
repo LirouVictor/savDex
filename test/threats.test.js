@@ -3,6 +3,7 @@ import T from '../src/data/tables.js';
 import { prepare, buildTeams } from '../src/builder/build.js';
 import { threatList, matchup, typeMult, teamThreats, THREAT_BST } from '../src/builder/threats.js';
 import { runBuilder, resultsHtml } from '../src/builder/index.js';
+import { builderWin } from '../src/ui/render.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
 let slot = 0;
@@ -76,6 +77,17 @@ suite('Ameaças concretas', () => {
     expect(r.team.some(e => ['Lucario', 'Swampert'].includes(e.m.species.name))).toBe(true);
     const t = teamThreats(r.team, [ttar], mult);
     expect(t.wins).toBe(1);
+  });
+
+  it('caixa "Considerar as ameaças do jogo": desligada por padrão; sem ela, nota e tela como antes', () => {
+    const html = builderWin({ game: { id: 'quetzal' } });
+    expect(html).toMatch(/<input type="checkbox" id="builder-threats">/); // sem "checked"
+    slot = 0;
+    const all = ['Swampert', 'Lucario', 'Gengar', 'Togekiss', 'Arcanine', 'Scizor'].map(n => mon(n, ['water'], [80, 80, 80, 80, 80, 80], { moves: [atk('Surf', 'water', 1), atk('Ice Beam', 'ice', 1)] }));
+    const rs = runBuilder(all, T, '', null, {}); // o app não passa o jogo com a caixa desligada
+    expect(rs.every(r => r.parts.threats === 0 && !r.r.ameacas)).toBe(true);
+    expect(resultsHtml(rs, 0, T)).not.toContain('Ameaças do jogo');
+    expect(resultsHtml(rs, 0, T)).not.toMatch(/Ameaças [-+]?\d/);
   });
 
   it('tela: painel das ameaças com cobertura, dano, resposta e o que a estimativa não sabe', () => {
