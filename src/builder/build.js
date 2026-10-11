@@ -1,7 +1,8 @@
 // Montador de equipes do app, sem IA. Para cada plano que o save comporta (clima, terreno, Trick Room ou
 // equilibrado), procura no PC inteiro a melhor equipe de 6 por uma nota feita só de contas: fraquezas em comum
 // (descontando o que o clima da equipe corta), cobertura ofensiva, papéis (pivô, prioridade, recuperação…),
-// atacantes físicos × especiais, stats base e quem põe/aproveita o plano. A busca é em feixe (beam search):
+// atacantes físicos × especiais, stats base, quem põe/aproveita o plano e quanto as duplas da equipe jogam juntas nos
+// times do competitivo (Smogon; smogon.js). A busca é em feixe (beam search):
 // começa do núcleo do plano e vai completando uma vaga de cada vez, guardando as melhores equipes parciais.
 // O nível não conta (o jogador pode treinar depois); quem ainda não evoluiu conta pela forma evoluída final e quem
 // segura a própria megapedra conta com os tipos, stats e habilidade da mega. Nos jogos com golpes por nível da ROM,
@@ -243,6 +244,7 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
 function blankCaches(e) {
   e.tctx = null; e.thr = null; e.thrV = null; e.thrM = null; e._dmg = null; e._side = null;
   e.conflictBy = null; e.conflict = false; e.risk = false;
+  e.sx = -1; e.sctx = null;
 }
 
 /**
@@ -428,11 +430,11 @@ export function scoreParts(team, plan, types, inc = null) {
   const scen = megas.map(mg => partsOf(team.map(e => (e.base && e !== mg ? e.base : e)), plan, types, true));
   const avg = key => { let x = 0; for (const q of scen) x += q[key]; return x / scen.length; };
   const max = key => { let x = -Infinity; for (const q of scen) if (q[key] > x) x = q[key]; return x; };
-  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), threats: 0, total: 0 };
+  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), threats: 0, comp: compPart(team), total: 0 };
   for (let a = 0; a < types.length; a++) { let x = -Infinity; for (const q of scen) if (q.defByType[a] > x) x = q.defByType[a]; p.defense += x; }
   // Ameaças: cada uma vale o cenário que a responde (as duas formas de quem segura a megapedra, em threatPart)
   p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan);
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats;
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp;
   return p;
 }
 
@@ -444,7 +446,7 @@ export function scoreParts(team, plan, types, inc = null) {
 function partsOf(team, plan, types, byType, inc = null) {
   const n = team.length;
   const halved = halvedIndex(plan, types);
-  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, threats: 0, total: 0 };
+  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, threats: 0, comp: 0, total: 0 };
   if (byType) p.defByType = new Array(types.length).fill(0);
   // Fraquezas em comum: 3 ou mais fracos ao mesmo tipo pesa muito; mais fracos que resistentes, um pouco
   for (let a = 0; a < types.length; a++) {
@@ -503,9 +505,58 @@ function partsOf(team, plan, types, byType, inc = null) {
     if (auto) p.plan += 16;
     if (plan.kind === 'weather') p.plan -= 10 * conflicts + 4 * risks;
   }
-  if (!byType) p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan);
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats;
+  if (!byType) { p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan); p.comp = compPart(team); }
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp;
   return p;
+}
+
+// Referência competitiva (smogon.js): cada dupla da equipe soma o log2 do lift dela nos times do Smogon (Pelipper +
+// Basculegion 3,2: juntos ≈9× mais que o acaso; Landorus-T + Gliscor −4,5: dois Ground que se substituem), vezes COMP_W.
+// Espécie sem dados no formato (Pokémon sem evoluir, próprios do hack, pouco usados) conta como acaso (0)
+const COMP_W = 1;
+
+/** A parte "Competitivo" da nota (0 sem a referência do jogo). */
+function compPart(team) {
+  const c = team.length ? team[0].sctx : null;
+  if (!c) return 0;
+  let s = 0;
+  for (let i = 1; i < team.length; i++) {
+    const a = team[i].sx;
+    if (a < 0) continue;
+    const row = a * c.K;
+    for (let j = 0; j < i; j++) { const b = team[j].sx; if (b >= 0) s += c.M[row + b]; }
+  }
+  return c.w * s;
+}
+
+/** As duplas da equipe com dados no competitivo (fora do acaso), da mais forte para a que mais se evita; null sem a referência. */
+export function compPairs(team) {
+  const c = team.length ? team[0].sctx : null;
+  if (!c) return null;
+  const out = [];
+  for (let i = 0; i < team.length; i++) {
+    for (let j = i + 1; j < team.length; j++) {
+      const a = team[i].sx, b = team[j].sx;
+      const v = a >= 0 && b >= 0 ? c.M[a * c.K + b] : 0;
+      if (v) out.push({ a: team[i], b: team[j], v });
+    }
+  }
+  return out.sort((x, y) => y.v - x.v);
+}
+
+/** Liga a referência competitiva nas entradas: o número de cada espécie na matriz de duplas (-1 sem dados). */
+function setComp(pool, comp, w) {
+  if (!comp || !w) return null;
+  const ids = [], at = new Map();
+  for (const x of pool) {
+    const id = comp.find(x.bf.species);
+    if (id && !at.has(id)) { at.set(id, ids.length); ids.push(id); }
+    x.sx = id ? at.get(id) : -1;
+    if (x.base) x.base.sx = x.sx;
+  }
+  const ctx = { M: comp.matrix(ids), K: ids.length, w, label: comp.label, ids, index: comp };
+  for (const x of pool) { x.sctx = ctx; if (x.base) x.base.sctx = ctx; }
+  return ctx;
 }
 
 // Ameaças (threats.js): cada ponto percentual das ameaças do jogo que ninguém da equipe vence vale TH_NONE; das que
@@ -580,7 +631,7 @@ function threatPartInc(a, team, plan) {
 }
 
 /** Pode entrar: não repete Pokémon nem espécie, até 2 megapedras e, num plano de clima, nenhum outro clima. */
-function allowed(team, e, plan) {
+export function allowed(team, e, plan) {
   let megas = 0;
   for (const x of team) { if (x.real === e.real || x.key === e.key) return false; if (x.mega) megas++; }
   if (e.mega && megas >= MAX_MEGAS) return false;
@@ -673,12 +724,13 @@ export function planHolds(team, plan) {
  * Equipes para todos os planos do save, da melhor nota para a pior, sem repetir a mesma equipe.
  * @param {object[]} all Pokémon do save (equipe + PC)
  * @param {object} T tabelas do jogo
- * @param {{ want?: object[], dex?: object|null, noLegends?: boolean, anyItem?: boolean, ready?: boolean }} [opts] Pokémon
- *   que o jogador quer na equipe (do save), os golpes por nível da ROM (os que aprendem também contam), se deixa de fora
- *   lendários e míticos (menos os que o jogador pediu), se conta com megapedras que o Pokémon ainda não segura e o modo
- *   "Prontos para usar" (o trabalho que falta pesa mais; senão, "Posso treinar")
+ * @param {{ want?: object[], dex?: object|null, noLegends?: boolean, anyItem?: boolean, ready?: boolean, comp?: object|null }} [opts]
+ *   Pokémon que o jogador quer na equipe (do save), os golpes por nível da ROM (os que aprendem também contam), se deixa
+ *   de fora lendários e míticos (menos os que o jogador pediu), se conta com megapedras que o Pokémon ainda não segura, o
+ *   modo "Prontos para usar" (o trabalho que falta pesa mais; senão, "Posso treinar") e a referência competitiva do jogo
+ *   (loadSmogon; sem ela, a nota não tem a parte "Competitivo")
  */
-export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst', game = null, threats = null, threatWeights = [TH_NONE, TH_ONLY] } = {}) {
+export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst', game = null, threats = null, threatWeights = [TH_NONE, TH_ONLY], comp = null, compWeight = COMP_W } = {}) {
   const types = attackTypes(T);
   if (noLegends) {
     const asked = new Set(want.map(speciesKey));
@@ -690,6 +742,8 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
     for (const e of pool) { e.cost = readyCost(e, true, refLevel); if (e.base) e.base.cost = e.cost; }
   }
+  // Referência competitiva (o índice de smogon.js do jogo do save): a parte "Competitivo" da nota
+  const sctx = setComp(pool, comp, compWeight);
   // Ameaças do jogo (com o jogo do save, ou a lista dada nos testes): a parte "Ameaças" da nota
   const list = threats || (game ? threatList(T, game, dex) : null);
   const tctx = list && list.length ? { threats: list, mult: typeMult(T), words: (list.length + 31) >>> 5, valid: null, w: threatWeights,
@@ -739,7 +793,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
   // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
   Object.defineProperty(result, 'pool', { value: pool }); // também para conferências (busca local nos testes de comparação)
-  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx } });
+  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx, comp: sctx, noLegends, dex } });
   return result;
 }
 
@@ -774,12 +828,47 @@ const teamKey = team => team.map(e => e.id).sort((a, b) => a - b).join(',');
  * mas é fraco ao tipo que o clima fortalece (Venusaur no sol: entra, com uma pena menor).
  */
 export function setPlanFlags(pool, plan) {
-  for (const x of pool) {
-    for (const e of x.base ? [x, x.base] : [x]) {
-      const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
-      e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
-      e.risk = c === 'weak' && e.strong.has(plan.field);
-    }
-  }
+  for (const x of pool) for (const e of x.base ? [x, x.base] : [x]) planFlags(e, plan);
 }
+
+/** As marcas de setPlanFlags numa entrada. */
+export function planFlags(e, plan) {
+  const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
+  e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
+  e.risk = c === 'weak' && e.strong.has(plan.field);
+}
+
+/**
+ * Um Pokémon que o jogador não tem (o ideal do competitivo, ideal.js), no formato das entradas da busca, para a nota
+ * estimar a equipe com ele: a espécie do jogo (gameSpecies em threats.js) com a habilidade que mais serve ao plano, sem
+ * item, e os golpes de dano que aprende por nível (tabela da ROM; sem ela, um golpe de 90 de poder de cada tipo dele).
+ * Sem custo de preparo; fica fora da matriz competitiva (sx = -1: quem chama soma as duplas dele).
+ * @param {object} like uma entrada do save, de onde vêm as referências das ameaças e da tabela competitiva
+ */
+export function outsiderEntry(spec, T, dex, like, plan) {
+  const types = attackTypes(T);
+  const idx = new Map(T.types.map((ty, i) => [ty, i]));
+  const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
+  const f = plan.field;
+  const ab = spec.abilities.find(a => f && (ABUSERS[a] === f || FIELD[a] === f)) || spec.abilities[0] || null;
+  const species = { name: spec.name, form: spec.form, showdown: spec.showdown, types: spec.types, baseStats: spec.stats, abilities: spec.abilities };
+  const m = { species, speciesId: spec.id, ability: ab ? { name: ab, num: Math.max(0, spec.abilities.indexOf(ab)) } : null, item: null, moves: [], level: 100, outsider: true };
+  const learn = levelMoves(m, dex, T);
+  if (!learn.length) {
+    const physical = spec.stats[1] >= spec.stats[3];
+    m.moves = spec.types.map(ty => ({ name: null, type: ty, power: 90, category: T.gen3 ? (SPECIAL_G3.has(ty) ? 1 : 0) : physical ? 0 : 1 }));
+  }
+  const e = Object.assign(entry(m, m, T, types, mult, learn), { id: -1 - spec.id });
+  e.cost = 0;
+  e.statVal = statValue(e, 'bst');
+  blankCaches(e);
+  e.tctx = like.tctx;
+  e.sctx = like.sctx;
+  e.conflictBy = {};
+  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict(e.bf, w, T);
+  planFlags(e, plan);
+  return e;
+}
+// Gen 3: a categoria vem do tipo do golpe
+const SPECIAL_G3 = new Set(['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dragon', 'dark']);
 

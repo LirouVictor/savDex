@@ -16,6 +16,7 @@
     "nds": "node tools/build-nds.mjs",
     "quetzal": "node tools/build-quetzal.mjs",
     "soulgold": "node tools/build-soulgold.mjs",
+    "smogon": "node tools/build-smogon.mjs",
     "diff-saves": "node tools/diff-saves.mjs"
   },
   "devDependencies": {

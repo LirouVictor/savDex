@@ -36,23 +36,18 @@ const stat = b => b + 20; // nível 50, IV 31, sem EVs, natureza neutra
 const hp = b => b + 75;
 
 /**
- * As ameaças de referência do jogo: espécies (e formas de batalha, sem megas) com stats base 500+, não lendárias,
- * que existem no jogo: Dex Nacional e formas da ROM no Quetzal; a tabela da ROM no Unbound; a Pokédex de Johto no
- * SoulGold; 1–386 na Gen 3; 1–493 / 1–649 nos jogos de DS (stats e tipos da época).
- * @param {object} T tabelas do jogo do save
- * @param {{ id: string, gen?: number }} game
- * @param {object|null} dex golpes por nível da ROM (os da ameaça também contam)
+ * As espécies que existem no jogo do save, com tipos, stats e habilidades do próprio jogo (sem megas, Gigantamax e formas
+ * que só aparecem no meio da batalha): Dex Nacional e formas da ROM no Quetzal; a tabela da ROM no Unbound; a Pokédex de
+ * Johto no SoulGold; 1–386 na Gen 3; 1–493 / 1–649 nos jogos de DS (stats e tipos da época). `showdown`: o nome no
+ * Showdown, quando a tabela traz (formas do Quetzal e do SoulGold).
+ * @returns {Array<{ id: number, name: string, form: string|null, showdown: string|null, types: string[], stats: number[], abilities: string[], bst: number }>}
  */
-export function threatList(T, game, dex = null) {
+export function gameSpecies(T, game) {
   const out = [];
   const typeName = i => T.types[i] || null;
-  const add = (id, name, form, types, stats, abilities) => {
+  const add = (id, name, form, types, stats, abilities, showdown = null) => {
     if (!stats || !types.length) return;
-    const bst = stats.reduce((a, b) => a + b, 0);
-    if (bst < THREAT_BST || isLegendary({ species: { name } })) return;
-    const abs = abilities.filter(Boolean);
-    if (abs.length && abs.every(a => CRIPPLED.has(a))) return;
-    out.push({ id, name, form: form || null, types, stats, abilities: abs, bst });
+    out.push({ id, name, form: form || null, showdown, types, stats, abilities: abilities.filter(Boolean), bst: stats.reduce((a, b) => a + b, 0) });
   };
   if (T.unbound || T.soulgold) {
     const D = T.unbound || T.soulgold;
@@ -63,7 +58,7 @@ export function threatList(T, game, dex = null) {
       // SoulGold: a forma regional às vezes só aparece no nome do Showdown (Goodra-Hisui)
       const sd = T.soulgold && D.showdown[id];
       const form = form0 || (sd && sd.startsWith(name + '-') ? sd.slice(name.length + 1) : null);
-      add(id, name, form, [t1, t2].filter(Boolean).map(typeName).filter(Boolean), base, [D.abilities[a1], D.abilities[a2], D.abilities[ha]]);
+      add(id, name, form, [t1, t2].filter(Boolean).map(typeName).filter(Boolean), base, [D.abilities[a1], D.abilities[a2], D.abilities[ha]], sd || null);
     });
   } else if (T.gen3) {
     T.gen3.species.forEach((row, id) => {
@@ -92,10 +87,24 @@ export function threatList(T, game, dex = null) {
       for (const [k, row] of Object.entries(Q.species)) {
         const id = +k;
         if (id <= 898 || !row || row[11] || SKIP_FORM.test(row[9] || '')) continue;
-        add(id, row[0], row[9], row[1].map(typeName).filter(Boolean), row[2], row[3]);
+        add(id, row[0], row[9], row[1].map(typeName).filter(Boolean), row[2], row[3], row[10] || null);
       }
     }
   }
+  return out;
+}
+
+/**
+ * As ameaças de referência do jogo: as espécies do jogo (gameSpecies) com stats base 500+, não lendárias e que não
+ * têm só habilidade que as trava (Truant, Slow Start).
+ * @param {object} T tabelas do jogo do save
+ * @param {{ id: string, gen?: number }} game
+ * @param {object|null} dex golpes por nível da ROM (os da ameaça também contam)
+ */
+export function threatList(T, game, dex = null) {
+  const out = gameSpecies(T, game).filter(x => x.bst >= THREAT_BST && !isLegendary({ species: { name: x.name } })
+    && !(x.abilities.length && x.abilities.every(a => CRIPPLED.has(a))))
+    .map(({ id, name, form, types, stats, abilities, bst }) => ({ id, name, form, types, stats, abilities, bst }));
   // Formas iguais na batalha (Unown, Vivillon…) contam uma vez
   const seen = new Set();
   const list = out.filter(x => {

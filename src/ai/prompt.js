@@ -490,8 +490,10 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
  * @param {object[]} team os 6 como o app contou (forma evoluída, megapedra a dar)
  * @param {{ plan?: string, roles?: Map<string, string> }} extra nome do plano e função de cada membro (pela referência)
  */
-export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null, plan = '', roles = new Map() } = {}) {
-  const pool = analysisPool(all, T, Math.min(ANALYSIS_PC, max - team.length), team);
+export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null, plan = '', roles = new Map(), ideal = [], idealMons = [] } = {}) {
+  // As alternativas do "ideal × o que você tem" vão entre os candidatos (a IA pode sugerir a troca por elas)
+  const alts = idealMons.filter(m => !team.includes(m));
+  const pool = [...alts, ...analysisPool(all, T, Math.min(ANALYSIS_PC, max - team.length) - alts.length, team).filter(m => !alts.includes(m))];
   const line = m => {
     const extra = [];
     if (roles.get(refOf(m))) extra.push(`${t('Função no plano')}: ${roles.get(refOf(m))}`);
@@ -512,6 +514,7 @@ export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { de
     t('Cálculos do app (só tipos e números, sem habilidades):'),
     teamFacts(team, T),
     ...learnLines(team, dex, T, game),
+    ...(ideal.length ? ['', t('Referência competitiva (contas do app: o ideal NÃO está no save do jogador; a alternativa está). Diga se vale capturar o ideal ou usar a alternativa; o ideal não entra nas trocas:'), ...ideal] : []),
     '',
     t('Fora da equipe ({n} candidatos que mais ajudam a equipe):', { n: pool.length }),
     ...pool.map(m => monLine(m, free)),

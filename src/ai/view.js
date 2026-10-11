@@ -175,6 +175,7 @@ export function buildView(r, byRef, model, T, opts = null) {
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
     ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + `<p class="hint ai-threat-note">${esc(r.ameacas.note)}</p>`) : ''}
+    ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + `<p class="hint ai-threat-note">${esc(r.ideal.note)}</p>`) : ''}
     ${panel('Conferência do app', 'info', check)}
     ${panel('Próximos passos', 'swap', dicas)}
     ${footer(model, r.dropped, opts)}
@@ -203,6 +204,7 @@ export function confirmView(prep) {
         <li>${t('De cada um: espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes (tipo, categoria e poder).')}</li>
         ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
         ${review ? `<li>${t('O plano da equipe e a função de cada membro, calculados pelo app.')}</li>` : ''}
+        ${counts.ideal ? `<li>${t('O ideal do competitivo que falta no save e a alternativa do save, calculados pelo app.')}</li>` : ''}
         ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
         ${counts.free ? `<li>${t('Modo livre: as outras habilidades que cada um pode ter, trocando por item.')}</li>` : ''}
         ${analyze ? '' : `<li>${counts.learn2
