@@ -391,7 +391,7 @@ export function builderWin(d, providers = []) {
   const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   return `<details class="win win-fold" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
-    <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.')} ${t('A nota também conta as duplas que jogam juntas nos times do competitivo (estatísticas públicas de uso do Smogon).')}</p>
+    <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room, Hiperofensiva ou equilibrada. Sem chave, sem internet e sem cota.')} ${t('A nota também conta as duplas que jogam juntas nos times do competitivo (estatísticas públicas de uso do Smogon).')}</p>
     <label class="ai-label" for="builder-note">${t('Pedido (opcional)')}</label>
     <input id="builder-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario; time de chuva')}">
     <p class="hint builder-note-hint">${t('O app coloca na equipe os Pokémon que você citar pelo nome; a IA lê o pedido inteiro.')}</p>

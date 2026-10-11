@@ -1,4 +1,4 @@
-// Montador de equipes do app, sem IA. Para cada plano que o save comporta (clima, terreno, Trick Room ou
+// Montador de equipes do app, sem IA. Para cada plano que o save comporta (clima, terreno, Trick Room, Hiperofensiva ou
 // equilibrado), procura no PC inteiro a melhor equipe de 6 por uma nota feita só de contas: fraquezas em comum
 // (descontando o que o clima da equipe corta), cobertura ofensiva, papéis (pivô, prioridade, recuperação…),
 // atacantes físicos × especiais, stats base, quem põe/aproveita o plano e quanto as duplas da equipe jogam juntas nos

@@ -821,7 +821,7 @@ export default {
   'Procurando outras opções': 'Looking for other options',
   'Nenhuma outra opção deste plano com nota perto desta (90% ou mais).': 'No other option for this plan scores close to this one (90% or more).',
   'montada pelo app': 'built by the app',
-  'O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room ou equilibrada. Sem chave, sem internet e sem cota.': 'The app searches all your Pokémon (party and PC) for the best team for each plan the save supports: weather, terrain, Trick Room or balanced. No key, no internet and no quota.',
+  'O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room, Hiperofensiva ou equilibrada. Sem chave, sem internet e sem cota.': 'The app searches all your Pokémon (party and PC) for the best team for each plan the save supports: weather, terrain, Trick Room, Hyper Offense or balanced. No key, no internet and no quota.',
   'A nota também conta as duplas que jogam juntas nos times do competitivo (estatísticas públicas de uso do Smogon).': 'The score also counts the pairs that play together on competitive teams (Smogon’s public usage statistics).',
   'Dê {stone} a {ref} (o app contou com a mega).': 'Give {stone} to {ref} (the app counted the Mega).',
   'intimidação': 'Intimidate',
