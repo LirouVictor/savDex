@@ -367,6 +367,17 @@ export function analysisWin(d, T) {
 // Jogos com a tabela de megas da ROM (o modo sem restrição de item conta com megapedras que o Pokémon não segura)
 const MEGA_GAMES = ['quetzal', 'unbound', 'soulgold'];
 
+/** Explicação embaixo do seletor de preparo (app.js troca ao mudar a escolha). */
+export const READY_HINT = {
+  train: () => t('Conta o que dá para conseguir evoluindo e ensinando golpes.'),
+  ready: () => t('Prefere quem já está pronto; quem precisa evoluir ou aprender golpes ainda entra, se compensar.'),
+};
+
+/** Caixa de marcar no estilo do app: o nome da opção e, embaixo, o que ela faz. */
+export function check(id, label, desc = '', on = false) {
+  return `<label class="ai-skip"><input type="checkbox" id="${id}"${on ? ' checked' : ''}><span class="chk-text"><b>${label}</b>${desc ? `<small>${desc}</small>` : ''}</span></label>`;
+}
+
 /**
  * Montar equipe, numa janela só: o app monta sozinho (sem IA; o pacote só carrega ao tocar no botão) e, no fim, a
  * parte opcional com IA (a chave é do usuário e fica só neste aparelho): comentar a equipe que o app montou, avaliar
@@ -385,14 +396,15 @@ export function builderWin(d, providers = []) {
     <input id="builder-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario; time de chuva')}">
     <p class="hint builder-note-hint">${t('O app coloca na equipe os Pokémon que você citar pelo nome; a IA lê o pedido inteiro.')}</p>
     <label class="ai-label" for="builder-ready">${t('Preparo')}</label>
-    <select id="builder-ready" class="ai-input">
-      <option value="train">${t('Posso treinar: conta o que dá para conseguir evoluindo e ensinando golpes')}</option>
-      <option value="ready">${t('Prontos para usar: prefere quem já está pronto (o resto ainda entra, se compensar)')}</option>
+    <select id="builder-ready" class="ai-input" aria-describedby="builder-ready-hint">
+      <option value="train">${t('Posso treinar')}</option>
+      <option value="ready">${t('Prontos para usar')}</option>
     </select>
-    <label class="ai-skip"><input type="checkbox" id="builder-nolegend"> ${t('Sem lendários e míticos (menos os que você pedir acima)')}</label>
-    ${megas ? `<label class="ai-skip"><input type="checkbox" id="builder-anyitem"> ${t('Sem restrição de item: conta com a megapedra de quem tem mega, mesmo sem ela')}</label>` : ''}
-    <label class="ai-skip"><input type="checkbox" id="builder-threats"> ${t('Considerar as ameaças do jogo: prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta)')}</label>
-    <div class="export-btns ai-actions"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
+    <p class="hint builder-note-hint" id="builder-ready-hint">${READY_HINT.train()}</p>
+    ${check('builder-nolegend', t('Sem lendários e míticos'), t('Menos os que você pedir acima.'))}
+    ${megas ? check('builder-anyitem', t('Sem restrição de item'), t('Conta com a megapedra de quem tem mega, mesmo que ainda não a segure.')) : ''}
+    ${check('builder-threats', t('Considerar as ameaças do jogo'), t('Prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta).'))}
+    <div class="export-btns ai-actions ai-actions-one"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
     <details class="fold ai-fold" id="ai-win">
       <summary>${t('Com IA (opcional)')} <small id="ai-svc">${t('IA')}</small></summary>
@@ -415,9 +427,9 @@ export function builderWin(d, providers = []) {
         <p class="hint">${t('A chave fica guardada só neste aparelho.')}</p>
       </div>
       <div id="ai-main" class="hidden">
-        ${free ? `<label class="ai-skip ai-free"><input type="checkbox" id="ai-free"> ${free === 'patch'
-    ? t('Modo livre: considerar trocar a habilidade (Ability Capsule e Ability Patch)')
-    : t('Modo livre: considerar trocar entre a 1ª e a 2ª habilidade (Ability Capsule)')}</label>` : ''}
+        ${free ? check('ai-free', t('Modo livre'), free === 'patch'
+    ? t('Considera trocar a habilidade (Ability Capsule e Ability Patch).')
+    : t('Considera trocar entre a 1ª e a 2ª habilidade (Ability Capsule).')) : ''}
         <div class="export-btns ai-actions">
           <button class="btn" type="button" data-ai="analyze"${noParty ? ' disabled' : ''}>${t('Analisar minha equipe')}</button>
           <button class="btn" type="button" data-ai="build">${t('Montar com IA')}</button>
@@ -431,7 +443,7 @@ export function builderWin(d, providers = []) {
             <button class="btn btn-ghost btn-small" type="button" id="ai-model-save">${t('Salvar modelo')}</button>
             <datalist id="ai-models"></datalist>
           </div>
-          <label class="ai-skip"><input type="checkbox" id="ai-ask" checked> ${t('Mostrar o que vai ser enviado antes de enviar')}</label>
+          ${check('ai-ask', t('Mostrar o que vai ser enviado antes de enviar'), '', true)}
           <button class="btn btn-ghost btn-small" type="button" id="ai-list">${t('Ver modelos da chave')}</button>
           <p class="hint" id="ai-models-out" role="status"></p>
           <button class="btn btn-ghost btn-small" type="button" id="ai-forget">${t('Apagar chave deste aparelho')}</button>
@@ -449,7 +461,7 @@ export function searchWin(d, T) {
     <summary class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></summary>
     <div class="search-form">
       <label class="sr" for="q">${t('Buscar')}</label>
-      <input id="q" type="search" placeholder="${t('Nome, espécie, golpe, habilidade ou item')}" autocomplete="off" enterkeyhint="search">
+      <input id="q" type="search" placeholder="${t('Pokémon, golpe, habilidade ou item')}" autocomplete="off" enterkeyhint="search">
       <div class="search-row">
         <label class="sr" for="f-type">${t('Tipo')}</label>
         <select id="f-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>

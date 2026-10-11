@@ -342,7 +342,8 @@ export function resultsHtml(results, i, T) {
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
   const shown = shownParts(cur.parts, cur.score);
   // A parte "Ameaças" só aparece com a caixa marcada (sem ela, a linha é a de antes)
-  const parts = PARTS.filter(([k]) => k !== 'threats' || cur.r.ameacas).map(([k, label]) => `${t(label)} ${shown[k] > 0 ? '+' : ''}${shown[k]}`).join(' · ');
+  const parts = PARTS.filter(([k]) => k !== 'threats' || cur.r.ameacas)
+    .map(([k, label]) => `<span class="part${shown[k] > 0 ? ' up' : shown[k] < 0 ? ' down' : ''}">${esc(t(label))} <b>${shown[k] > 0 ? '+' : ''}${shown[k]}</b></span>`).join('');
   // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`
@@ -354,7 +355,7 @@ export function resultsHtml(results, i, T) {
       <div class="builder-ai-out" aria-live="polite"></div>
     </div>`;
   return `<div class="dex-filters builder-tabs" role="group" aria-label="${esc(t('Planos'))}">${tabs}</div>
-    <p class="hint builder-score">${t('Nota {n}', { n: Math.round(cur.score) })}: ${esc(parts)}</p>${more}
+    <div class="builder-score"><span class="score-badge">${t('Nota {n}', { n: `<b>${Math.round(cur.score)}</b>` })}</span>${parts}</div>${more}
     ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}
     ${ai}`;
 }

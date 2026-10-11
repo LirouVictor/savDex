@@ -137,7 +137,7 @@ suite('Montador de equipes (sem IA)', () => {
     expect(res.length).toBeGreaterThanOrEqual(3);
     const html = resultsHtml(res, 0, T);
     expect(html).toContain('data-plan="1"');
-    expect(html).toMatch(/Nota -?\d+: Defesa/);
+    expect(html.replace(/<[^>]+>/g, ' ')).toMatch(/Nota\s+-?\d+\s+Defesa\s+[+-]?\d+/);
     expect(html).toContain('Equipe montada pelo app');
     expect(html).toContain('data-ai-copy');
     expect(html).toContain('Montada pelo app, sem IA');
@@ -329,7 +329,7 @@ suite('Montador de equipes (sem IA)', () => {
     for (const r of rs) expect(r.parts.total).toBeCloseTo(r.score, 9);
     // Na tela: a linha "Nota N: Defesa … · Ataque …" soma N (as partes são arredondadas juntas, não uma a uma)
     rs.forEach((r, i) => {
-      const line = resultsHtml(rs, i, T).match(/builder-score">([^<]*)</)[1];
+      const line = resultsHtml(rs, i, T).match(/class="builder-score">([\s\S]*?)<\/div>/)[1].replace(/<[^>]+>/g, ' ');
       const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
       expect(nota).toBe(Math.round(r.score));
       expect(parts).toHaveLength(7); // sem o jogo (caixa das ameaças desligada), sem a parte "Ameaças"

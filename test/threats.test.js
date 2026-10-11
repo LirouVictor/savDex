@@ -87,7 +87,7 @@ suite('Ameaças concretas', () => {
     const rs = runBuilder(all, T, '', null, {}); // o app não passa o jogo com a caixa desligada
     expect(rs.every(r => r.parts.threats === 0 && !r.r.ameacas)).toBe(true);
     expect(resultsHtml(rs, 0, T)).not.toContain('Ameaças do jogo');
-    expect(resultsHtml(rs, 0, T)).not.toMatch(/Ameaças [-+]?\d/);
+    expect(resultsHtml(rs, 0, T).replace(/<[^>]+>/g, '')).not.toMatch(/Ameaças [-+]?\d/);
   });
 
   it('tela: painel das ameaças com cobertura, dano, resposta e o que a estimativa não sabe', () => {
@@ -109,6 +109,6 @@ suite('Ameaças concretas', () => {
     expect(html).toContain('Estimativa, não simulação');
     expect(html).toContain('o app não tem a tabela de golpes deste jogo');
     // A parte "Ameaças" aparece na linha da nota
-    expect(html).toMatch(/Ameaças [-+]?\d+/);
+    expect(html.replace(/<[^>]+>/g, '')).toMatch(/Ameaças [-+]?\d+/);
   });
 });

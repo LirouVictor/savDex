@@ -229,7 +229,7 @@ export function confirmView(prep) {
   </div>
   ${P.privacy ? `<p class="hint">${esc(t(P.privacy))}</p>` : ''}
   <details class="ai-raw fold"><summary>${t('Ver o texto exato ({n} caracteres)', { n: num(text.length) })}</summary><pre>${esc(text)}</pre></details>
-  <label class="ai-skip"><input type="checkbox" data-skip> ${t('Não perguntar de novo neste aparelho')}</label>
+  <label class="ai-skip"><input type="checkbox" data-skip><span class="chk-text"><b>${t('Não perguntar de novo neste aparelho')}</b></span></label>
   <div class="export-btns ai-confirm-btns">
     <button class="btn btn-ghost" type="button" data-cancel>${t('Cancelar')}</button>
     <button class="btn" type="button" data-send>${esc(t('Enviar ao {service}', { service: P.service }))}</button>
