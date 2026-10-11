@@ -149,7 +149,7 @@ function side(o, mult, stats, types, abilities, moves) {
     return k[ty];
   };
   return (o._side = {
-    mult, into, se, abilities,
+    mult, into, se, abilities, speedIn: abilities.map(a => SPEED_ABILITY[a]).find(Boolean) || null,
     hp: hp(stats[0]), def: stat(stats[2]), spd: stat(stats[4]), spe: stats[5],
     moves: strongest(moves.filter(mv => !SKIP_MOVES.has(mv.name)).map(mv => ({
       mv, type: mv.type, power: mv.power, A: stat(mv.category === 0 ? stats[1] : stats[3]), phys: mv.category === 0,
@@ -195,27 +195,42 @@ function bestByClass(a, d, dmg, o, by = null, se = null) {
 
 /** O dano no plano: o melhor das classes que valem nele, com o clima. [dano, classe] */
 function pick(dmg, o, variant) {
+  const out = pickDmg(dmg, o, variant);
+  for (let c = 0; c < CLASSES; c++) if (classDmg(dmg, o, c, variant) === out) return [out, c];
+  return [out, 0];
+}
+function classDmg(dmg, o, c, variant) {
   const w = WEATHER[variant];
-  let out = dmg[o], c = 0;
+  if (c === 3) return variant === 'sol' ? dmg[o + 3] : 0;
+  if (c === 4) return variant === 'chuva' ? dmg[o + 4] : 0;
+  const type = c === 1 ? 'water' : c === 2 ? 'fire' : null;
+  return dmg[o + c] * (!w || !type ? 1 : w.boosts === type ? 1.5 : w.weakens === type ? 0.5 : 1);
+}
+/** Só o dano (sem criar listas: é a conta repetida para cada par e cada plano). */
+function pickDmg(dmg, o, variant) {
+  const w = WEATHER[variant];
+  let out = dmg[o];
   const water = dmg[o + 1] * (!w ? 1 : w.boosts === 'water' ? 1.5 : w.weakens === 'water' ? 0.5 : 1);
   const fire = dmg[o + 2] * (!w ? 1 : w.boosts === 'fire' ? 1.5 : w.weakens === 'fire' ? 0.5 : 1);
-  if (water > out) { out = water; c = 1; }
-  if (fire > out) { out = fire; c = 2; }
-  if (variant === 'sol' && dmg[o + 3] > out) { out = dmg[o + 3]; c = 3; }
-  if (variant === 'chuva' && dmg[o + 4] > out) { out = dmg[o + 4]; c = 4; }
-  return [out, c];
+  if (water > out) out = water;
+  if (fire > out) out = fire;
+  if (variant === 'sol' && dmg[o + 3] > out) out = dmg[o + 3];
+  if (variant === 'chuva' && dmg[o + 4] > out) out = dmg[o + 4];
+  return out;
 }
 
-/** Vence vindo de graça / entra na troca e vence, pelo dano dos dois lados e pela velocidade. */
-function verdict(me, them, out, inn, variant) {
-  // Velocidade: stats base (mesmo nível); no clima, as habilidades de velocidade dobram; no Trick Room, inverte
-  const spe = (s, list) => s * (list.some(a => SPEED_ABILITY[a] === variant) ? 2 : 1);
-  const vMe = spe(me.spe, me.abilities), vThem = spe(them.spe, them.abilities);
-  const faster = variant === 'room' ? vMe < vThem : vMe > vThem;
-  const nT = out > 0 ? Math.ceil(100 / out) : Infinity; // golpes para derrubar a ameaça
+// Velocidade: stats base (mesmo nível); no clima, as habilidades de velocidade dobram; no Trick Room, inverte
+function isFaster(me, them, variant) {
+  const vMe = me.spe * (me.speedIn === variant ? 2 : 1), vThem = them.spe * (them.speedIn === variant ? 2 : 1);
+  return variant === 'room' ? vMe < vThem : vMe > vThem;
+}
+/** Vence vindo de graça (bit 1) / também entra na troca e vence (bit 2), pelo dano dos dois lados e pela velocidade. */
+function verdictBits(faster, out, inn) {
+  if (!(out > 0)) return 0;
+  const nT = Math.ceil(100 / out); // golpes para derrubar a ameaça
   const nM = inn > 0 ? Math.ceil(100 / inn) : Infinity; // golpes que o membro aguenta
   // Vindo de graça: o mais rápido bate primeiro. Entrando na troca, leva um golpe a mais
-  return { faster, wins: nT < Infinity && (faster ? nT <= nM : nT < nM), safe: nT < Infinity && (faster ? nT < nM : nT + 1 < nM) };
+  return ((faster ? nT <= nM : nT < nM) ? 1 : 0) | ((faster ? nT < nM : nT + 1 < nM) ? 2 : 0);
 }
 
 /**
@@ -233,8 +248,9 @@ export function matchup(e, x, mult, variant = 'none') {
   return {
     out, in: inn, by: byO[co] || null, with: byI[ci] || null,
     // Acerta em cheio com algum golpe que vale no plano
-    se: se[0] || se[1] || se[2] || (variant === 'sol' && !!se[3]) || (variant === 'chuva' && !!se[4]),
-    ...verdict(me, them, out, inn, variant),
+    se: !!(se[0] || se[1] || se[2] || (variant === 'sol' && se[3]) || (variant === 'chuva' && se[4])),
+    faster: isFaster(me, them, variant), wins: !!(verdictBits(isFaster(me, them, variant), out, inn) & 1),
+    safe: !!(verdictBits(isFaster(me, them, variant), out, inn) & 2),
   };
 }
 
@@ -258,9 +274,9 @@ export function threatBits(e, c, variant) {
   const safe = new Uint32Array(c.words), wins = new Uint32Array(c.words);
   for (let i = 0; i < n; i++) {
     const o = i * 2 * CLASSES;
-    const r = verdict(me, threatSide(c.threats[i], c.mult), pick(dmg, o, variant)[0], pick(dmg, o + CLASSES, variant)[0], variant);
-    if (r.wins) wins[i >>> 5] |= 1 << (i & 31);
-    if (r.safe) safe[i >>> 5] |= 1 << (i & 31);
+    const r = verdictBits(isFaster(me, threatSide(c.threats[i], c.mult), variant), pickDmg(dmg, o, variant), pickDmg(dmg, o + CLASSES, variant));
+    if (r & 1) wins[i >>> 5] |= 1 << (i & 31);
+    if (r & 2) safe[i >>> 5] |= 1 << (i & 31);
   }
   return { safe, wins };
 }

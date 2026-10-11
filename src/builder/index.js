@@ -267,11 +267,11 @@ const names = (xs, max) => list(xs.slice(0, max).map(threatName)) + (xs.length >
 
 /**
  * Ameaças do jogo: cobertura, dano e resposta separados (a resposta é entrar no campo e vencer o 1 contra 1, não só
- * ter golpe super efetivo), e o que a estimativa não sabe. Com duas megapedras, vale a forma que responde a cada uma.
+ * ter golpe super efetivo), e o que a estimativa não sabe.
  */
 function threatsHtml(res, c) {
-  const megas = res.team.filter(e => e.mega && e.base);
-  const team = megas.length >= 2 ? [...res.team, ...megas.map(e => e.base)] : res.team;
+  // Quem segura a megapedra conta nas duas formas (o jogador escolhe megaevoluir ou não), como na nota
+  const team = res.team.flatMap(e => (e.mega && e.base ? [e, e.base] : [e]));
   const tt = teamThreats(team, c.threats, c.mult, variantOf(res.plan));
   const n = tt.n, only = tt.wins - tt.safe;
   const lines = [

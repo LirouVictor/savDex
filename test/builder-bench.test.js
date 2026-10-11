@@ -58,7 +58,7 @@ function setFlags(pool, plan) {
 
 // Busca local: troca um membro por vez enquanto a nota sobe (mede o quanto a busca em feixe deixou na mesa)
 function localGain(team, pool, plan, types, opts) {
-  let cur = [...team], s = B.score(cur, plan, types, opts), gain = 0, improved = true, guard = 0;
+  let cur = [...team], s = B.score(cur, plan, types), gain = 0, improved = true, guard = 0;
   const usable = pool.filter(e => !e.conflict);
   while (improved && guard++ < 20) {
     improved = false;
@@ -68,7 +68,7 @@ function localGain(team, pool, plan, types, opts) {
         if (!allowed(rest, c, plan)) continue;
         const t = [...rest, c];
         if (!B.planHolds(t, plan)) continue;
-        const v = B.score(t, plan, types, opts);
+        const v = B.score(t, plan, types);
         if (v > s + 1e-9) { gain += v - s; cur = t; s = v; improved = true; break; }
       }
     }
@@ -99,7 +99,7 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null) {
   for (const e of team) for (const mv of [...e.m.moves, ...(e.teachAtk || [])]) if ((mv.category === 0 || mv.category === 1) && mv.type && (!mv.power || mv.power >= 70)) atk.add(mv.type);
   let hit = 0, wall = 0;
   for (const o of OPP) { const best = Math.max(...[...atk].map(a => eff(a, o))); if (best > 1) hit++; if (best < 1) wall++; }
-  const parts = B.scoreParts(team, plan, types, opts);
+  const parts = B.scoreParts(team, plan, types);
   return {
     names: team.map(e => e.m.species.name + (e.given ? '@' + e.given : '') + (e.m.evolvedFrom ? '(de ' + e.m.evolvedFrom.species.name + ')' : '')),
     score: r1(parts.total), parts: Object.fromEntries(Object.entries(parts).filter(([k]) => k !== 'total').map(([k, v]) => [k, r1(v)])),
