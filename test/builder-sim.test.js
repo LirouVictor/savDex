@@ -1,6 +1,6 @@
 // Conferência do montador por batalhas simuladas (opcional; não roda no `npm test` normal).
 // Precisa do simulador do Pokémon Showdown (MIT), fora do package.json: `npm i --no-save pokemon-showdown@0.11.11`.
-// Uso: BUILDER_SIM=1 [BENCH_USER_SAVE=save] [SIM_ONLY=a.sav,b.sav] [SIM_N=20] [SIM_VARIANTS=2] [SIM_RR=5] [SIM_OUT=saida.json]
+// Uso: BUILDER_SIM=1 [BENCH_USER_SAVE=save] [SIM_ONLY=a.sav,b.sav] [SIM_N=20] [SIM_VARIANTS=2] [SIM_RR=5] [SIM_SEED=0] [SIM_OUT=saida.json]
 //   [SIM_LOG=texto.txt] npx vitest run test/builder-sim.test.js
 // Opções do montador como no teste de comparação: SIM_THREATS=1 (ameaças do jogo), SIM_READY=1 ("Prontos para usar").
 // Para cada save: as equipes do app (uma por plano) e variações delas (um membro trocado por outro candidato) jogam
@@ -34,6 +34,7 @@ const SMOGON = { gen3ou: SM3, gen4ou: SM4, gen5ou: SM5, gen8nationaldex: SM8, ge
 const compIndex = game => { const fs = smogonFormats(game); return fs.length ? smogonIndex(fs.map(f => SMOGON[f])) : null; };
 const FILES = ['quetzal-7ins.sav', 'quetzal-en.sav', 'quetzal-en2.sav', 'unbound-a.sav', 'unbound-c.sav', 'soulgold-b.sav', 'emerald.sav', 'hgss.duc', 'b2w2.duc'];
 const RUN = !!process.env.BUILDER_SIM;
+const SEED = +(process.env.SIM_SEED || 0); // outra semente = outros adversários, variações e sorteios
 const r2 = x => Math.round(x * 100) / 100;
 
 // Correlação de Spearman (postos com empates pela média)
@@ -79,9 +80,9 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
     const sdex = Dex.forFormat(fmt.battle);
     const mains = B.buildTeams(mons, T, { dex, comp: compIndex(d.game), game: process.env.SIM_THREATS ? d.game : null, ready: !!process.env.SIM_READY });
     const pool = mains.pool;
-    const opp = opponents(fmt.opp, NOPP, 1);
+    const opp = opponents(fmt.opp, NOPP, 1 + SEED);
     const save = { save: name, game: g, teams: [] };
-    const rand = rng(name.length * 7919 + 17);
+    const rand = rng(name.length * 7919 + 17 + SEED * 101);
     // As equipes: a de cada plano e NVAR variações dela (um membro trocado por um dos 60 melhores candidatos sozinho)
     const list = [];
     for (const r of mains) {
@@ -110,7 +111,7 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
     // Contra os times do random battle (medida absoluta; satura nos saves cheios de lendários)
     for (const x of list) {
       let w = 0;
-      opp.forEach((o, i) => { w += battle(fmt.battle, x.sets, o, x.plan, [11, i + 1, 13, 17]); });
+      opp.forEach((o, i) => { w += battle(fmt.battle, x.sets, o, x.plan, [11 + SEED, i + 1, 13, 17]); });
       x.rand = w / opp.length;
     }
     // Torneio entre as equipes do save: cada par joga RR batalhas com cada um começando como p1 (mesmas sementes)
@@ -119,8 +120,8 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
       for (let b = a + 1; b < list.length; b++) {
         const A = list[a], Bt = list[b];
         for (let k = 0; k < RR; k++) {
-          const w1 = battle(fmt.battle, A.sets, Bt.sets, A.plan, [21, a + 1, b + 1, k + 1], Bt.plan);
-          const w2 = battle(fmt.battle, Bt.sets, A.sets, Bt.plan, [23, a + 1, b + 1, k + 1], A.plan);
+          const w1 = battle(fmt.battle, A.sets, Bt.sets, A.plan, [21 + SEED, a + 1, b + 1, k + 1], Bt.plan);
+          const w2 = battle(fmt.battle, Bt.sets, A.sets, Bt.plan, [23 + SEED, a + 1, b + 1, k + 1], A.plan);
           A.rr += w1 + (1 - w2); Bt.rr += (1 - w1) + w2; A.games += 2; Bt.games += 2;
         }
       }
@@ -166,5 +167,74 @@ it.skipIf(!RUN)('montador: batalhas simuladas', () => {
     + `Por save (média): nota × torneio em todas as equipes ${f(summary.allRho)}; entre os planos ${f(summary.planRho)}, sem a parte Plano ${f(summary.planRhoNoPlan)}`);
   console.log(lines.join('\n'));
   if (process.env.SIM_OUT) writeFileSync(process.env.SIM_OUT, JSON.stringify({ summary, saves: out }, null, 1));
+  if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
+}, 7200000);
+
+// A × B (opcional: SIM_AB=1; SIM_AB_N batalhas para cada lado, padrão 40): mudanças na busca que sobem a nota fazem equipes
+// mais fortes? Para cada save e plano, a equipe da busca de antes (A: feixe de 24, 110 candidatos, sem os parceiros
+// competitivos) contra as das buscas maiores (B: com os parceiros, sem o corte, feixe de 96), frente a frente e contra
+// os times do random battle. Só os planos em que a equipe muda.
+it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes mais fortes?', () => {
+  if (!showdown()) throw new Error('Instale o simulador: npm i --no-save pokemon-showdown@0.11.11');
+  const { Dex } = showdown();
+  const K = +(process.env.SIM_AB_N || 40), NOPP = +(process.env.SIM_N || 40);
+  let files = FILES.map(f => ['fixtures/' + f, f]);
+  if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
+  if (process.env.SIM_ONLY) files = files.filter(([, n]) => process.env.SIM_ONLY.split(',').includes(n));
+  const lines = [], rows = [];
+  const VARIANTS = [['parceiros', [24, 110, true]], ['sem corte', [24, Infinity, false]], ['feixe 96', [96, 110, false]]];
+  for (const [p, name] of files) {
+    if (!existsSync(p)) continue;
+    const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
+    const mons = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+    const g = d.game.id;
+    const dex = g === 'quetzal' ? quetzalLearnDex(QL) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const types = B.attackTypes(T);
+    const fmt = formatsFor(d.game);
+    const sdex = Dex.forFormat(fmt.battle);
+    const mains = B.buildTeams(mons, T, { dex, comp: compIndex(d.game), game: process.env.SIM_THREATS ? d.game : null });
+    const pool = mains.pool;
+    const opp = opponents(fmt.opp, NOPP, 3);
+    for (const r of mains) {
+      const plan = r.plan;
+      B.setPlanFlags(pool, plan);
+      const label = plan.field || (plan.kind === 'offense' ? 'hiperofensiva' : 'equilibrada');
+      const A = B.bestTeam(pool, plan, types, [], [], 24, 110, false);
+      if (!A || !B.planHolds(A.team, plan)) continue;
+      const setsOf = t => { const s = leadOrder(t, plan).map(e => toSet(e, plan, sdex)); return s.some(x => !x) ? null : s; };
+      const sA = setsOf(A.team);
+      if (!sA) continue;
+      const keyA = A.team.map(e => e.id).sort().join();
+      let randA = null;
+      for (const [vname, args] of VARIANTS) {
+        const X = B.bestTeam(pool, plan, types, [], [], ...args);
+        if (!X || !B.planHolds(X.team, plan) || X.team.map(e => e.id).sort().join() === keyA) continue;
+        const sX = setsOf(X.team);
+        if (!sX) continue;
+        let w = 0;
+        for (let k = 0; k < K; k++) {
+          w += battle(fmt.battle, sX, sA, plan, [31, k + 1, 3, 5], plan);
+          w += 1 - battle(fmt.battle, sA, sX, plan, [37, k + 1, 3, 5], plan);
+        }
+        const h2h = w / (2 * K);
+        if (randA === null) { randA = 0; opp.forEach((o, i) => { randA += battle(fmt.battle, sA, o, plan, [41, i + 1, 3, 5]); }); randA /= opp.length; }
+        let randX = 0;
+        opp.forEach((o, i) => { randX += battle(fmt.battle, sX, o, plan, [41, i + 1, 3, 5]); });
+        randX /= opp.length;
+        const dS = B.score(X.team, plan, types) - B.score(A.team, plan, types);
+        rows.push({ save: name, plan: label, variant: vname, dScore: r2(dS), h2h: r2(h2h), dRand: r2(randX - randA) });
+        const sa = new Set(A.team.map(e => e.real));
+        lines.push(`${name.padEnd(16)} ${label.padEnd(20)} ${vname.padEnd(10)} nota +${r2(dS)}: frente a frente ${Math.round(100 * h2h)}% (±${Math.round(100 * 1.96 * Math.sqrt(h2h * (1 - h2h) / (2 * K)))}), aleatórios ${Math.round(100 * randX)}% × ${Math.round(100 * randA)}%; entra ${X.team.filter(e => !sa.has(e.real)).map(e => e.m.species.name).join(', ')}`);
+      }
+    }
+  }
+  const by = v => rows.filter(x => x.variant === v);
+  for (const [v] of VARIANTS) {
+    const xs = by(v);
+    if (!xs.length) continue;
+    const m = k => r2(xs.reduce((a, x) => a + x[k], 0) / xs.length);
+    lines.push(`RESUMO ${v}: ${xs.length} planos mudam; nota +${m('dScore')}; frente a frente ${Math.round(100 * m('h2h'))}% (venceu mais em ${xs.filter(x => x.h2h > 0.5).length}); aleatórios ${m('dRand') >= 0 ? '+' : ''}${Math.round(100 * m('dRand'))} pontos`);
+  }
+  console.log(lines.join('\n'));
   if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
 }, 7200000);
