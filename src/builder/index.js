@@ -82,78 +82,67 @@ const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
   ? FIELD_MOVES[name] === f || (f === 'Trick Room' && name === 'Trick Room')
   : (MOVE_ABUSERS[name] || []).includes(f)));
 
-/** Função de cada membro na equipe e o porquê, pelas contas (em português; os nomes viram referências E1/C3-12). */
+/**
+ * Função de cada membro na equipe e até 3 motivos curtos, do mais importante para o menos (os nomes viram referências
+ * E1/C3-12). O que é para fazer (ensinar, evoluir) fica nos próximos passos.
+ */
 function describeMember(e, team, plan, types) {
   const m = e.m, bf = e.bf, f = plan.field;
-  const reasons = [];
+  const why = [];
   let role = '';
-  if (e.given) reasons.push(t('Sem restrição de item: o app contou com {stone} (dê a ele).', { stone: e.given }));
-  if (bf !== m) {
-    const mega = { name: `${bf.species.name} ${bf.species.form || 'Mega'}`, types: bf.species.types.map(cap).join('/'), ability: bf.ability.name };
-    reasons.push(e.abBase && e.abBase !== bf.ability.name
-      ? t('Com a megapedra vira {name} ({types}; {ability}); antes de megaevoluir, tem {base}: as duas contam.', { ...mega, base: e.abBase })
-      : t('Com a megapedra vira {name} ({types}; {ability}): a conta é com a mega.', mega));
-  }
+  if (e.given) why.push(t('dê {stone}', { stone: e.given }));
+  // O plano: como põe, como aproveita
   if (f && e.strat.set.has(f)) {
     role = t('põe {field}', { field: t(f) });
-    reasons.push(t('Põe {field} com {how}.', { field: t(f), how: howSets(bf, f) }));
+    why.push(howSets(bf, f));
   } else if (f && e.learnSet.has(f)) {
     const [mv, lv] = teachFor(e, f, 'set') || [];
     role = t('pode pôr {field}', { field: t(f) });
-    if (mv) reasons.push(t('Ensinando {move} ({when}), põe {field}.', { move: mv, when: learnAt(lv), field: t(f) }));
+    if (mv) why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(lv) }));
   }
-  if (plan.kind !== 'room' && f && !e.strong.has(f) && e.learnUse.has(f) && !(e.stab.has(f))) {
+  if (plan.kind !== 'room' && f && e.strong.has(f)) {
+    // Sob o selo "aproveita chuva", só o porquê (Swift Swim); sob outro selo, com o verbo
+    const uses = whyUses(bf, f).filter(x => !why.includes(x)).slice(0, 2);
+    if (!role) {
+      role = t('aproveita {field}', { field: t(f) });
+      if (uses.length) why.push(list(uses));
+    } else if (uses.length) why.push(t('aproveita: {list}', { list: list(uses) }));
+  } else if (plan.kind !== 'room' && f && e.learnUse.has(f) && !e.stab.has(f)) {
     const [mv, lv] = teachFor(e, f, 'use') || [];
     if (mv) {
       if (!role) role = t('aproveita {field}', { field: t(f) });
-      reasons.push(t('Ensinando {move} ({when}), aproveita {field}.', { move: mv, when: learnAt(lv), field: t(f) }));
+      why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(lv) }));
     }
+  } else if (plan.kind === 'weather' && WEATHER[f] && (e.stab.has(f) || e.strat.boost.has(f)) && !role) {
+    role = t('golpes {type} mais fortes', { type: cap(WEATHER[f].boosts) });
   }
-  if (plan.kind !== 'room' && f && e.strong.has(f)) {
-    if (!role) role = t('aproveita {field}', { field: t(f) });
-    const why = whyUses(bf, f);
-    if (why.length) reasons.push(t('Aproveita {field}: {list}.', { field: t(f), list: list(why) }));
-  } else if (plan.kind === 'weather' && WEATHER[f] && (e.stab.has(f) || e.strat.boost.has(f))) {
-    if (!role) role = t('golpes {type} mais fortes', { type: cap(WEATHER[f].boosts) });
-    reasons.push(t('Os golpes {type} dele ficam 1,5× mais fortes com {field}.', { type: cap(WEATHER[f].boosts), field: t(f) }));
-  }
-  if (plan.kind === 'room' && e.spe <= 50 && e.dmg >= 2 && !role) {
-    role = t('atacante lento');
-    reasons.push(t('Lento: no Trick Room, ataca primeiro.'));
-  }
-  // Segura o que acerta os outros: tipos a que 2 ou mais colegas são fracos e ele resiste ou anula
-  const holds = types.filter((ty, a) => e.def[a] < 0 && team.filter(o => o !== e && o.def[a] > 0).length >= 2);
+  if (plan.kind === 'room' && e.spe <= 50 && e.dmg >= 2 && !role) role = t('atacante lento');
+  // A mega, se o plano não a citou (Dragonite: Multiscale)
+  if (bf !== m && !e.given && !why.some(x => x.includes(m.item.name))) why.push(t('mega: {ability}', { ability: bf.ability.name }));
+  // O que segura pela equipe: resiste ao que acerta 2+ colegas em cheio, anula pela habilidade
+  const holds = types.filter((ty, a) => e.def[a] < 0 && team.filter(o => o !== e && o.def[a] > 0).length >= 2).map(cap);
   if (holds.length) {
-    if (!role) role = t('segura {list}', { list: list(holds.slice(0, 2).map(cap)) });
-    reasons.push(t('Resiste a {list}, que acerta(m) outros membros em cheio.', { list: list(holds.map(cap)) }));
+    if (!role) role = t('segura {list}', { list: list(holds.slice(0, 2)) });
+    else why.push(t('segura {list}', { list: list(holds.slice(0, 2)) }));
   }
-  const absorbs = types.filter((ty, a) => e.def[a] === -2);
-  if (absorbs.length) reasons.push(t('{ability} anula golpes {type}.', { ability: bf.ability.name, type: list(absorbs.map(cap)) }));
-  if (e.preImmune && e.preImmune.length) reasons.push(t('Antes de megaevoluir, {ability} anula golpes {type}.', { ability: e.abBase, type: list(e.preImmune.map(cap)) }));
-  // Habilidade que fortalece os golpes (Technician, Iron Fist…) e Contrary com golpes que baixam stats
+  const absorbs = types.filter((ty, a) => e.def[a] === -2).map(cap);
+  if (absorbs.length) why.push(t('{ability} anula {type}', { ability: bf.ability.name, type: list(absorbs) }));
+  if (e.preImmune && e.preImmune.length) why.push(t('{ability} anula {type} antes da mega', { ability: e.abBase, type: list(e.preImmune.map(cap)) }));
+  // Único da equipe que acerta um tipo em cheio
+  const only = types.filter((ty, a) => (e.cov & (1 << a)) && !team.some(o => o !== e && (o.cov & (1 << a)))).map(cap);
+  if (only.length) why.push(t('único que acerta {list}', { list: list(only.slice(0, 2)) }));
+  if (e.contrary && e.contrary.length) why.push(t('Contrary + {move}', { move: e.contrary[0] }));
+  const roles = ROLE_ORDER.filter(r => e.roles.includes(r) && t(r) !== role).map(r => t(r));
+  if (roles.length) why.push(list(roles.slice(0, 2)));
   const byAb = new Map();
   for (const mv of e.boosted || []) byAb.set(mv.by, [...(byAb.get(mv.by) || []), mv.name]);
-  for (const [ab, mvs] of byAb) reasons.push(t('{ability} fortalece {moves}.', { ability: ab, moves: list(mvs) }));
-  if (e.teachAtk && e.teachAtk.length) reasons.push(t('Golpes de dano a ensinar: {list}.', { list: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)) }));
-  if (e.contrary && e.contrary.length) reasons.push(t('Contrary: com {moves}, os stats sobem em vez de baixar.', { moves: list(e.contrary) }));
-  // Único que acerta um tipo em cheio
-  const only = types.filter((ty, a) => (e.cov & (1 << a)) && !team.some(o => o !== e && (o.cov & (1 << a))));
-  if (only.length) reasons.push(t('Único da equipe que acerta {list} em cheio.', { list: list(only.map(cap)) }));
-  const roles = ROLE_ORDER.filter(r => e.roles.includes(r));
-  if (roles.length) reasons.push(t('Papéis: {list}.', { list: list(roles.map(r => t(r))) }));
-  // Papel que a equipe não tem e ele aprende
-  const extra = ROLE_ORDER.filter(r => e.roleMoves.has(r) && !team.some(o => o.roles.includes(r)));
-  if (extra.length) reasons.push(t('Pode ganhar: {list}.', { list: list(extra.map(r => `${t(r)} (${e.roleMoves.get(r).name}, ${learnAt(e.roleMoves.get(r).level)})`)) }));
-  if (!role) role = roles.length ? t(roles[0]) : t('cobertura');
-  // Sem outro motivo: entra pela força (stats base) e pelos golpes que acertam bem
-  if (!reasons.length) {
-    reasons.push(t('Atacante {kind} com stats base {bst}.', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
-  }
-  if (m.evolvedFrom) reasons.push(t('Evolua {from} para {to}: a conta é com a forma evoluída.', { from: m.evolvedFrom.species.name, to: m.species.name }));
-  return { ref: refOf(m), papel: role, motivo: reasons.join(' ') };
+  for (const [ab, mvs] of byAb) why.push(`${ab}: ${list(mvs.slice(0, 2))}`);
+  if (!role) role = roles.length ? roles[0] : t('cobertura');
+  if (!why.length) why.push(t('atacante {kind}, stats base {bst}', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
+  return { ref: refOf(m), papel: role, motivo: cap(why.slice(0, 3).join(' · ')) };
 }
 
-/** Pontos fortes e fracos da equipe, pelas contas. */
+/** Pontos fortes e fracos da equipe, pelas contas: só o que pesa (até 3 de cada). */
 function teamPoints(team, plan, types) {
   const ref = e => refOf(e.m);
   const good = [], bad = [];
@@ -167,9 +156,13 @@ function teamPoints(team, plan, types) {
   for (const e of team) cov |= e.cov;
   const covered = types.filter((ty, a) => cov & (1 << a));
   good.push(t('Golpes super efetivos contra {n} dos {total} tipos.', { n: covered.length, total: types.length }));
-  const roles = ROLE_ORDER.filter(r => team.some(e => e.roles.includes(r)));
-  if (roles.length) good.push(t('Papéis na equipe: {list}.', { list: list(roles.map(r => t(r))) }));
   const halved = plan.kind === 'weather' && WEATHER[f] ? WEATHER[f].weakens : null;
+  const pairs = compPairs(team);
+  const duo = x => `${ref(x.a)} + ${ref(x.b)} (${times(x.v)})`;
+  if (pairs) {
+    const strong = pairs.filter(x => x.v >= 1).slice(0, 2);
+    if (strong.length) good.push(t('Duplas comuns no competitivo: {list}.', { list: list(strong.map(duo)) }));
+  }
   types.forEach((ty, a) => {
     const weak = team.filter(e => e.def[a] > 0);
     if (weak.length < 3) return;
@@ -179,23 +172,18 @@ function teamPoints(team, plan, types) {
       ? t('{type} acerta {n} membros em cheio; {ref} anula com {ability}.', { type: cap(ty), n: weak.length, ref: ref(absorber), ability: absorber.m.ability.name })
       : t('{type} acerta {n} membros em cheio.', { type: cap(ty), n: weak.length }));
   });
-  // Referência competitiva: as duplas que jogam juntas (ou se evitam) nos times do Smogon
-  const pairs = compPairs(team);
-  if (pairs) {
-    const label = team[0].sctx.label;
-    const duo = x => `${ref(x.a)} + ${ref(x.b)} (${times(x.v)})`;
-    const strong = pairs.filter(x => x.v >= 1).slice(0, 3);
-    const avoid = pairs.filter(x => x.v <= -1).reverse().slice(0, 2);
-    if (strong.length) good.push(t('No competitivo ({format}), jogam juntos bem mais que o acaso: {list}.', { format: label, list: list(strong.map(duo)) }));
-    if (avoid.length) bad.push(t('No competitivo ({format}), quase não jogam juntos: {list}.', { format: label, list: list(avoid.map(duo)) }));
-  }
+  const roles = ROLE_ORDER.filter(r => team.some(e => e.roles.includes(r)));
   const missing = KEY_ROLES.filter(r => !roles.includes(r));
   if (missing.length) bad.push(t('Falta na equipe: {list}.', { list: list(missing.map(r => t(r))) }));
   const gaps = types.filter((ty, a) => !(cov & (1 << a)));
   if (gaps.length) bad.push(t('Nenhum golpe super efetivo contra: {list}.', { list: list(gaps.map(cap)) }));
   const few = team.filter(e => e.dmg < 2);
   if (few.length) bad.push(t('Poucos golpes de dano: {list}.', { list: list(few.map(ref)) }));
-  return { good, bad };
+  if (pairs) {
+    const avoid = pairs.filter(x => x.v <= -1).reverse().slice(0, 2);
+    if (avoid.length) bad.push(t('Quase não jogam juntos no competitivo: {list}.', { list: list(avoid.map(duo)) }));
+  }
+  return { good: good.slice(0, 3), bad: bad.slice(0, 3) };
 }
 
 /** Próximos passos: evoluir, ensinar golpes, escolher a megaevolução, usar o item do clima. */
@@ -281,9 +269,8 @@ function describeTeam(res, types, pool, ctx) {
   const membros = team.map(e => describeMember(e, team, plan, types));
   const { good, bad } = teamPoints(team, plan, types);
   const r = {
-    nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: plan.field
-      ? t('Plano: {plan}. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.', { plan: t(plan.field) })
-      : t('Equilibrada: sem clima, terreno nem Trick Room. Montada pelo app com todos os seus Pokémon (equipe e PC), sem IA.'),
+    // Sem resumo: a aba e o título já dizem o plano
+    nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: '',
     membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
     ameacas: threats ? threatsHtml(res, threats) : null,
   };
@@ -313,26 +300,20 @@ function idealLines(res, pool, ctx) {
   const name = sp => (sp.form ? `${sp.name} (${sp.form})` : sp.name);
   const lines = swaps.map(s => {
     const out = refOf(s.out.m);
-    const head = t('No lugar de {out}: {ideal} ({types}), que não está no seu save. No competitivo, joga com {list}. Com ele, a nota estimada iria de {a} para {b}.', {
+    const head = t('{out} → {ideal} ({types}), que você não tem: joga com {list} no competitivo; nota {a} → {b}.', {
       out, ideal: name(s.spec), types: s.spec.types.map(cap).join('/'), a: Math.round(s.base), b: Math.round(s.score),
       list: list(s.pairs.slice(0, 2).map(p => `${refOf(p.m.m)} (${times(p.v)})`)),
     });
-    if (!s.alt) return `${head} ${t('Nenhum Pokémon do seu save faz esse papel.')}`;
+    if (!s.alt) return `${head} ${t('Ninguém do seu save faz esse papel.')}`;
     const y = s.alt.e, why = [];
     if (s.alt.sim.shared.length) why.push(s.alt.sim.shared.map(cap).join('/'));
     if (s.alt.sim.role) why.push(plan.kind === 'room' ? t('lento no Trick Room') : t('aproveita {field}', { field: t(plan.field) }));
     if (y.m.evolvedFrom) why.push(t('evolua para {name}', { name: y.m.species.name }));
     if (y.given) why.push(t('com {stone}', { stone: y.given }));
-    return `${head} ${t('Do seu save, o mais parecido é {alt} ({why}); no lugar de {out}, a nota fica {c}.', { alt: refOf(y.m), why: why.join('; '), out, c: Math.round(s.alt.score) })}`;
+    return `${head} ${t('No seu save: {alt} ({why}), nota {c}.', { alt: refOf(y.m), why: why.join('; '), c: Math.round(s.alt.score) })}`;
   });
   if (!lines.length) lines.push(t('Nenhum Pokémon que falta no seu save melhora esta equipe pela referência do competitivo.'));
-  const note = [
-    t('O ideal sai das duplas que mais jogam juntas nos times do competitivo ({format}) com quem fica na equipe, e só aparece se a nota do app sobe com ele.', { format: ctx.comp.label }),
-    ctx.dex && ctx.dex.rom
-      ? t('A nota com o ideal é uma estimativa: ele conta com a habilidade que mais serve ao plano e os golpes de dano que aprende por nível, sem item e sem contar capturar e treinar.')
-      : t('A nota com o ideal é uma estimativa: ele conta com a habilidade que mais serve ao plano e um golpe de 90 de poder de cada tipo dele (o app não tem a tabela de golpes deste jogo), sem item e sem contar capturar e treinar.'),
-    t('Lendários e míticos ficam de fora, e o app não sabe onde (nem se) dá para capturar cada um no jogo. Mais parecido: tipos em comum, o mesmo papel no plano e o jeito dos stats.'),
-  ].join(' ');
+  const note = t('Estimativa pelas duplas do competitivo (Smogon), sem lendários; o app não sabe onde capturar o ideal.');
   return { lines, note, alts: swaps.filter(s => s.alt).map(s => s.alt.e.m) };
 }
 
@@ -348,28 +329,16 @@ function threatsHtml(res, c) {
   const team = res.team.flatMap(e => (e.mega && e.base ? [e, e.base] : [e]));
   const tt = teamThreats(team, c.threats, c.mult, variantOf(res.plan));
   const n = tt.n, only = tt.wins - tt.safe;
-  const lines = [
-    t('Cobertura: algum golpe acerta {k} de {n} em cheio.', { k: tt.se, n }),
-    t('Dano: alguém tira metade ou mais de {k} de {n} com um golpe.', { k: tt.hit2, n }),
-    t('Resposta: alguém entra no golpe e vence {safe}; mais {only} só vindo de graça (depois que um aliado cai); {none} sem resposta.', { safe: tt.safe, only, none: tt.none.length }),
-  ];
-  if (tt.none.length) lines.push(t('Sem resposta: {list}.', { list: names(tt.none, 8) }));
-  if (tt.seNoAnswer) lines.push(t('{k} delas levam golpe super efetivo, mas ninguém vence o 1 contra 1: só a cobertura de tipos não basta.', { k: tt.seNoAnswer }));
+  const lines = [t('Resposta: alguém entra no golpe e vence {safe} de {n}; mais {only} só vindo de graça (depois que um aliado cai).', { safe: tt.safe, n, only })];
+  if (tt.none.length) lines.push(t('Sem resposta: {list}.', { list: names(tt.none, 6) }));
   // Quem é a única resposta (sai e a equipe fica sem ela)
   const unique = new Map();
   for (const p of tt.per) {
     const who = [...new Set(p.wins.map(e => e.real))];
     if (who.length === 1) { const k = refOf(res.team.find(e => e.real === who[0]).m); unique.set(k, [...(unique.get(k) || []), p.x]); }
   }
-  for (const [ref, xs] of [...unique].sort((a, b) => b[1].length - a[1].length).slice(0, 3)) lines.push(t('Só {ref} responde a {list}.', { ref, list: names(xs, 4) }));
-  const how = c.learned
-    ? t('A ameaça usa o golpe mais forte contra cada membro: um de 80 de poder de cada tipo dela ou os de dano que aprende por nível (tabela da ROM).')
-    : t('A ameaça usa um golpe de 90 de poder de cada tipo dela (o app não tem a tabela de golpes deste jogo).');
-  const note = [
-    t('Contra {n} Pokémon fortes do jogo (stats base 500 ou mais, sem lendários). Estimativa, não simulação: os dois lados no nível 50, sem itens, EVs, naturezas nem mudanças de stats.', { n }),
-    how, t('Conta o clima do plano (golpes Water e Fire, habilidades de velocidade) e o Trick Room; terrenos, não. O app não sabe os times dos treinadores do jogo nem os golpes de TM.'),
-    c.modernAbilities ? t('Habilidades das ameaças: as atuais (PokeAPI), que podem ter mudado desde este jogo.') : '',
-  ].filter(Boolean).join(' ');
+  for (const [ref, xs] of [...unique].sort((a, b) => b[1].length - a[1].length).slice(0, 2)) lines.push(t('Só {ref} responde a {list}.', { ref, list: names(xs, 4) }));
+  const note = t('Estimativa contra {n} Pokémon fortes do jogo (sem lendários): nível 50, sem itens nem EVs, com o clima e o Trick Room do plano. O app não sabe os times dos treinadores nem os golpes de TM.', { n });
   return { lines, note };
 }
 
@@ -398,7 +367,7 @@ export function resultsHtml(results, i, T) {
   const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
   const shown = shownParts(cur.parts, cur.score);
   // A parte "Ameaças" só aparece com a caixa marcada; a "Competitivo", com a referência do jogo carregada
-  const parts = PARTS.filter(([k]) => (k !== 'threats' || cur.r.ameacas) && (k !== 'comp' || cur.comp))
+  const parts = PARTS.filter(([k]) => shown[k] !== 0)
     .map(([k, label]) => `<span class="part${shown[k] > 0 ? ' up' : shown[k] < 0 ? ' down' : ''}">${esc(t(label))} <b>${shown[k] > 0 ? '+' : ''}${shown[k]}</b></span>`).join('');
   // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt ? '' : !cur.alts
@@ -407,7 +376,7 @@ export function resultsHtml(results, i, T) {
   // Os dois métodos juntos: a IA (com a chave do jogador) comenta a equipe que o app montou; o comentário entra aqui
   const ai = `<div class="builder-ai">
       <button class="btn" type="button" data-ai-review>${t('Comentar com IA')}</button>
-      <p class="hint">${t('A IA explica como esta equipe joga o plano, aponta riscos e dá dicas de golpes e itens. A equipe e a nota continuam as do app.')}</p>
+      <p class="hint">${t('A IA comenta esta equipe: riscos, golpes e itens. A equipe e a nota continuam as do app.')}</p>
       <div class="builder-ai-out" aria-live="polite"></div>
     </div>`;
   return `<div class="dex-filters builder-tabs" role="group" aria-label="${esc(t('Planos'))}">${tabs}</div>

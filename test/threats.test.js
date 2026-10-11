@@ -90,7 +90,7 @@ suite('Ameaças concretas', () => {
     expect(resultsHtml(rs, 0, T).replace(/<[^>]+>/g, '')).not.toMatch(/Ameaças [-+]?\d/);
   });
 
-  it('tela: painel das ameaças com cobertura, dano, resposta e o que a estimativa não sabe', () => {
+  it('tela: painel das ameaças com a resposta, quem fica sem resposta e o que a estimativa não sabe', () => {
     slot = 0;
     const all = [
       mon('Swampert', ['water', 'ground'], [100, 110, 90, 85, 90, 60], { moves: [atk('Liquidation', 'water'), atk('Earthquake', 'ground'), atk('Ice Punch', 'ice')] }),
@@ -103,11 +103,9 @@ suite('Ameaças concretas', () => {
     const rs = runBuilder(all, T, '', null, { game: { id: 'quetzal' } });
     const html = resultsHtml(rs, 0, T);
     expect(html).toContain('Ameaças do jogo (estimativa)');
-    expect(html).toMatch(/Cobertura: algum golpe acerta \d+ de \d+ em cheio/);
-    expect(html).toMatch(/Dano: alguém tira metade ou mais de \d+ de \d+/);
-    expect(html).toMatch(/Resposta: alguém entra no golpe e vence \d+/);
-    expect(html).toContain('Estimativa, não simulação');
-    expect(html).toContain('o app não tem a tabela de golpes deste jogo');
+    expect(html).toMatch(/Resposta: alguém entra no golpe e vence \d+ de \d+; mais \d+ só vindo de graça/);
+    expect(html).toMatch(/Estimativa contra \d+ Pokémon fortes do jogo \(sem lendários\): nível 50, sem itens nem EVs/);
+    expect(html).toContain('O app não sabe os times dos treinadores nem os golpes de TM.');
     // A parte "Ameaças" aparece na linha da nota
     expect(html.replace(/<[^>]+>/g, '')).toMatch(/Ameaças [-+]?\d+/);
   });

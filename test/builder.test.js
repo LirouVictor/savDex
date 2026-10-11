@@ -336,7 +336,10 @@ suite('Montador de equipes (sem IA)', () => {
       const line = resultsHtml(rs, i, T).match(/class="builder-score">([\s\S]*?)<\/div>/)[1].replace(/<[^>]+>/g, ' ');
       const [nota, ...parts] = line.match(/[+-]?\d+/g).map(Number);
       expect(nota).toBe(Math.round(r.score));
-      expect(parts).toHaveLength(7); // sem o jogo (caixa das ameaças desligada), sem a parte "Ameaças"
+      // Só as partes que não são 0 aparecem (sem o jogo, nunca a parte "Ameaças")
+      expect(parts.length).toBeLessThanOrEqual(7);
+      expect(parts.every(x => x !== 0)).toBe(true);
+      expect(line).not.toContain('Ameaças');
       expect(parts.reduce((a, b) => a + b, 0)).toBe(nota);
     });
   });
@@ -408,7 +411,7 @@ suite('Montador de equipes (sem IA)', () => {
     const k = res.findIndex(r => r.plan.field === 'chuva');
     const html = resultsHtml(res, k, T);
     expect(html).toContain('Competitivo');
-    expect(html).toMatch(/No competitivo \(Smogon, Gen 9 National Dex \+ National Dex Ubers\), jogam juntos bem mais que o acaso: .*Pelipper.*Kingdra.* \(\d+×\)/);
+    expect(html).toMatch(/Duplas comuns no competitivo: .*Pelipper.*Kingdra.* \(\d+×\)/);
     expect(resultsHtml(runBuilder(pool(), T), 0, T)).not.toContain('Competitivo');
   });
 
@@ -442,11 +445,10 @@ suite('Montador de equipes (sem IA)', () => {
     const k = ui.findIndex(r => r.plan.field === 'chuva');
     const html = resultsHtml(ui, k, T);
     expect(html).toContain('Ideal do competitivo × o que você tem');
-    expect(html).toMatch(/No lugar de <b>[^<]+<\/b>: Basculegion \(Water\/Ghost\), que não está no seu save\. No competitivo, joga com <b>Pelipper<\/b> \(9×\)/);
-    expect(html).toMatch(/a nota estimada iria de \d+ para \d+\./);
-    expect(html).toMatch(/Do seu save, o mais parecido é <b>Venusaur<\/b> \(Grass\); no lugar de <b>Raichu<\/b>, a nota fica \d+\./);
-    expect(html).not.toMatch(/mais parecido é C\d/); // a alternativa aparece pelo nome
-    expect(ui[k].r.ideal.lines[0]).toMatch(/^No lugar de C\d+-\d+: Basculegion/); // referências, para a IA
+    expect(html).toMatch(/<b>[^<]+<\/b> → Basculegion \(Water\/Ghost\), que você não tem: joga com <b>Pelipper<\/b> \(9×\)[^.]* no competitivo; nota \d+ → \d+\./);
+    expect(html).toMatch(/<b>Raichu<\/b> → Ludicolo [^<]*<b>Pelipper<\/b>[^<]*No seu save: <b>Venusaur<\/b> \(Grass\), nota \d+\./);
+    expect(html).not.toMatch(/No seu save: C\d/); // a alternativa aparece pelo nome
+    expect(ui[k].r.ideal.lines[0]).toMatch(/^C\d+-\d+ → Basculegion/); // referências, para a IA
     // Sem a referência competitiva (ou sem o jogo), sem o painel
     expect(resultsHtml(runBuilder(pool(), T, '', null, { saveGame: { id: 'quetzal' } }), 0, T)).not.toContain('Ideal do competitivo');
     expect(resultsHtml(runBuilder(pool(), T, '', null, { comp }), 0, T)).not.toContain('Ideal do competitivo');
