@@ -10,16 +10,17 @@ import { t } from '../i18n.js';
 
 /**
  * Monta o pedido sem enviar nada.
- * @param {'analyze'|'build'|'review'} kind review = comentário sobre a equipe montada pelo app (`team`, `plan`, `roles`)
+ * @param {'analyze'|'build'|'review'} kind review = comentário sobre a equipe montada pelo app (`team`, `plan`, `roles` e as
+ *   linhas do "ideal × o que você tem", `ideal`)
  * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object, free?: boolean, team?: object[], plan?: string, roles?: Map }} ctx
  *   dex = golpes por nível (dex.json), opcional; free = modo livre (habilidade trocável por item, nos jogos em que o item existe)
  */
-export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false, team = null, plan = '', roles = new Map() }) {
+export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false, team = null, plan = '', roles = new Map(), ideal = [], idealMons = [] }) {
   const P = provider();
   const system = systemPrompt(game);
   const mode = free ? freeAbilityMode(game) : null;
   const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game, free: mode })
-    : kind === 'review' ? reviewPrompt(all, T, team, note, P.maxCandidates, { dex, game, free: mode, plan, roles })
+    : kind === 'review' ? reviewPrompt(all, T, team, note, P.maxCandidates, { dex, game, free: mode, plan, roles, ideal, idealMons })
       : buildPrompt(all, T, note, P.maxCandidates, { free: mode });
   const lines = prompt.split('\n');
   const refs = lines.filter(l => /^(E\d|C\d+-\d+) \|/.test(l)).length;
@@ -36,6 +37,7 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null, fr
     learn: lines.some(l => /^(E\d|C\d+-\d+): /.test(l)), // golpes por nível da equipe (análise do Quetzal/Unbound)
     hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode, T).length > 0, // clima/terreno/Trick Room
     free: !!mode,
+    ideal: kind === 'review' && ideal.length > 0, // ideal do competitivo × o que o jogador tem (contas do app)
   });
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
   // Montagem do Quetzal/Unbound: a segunda etapa leva os golpes por nível dos 6 escolhidos

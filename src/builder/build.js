@@ -554,7 +554,7 @@ function setComp(pool, comp, w) {
     x.sx = id ? at.get(id) : -1;
     if (x.base) x.base.sx = x.sx;
   }
-  const ctx = { M: comp.matrix(ids), K: ids.length, w, label: comp.label };
+  const ctx = { M: comp.matrix(ids), K: ids.length, w, label: comp.label, ids, index: comp };
   for (const x of pool) { x.sctx = ctx; if (x.base) x.base.sctx = ctx; }
   return ctx;
 }
@@ -631,7 +631,7 @@ function threatPartInc(a, team, plan) {
 }
 
 /** Pode entrar: não repete Pokémon nem espécie, até 2 megapedras e, num plano de clima, nenhum outro clima. */
-function allowed(team, e, plan) {
+export function allowed(team, e, plan) {
   let megas = 0;
   for (const x of team) { if (x.real === e.real || x.key === e.key) return false; if (x.mega) megas++; }
   if (e.mega && megas >= MAX_MEGAS) return false;
@@ -793,7 +793,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
   // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
   Object.defineProperty(result, 'pool', { value: pool }); // também para conferências (busca local nos testes de comparação)
-  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx, comp: sctx } });
+  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx, comp: sctx, noLegends, dex } });
   return result;
 }
 
@@ -828,12 +828,47 @@ const teamKey = team => team.map(e => e.id).sort((a, b) => a - b).join(',');
  * mas é fraco ao tipo que o clima fortalece (Venusaur no sol: entra, com uma pena menor).
  */
 export function setPlanFlags(pool, plan) {
-  for (const x of pool) {
-    for (const e of x.base ? [x, x.base] : [x]) {
-      const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
-      e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
-      e.risk = c === 'weak' && e.strong.has(plan.field);
-    }
-  }
+  for (const x of pool) for (const e of x.base ? [x, x.base] : [x]) planFlags(e, plan);
 }
+
+/** As marcas de setPlanFlags numa entrada. */
+export function planFlags(e, plan) {
+  const c = plan.kind === 'weather' ? e.conflictBy[plan.field] : null;
+  e.conflict = !!c && !(c === 'weak' && e.strong.has(plan.field));
+  e.risk = c === 'weak' && e.strong.has(plan.field);
+}
+
+/**
+ * Um Pokémon que o jogador não tem (o ideal do competitivo, ideal.js), no formato das entradas da busca, para a nota
+ * estimar a equipe com ele: a espécie do jogo (gameSpecies em threats.js) com a habilidade que mais serve ao plano, sem
+ * item, e os golpes de dano que aprende por nível (tabela da ROM; sem ela, um golpe de 90 de poder de cada tipo dele).
+ * Sem custo de preparo; fica fora da matriz competitiva (sx = -1: quem chama soma as duplas dele).
+ * @param {object} like uma entrada do save, de onde vêm as referências das ameaças e da tabela competitiva
+ */
+export function outsiderEntry(spec, T, dex, like, plan) {
+  const types = attackTypes(T);
+  const idx = new Map(T.types.map((ty, i) => [ty, i]));
+  const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
+  const f = plan.field;
+  const ab = spec.abilities.find(a => f && (ABUSERS[a] === f || FIELD[a] === f)) || spec.abilities[0] || null;
+  const species = { name: spec.name, form: spec.form, showdown: spec.showdown, types: spec.types, baseStats: spec.stats, abilities: spec.abilities };
+  const m = { species, speciesId: spec.id, ability: ab ? { name: ab, num: Math.max(0, spec.abilities.indexOf(ab)) } : null, item: null, moves: [], level: 100, outsider: true };
+  const learn = levelMoves(m, dex, T);
+  if (!learn.length) {
+    const physical = spec.stats[1] >= spec.stats[3];
+    m.moves = spec.types.map(ty => ({ name: null, type: ty, power: 90, category: T.gen3 ? (SPECIAL_G3.has(ty) ? 1 : 0) : physical ? 0 : 1 }));
+  }
+  const e = Object.assign(entry(m, m, T, types, mult, learn), { id: -1 - spec.id });
+  e.cost = 0;
+  e.statVal = statValue(e, 'bst');
+  blankCaches(e);
+  e.tctx = like.tctx;
+  e.sctx = like.sctx;
+  e.conflictBy = {};
+  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict(e.bf, w, T);
+  planFlags(e, plan);
+  return e;
+}
+// Gen 3: a categoria vem do tipo do golpe
+const SPECIAL_G3 = new Set(['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dragon', 'dark']);
 

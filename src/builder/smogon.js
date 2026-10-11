@@ -65,9 +65,10 @@ function candidates(sp) {
 /**
  * Índice das tabelas de um jogo.
  * @param {object[]} tables conteúdo de src/data/smogon/<formato>.json, na ordem de smogonFormats
- * @returns {{ find, pair, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `pair(a, b)`: a sinergia da
- *   dupla na primeira tabela que conhece as duas (Ubers só vale para quem não está na National Dex); `matrix(ids)`: as
- *   duplas de uma lista de IDs numa matriz (para a nota, que roda dezenas de milhares de vezes)
+ * @returns {{ find, pair, partners, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `pair(a, b)`: a
+ *   sinergia da dupla na primeira tabela que conhece as duas (Ubers só vale para quem não está na National Dex);
+ *   `partners(a)`: as duplas guardadas da espécie (Map ID → sinergia); `matrix(ids)`: as duplas de uma lista de IDs numa
+ *   matriz (para a nota, que roda dezenas de milhares de vezes)
  */
 export function smogonIndex(tables) {
   const parts = tables.map(t => {
@@ -76,7 +77,25 @@ export function smogonIndex(tables) {
     return { t, known: new Set(t.ids), pairs };
   });
   const knows = id => parts.some(p => p.known.has(id));
+  // Duplas de cada espécie (as mesmas de pair: a de um formato só vale se nenhum anterior conhece as duas), montadas na
+  // primeira consulta
+  let adj = null;
+  const partners = a => {
+    if (!adj) {
+      adj = new Map();
+      const put = (x, y, v) => (adj.get(x) || adj.set(x, new Map()).get(x)).set(y, v);
+      parts.forEach((p, k) => {
+        for (const [i, j, v] of p.t.pairs) {
+          const x = p.t.ids[i], y = p.t.ids[j];
+          if (parts.slice(0, k).some(q => q.known.has(x) && q.known.has(y))) continue;
+          put(x, y, v); put(y, x, v);
+        }
+      });
+    }
+    return adj.get(a) || new Map();
+  };
   return {
+    partners,
     label: `Smogon, ${tables.map(t => FORMAT_NAME[t.format] || t.format).join(' + ')}`, // "Smogon, Gen 9 National Dex + National Dex Ubers"
     find: sp => candidates(sp).find(knows) || null,
     pair: (a, b) => {

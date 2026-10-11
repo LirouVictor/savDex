@@ -528,7 +528,7 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false, free: false });
+    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false, free: false, ideal: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
     expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: um por espécie;');
@@ -779,6 +779,19 @@ suite('IA: comentário sobre a equipe montada pelo app', () => {
     expect(html).toContain('2 Pokémon da equipe montada pelo app e 3 de fora dela');
     expect(html).toContain('O plano da equipe e a função de cada membro, calculados pelo app.');
     expect(html).not.toContain('segundo envio');
+  });
+  it('ideal × o que você tem: as linhas do app vão no pedido e a alternativa do save entra entre os candidatos', async () => {
+    const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
+    const alt = all[all.length - 1];
+    const line = `No lugar de E1: Barraskewda (Water), que não está no seu save. No competitivo, joga com C3-12 (16×). Com ele, a nota estimada iria de 200 para 210. Do seu save, o mais parecido é ${refOf(alt)} (Water); no lugar de E1, a nota fica 195.`;
+    const prep = prepareAi('review', { all, T, team, plan: 'Chuva', roles, ideal: [line], idealMons: [alt] });
+    expect(prep.prompt).toContain('Referência competitiva (contas do app: o ideal NÃO está no save do jogador; a alternativa está).');
+    expect(prep.prompt).toContain(line);
+    expect(prep.prompt.split('Fora da equipe')[1]).toMatch(new RegExp(`\\n${refOf(alt)} \\|`));
+    expect(prep.counts.ideal).toBe(true);
+    expect(confirmHtml(prep)).toContain('O ideal do competitivo que falta no save e a alternativa do save, calculados pelo app.');
+    // Sem as linhas, nada muda no pedido
+    expect(prepareAi('review', { all, T, team, plan: 'Chuva', roles }).prompt).not.toContain('Referência competitiva');
   });
   it('trocas: sai um membro da equipe montada, entra alguém de fora dela; a tela mostra a equipe como o app contou', async () => {
     const { prepareAi, sendAi } = await import('../src/ai/index.js');

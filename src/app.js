@@ -374,7 +374,9 @@ function setupBuilder(out) {
     }
     btn.disabled = true;
     try {
-      const res = await askAi('review', slot, btn, { team: cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])) });
+      // O "ideal × o que você tem" vai junto: a IA comenta se vale capturar o ideal ou usar a alternativa do save
+      const res = await askAi('review', slot, btn, { team: cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])),
+        ideal: cur.r.ideal ? cur.r.ideal.lines : [], idealMons: cur.r.ideal ? cur.r.ideal.alts.map(m => m.evolvedFrom || m.stoneFrom || m) : [] });
       if (res) cur.review = { html: res.html, byRef: res.byRef };
     } finally {
       btn.disabled = false;
@@ -411,7 +413,7 @@ function setupBuilder(out) {
       const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
       // Ameaças do jogo só com a caixa marcada (a busca fica 35–60% mais lenta no celular)
       const threats = $('#builder-threats').checked;
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp, saveGame: game }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
