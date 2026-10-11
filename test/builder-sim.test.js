@@ -182,7 +182,9 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
   if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
   if (process.env.SIM_ONLY) files = files.filter(([, n]) => process.env.SIM_ONLY.split(',').includes(n));
   const lines = [], rows = [];
-  const VARIANTS = [['parceiros', [24, 110, true]], ['sem corte', [24, Infinity, false]], ['feixe 96', [96, 110, false]]];
+  // SIM_AB_VARIANTS='[["200",[24,200,false]]]' troca as buscas comparadas (nome, [feixe, candidatos, parceiros])
+  const VARIANTS = process.env.SIM_AB_VARIANTS ? JSON.parse(process.env.SIM_AB_VARIANTS).map(([n, a]) => [n, a.map(x => (x === null ? Infinity : x))])
+    : [['parceiros', [24, 110, true]], ['sem corte', [24, Infinity, false]], ['feixe 96', [96, 110, false]]];
   for (const [p, name] of files) {
     if (!existsSync(p)) continue;
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
