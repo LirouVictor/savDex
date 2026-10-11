@@ -382,8 +382,13 @@ function setupBuilder(out) {
   };
   // Preparo (posso treinar / prontos para usar): a escolha fica neste aparelho
   const readySel = $('#builder-ready');
+  const readyHint = () => { $('#builder-ready-hint').textContent = R.READY_HINT[readySel.value](); };
   try { if (localStorage.getItem('builder-ready') === 'ready') readySel.value = 'ready'; } catch { /* sem armazenamento */ }
-  readySel.addEventListener('change', () => { try { if (readySel.value === 'ready') localStorage.setItem('builder-ready', 'ready'); else localStorage.removeItem('builder-ready'); } catch { /* sem armazenamento */ } });
+  readyHint();
+  readySel.addEventListener('change', () => {
+    readyHint();
+    try { if (readySel.value === 'ready') localStorage.setItem('builder-ready', 'ready'); else localStorage.removeItem('builder-ready'); } catch { /* sem armazenamento */ }
+  });
   // As caixas do montador (sem lendários; sem restrição de item; ameaças do jogo): a escolha fica neste aparelho
   for (const [id, key] of [['#builder-nolegend', 'builder-nolegend'], ['#builder-anyitem', 'builder-anyitem'], ['#builder-threats', 'builder-threats']]) {
     const box = $(id);

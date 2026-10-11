@@ -25,10 +25,16 @@ export function iconSrc(sp) {
   return sp.hasIcon ? iconUrl(sp.spriteId) : spriteUrl(sp.spriteId);
 }
 
-/** Se uma imagem de sprite falhar (offline, 404), troca pela silhueta. */
+/** Se uma imagem de sprite falhar (offline, 404), troca pela silhueta; a de uma insígnia, por um losango. */
 export function installImageFallback(root = document) {
   root.addEventListener('error', e => {
     const img = e.target;
+    if (img instanceof HTMLImageElement && img.classList.contains('bdg')) {
+      const pin = document.createElement('i');
+      pin.className = `bdg bdg-pin ${img.classList.contains('off') ? 'off' : 'got'}`;
+      img.replaceWith(pin);
+      return;
+    }
     if (!(img instanceof HTMLImageElement) || !img.dataset.sprite) return;
     const next = img.dataset.next;
     if (next) { img.dataset.next = ''; img.classList.remove('ico'); img.src = next; }
