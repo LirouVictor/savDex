@@ -3,7 +3,7 @@
 // Smogon (smogon.js) com quem fica na equipe e só aparece se a nota do app, estimada com ele, sobe. Tudo por contas; a IA
 // só comenta (o "Comentar com IA" leva estas linhas).
 
-import { scoreParts, shownScore, allowed, planHolds, outsiderEntry, sets, isLegendary } from './build.js';
+import { scoreParts, allowed, planHolds, outsiderEntry, sets, isLegendary } from './build.js';
 import { gameSpecies } from './threats.js';
 
 const SHORTLIST = 12; // ideais avaliados pela nota: os que mais jogam com a equipe no competitivo
@@ -85,7 +85,7 @@ function alternative(found, team, plan, pool, types) {
   for (const [y, sim] of close.slice(0, ALT_TRY)) {
     const team2 = [...rest, y];
     if (!planHolds(team2, plan)) continue;
-    const score = shownScore(team2, plan, types);
+    const score = scoreParts(team2, plan, types).total;
     // O mais parecido; entre os igualmente parecidos, o de nota maior
     if (!best || sim.score > best.sim.score + 1e-9 || (Math.abs(sim.score - best.sim.score) <= 1e-9 && score > best.score)) best = { e: y, sim, score };
   }
@@ -100,7 +100,7 @@ function alternative(found, team, plan, pool, types) {
  * @param {{ id: string, gen?: number }} game o jogo do save (as espécies que existem nele)
  * @returns {Array<{ out: object, X: object, spec: object, pairs: Array<{ m: object, v: number }>, base: number, score: number, alt: { e: object, sim: object, score: number }|null }>}
  *   `out`: quem sai; `X`: o ideal (entrada estimada); `pairs`: as duplas fortes dele com quem fica; `base`/`score`: a
- *   nota mostrada (shownScore) da equipe hoje e com o ideal; `alt`: a alternativa do save e a nota mostrada com ela
+ *   nota da equipe hoje e com o ideal; `alt`: a alternativa do save e a nota com ela
  */
 export function idealSwaps(team, plan, pool, ctx, T, game) {
   const c = ctx.comp;
@@ -126,8 +126,7 @@ export function idealSwaps(team, plan, pool, ctx, T, game) {
     }
   }
   const shortlist = [...cand].sort((x, y) => y[1] - x[1]).slice(0, SHORTLIST);
-  // A nota da busca (com a parte "Plano") decide; a mostrada (shownScore, sem ela) também precisa subir
-  const base = scoreParts(team, plan, types).total, baseShown = shownScore(team, plan, types);
+  const base = scoreParts(team, plan, types).total;
   // Vagas: quem o jogador pediu e quem põe o plano ficam
   const open = team.filter(e => !forced.has(e) && !(plan.field && sets(e, plan.field)) && !(plan.kind === 'offense' && e.hoSup));
   const found = [];
@@ -146,14 +145,12 @@ export function idealSwaps(team, plan, pool, ctx, T, game) {
       const team2 = [...rest, X];
       if (!planHolds(team2, plan)) continue;
       // O ideal fica fora da matriz competitiva: as duplas dele entram aqui
-      const comp = c.w * pairs.reduce((a, p) => a + p.v, 0);
-      const parts = scoreParts(team2, plan, types);
-      const score = parts.total + comp, shown = parts.total - parts.plan + comp;
-      if (score >= base + MIN_GAIN && shown >= baseShown + MIN_GAIN && (!best || score > best.score)) best = { out, X, spec, pairs: strong, base: baseShown, score: shown, rank: score };
+      const score = scoreParts(team2, plan, types).total + c.w * pairs.reduce((a, p) => a + p.v, 0);
+      if (score >= base + MIN_GAIN && (!best || score > best.score)) best = { out, X, spec, pairs: strong, base, score };
     }
     if (best) found.push(best);
   }
-  found.sort((a, b) => b.rank - a.rank);
+  found.sort((a, b) => b.score - a.score);
   const picked = [];
   for (const f of found) {
     if (picked.length >= MAX) break;

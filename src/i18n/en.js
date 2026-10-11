@@ -758,6 +758,7 @@ export default {
   'Defesa': 'Defense',
   'Pokémon': 'Pokémon',
   'Equilíbrio': 'Balance',
+  'Plano': 'Plan',
   'põe {field}': 'sets {field}',
   'aproveita {field}': 'abuses {field}',
   'golpes {type} mais fortes': 'stronger {type} moves',
