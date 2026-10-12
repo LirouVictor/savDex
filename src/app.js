@@ -385,22 +385,10 @@ function setupBuilder(out) {
       btn.disabled = false;
     }
   };
-  // Preparo (posso treinar / prontos para usar): a escolha fica neste aparelho
-  const readySel = $('#builder-ready');
-  const readyHint = () => { $('#builder-ready-hint').textContent = R.READY_HINT[readySel.value](); };
-  try { if (localStorage.getItem('builder-ready') === 'ready') readySel.value = 'ready'; } catch { /* sem armazenamento */ }
-  readyHint();
-  readySel.addEventListener('change', () => {
-    readyHint();
-    try { if (readySel.value === 'ready') localStorage.setItem('builder-ready', 'ready'); else localStorage.removeItem('builder-ready'); } catch { /* sem armazenamento */ }
-  });
-  // As caixas do montador (sem lendários; sem restrição de item; ameaças do jogo): a escolha fica neste aparelho
-  for (const [id, key] of [['#builder-nolegend', 'builder-nolegend'], ['#builder-anyitem', 'builder-anyitem'], ['#builder-threats', 'builder-threats']]) {
-    const box = $(id);
-    if (!box) continue;
-    try { box.checked = localStorage.getItem(key) === '1'; } catch { /* sem armazenamento */ }
-    box.addEventListener('change', () => { try { if (box.checked) localStorage.setItem(key, '1'); else localStorage.removeItem(key); } catch { /* sem armazenamento */ } });
-  }
+  // Sem lendários e míticos: a escolha fica neste aparelho
+  const legend = $('#builder-nolegend');
+  try { legend.checked = localStorage.getItem('builder-nolegend') === '1'; } catch { /* sem armazenamento */ }
+  legend.addEventListener('change', () => { try { if (legend.checked) localStorage.setItem('builder-nolegend', '1'); else localStorage.removeItem('builder-nolegend'); } catch { /* sem armazenamento */ } });
   $('#builder-run').addEventListener('click', async e => {
     const btn = e.currentTarget;
     btn.disabled = true;
@@ -415,10 +403,11 @@ function setupBuilder(out) {
       // Equipes de referência do competitivo ([] se o jogo ainda não tem; null se não carregaram): o fluxo principal
       const refs = await mod.loadReferences(game);
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
-      const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
-      // Ameaças do jogo só com a caixa marcada (a busca fica 35–60% mais lenta no celular)
-      const threats = $('#builder-threats').checked;
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp, saveGame: game, refs }), i: 0 };
+      const noLegends = $('#builder-nolegend').checked;
+      // Sem as antigas opções (preparo, ameaças, sem restrição de item): o item é só informado (o jogador dá um jeito de
+      // conseguir), então quem tem mega conta com a megapedra nos jogos com a tabela de megas da ROM
+      const anyItem = R.MEGA_GAMES.includes(game && game.id);
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, comp, saveGame: game, refs }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
@@ -444,15 +433,15 @@ function setupBuilder(out) {
       show(k >= 0 ? k : i);
       return;
     }
-    // Mais referências e a montagem livre: só calculam quando o jogador pede
-    const extra = e.target.closest('[data-more-refs], [data-free]');
+    // Mais referências: só calculam quando o jogador pede
+    const extra = e.target.closest('[data-more-refs]');
     if (extra) {
       const b = state.builder, i = b.i;
       extra.disabled = true;
-      extra.innerHTML = `${t(extra.hasAttribute('data-free') ? 'Montando as equipes' : 'Adaptando mais referências')}<span class="dots" aria-hidden="true"></span>`;
+      extra.innerHTML = `${t('Adaptando mais referências')}<span class="dots" aria-hidden="true"></span>`;
       await new Promise(r => setTimeout(r, 30));
       if (state.builder !== b) return;
-      const k = extra.hasAttribute('data-free') ? mod.freeOptions(b.results) : mod.moreReferences(b.results);
+      const k = mod.moreReferences(b.results);
       show(k >= 0 ? k : i);
       return;
     }

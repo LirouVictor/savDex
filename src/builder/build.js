@@ -534,7 +534,7 @@ function regear(e, set, field) {
 function copyCtx(x, e, set, T) {
   x.tctx = e.tctx; x.sctx = e.sctx; x.sx = e.sx;
   x.conflictBy = {};
-  for (const f of WEATHERS) x.conflictBy[f] = weatherConflict({ ...x.bf, moves: set }, f, T);
+  for (const f of WEATHERS) x.conflictBy[f] = weatherConflict({ ...x.bf, moves: set, abs: [x.m.ability && x.m.ability.name] }, f, T);
 }
 
 /**
@@ -1212,7 +1212,7 @@ export function prepareBuild(all, T, { want = [], dex = null, noLegends = false,
     for (const e of x.base ? [x, x.base] : [x]) {
       e.tctx = tctx;
       e.conflictBy = {};
-      for (const f of WEATHERS) e.conflictBy[f] = weatherConflict({ ...e.bf, moves: e.moves }, f, T);
+      for (const f of WEATHERS) e.conflictBy[f] = weatherConflict({ ...e.bf, moves: e.moves, abs: [e.m.ability && e.m.ability.name] }, f, T);
     }
   }
   // Quem o jogador pediu: todas as versões dele (com cada megapedra, no modo sem restrição de item); em cada plano
@@ -1345,7 +1345,7 @@ export function outsiderEntry(spec, T, dex, like, plan) {
   e.tctx = like.tctx;
   e.sctx = like.sctx;
   e.conflictBy = {};
-  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict({ ...e.bf, moves: e.moves }, w, T);
+  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict({ ...e.bf, moves: e.moves, abs: [e.m.ability && e.m.ability.name] }, w, T);
   planFlags(e, plan);
   return e;
 }

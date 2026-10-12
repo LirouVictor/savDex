@@ -356,7 +356,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
 }, 3600000);
 
 // Equipes de referência (opcional: BENCH_REFS=1; BENCH_OUT/BENCH_LOG como acima; BENCH_FID_W troca o peso da fidelidade,
-// BENCH_FID_MODE=v1|v2 troca a conta da fidelidade, BENCH_ROLE_MOVES=off|always troca a escolha das versões com os papéis da original nos mantidos, BENCH_REF_ALL=1 adapta todas as compatíveis em vez das ADAPT_N melhores pela estimativa). Nos saves do Quetzal mede,
+// BENCH_ANYITEM=1 conta as megapedras que o Pokémon ainda não segura, BENCH_FID_MODE=v1|v2 troca a conta da fidelidade, BENCH_ROLE_MOVES=off|always troca a escolha das versões com os papéis da original nos mantidos, BENCH_REF_ALL=1 adapta todas as compatíveis em vez das ADAPT_N melhores pela estimativa). Nos saves do Quetzal mede,
 // lado a lado com a montagem livre: quantas referências são compatíveis, a nota e a fidelidade das adaptadas, quanto das
 // estratégias, dos papéis e do plano da original a adaptada preserva, e o tempo.
 it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem livre', async () => {
@@ -374,7 +374,8 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const dex = quetzalLearnDex(QL, QT);
     const comp = compIndex(d.game);
     let t0 = performance.now();
-    const ctx = B.prepareBuild(all, T, { dex, comp });
+    const anyItem = !!process.env.BENCH_ANYITEM;
+    const ctx = B.prepareBuild(all, T, { dex, comp, anyItem });
     const tPrep = performance.now() - t0;
     t0 = performance.now();
     const rm = process.env.BENCH_ROLE_MOVES;
@@ -382,7 +383,7 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
       ...(rm ? { roleMoves: rm === 'off' ? false : rm } : {}), ...(process.env.BENCH_FID_MODE ? { fidMode: process.env.BENCH_FID_MODE } : {}) });
     const tRefs = performance.now() - t0;
     t0 = performance.now();
-    const free = B.freeTeams(B.prepareBuild(all, T, { dex, comp }));
+    const free = B.freeTeams(B.prepareBuild(all, T, { dex, comp, anyItem }));
     const tFree = performance.now() - t0;
     let st = 0, stN = 0, ro = 0, roN = 0, pl = 0, plN = 0, kr = 0, krN = 0;
     const FIDR = ['pivot', 'regen', 'hazard', 'removal', 'phaze', 'screens', 'web', 'sweeper', 'priority', 'sacrifice'];

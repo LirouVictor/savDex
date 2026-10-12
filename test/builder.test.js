@@ -3,6 +3,7 @@ import T from '../src/data/tables.js';
 import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes, setPlanFlags } from '../src/builder/build.js';
 import { idealSwaps } from '../src/builder/ideal.js';
 import { megaForm } from '../src/ai/evolve.js';
+import { weatherConflict } from '../src/ai/strategy.js';
 import { runBuilder, moreOptions, resultsHtml, shownParts, wantedMons } from '../src/builder/index.js';
 import { builderWin } from '../src/ui/render.js';
 import { smogonIndex } from '../src/builder/smogon.js';
@@ -48,6 +49,16 @@ const pool = () => {
 const names = r => r.team.map(e => e.m.species.name);
 
 suite('Montador de equipes (sem IA)', () => {
+  it('Air Lock e Cloud Nine anulam o clima da própria equipe: ficam fora dos planos de clima', () => {
+    const ray = { species: { types: ['dragon', 'flying'] }, ability: { name: 'Air Lock' }, moves: [] };
+    for (const f of ['chuva', 'sol', 'tempestade de areia', 'neve/granizo']) expect(weatherConflict(ray, f, T)).toBe('nullify');
+    expect(weatherConflict({ species: { types: ['water'] }, ability: { name: 'Damp' }, abs: ['Cloud Nine'], moves: [] }, 'chuva', T)).toBe('nullify');
+    expect(weatherConflict(ray, 'Electric Terrain', T)).toBe(null); // terreno não é clima
+    slot = 0;
+    const all = [...pool(), mon('Rayquaza', ['dragon', 'flying'], [105, 150, 90, 150, 90, 95], { ab: 'Air Lock', moves: [atk('Dragon Ascent', 'flying'), atk('Extreme Speed', 'normal'), ['Dragon Dance', 'dragon', 2, 0], atk('Earthquake', 'ground')] })];
+    for (const r of buildTeams(all, T).filter(r => r.plan.kind === 'weather')) expect(names(r)).not.toContain('Rayquaza');
+  });
+
   it('planos que o save comporta: clima com quem põe e 2+ que aproveitam; equilibrada sempre', () => {
     const p = prepare(pool(), T);
     const kinds = plans(p).map(x => x.field || 'equilibrada');

@@ -1,10 +1,19 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-13';
+export const UPDATED = '2026-10-16';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-16',
+    pt: [
+      'Montar equipe: a janela ficou mais simples. Saíram as opções que não fazem mais sentido com as equipes de referência (Preparo, Sem restrição de item, Ameaças do jogo) e o botão “Montar do zero”. A megapedra agora sempre conta (o app só diz qual pedra dar), e a montagem do zero só aparece quando nenhuma equipe de referência combina com o seu save, com o aviso. Também: Pokémon com Air Lock ou Cloud Nine (Rayquaza, Golduck…) não entram mais em equipes de clima, porque anulam o clima da própria equipe.',
+    ],
+    en: [
+      'Build team: the window is simpler. The options that no longer make sense with reference teams (Preparation, No item restriction, Game threats) and the “Build from scratch” button are gone. Mega Stones now always count (the app just says which stone to give), and building from scratch only shows up when no reference team fits your save, with a notice. Also: Pokémon with Air Lock or Cloud Nine (Rayquaza, Golduck…) no longer join weather teams, since they cancel their own team’s weather.',
+    ],
+  },
   {
     date: '2026-10-15',
     pt: [
@@ -310,7 +319,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e as opções do montador de equipes (preparo, sem lendários, sem restrição de item, ameaças do jogo).</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e a opção “Sem lendários e míticos” do montador de equipes.</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -339,7 +348,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder options (preparation, no legendaries, no item restriction, the game’s threats).</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder’s “No legendaries or mythicals” option.</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>
