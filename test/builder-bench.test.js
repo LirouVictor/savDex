@@ -402,7 +402,9 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
       roN += r.orig.roles.size; ro += [...r.orig.roles].filter(k => u & roleMask([k])).length;
       if (r.orig.plan.kind !== 'balance') { plN++; if (r.adapted.planKept && r.adapted.holds) pl++; }
     }
-    const best = refs[0] ? refs[0].adapted.score : null, bestFree = free[0] ? free[0].score : null;
+    // A lista vem primeiro pelos Pokémon do jogador (byOwned): a melhor é a de maior nota + fidelidade
+    const top = list => list.reduce((a, r) => (!a || r.rank > a.rank ? r : a), null);
+    const best = refs.length ? top(refs).adapted.score : null, bestFree = free[0] ? free[0].score : null;
     const freeStrats = free.length ? free.reduce((a, r) => a + strategiesOf(r.team, r.plan).length, 0) / free.length : 0;
     const row = { save: name, pc: all.length, compatible: refs.candidates.list.length, rejected: refs.rejected, adapted: refs.length,
       best: best && r1(best), bestFree: bestFree && r1(bestFree), meanRef: refs.length ? r1(refs.reduce((a, r) => a + r.adapted.score, 0) / refs.length) : null,
@@ -413,7 +415,7 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const isTour = r => r.format.kind === 'tournament';
     const tours = refs.filter(isTour);
     Object.assign(row, { tourCompatible: refs.candidates.list.filter(w => w.format.kind === 'tournament').length, tourAdapted: tours.length,
-      tourTop6: refs.slice(0, 6).filter(isTour).length, bestTour: tours[0] ? r1(tours[0].adapted.score) : null });
+      tourTop6: refs.slice(0, 6).filter(isTour).length, bestTour: tours.length ? r1(top(tours).adapted.score) : null, firstOwned: refs[0] ? refs[0].owned : null });
     rows.push(row);
     lines.push(`${name} (${all.length}): ${row.compatible} compatíveis (${row.rejected} de fora), ${row.adapted} adaptadas; melhor ${row.best} × livre ${row.bestFree}; média ${row.meanRef} × ${row.meanFree}; mantidos ${row.kept.join(',')}; estratégias da original ${row.stratsKept}, papéis ${row.rolesKept}, papéis dos mantidos ${row.keptOwnRoles}, plano ${row.planKept}; estratégias por equipe livre ${row.freeStrats}; tempo preparo ${row.ms.prep} ms, referências ${row.ms.refs} ms, livre ${row.ms.free} ms`);
     lines.push(`  torneio: ${row.tourCompatible} compatíveis, ${row.tourAdapted} adaptadas, ${row.tourTop6} entre as 6 primeiras, melhor ${row.bestTour}`);

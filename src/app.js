@@ -421,6 +421,8 @@ function setupBuilder(out) {
         if (f) {
           for (const x of sheet.querySelectorAll('[data-filter]')) x.setAttribute('aria-pressed', String(x === f));
           for (const li of sheet.querySelectorAll('[data-kind]')) li.hidden = f.dataset.filter !== 'all' && li.dataset.kind !== f.dataset.filter;
+          // O cabeçalho "Você tem N dos 6" some quando o filtro esconde todas as equipes do grupo
+          for (const h of sheet.querySelectorAll('.picker-group')) h.hidden = ![...sheet.querySelectorAll(`[data-kind][data-owned="${h.dataset.owned}"]`)].some(li => !li.hidden);
           return;
         }
         const c = ev.target.closest('[data-choose]');

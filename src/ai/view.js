@@ -93,9 +93,9 @@ function originalHtml(o, byRef) {
   const links = o.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join(' · ');
   return `<section class="ref-block">
     <div class="ref-block-head"><h3>${t('Equipe original')}</h3><span class="builder-tag">${esc(o.tag)}</span></div>
-    <p class="ref-origin"><b>${esc(o.head)}</b>${o.plan ? ` ${esc(o.plan)}` : ''}</p>
+    ${o.plan ? `<p class="ref-origin">${esc(o.plan)}</p>` : ''}
     <ul class="party-grid builder-grid">${tiles}</ul>${sheets}
-    <details class="fold ref-source"><summary>${t('Origem e conferência')}</summary>${bullets(o.lines, new Map())}<p class="hint ref-links">${links}</p></details>
+    <details class="fold ref-source"><summary>${t('Origem e conferência')}</summary><p class="ref-origin"><b>${esc(o.head)}</b></p>${bullets(o.lines, new Map())}<p class="hint ref-links">${links}</p></details>
   </section>`;
 }
 // O membro da original no formato que monTile desenha (sem nível, sem gênero)
