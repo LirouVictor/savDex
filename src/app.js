@@ -305,24 +305,24 @@ function setupAi(out) {
 // Pedido da IA: o campo de pedido e a opção "Sem lendários e míticos" saíram da janela (decisão do autor)
 const aiNote = () => '';
 
-const AI_WAIT = { analyze: 'Analisando a equipe', build: 'Montando a equipe', review: 'Comentando a equipe' };
+const AI_WAIT = { analyze: 'Analisando a equipe', build: 'Montando a equipe' };
 
 /**
- * Pede à IA (avaliar a equipe atual, montar uma equipe ou comentar a equipe que o app montou): monta o pedido, mostra
+ * Pede à IA (avaliar a equipe atual ou montar uma equipe): monta o pedido, mostra
  * o que vai ser enviado (se o usuário não desligou) e desenha a resposta em `outEl`.
  * @returns {Promise<object|null>} o resultado de sendAi, ou null se o usuário cancelou ou deu erro
  */
-async function askAi(kind, outEl, opener, extra = {}) {
+async function askAi(kind, outEl, opener) {
   const $ = s => document.getElementById('out').querySelector(s);
   $('#ai-provider').disabled = true;
   try {
     const ai = await import('./ai/index.js');
-    // Quetzal/Unbound/SoulGold: golpes por nível (os mesmos do detalhe). Na análise e no comentário vão no pedido;
-    // em todos, o app confere com eles os golpes que a IA citar
+    // Quetzal/Unbound/SoulGold: golpes por nível (os mesmos do detalhe). Na análise vão no pedido; nas duas, o app
+    // confere com eles os golpes que a IA citar
     const game = state.data.game;
     const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
     // Monta o pedido e mostra exatamente o que vai ser enviado antes de enviar
-    const prep = ai.prepareAi(kind, { all: state.all, T, game, note: aiNote(), dex, free: !!$('#ai-free')?.checked, ...extra });
+    const prep = ai.prepareAi(kind, { all: state.all, T, game, note: aiNote(), dex, free: !!$('#ai-free')?.checked });
     if (!skipConfirm() && !(await confirmSend(ai.confirmHtml(prep), opener))) return null;
     outEl.innerHTML = `<p class="ai-wait"><svg class="ai-spin" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" shape-rendering="crispEdges"><use href="#logo"/></svg><span class="pixel">${t(AI_WAIT[kind])}</span><span class="dots" aria-hidden="true"></span><br><small>${t('Pode levar até um minuto.')}</small></p>`;
     const res = await ai.sendAi(prep, {
@@ -354,32 +354,6 @@ function setupBuilder(out) {
     state.builder.i = i;
     bOut.innerHTML = mod.resultsHtml(state.builder.results, i, T);
     if (!state.persist) bOut.querySelector('[data-ai-save]')?.remove();
-    // O comentário da IA fica com a equipe dele (trocar de aba e voltar não perde)
-    const cur = state.builder.results[i], slot = bOut.querySelector('.builder-ai-out');
-    if (cur && cur.review && slot) slot.innerHTML = cur.review.html;
-  };
-  // Comentar com IA: a IA avalia e explica a equipe que o app montou, com o plano e a função de cada membro
-  const review = async (cur, btn) => {
-    const slot = btn.closest('.builder-ai').querySelector('.builder-ai-out');
-    if (!provider().getKey()) {
-      const fold = $('#ai-win');
-      fold.open = true;
-      slot.innerHTML = `<p class="hint">${t('Para a IA comentar, escolha o serviço e cole a sua chave grátis em “Com IA (opcional)”, no fim desta janela.')}</p>`;
-      fold.scrollIntoView({ block: 'start' });
-      return;
-    }
-    btn.disabled = true;
-    try {
-      // O "ideal × o que você tem" vai junto: a IA comenta se vale capturar o ideal ou usar a alternativa do save
-      // Com o moveset do app (Quetzal), a IA vê os golpes que o app sugere, não os do save
-      const res = await askAi('review', slot, btn, { team: cur.showdown || cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])),
-        ideal: cur.r.ideal ? cur.r.ideal.lines : [], idealMons: cur.r.ideal ? cur.r.ideal.alts.map(m => m.evolvedFrom || m.stoneFrom || m.planFrom || m) : [],
-        // Estratégias (Quetzal): as que o app conferiu e o que cada membro pode ter, para conferir as que a IA propõe
-        strategies: cur.r.estrategias ? cur.r.estrategias.ai : [], check: cur.aiCheck || null });
-      if (res) cur.review = { html: res.html, byRef: res.byRef };
-    } finally {
-      btn.disabled = false;
-    }
   };
   // A opção "Sem lendários e míticos" saiu (decisão do autor): apaga a escolha guardada por versões anteriores
   try { localStorage.removeItem('builder-nolegend'); } catch { /* sem armazenamento */ }
@@ -451,8 +425,6 @@ function setupBuilder(out) {
       show(k >= 0 ? k : i);
       return;
     }
-    const ask = e.target.closest('[data-ai-review]');
-    if (ask) { review(cur, ask); return; }
     // Bloco de um membro (original ou adaptada): abre o card dele; dentro do card, "Ver o Pokémon do save" abre o detalhe
     const tile = e.target.closest('[data-sheet]');
     if (tile) {
@@ -466,9 +438,7 @@ function setupBuilder(out) {
     }
     const card = e.target.closest('[data-ref]');
     if (card) {
-      // No comentário da IA aparecem também Pokémon de fora da equipe (trocas sugeridas)
-      const refs = card.closest('.builder-ai-out') && cur.review ? cur.review.byRef : cur.byRef;
-      const m = refs.get(card.dataset.ref);
+      const m = cur.byRef.get(card.dataset.ref);
       if (m) openDetail(m, card);
       return;
     }

@@ -116,9 +116,11 @@ suite('Moveset no montador (Quetzal, com a lista do tutor)', () => {
     const cur = res[0];
     expect(cur.r.membros.every(x => x.golpes && x.golpes.length)).toBe(true);
     expect(cur.r.dicas.some(x => x.includes('NOVO MOV.'))).toBe(true);
-    expect(cur.showdown.some(m => m.plannedMoves && m.moves.some(mv => mv.name === 'Earthquake'))).toBe(true);
-    // O Pokémon real (o detalhe e as equipes salvas) continua com os golpes do save
-    expect(cur.team.every(m => !m.plannedMoves)).toBe(true);
+    // O Copiar (Showdown) leva o moveset do app; o Pokémon real (o detalhe e as equipes salvas) continua com os do save
+    const i = cur.showdown.findIndex(m => m.moves.some(mv => mv.name === 'Earthquake'));
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(cur.showdown[i]).not.toBe(cur.team[i]);
+    expect(cur.team[i].moves).not.toBe(cur.showdown[i].moves);
   });
 });
 

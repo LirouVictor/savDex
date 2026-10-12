@@ -188,54 +188,6 @@ export const ANALYSIS_SCHEMA = {
   required: ['nota', 'resumo', 'pontos_fortes', 'pontos_fracos', 'sinergias', 'trocas', 'dicas'],
 };
 
-/** Comentário sobre a equipe do app: o mesmo da análise, com as trocas entre a equipe montada e quem está fora dela. */
-export const REVIEW_SCHEMA = {
-  ...ANALYSIS_SCHEMA,
-  properties: {
-    ...ANALYSIS_SCHEMA.properties,
-    trocas: {
-      ...ANALYSIS_SCHEMA.properties.trocas,
-      description: 'Até 2 trocas, só as que resolvem um problema claro (pode ficar vazio): sai um membro da equipe montada, entra um Pokémon de fora dela',
-      items: {
-        ...ANALYSIS_SCHEMA.properties.trocas.items,
-        properties: { sai: { type: 'STRING', description: 'referência de um membro da equipe montada' }, entra: { type: 'STRING', description: 'referência de um Pokémon de fora da equipe' }, motivo: { type: 'STRING', description: 'Que problema resolve e o que se perde' } },
-      },
-    },
-  },
-};
-
-/**
- * Comentário com estratégias (Quetzal, com a biblioteca do app): a IA também propõe até 3 estratégias, conhecidas (da
- * lista do app) ou novas (ideias dela), com quem faz, como executar e as peças (golpe, item, habilidade de cada membro);
- * o app confere cada peça (checkStrategies).
- */
-export const REVIEW_STRAT_SCHEMA = {
-  ...REVIEW_SCHEMA,
-  properties: {
-    ...REVIEW_SCHEMA.properties,
-    estrategias: {
-      type: 'ARRAY',
-      description: 'Até 3 estratégias que esta equipe executa ou quase executa: as conhecidas da lista do app que valem a pena e, se houver, ideias novas',
-      items: {
-        type: 'OBJECT',
-        properties: {
-          nome: { type: 'STRING', description: 'Nome curto; para uma conhecida, o mesmo nome da lista do app' },
-          origem: { type: 'STRING', enum: ['conhecida', 'nova'], description: 'conhecida = da lista do app; nova = ideia sua, fora da lista' },
-          membros: { ...strList, description: 'Referências dos membros da equipe que a executam' },
-          execucao: { type: 'STRING', description: 'Como executar, em até 3 passos curtos' },
-          pecas: {
-            type: 'ARRAY',
-            description: 'O que cada membro precisa ter: golpe, item ou habilidade, com o nome em inglês',
-            items: { type: 'OBJECT', properties: { ref: str, tipo: { type: 'STRING', enum: ['golpe', 'item', 'habilidade'] }, nome: str }, required: ['ref', 'tipo', 'nome'] },
-          },
-        },
-        required: ['nome', 'origem', 'membros', 'execucao', 'pecas'],
-      },
-    },
-  },
-  required: [...REVIEW_SCHEMA.required, 'estrategias'],
-};
-
 export const BUILD_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -360,12 +312,10 @@ export function buildIssues(team, T) {
 
 /**
  * Candidatos do PC para a análise: os que resistem às fraquezas da equipe ou cobrem os tipos sem golpe
- * super efetivo valem mais; depois, os de maior total de stats base. Com `team` (a equipe montada pelo app), os
- * candidatos são todos os de fora dela, inclusive os da equipe atual.
+ * super efetivo valem mais; depois, os de maior total de stats base.
  */
-export function analysisPool(all, T, limit, team = null) {
-  const party = team || all.filter(m => m.location === 'party');
-  const inTeam = new Set(party.map(refOf));
+export function analysisPool(all, T, limit) {
+  const party = all.filter(m => m.location === 'party');
   const a = analyzeTeam(party, { types: T.types, chart: T.typechart });
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(atk) && idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
@@ -376,7 +326,7 @@ export function analysisPool(all, T, limit, team = null) {
     const off = a.gaps.filter(g => [...hits].some(h => mult(h, [g]) > 1)).length;
     return bst(m) + 60 * def + 40 * off;
   };
-  return candidates(all, Infinity).filter(m => (team ? !inTeam.has(refOf(m)) : m.location !== 'party'))
+  return candidates(all, Infinity).filter(m => m.location !== 'party')
     .map(m => [m, score(m)]).sort((x, y) => y[1] - x[1]).slice(0, Math.max(0, limit)).map(([m]) => m);
 }
 
@@ -515,94 +465,6 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
   ].join('\n');
 }
 
-/**
- * Comentário da IA sobre a equipe que o app montou (sem IA): a mesma avaliação da análise, com a equipe do app no
- * lugar da atual, o plano e a função de cada membro (contas do app). Quem o app contou evoluído ou com uma megapedra
- * que ainda não segura vai marcado. Sem nível, como nos outros pedidos.
- * @param {object[]} team os 6 como o app contou (forma evoluída, megapedra a dar)
- * @param {{ plan?: string, roles?: Map<string, string> }} extra nome do plano e função de cada membro (pela referência)
- */
-export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null, plan = '', roles = new Map(), ideal = [], idealMons = [], strategies = null } = {}) {
-  // As alternativas do "ideal × o que você tem" vão entre os candidatos (a IA pode sugerir a troca por elas)
-  const alts = idealMons.filter(m => !team.includes(m));
-  const pool = [...alts, ...analysisPool(all, T, Math.min(ANALYSIS_PC, max - team.length) - alts.length, team).filter(m => !alts.includes(m))];
-  const line = m => {
-    const extra = [];
-    if (roles.get(refOf(m))) extra.push(`${t('Função no plano')}: ${roles.get(refOf(m))}`);
-    if (m.evolvedFrom) extra.push(t('hoje é {name}; o app contou a forma evoluída', { name: m.evolvedFrom.species.name }));
-    if (m.stoneFrom) extra.push(t('ainda não segura {stone}; o app contou com ela', { stone: m.item.name }));
-    if (m.plannedMoves) extra.push(t('golpes: o moveset que o app sugere (os que ele ainda não sabe, o jogo ensina pelo menu do Pokémon)'));
-    if (m.gear) extra.push(t('item e habilidade: os que o app sugere pelo competitivo (o jogador ainda vai conseguir)'));
-    if (m.combos && m.combos.length) extra.push(t('interações que o app reconhece: {list}', { list: m.combos.join('; ') }));
-    return [monLine(m, free), ...extra].join(' | ');
-  };
-  return [
-    t('O app montou esta equipe sozinho, por contas (sem IA), com todos os Pokémon do jogador: plano {plan}. Avalie a EQUIPE MONTADA PELO APP. Dê UMA nota de 0 a 10 pesando: defesa entre os membros (25%), cobertura ofensiva (25%), papéis e sinergia (20%), ameaças comuns do jogo (20%), itens e sets (10%).', { plan: plan || t('Equilibrada') }),
-    t('Explique como a equipe joga o plano e o que as contas não veem (itens, golpes por TM, sets). A função de cada membro é a das contas do app: interprete, não contradiga.'),
-    t('Trocas: até 2, com Pokémon de fora da equipe, só se resolverem um problema claro que os cálculos mostram (nenhuma, se não houver); para cada uma, diga o que resolve e o que se perde. Não tire quem sustenta o plano.'),
-    t('Dicas por membro: só quando mudam algo concreto (um golpe, o item, a natureza ou os EVs), dizendo o quê e por quê. Omita quem já está bem montado; não repita o que o Pokémon já faz.'),
-    ...freeLine(free),
-    wish(note),
-    t('EQUIPE MONTADA PELO APP:'),
-    ...team.map(line),
-    '',
-    t('Cálculos do app (só tipos e números, sem habilidades):'),
-    teamFacts(team, T),
-    ...learnLines(team, dex, T, game),
-    ...(ideal.length ? ['', t('Referência competitiva (contas do app: o ideal NÃO está no save do jogador; a alternativa está). Diga se vale capturar o ideal ou usar a alternativa; o ideal não entra nas trocas:'), ...ideal] : []),
-    ...(strategies ? strategyPrompt(strategies) : []),
-    '',
-    t('Fora da equipe ({n} candidatos que mais ajudam a equipe):', { n: pool.length }),
-    ...pool.map(m => monLine(m, free)),
-  ].join('\n');
-}
-
-/**
- * Estratégias (Quetzal): as conhecidas que o app conferiu na equipe e a lista das que ele conhece. A IA propõe até 3
- * (conhecidas ou novas), com as peças que cada membro precisa; o app confere cada peça antes de mostrar.
- */
-function strategyPrompt({ lines = [], known = [] }) {
-  return ['',
-    t('Estratégias. Conhecidas pelo app (do competitivo de singles): {list}.', { list: known.map(k => k.name).join('; ') }),
-    ...(lines.length ? [t('O app conferiu nesta equipe (com os golpes e itens sugeridos):'), ...lines.map(l => `- ${l}`)] : [t('O app não achou nenhuma delas completa nesta equipe.')]),
-    t('No campo estrategias, proponha até 3: as conhecidas que valem a pena (origem "conhecida", com o nome da lista) e, se houver, ideias novas que as mecânicas permitem (origem "nova"). Para cada uma: quem faz, como executar em até 3 passos e as peças (golpe, item ou habilidade de cada membro, nomes em inglês). Use só golpes que o membro tem ou aprende (por nível ou pelo tutor do jogo), habilidades da espécie e itens que existem no jogo: o app confere cada peça e marca o que não bater. Ideia nova não é estratégia comprovada: diga o risco.'),
-  ];
-}
-
-const normId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-/**
- * Confere as estratégias que a IA propôs: membros da equipe, cada peça (golpe que o membro sabe ou aprende, habilidade da
- * espécie, item que existe no jogo) e a origem (uma "conhecida" fora da lista do app vira "nova").
- * @param {object} check { refs: Map(ref → { name, moves: Set, abilities: Set }), itemOk, known: [{ id, name }] } (aiChecks)
- * @returns {Array<{ nome, origem, membros: string[], execucao, ok: object[], bad: Array<{ ref, tipo, nome, why }> }>}
- */
-export function checkStrategies(list, check) {
-  if (!Array.isArray(list) || !check) return [];
-  const knownIds = new Set(check.known.map(k => normId(k.name)));
-  const out = [];
-  for (const x of list.slice(0, 3)) {
-    if (!x || !String(x.nome || '').trim()) continue;
-    const membros = (Array.isArray(x.membros) ? x.membros : []).map(r => String(r).trim()).filter(r => check.refs.has(r));
-    const ok = [], bad = [];
-    for (const p of Array.isArray(x.pecas) ? x.pecas : []) {
-      const ref = String((p && p.ref) || '').trim(), nome = String((p && p.nome) || '').trim(), tipo = p && p.tipo;
-      if (!nome) continue;
-      const mon = check.refs.get(ref);
-      const has = set => [...set].some(n => normId(n) === normId(nome));
-      const piece = { ref, tipo, nome };
-      if (!mon) bad.push({ ...piece, why: 'fora' });
-      else if (tipo === 'golpe') (has(mon.moves) ? ok : bad).push({ ...piece, why: 'golpe', mon: mon.name });
-      else if (tipo === 'habilidade') (has(mon.abilities) ? ok : bad).push({ ...piece, why: 'habilidade', mon: mon.name });
-      else if (tipo === 'item') (check.itemOk(nome) ? ok : bad).push({ ...piece, why: 'item', mon: mon.name });
-    }
-    // "Conhecida" só se o nome bate com uma da lista do app (sem diferenciar maiúsculas e pontuação)
-    const name = String(x.nome).trim();
-    const known = x.origem === 'conhecida' && [...knownIds].some(k => k === normId(name) || (normId(name).length >= 6 && k.includes(normId(name))) || normId(name).includes(k));
-    out.push({ nome: name, origem: known ? 'conhecida' : 'nova', membros, execucao: String(x.execucao || '').trim(), ok, bad });
-  }
-  return out;
-}
-
 /** Usa (ou põe) clima, terreno ou Trick Room: habilidade (no modo livre, também as trocáveis), golpe ou megapedra. */
 export const strategyOf = (m, free = null) => fieldsOf(m, abilityAlts(m, free).map(a => a.name));
 
@@ -697,19 +559,16 @@ export function refinePrompt(team, T, note = '', { dex = null, game = null, swap
 
 const texts = (v, max = 6) => (Array.isArray(v) ? v : []).map(x => String(x || '').trim()).filter(Boolean).slice(0, max);
 
-/**
- * Confere a análise: notas válidas, trocas e dicas só com referências que existem. Com `team` (referências da
- * equipe montada pelo app), a troca tira um membro dela e põe alguém de fora; sem, tira da equipe atual e põe do PC.
- */
-export function checkAnalysis(data, byRef, team = null) {
+/** Confere a análise: notas válidas, trocas e dicas só com referências que existem (sai da equipe, entra do PC). */
+export function checkAnalysis(data, byRef) {
   const dropped = [];
-  const isParty = r => byRef.has(r) && (team ? team.has(r) : byRef.get(r).location === 'party');
-  const isPc = r => byRef.has(r) && (team ? !team.has(r) : byRef.get(r).location !== 'party');
+  const isParty = r => byRef.has(r) && byRef.get(r).location === 'party';
+  const isPc = r => byRef.has(r) && byRef.get(r).location !== 'party';
   const trocas = (Array.isArray(data.trocas) ? data.trocas : []).filter(x => {
     const ok = x && isParty(String(x.sai).trim()) && isPc(String(x.entra).trim());
     if (!ok && x) dropped.push(`${x.sai} → ${x.entra}`);
     return ok;
-  }).slice(0, team ? 2 : 3).map(x => ({ sai: String(x.sai).trim(), entra: String(x.entra).trim(), motivo: String(x.motivo || '').trim() }));
+  }).slice(0, 3).map(x => ({ sai: String(x.sai).trim(), entra: String(x.entra).trim(), motivo: String(x.motivo || '').trim() }));
   const dicas = (Array.isArray(data.dicas) ? data.dicas : []).filter(d => {
     const ok = d && byRef.has(String(d.ref).trim()) && String(d.texto || '').trim();
     if (!ok && d && d.ref) dropped.push(String(d.ref));

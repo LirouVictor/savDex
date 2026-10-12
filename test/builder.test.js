@@ -188,9 +188,9 @@ suite('Montador de equipes (sem IA)', () => {
     expect(html).toContain('data-ai="analyze"');
     expect(html).toContain('Montar com IA');
     expect(html).toContain('id="ai-free"');
-    // O resultado do app tem o botão para a IA comentar a equipe, com o lugar do comentário
+    // O "Comentar com IA" saiu (decisão do autor): o resultado do app não chama a IA
     const res = runBuilder(pool(), T);
-    expect(resultsHtml(res, 0, T)).toMatch(/data-ai-review[\s\S]*class="builder-ai-out"/);
+    expect(resultsHtml(res, 0, T)).not.toMatch(/data-ai-review|builder-ai-out/);
   });
 
   it('megapedra da própria espécie: conta com os tipos, stats e habilidade da mega (tabela da ROM)', () => {
