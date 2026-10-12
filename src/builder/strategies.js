@@ -25,8 +25,11 @@ const damaging = m => (m.category === 0 || m.category === 1) && !!m.type;
 
 /**
  * Os papéis: `test(c)` diz se o Pokémon cumpre o papel com o que tem (c = { abs, item, moves, types, b }); `moves`, os
- * golpes que dão o papel (para achar o que ensinar); `items`, os itens que dão o papel (o que dar).
+ * golpes que dão o papel (para achar o que ensinar); `items`, os itens que dão o papel (o que dar). O que depende da
+ * espécie fica à parte: `stat(b)` (stats base) e `type` (tipo). As equipes de referência (reference.js) guardam só os
+ * papéis que o set cumpre (golpes, item, habilidade) e conferem stats e tipos com as tabelas do jogo do save.
  */
+const twoHits = c => c.moves.filter(damaging).length >= 2;
 const ROLE_TESTS = {
   pivot: { moves: PIVOT },
   regen: { test: c => c.abs.includes('Regenerator') },
@@ -36,31 +39,39 @@ const ROLE_TESTS = {
   screens: { moves: SCREENS },
   web: { moves: names('Sticky Web') },
   // Quem varre: ataca forte (Ataque ou Ataque Especial base 100+), sobe os stats e tem 2+ golpes de dano
-  sweeper: { moves: SETUP, test: c => Math.max(c.b[1], c.b[3]) >= 100 && c.moves.filter(damaging).length >= 2 },
+  sweeper: { moves: SETUP, test: twoHits, stat: b => Math.max(b[1], b[3]) >= 100 },
   // Atacante de velocidade média (a Sticky Web deixa o adversário mais lento que ele)
-  midAttacker: { test: c => Math.max(c.b[1], c.b[3]) >= 95 && c.b[5] >= 60 && c.b[5] < 100 && c.moves.filter(damaging).length >= 2 },
+  midAttacker: { test: twoHits, stat: b => Math.max(b[1], b[3]) >= 95 && b[5] >= 60 && b[5] < 100 },
   drum: { moves: names('Belly Drum') },
-  priority: { moves: PRIORITY, test: c => c.b[1] >= 90 },
+  priority: { moves: PRIORITY, stat: b => b[1] >= 90 },
   smash: { moves: names('Shell Smash') },
   smashItem: { items: ['White Herb', 'Focus Sash'] },
   pass: { moves: names('Baton Pass') },
   passable: { moves: names(...SETUP, 'Substitute') },
   sacrifice: { moves: SACRIFICE },
   clay: { items: ['Light Clay'] },
-  fire: { test: c => c.types.includes('fire') },
-  water: { test: c => c.types.includes('water') },
-  grass: { test: c => c.types.includes('grass') },
-  dragon: { test: c => c.types.includes('dragon') },
-  steel: { test: c => c.types.includes('steel') },
-  fairy: { test: c => c.types.includes('fairy') },
+  fire: { type: 'fire' },
+  water: { type: 'water' },
+  grass: { type: 'grass' },
+  dragon: { type: 'dragon' },
+  steel: { type: 'steel' },
+  fairy: { type: 'fairy' },
 };
-/** O Pokémon cumpre o papel com o que tem? (golpe da lista e/ou teste; item da lista) */
-function hasRole(c, r) {
+/** O set cumpre o papel (golpe da lista e/ou teste; item da lista), sem olhar stats nem tipos da espécie. */
+function setHas(c, r) {
   const t = ROLE_TESTS[r];
+  if (t.type) return false;
   if (t.items) return t.items.includes(c.item);
   if (t.moves && !c.moves.some(m => t.moves.has(m.name))) return false;
   return t.test ? t.test(c) : true;
 }
+/** A espécie permite o papel (stats base e tipos). */
+const speciesHas = (r, types, b) => { const t = ROLE_TESTS[r]; return t.type ? types.includes(t.type) : !t.stat || t.stat(b); };
+/** O Pokémon cumpre o papel com o que tem? */
+const hasRole = (c, r) => (ROLE_TESTS[r].type ? speciesHas(r, c.types, c.b) : setHas(c, r) && speciesHas(r, c.types, c.b));
+
+/** Os papéis que um set cumpre pelos golpes, item e habilidade (sem stats nem tipos): o que o importador guarda. */
+export const setRoleKeys = c => Object.keys(ROLE_TESTS).filter(r => setHas(c, r));
 
 /**
  * As estratégias conhecidas. `v` = o quanto ela vale quando a equipe a executa (para a nota, se um dia entrar; ver
@@ -150,7 +161,7 @@ export function rolesOfMon(c, cands = [], itemOk = () => true, teachOk = () => t
     }
     if (!t.moves) continue;
     // O golpe que ele pode aprender (o menu ensina na hora primeiro; depois o treino) e que cumpre o papel com ele
-    const best = cands.filter(x => t.moves.has(x.name) && teachOk(x.name) && (!t.test || t.test({ ...c, moves: [...c.moves, x] })))
+    const best = cands.filter(x => t.moves.has(x.name) && teachOk(x.name) && hasRole({ ...c, moves: [...c.moves, x] }, r))
       .sort((a, b) => SRC_RANK[a.src] - SRC_RANK[b.src])[0];
     if (best) teach.set(r, { kind: 'move', name: best.name, src: best.src, level: best.level });
   }
@@ -224,6 +235,23 @@ export function roleBits(c) {
   for (const s of STRATEGIES) if (s.same && s.same.every(r => x & roleBit(r))) x |= SAME_BIT.get(s.id);
   return x;
 }
+/**
+ * Os bits de papéis de um membro de equipe de referência: os papéis do set (setRoleKeys) que a espécie permite no jogo
+ * (stats e tipos das tabelas do jogo; sem a espécie no jogo, `b` null: valem os do set) e os de tipo.
+ */
+export function refRoleBits(keys, types = [], b = null) {
+  let x = 0;
+  for (const r of ROLE_KEYS) {
+    const t = ROLE_TESTS[r];
+    if (t.type ? types.includes(t.type) : keys.includes(r) && (!b || !t.stat || t.stat(b))) x |= roleBit(r);
+  }
+  for (const s of STRATEGIES) if (s.same && s.same.every(r => x & roleBit(r))) x |= SAME_BIT.get(s.id);
+  return x;
+}
+/** Os nomes dos papéis de uma máscara de bits (sem os bits de `same`). */
+export const roleKeysOf = bits => ROLE_KEYS.filter(r => bits & roleBit(r));
+/** A máscara de bits de uma lista de papéis. */
+export const roleMask = keys => { let x = 0; for (const r of keys) x |= roleBit(r); return x; };
 // Cada papel (e cada `same`) com o número do bit; as estratégias guardam os números dos bits que pedem
 const COMPILED = STRATEGIES.map(s => ({ id: s.id, v: s.v, offense: s.offense,
   need: [...(s.same ? [[SAME_BIT.get(s.id), 1]] : []), ...(s.need || []).map(([r, n]) => [roleBit(r), n])].map(([bit, n]) => [31 - Math.clz32(bit), n]) }));
@@ -273,12 +301,13 @@ export function strategyValue(team, plan) {
 /**
  * Sementes da busca (build.js): para cada estratégia, quem a executa no PC, um Pokémon diferente por papel, os melhores
  * pela nota sozinho (`rank`). `ok(seed, e)` diz se o Pokémon pode entrar junto (sem repetir espécie, megapedras…).
- * Ficam as `max` estratégias de mais valor que dá para montar.
+ * Ficam as `max` estratégias de mais valor que dá para montar (só as de `only`, se vier: as da equipe de referência).
  */
-export function strategySeeds(pool, plan, base, rank, ok, max = 2) {
+export function strategySeeds(pool, plan, base, rank, ok, max = 2, only = null) {
   const out = [];
   for (const s of COMPILED) {
     if (s.offense === false && plan.kind === 'offense') continue;
+    if (only && !only.has(s.id)) continue;
     if (executes(s, base)) continue; // as sementes de sempre já a têm
     const seed = [...base];
     let fail = false;

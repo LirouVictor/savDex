@@ -1,0 +1,156 @@
+{
+ "format": "gen9ou",
+ "name": "Gen 9 OU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9ou.json",
+  "thread": "https://www.smogon.com/forums/threads/sv-ou-sample-teams.3712513/",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9ou-q3os4i",
+   "name": "Dark ‘n darker",
+   "author": "DCT1 s7a",
+   "verification": "unverified",
+   "members": [
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "ice", "poison" ], "dmg": 4, "cat": "S" },
+    { "s": "Enamorus", "r": [ "midAttacker", "sacrifice" ], "at": [ "fairy", "fire", "ground" ], "dmg": 3, "cat": "S" },
+    { "s": "Glimmora", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ground", "poison", "rock" ], "dmg": 3, "cat": "M" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Roaring Moon", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "fighting", "steel" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-ctmprh",
+   "name": "~ mana webs",
+   "author": "FlamingVictini",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Ribombee", "r": [ "web", "midAttacker", "smashItem" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Glimmora", "r": [ "midAttacker" ], "at": [ "fairy", "ground", "poison", "rock" ], "dmg": 4, "cat": "S" },
+    { "s": "Manaphy", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "chuva" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Roaring Moon", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "flying", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "fighting", "rock", "steel" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-pckllr",
+   "name": "The Safari Zone",
+   "author": "barracades",
+   "verification": "unverified",
+   "members": [
+    { "s": "Iron Moth", "r": [ "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fire", "poison", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Iron Valiant", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Ogerpon-Cornerstone", "r": [ "hazard", "midAttacker" ], "at": [ "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Raging Bolt", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "electric", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Rillaboom", "r": [ "pivot", "midAttacker", "priority" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "use": [ "Grassy Terrain" ], "at": [ "bug", "dark", "grass" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-1icmcx6",
+   "name": "dirge ho",
+   "author": "noonemorebased",
+   "verification": "unverified",
+   "members": [
+    { "s": "Iron Treads", "r": [ "hazard", "removal", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "ground", "normal", "steel" ], "dmg": 3, "cat": "M" },
+    { "s": "Enamorus", "r": [ "sweeper", "midAttacker", "smashItem", "passable" ], "at": [ "fairy", "ground" ], "dmg": 2, "cat": "S" },
+    { "s": "Ogerpon-Wellspring", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Roaring Moon", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "flying", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Skeledirge", "r": [ "midAttacker" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-1rrrkpu",
+   "name": "The Rainbow DLC2 ver 2",
+   "author": "butts99999",
+   "verification": "unverified",
+   "members": [
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Cinderace", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "dark", "fairy", "fighting" ], "dmg": 3, "cat": "M" },
+    { "s": "Kyurem", "r": [ "midAttacker" ], "use": [ "neve/granizo" ], "at": [ "dragon", "ground", "ice" ], "dmg": 4, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-14makgl",
+   "name": "new max boots",
+   "author": "noonemorebased",
+   "verification": "unverified",
+   "members": [
+    { "s": "Skarmory", "r": [ "hazard", "phaze" ], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyurem", "r": [ "midAttacker" ], "at": [ "dragon", "ground", "ice" ], "dmg": 4, "cat": "M" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Weavile", "r": [ "midAttacker", "priority" ], "at": [ "dark", "fighting", "ice" ], "dmg": 4, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "rock", "steel" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-1u2z42e",
+   "name": "Prime Pult",
+   "author": "Mimikyu Stardust",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dragon", "normal" ], "dmg": 4, "cat": "M" },
+    { "s": "Iron Crown", "r": [ "pivot", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "electric", "fighting", "psychic", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "grass", "ground" ], "dmg": 3, "cat": "M" },
+    { "s": "Primarina", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "psychic", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Samurott-Hisui", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "water" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-1lejuh9",
+   "verification": "unverified",
+   "members": [
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dragon", "ghost" ], "dmg": 3, "cat": "M" },
+    { "s": "Gliscor", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "fire", "poison", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "dark", "fighting", "rock" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tch6rr",
+   "name": "Ogerpon Tinglu Fat",
+   "author": "Punny",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "fighting", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Deoxys-Speed", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "ice", "psychic" ], "dmg": 4, "cat": "M" },
+    { "s": "Garganacl", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Gliscor", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Ogerpon", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ou-p4llyn",
+   "name": "sd gliscor fat v1",
+   "author": "noonemorebased",
+   "verification": "unverified",
+   "members": [
+    { "s": "Gliscor", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Alomomola", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "flying", "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Cinderace", "r": [ "removal", "midAttacker", "priority" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "fighting", "ghost", "steel" ], "dmg": 3, "cat": "S" },
+    { "s": "Hoopa-Unbound", "r": [ "midAttacker" ], "at": [ "dark", "electric", "poison", "psychic" ], "dmg": 4, "cat": "M" },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" }
+   ]
+  }
+ ],
+ "results": []
+}

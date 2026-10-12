@@ -1,0 +1,247 @@
+{
+ "format": "gen9nationaldex",
+ "name": "Gen 9 National Dex",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9nationaldex.json",
+  "thread": "https://www.smogon.com/forums/threads/national-dex-sample-teams.3714863/",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9nationaldex-1w9plj4",
+   "name": "WCOP grassy",
+   "author": "jaja0203030",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Latias", "mega": "Mega", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Alomomola", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Heatran", "r": [ "hazard", "midAttacker" ], "at": [ "fire", "ground" ], "dmg": 2, "cat": "S" },
+    { "s": "Kartana", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "grass", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "ground", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Rillaboom", "r": [ "pivot", "midAttacker", "priority" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "use": [ "Grassy Terrain" ], "at": [ "bug", "dark", "grass" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-14oo4c8",
+   "name": "mmedi hydrei",
+   "author": "saki kurokuma",
+   "verification": "unverified",
+   "members": [
+    { "s": "Medicham", "mega": "Mega", "r": [ "midAttacker", "priority" ], "at": [ "fighting", "normal", "psychic", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Clefable", "r": [ "hazard" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Heatran", "r": [ "midAttacker" ], "at": [ "fire", "ground", "ice" ], "dmg": 3, "cat": "S" },
+    { "s": "Hydreigon", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "fighting", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "ground", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Ogerpon", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting", "grass" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1h3kss6",
+   "author": "KIRIKO YAMAGAMI",
+   "verification": "unverified",
+   "members": [
+    { "s": "Charizard", "mega": "Mega-Y", "r": [ "midAttacker" ], "set": [ "sol" ], "auto": [ "sol" ], "use": [ "sol" ], "at": [ "grass", "ground", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal", "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "ground", "ice", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "pivot", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "electric", "psychic", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Kartana", "r": [ "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Raging Bolt", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-qcblya",
+   "author": "hidin",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Ogerpon-Cornerstone", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "pivot", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "electric", "fighting", "psychic", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Iron Moth", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "fire", "normal", "poison" ], "dmg": 4, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Raging Bolt", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 3, "cat": "S" },
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "ice", "water" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1wdikbb",
+   "author": "hidin",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Rillaboom", "r": [ "pivot", "midAttacker", "priority" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "use": [ "Grassy Terrain" ], "at": [ "bug", "dark", "fighting", "grass" ], "dmg": 4, "cat": "P" },
+    { "s": "Hawlucha", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "psychic", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Iron Moth", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fire", "grass", "normal", "poison" ], "dmg": 4, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Raging Bolt", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1jar92i",
+   "name": "Fight Z Darkrai + Lop Balance",
+   "author": "Lameflame",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Corviknight", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Darkrai", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Lopunny", "mega": "Mega", "r": [ "midAttacker", "priority" ], "at": [ "fighting", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-dp82po",
+   "name": "r3 final - leni",
+   "author": "omarsgarciav",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "ice", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "poison" ], "dmg": 3, "cat": "S" },
+    { "s": "Diancie", "mega": "Mega", "r": [ "hazard", "midAttacker" ], "at": [ "fairy", "fire", "rock" ], "dmg": 3, "cat": "M" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Serperior", "r": [ "midAttacker", "passable" ], "at": [ "fire", "grass" ], "dmg": 2, "cat": "S" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1g12yvu",
+   "author": "omarsgarciav",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Medicham", "mega": "Mega", "r": [ "midAttacker", "priority" ], "at": [ "fighting", "normal", "psychic", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "ice", "poison" ], "dmg": 4, "cat": "S" },
+    { "s": "Kartana", "r": [ "removal", "midAttacker" ], "at": [ "dark", "fighting", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground", "ice" ], "dmg": 3, "cat": "M" },
+    { "s": "Samurott-Hisui", "r": [ "hazard", "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "water" ], "dmg": 3, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1mmsz2c",
+   "name": "monofire larp crown",
+   "author": "PRC BOB MOSS",
+   "verification": "unverified",
+   "members": [
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Diancie", "mega": "Mega", "r": [ "hazard", "midAttacker", "passable" ], "at": [ "fairy", "normal" ], "dmg": 2, "cat": "M" },
+    { "s": "Dragonite", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Gouging Fire", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "fire", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "psychic", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-d1bss1",
+   "author": "1yr",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Alomomola", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "pivot", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "electric", "psychic", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Serperior", "r": [ "midAttacker", "passable" ], "at": [ "grass", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "removal", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Tyranitar", "mega": "Mega", "r": [ "hazard", "midAttacker" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "dark", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Ursaluna", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fire", "ground", "normal" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-aqv66h",
+   "name": "Copy of Specs torn t broke man",
+   "author": "Mimikyu Stardust",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Archaludon", "r": [ "midAttacker" ], "use": [ "chuva" ], "at": [ "dragon", "electric", "fighting", "steel" ], "dmg": 4, "cat": "M" },
+    { "s": "Barraskewda", "r": [ "pivot", "midAttacker", "priority" ], "use": [ "chuva" ], "at": [ "fighting", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Iron Treads", "r": [ "hazard", "removal", "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "ground", "ice", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Pelipper", "r": [ "pivot", "midAttacker" ], "set": [ "chuva" ], "auto": [ "chuva" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Raging Bolt", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "electric", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "fighting", "flying", "normal" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1pvozc9",
+   "name": "torn z chomp",
+   "author": "sealoo",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "removal", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Ferrothorn", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Garchomp", "r": [ "hazard", "sweeper", "midAttacker", "passable" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Tapu Lele", "r": [ "midAttacker" ], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [ "fairy", "fire", "psychic" ], "dmg": 4, "cat": "S" },
+    { "s": "Toxapex", "r": [ "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "ice", "water" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-kwuz09",
+   "author": "sealoo",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Gouging Fire", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "fire", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Ferrothorn", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Tapu Koko", "r": [ "pivot", "midAttacker" ], "set": [ "Electric Terrain" ], "auto": [ "Electric Terrain" ], "at": [ "electric", "ice" ], "dmg": 3, "cat": "S" },
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "ice", "water" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1vv87b2",
+   "name": "Be Strong and Hit Stuff - Ursaluna + Tapu Koko Balance",
+   "author": "Ineros",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Ursaluna", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fire", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Corviknight", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "fire", "poison" ], "dmg": 2, "cat": "S" },
+    { "s": "Tangrowth", "r": [ "regen", "midAttacker" ], "at": [ "dark", "grass", "ice" ], "dmg": 3, "cat": "M" },
+    { "s": "Tapu Koko", "r": [ "pivot", "midAttacker" ], "set": [ "Electric Terrain" ], "auto": [ "Electric Terrain" ], "at": [ "bug", "electric", "ice" ], "dmg": 3, "cat": "M" },
+    { "s": "Tyranitar", "mega": "Mega", "r": [ "hazard", "midAttacker" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "dark", "rock" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-d8k158",
+   "name": "Z lele scarf shifu BO",
+   "verification": "unverified",
+   "members": [
+    { "s": "Tapu Lele", "r": [ "midAttacker" ], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [ "fairy", "fighting", "psychic" ], "dmg": 4, "cat": "S" },
+    { "s": "Dragonite", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "flying", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Ferrothorn", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "removal", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "ice", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Volcarona", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fire", "grass", "ground" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-1kodvmo",
+   "verification": "unverified",
+   "members": [
+    { "s": "Iron Valiant", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Darkrai", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting", "poison" ], "dmg": 3, "cat": "S" },
+    { "s": "Garganacl", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-ktgqxw",
+   "name": "TLOH IV - anique",
+   "author": "setset77",
+   "verification": "unverified",
+   "members": [
+    { "s": "Dondozo", "r": [ "midAttacker" ], "at": [ "fighting", "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Blissey", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Clodsire", "r": [ "hazard" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Corviknight", "r": [ "removal" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Gliscor", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Toxapex", "r": [ "regen", "hazard", "midAttacker" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "M" }
+   ]
+  }
+ ],
+ "results": []
+}

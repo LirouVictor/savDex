@@ -17,6 +17,7 @@ import { moveInfo } from '../parser/describe.js';
 import { pickMoveset, effTable, planSensitive, SRC } from './moveset.js';
 import { itemWorks, kitItem, combosOf, comboValue, teamBits, teamComboValue } from './mechanics.js';
 import { roleBits, strategyValue, strategySeeds } from './strategies.js';
+import { speciesIds } from './species-id.js';
 export { teamCombos } from './mechanics.js';
 import speciesData from '../data/species.json';
 
@@ -702,7 +703,8 @@ function entry(m, bf, T, types, mult, learn = [], set = null) {
   return {
     m, bf, real: realOf(m), key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
     moves: own, set, setTeach: set ? set.filter(x => x.src !== SRC.known) : [], mcands: null, mctx: null,
-    combos: null, comboV: 0, comboF: null, cbits: 0, comboW: 0, sbits: 0, stratW: 0, nfe: !!m.nfe,
+    // Papéis da biblioteca de estratégias (equipes de referência; com o moveset do Quetzal, setCombos refaz com o item)
+    combos: null, comboV: 0, comboF: null, cbits: 0, comboW: 0, sbits: roleBits(mechOf(m, bf, own, m.item && !isMegaStone(m.item) ? m.item.name : null)), stratW: 0, nfe: !!m.nfe,
     given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
     learnSet, learnUse, learnCore, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
@@ -1037,9 +1039,11 @@ export function solo(e, plan) {
  *   ALT_SHARED membros com cada uma (ou os que o jogador pediu, se forem mais)
  * @param {number} [beamSize] equipes parciais guardadas a cada vaga
  * @param {number} [candLimit] candidatos (os melhores sozinhos para o plano; CANDS ou CANDS_BIG); os testes de comparação mudam os dois
- * @returns {{ plan, team: object[], score: number } | null}
+ * @param {{ bonus?: (team: object[]) => number, only?: Set<string> }} [opts] equipes de referência (reference.js): `bonus`
+ *   soma à nota da busca (o quanto a equipe preserva da original) e `only` limita as sementes de estratégia às da original
+ * @returns {{ plan, team: object[], score: number } | null} `score` com o bônus
  */
-export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = pool.length > BIG_PC ? CANDS_BIG : CANDS) {
+export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = BEAM, candLimit = pool.length > BIG_PC ? CANDS_BIG : CANDS, { bonus = null, only = null } = {}) {
   const maxShared = Math.max(ALT_SHARED, forced.length);
   const tooClose = team => prev.some(p => team.filter(e => p.has(e.real)).length > maxShared);
   // Num plano de clima: fora quem tem a fraqueza que o clima fortalece ou depende de golpes que ele enfraquece
@@ -1061,13 +1065,14 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
   // uma (as 2 de mais valor que a semente de sempre não tem), com um feixe menor; o resto da equipe a busca completa
   const sizes = seeds.map(() => beamSize);
   if (!prev.length && seeds.length && pool.length && pool[0].stratW) {
-    for (const x of strategySeeds(usable, plan, seeds[0], e => solo(e, plan), (team, e) => allowed(team, e, plan))) { seeds.push(x.seed); sizes.push(STRAT_BEAM); }
+    for (const x of strategySeeds(usable, plan, seeds[0], e => solo(e, plan), (team, e) => allowed(team, e, plan), 2, only)) { seeds.push(x.seed); sizes.push(STRAT_BEAM); }
   }
   let best = null;
+  const val = bonus ? (team, acc) => score(team, plan, types, acc) + bonus(team) : (team, acc) => score(team, plan, types, acc);
   for (let si = 0; si < seeds.length; si++) {
     const seed = seeds[si], size = sizes[si];
     if (seed.length > 6) continue;
-    let beam = [{ team: seed, ids: seed.map(e => e.id).sort((a, b) => a - b), s: score(seed, plan, types) }];
+    let beam = [{ team: seed, ids: seed.map(e => e.id).sort((a, b) => a - b), s: val(seed, null) }];
     while (beam[0].team.length < 6) {
       const next = new Map();
       for (const st of beam) {
@@ -1083,7 +1088,7 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
           ids[j] = c.id;
           const key = ids.join(',');
           if (next.has(key)) continue;
-          next.set(key, { team, ids, s: score(team, plan, types, acc) });
+          next.set(key, { team, ids, s: val(team, acc) });
         }
       }
       if (!next.size) break;
@@ -1111,7 +1116,8 @@ export function planHolds(team, plan) {
 }
 
 /**
- * Equipes para todos os planos do save, da melhor nota para a pior, sem repetir a mesma equipe.
+ * O que a busca precisa do save (montagem livre e equipes de referência): os Pokémon que o montador pode usar, com as contas,
+ * as ameaças, a referência competitiva e quem o jogador pediu.
  * @param {object[]} all Pokémon do save (equipe + PC)
  * @param {object} T tabelas do jogo
  * @param {{ want?: object[], dex?: object|null, noLegends?: boolean, anyItem?: boolean, ready?: boolean, comp?: object|null }} [opts]
@@ -1120,8 +1126,11 @@ export function planHolds(team, plan) {
  *   modo "Prontos para usar" (o trabalho que falta pesa mais; senão, "Posso treinar") e a referência competitiva do jogo
  *   (loadSmogon; sem ela, a nota não tem a parte "Competitivo")
  */
-export function buildTeams(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst', game = null, threats = null, threatWeights = [TH_NONE, TH_ONLY], comp = null, compWeight = COMP_W } = {}) {
+export function prepareBuild(all, T, { want = [], dex = null, noLegends = false, anyItem = false, ready = false, statModel = 'bst', game = null, threats = null, threatWeights = [TH_NONE, TH_ONLY], comp = null, compWeight = COMP_W } = {}) {
   const types = attackTypes(T);
+  // As espécies que o jogador tem (antes de tirar os lendários): as equipes de referência dizem quem ficou de fora pela opção
+  const allIds = new Set();
+  for (const m of all) for (const id of speciesIds(m.species)) allIds.add(id);
   if (noLegends) {
     const asked = new Set(want.map(speciesKey));
     all = all.filter(m => !isLegendary(m) || asked.has(speciesKey(m)));
@@ -1167,6 +1176,17 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     }
     return out;
   };
+  return { pool, types, forcedFor, threats: tctx, comp: sctx, noLegends, dex, allIds };
+}
+
+/** As equipes da montagem livre para o save (prepareBuild + freeTeams; as opções são as de prepareBuild). */
+export function buildTeams(all, T, opts = {}) {
+  return freeTeams(prepareBuild(all, T, opts));
+}
+
+/** As equipes da montagem livre (sem referência), uma por plano, a partir do que prepareBuild preparou. */
+export function freeTeams(ctx) {
+  const { pool, types, forcedFor, threats: tctx, dex } = ctx;
   const out = [];
   for (const plan0 of plans(pool)) {
     // Moveset do plano (Quetzal): os candidatos com os golpes escolhidos para ele
@@ -1190,7 +1210,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   const result = out.filter(r => !seen.has(teamKey(r.team)) && seen.add(teamKey(r.team)));
   // O que altTeams precisa para buscar as alternativas de um plano depois, só se o jogador pedir
   Object.defineProperty(result, 'pool', { value: pool }); // também para conferências (busca local nos testes de comparação)
-  Object.defineProperty(result, 'ctx', { value: { types, forcedFor, threats: tctx, comp: sctx, noLegends, dex } });
+  Object.defineProperty(result, 'ctx', { value: ctx });
   return result;
 }
 

@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-13';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-14',
+    pt: [
+      'Montar equipe (Quetzal): agora o ponto de partida são equipes de verdade do competitivo. O app compara 64 equipes de exemplo do Smogon (Gen 9: National Dex, Ubers, OU, UU, RU, NU e PU, reunidas pelo projeto pkmn/smogon) com o seu save, mantém os Pokémon que você tem e troca os que faltam por Pokémon seus, escolhidos juntos pela equipe inteira e tentando preservar o plano, as estratégias e os papéis da original. Cada equipe mostra a original (com o link do tópico do Smogon e o que foi conferido), a sua versão adaptada (quem ficou, quem entrou no lugar de quem e o que se perdeu) e o que falta para reproduzir a original. Equipes de exemplo não são campeãs de torneio, e a tela diz isso. Se nenhuma equipe combina com o seu save, o app avisa; a montagem do zero continua no botão “Montar do zero”.',
+    ],
+    en: [
+      'Build team (Quetzal): the starting point is now real competitive teams. The app compares 64 Smogon sample teams (Gen 9: National Dex, Ubers, OU, UU, RU, NU and PU, collected by the pkmn/smogon project) with your save, keeps the Pokémon you have and replaces the missing ones with your own, chosen together for the whole team while trying to preserve the original plan, strategies and roles. Each team shows the original (with the link to the Smogon thread and what was checked), your adapted version (who stayed, who replaced whom and what was lost) and what is missing to rebuild the original. Sample teams are not tournament winners, and the screen says so. If no team fits your save, the app tells you; building from scratch is still available with “Build from scratch”.',
+    ],
+  },
+  {
     date: '2026-10-13',
     pt: [
       'Comentar com IA (Quetzal): a IA agora propõe até 3 estratégias para a equipe, as conhecidas do competitivo e ideias novas, explicando como executar e o que cada Pokémon precisa ter. O app confere cada golpe, item e habilidade antes de mostrar: marca o que é conhecido e conferido, o que é ideia nova (ainda não comprovada) e o que a IA errou, como um golpe que o Pokémon não aprende.',

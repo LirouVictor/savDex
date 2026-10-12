@@ -870,3 +870,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .dex-evo { color: var(--accent-ink); background: var(--accent); }
 /* Montador: as contas detalhadas da equipe, recolhidas no fim */
 .ai-facts { margin: 12px 0; }
+
+/* Equipes de referência (montador): o grupo das abas, os membros da original e os links da fonte */
+.builder-group { margin: .6rem 0 .2rem; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.ref-members li.miss { color: var(--muted); }
+.ref-links a { color: var(--accent); }
