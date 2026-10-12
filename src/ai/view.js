@@ -1,6 +1,6 @@
 // Telas dos resultados da IA. Os Pokémon citados são desenhados com os dados do save (não com o texto da IA).
 
-import { esc, typeChips, monShort } from '../ui/render.js';
+import { esc, typeChips, monShort, monTile } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
 import { REF_RE, teamFacts, buildIssues, moveChecks, levelGap } from './prompt.js';
 import { t, num } from '../i18n.js';
@@ -68,31 +68,70 @@ function panel(title, kind, inner) {
 }
 
 /**
- * Equipe montada pelo app: o que fazer primeiro (próximos passos), depois o ideal do competitivo e as ameaças, e as contas
- * detalhadas recolhidas (são as mesmas dos pontos fortes e fracos).
+ * Equipe montada pelo app, depois dos blocos dos membros: as trocas (equipes de referência), a estratégia, o ideal do
+ * competitivo e as ameaças. O que fazer com cada Pokémon (golpes a ensinar, item, evoluir) fica no card dele; os
+ * próximos passos só aparecem quando o card não tem os golpes (jogos sem a lista do tutor).
  */
-function appPanels(r, byRef, check, dicas) {
+function appPanels(r, byRef, dicas, cardsHaveMoves) {
   const note = x => `<p class="hint ai-threat-note">${esc(x.note)}</p>`;
-  return `${r.referencia ? refPanelsHtml(r.referencia, byRef) : ''}
-    ${panel('Próximos passos', 'swap', dicas)}
+  const ref = r.referencia;
+  return `${ref ? panel('Trocas', 'swap', bullets(ref.adapted.lines, byRef) + `<p class="hint ai-threat-note">${esc(ref.adapted.note)}</p>`) : ''}
+    ${r.estrategias ? panel('Estratégia', 'info', `<ul class="ai-list ai-strats">${r.estrategias.cards.map(x => `<li><b>${esc(x.title)}</b> <small class="ai-strat-tag">${esc(x.tag)}</small><br>${rich(x.text, byRef)}</li>`).join('')}</ul><p class="hint ai-threat-note">${esc(r.estrategias.note)}</p>`) : ''}
+    ${cardsHaveMoves ? '' : panel('Próximos passos', 'swap', dicas)}
     ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
-    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}
-    ${r.estrategias ? panel('Estratégias da equipe', 'info', `<ul class="ai-list ai-strats">${r.estrategias.cards.map(x => `<li><b>${esc(x.title)}</b> <small class="ai-strat-tag">${esc(x.tag)}</small><br>${rich(x.text, byRef)}</li>`).join('')}</ul><p class="hint ai-threat-note">${esc(r.estrategias.note)}</p>`) : ''}
-    ${r.interacoes ? `<details class="fold ai-facts"><summary>${t('Interações')}</summary>${bullets(r.interacoes.lines, byRef)}${note(r.interacoes)}</details>` : ''}
-    ${check ? `<details class="fold ai-facts"><summary>${t('Contas da equipe')}</summary>${check}</details>` : ''}`;
+    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}`;
 }
 
 /**
- * Equipe de referência (builder/reference.js): a original com a origem e os links da fonte, a adaptada (quem ficou, as
- * trocas e o que se perdeu) e o que falta para reproduzir a original.
+ * Equipe original de uma referência (builder/reference.js), antes da adaptada: os 6 em blocos como na seção Equipe (o
+ * toque abre o card do membro: situação no save, papéis na original e o que o formato costuma usar), o plano e,
+ * recolhidos, a origem, a conferência e os links da fonte.
  */
-function refPanelsHtml(x, byRef) {
-  const o = x.original;
+function originalHtml(o, byRef) {
+  const tiles = o.members.map((x, i) => `<li class="ref-tile ${x.ok ? 'ok' : x.game ? 'miss' : 'none'}">${monTile(fakeMon(x), `data-sheet="o${i}"`)}<small class="ref-tile-status">${esc(x.ok ? t('você tem') : x.game ? t('trocado') : t('não existe'))}</small></li>`).join('');
+  const sheets = o.members.map((x, i) => `<template data-sheet-id="o${i}">${originalSheet(x, o, byRef)}</template>`).join('');
   const links = o.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join(' · ');
-  const members = `<ul class="ai-list ref-members">${o.members.map(m => `<li class="${m.ok ? 'ok' : 'miss'}">${esc(m.text)} <small class="ai-strat-tag${m.ok ? '' : ' warn'}">${rich(m.status, byRef)}</small></li>`).join('')}</ul>`;
-  return `${panel('Equipe original', 'info', `<p><b>${esc(o.head)}</b></p>${bullets(o.lines, byRef)}${members}<p class="hint ref-links">${links}</p>`)}
-    ${panel('Sua equipe adaptada', 'swap', bullets(x.adapted.lines, byRef) + `<p class="hint ai-threat-note">${esc(x.adapted.note)}</p>`)}
-    ${panel('Para reproduzir a original', 'swap', bullets(x.reproduce.lines, byRef) + `<p class="hint ai-threat-note">${esc(x.reproduce.note)}</p>`)}`;
+  return `<section class="ref-block">
+    <div class="ref-block-head"><h3>${t('Equipe original')}</h3><span class="builder-tag">${esc(o.tag)}</span></div>
+    <p class="ref-origin"><b>${esc(o.head)}</b>${o.plan ? ` ${esc(o.plan)}` : ''}</p>
+    <ul class="party-grid builder-grid">${tiles}</ul>${sheets}
+    <details class="fold ref-source"><summary>${t('Origem e conferência')}</summary>${bullets(o.lines, new Map())}<p class="hint ref-links">${links}</p></details>
+  </section>`;
+}
+// O membro da original no formato que monTile desenha (sem nível, sem gênero)
+const fakeMon = x => ({ species: { name: x.name, types: x.types, spriteId: x.sprite }, hasNickname: false });
+
+/** Card de um membro da original: o que se sabe dele na original e o que o formato costuma usar com a espécie. */
+function originalSheet(x, o, byRef) {
+  const m = fakeMon(x);
+  const rows = [
+    [t('No seu save'), rich(x.status, byRef)],
+    [t('Na original'), esc(x.roles)],
+    ...(x.field.length ? [[t('Campo'), esc(x.field.join(', '))]] : []),
+    ...(x.attacks.length ? [[t('Golpes de dano'), `${esc(x.attacks.join(', '))}${x.cat ? ` (${esc(x.cat)})` : ''}`]] : []),
+  ];
+  const u = x.usage;
+  const usage = u ? `<h3 class="sheet-h">${t('O que o formato costuma usar')}</h3>
+    <span class="ai-moveset">${u.moves.map(mv => `<span class="ai-mv"><span>${esc(mv.name)}</span><small>${mv.pct}%</small></span>`).join('')}</span>
+    ${u.item || u.ability ? `<p class="ai-gear">${[u.item && `@ ${esc(u.item.name)} <i>${u.item.pct}%</i>`, u.ability && `${esc(u.ability.name)} <i>${u.ability.pct}%</i>`].filter(Boolean).join(' · ')}</p>` : ''}
+    <p class="hint">${t('Estatísticas de uso do formato (Smogon): a fração dos sets da espécie que leva cada um. O app não guarda o set da original.')}</p>` : '';
+  return `<div class="mon-hero${typeClass(m)}"><div class="sheet-mon">${sprite(m, 96)}<div><h2 id="detail-title">${esc(x.name)}</h2><p class="mon-sub">${esc(t('{tag} · equipe original', { tag: o.tag }))}</p>${typeChips(x.types)}</div></div></div>
+    <dl class="sheet-facts">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${usage}`;
+}
+
+/** Card de um membro da equipe montada pelo app: função, motivos, item, habilidade e os 4 golpes (com o que ensinar). */
+function memberSheet(x, m, byRef, hint) {
+  const from = m && m.evolvedFrom;
+  return `<div class="mon-hero${typeClass(m)}"><div class="sheet-mon">${sprite(m, 96)}<div><h2 id="detail-title">${monShort(m)}</h2><p class="mon-sub">${esc(where(m))}</p>${typeChips(m.species.types)}</div></div></div>
+    <div class="ai-member-body sheet-body">
+      ${x.papel ? `<span class="ai-role">${esc(x.papel)}</span>` : ''}
+      ${from ? `<small class="ai-evolve">${esc(t('Evolua: hoje é {name}{lv}', { name: from.species.name, lv: from.level ? ` (${t('Nv.')} ${from.level})` : '' }))}</small>` : ''}
+      ${gearHtml(x)}
+      <span class="ai-why">${rich(x.motivo, byRef)}</span>
+      ${x.golpes ? movesetHtml(x.golpes) : ''}
+    </div>
+    ${hint}
+    <p><button class="btn btn-ghost btn-small" type="button" data-ref="${esc(x.ref)}">${t('Ver o Pokémon do save')}</button></p>`;
 }
 
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');
@@ -209,13 +248,17 @@ export function buildView(r, byRef, model, T, opts = null) {
       </span>
     </button></li>`;
   }).join('');
+  const app = !!(opts && opts.app);
   const setHint = r.membros.some(x => x.golpes)
     ? `<p class="hint ai-moveset-hint">${t('Golpes de cada um: sem marca, ele já sabe; “tutor” e “nível”, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça; “Nv. N”, aprende ao chegar no nível.')}${r.membros.some(x => x.item || x.habilidade) ? ' ' + t('Item e habilidade: os que o competitivo (Smogon) mais usa; “dar” e “trocar” = o que ainda falta.') : ''}</p>` : '';
+  // Equipe do app: os 6 em blocos (como na seção Equipe), com a função embaixo; o toque abre o card do membro
+  const tiles = app ? r.membros.map((x, i) => `<li>${monTile(mons[i], `data-sheet="a${i}"`)}${x.papel ? `<small class="ref-tile-status">${esc(x.papel)}</small>` : ''}</li>`).join('') : '';
+  const sheets = app ? r.membros.map((x, i) => `<template data-sheet-id="a${i}">${memberSheet(x, mons[i], byRef, setHint)}</template>`).join('') : '';
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
-  const issues = mons.length ? buildIssues(mons, T) : [];
+  const issues = !app && mons.length ? buildIssues(mons, T) : [];
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
   const gap = levelGap(mons);
-  const check = mons.length ? warn + bullets([...teamFacts(mons, T).split('\n'), ...(gap ? [gap] : [])], byRef) : '';
+  const check = !app && mons.length ? warn + bullets([...teamFacts(mons, T).split('\n'), ...(gap ? [gap] : [])], byRef) : '';
   // Trocas feitas pelo app (critério que a IA furou): quem saiu, quem entrou e como ficaram os tipos
   const fixed = r.fix ? `<p class="ai-fix"><b>${t('Ajuste do app:')}</b> ${r.fix.swaps.map(s => t('{out} saiu, {in} entrou', { out: `<b>${monShort(s.out)}</b>`, in: `<b>${monShort(s.in)}</b>` })
       + (s.in.evolvedFrom ? ` (${esc(t('evolua {from} para {to}', { from: s.in.evolvedFrom.species.name, to: s.in.species.name }))})` : '')).join('; ')}.
@@ -223,9 +266,10 @@ export function buildView(r, byRef, model, T, opts = null) {
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}${checksHtml(x, byRef, opts && { ...opts, T })}</li>`).join('')}</ol>` : '';
   return `<div class="ai-result">
+    ${app && r.referencia ? originalHtml(r.referencia.original, byRef) : ''}
     <div class="ai-hero build">
       <div class="ai-hero-text">
-        <p class="ai-kicker">${opts && opts.app ? t('Equipe montada pelo app') : t('Equipe sugerida')}</p>
+        <p class="ai-kicker">${app ? (r.referencia ? t('Sua equipe adaptada') : t('Equipe montada pelo app')) : t('Equipe sugerida')}</p>
         <p class="ai-team-name">${esc(r.nome)}</p>
       </div>
       <div class="export-btns">
@@ -235,15 +279,16 @@ export function buildView(r, byRef, model, T, opts = null) {
     </div>
     <p class="hint team-msg" role="status"></p>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
-    <ul class="ai-members">${cards}</ul>
-    ${setHint}
+    ${app ? `<ul class="party-grid builder-grid">${tiles}</ul><p class="hint">${t('Toque num Pokémon para ver golpes, item e o que fazer.')}</p>${sheets}` : `<ul class="ai-members">${cards}</ul>
+    ${setHint}`}
     ${fixed}
     ${short}
+    ${app ? appPanels(r, byRef, dicas, r.membros.every(x => x.golpes)) : ''}
     <div class="ai-cols">
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
-    ${opts && opts.app ? appPanels(r, byRef, check, dicas) : `${panel('Conferência do app', 'info', check)}
+    ${app ? '' : `${panel('Conferência do app', 'info', check)}
     ${panel('Próximos passos', 'swap', dicas)}`}
     ${footer(model, r.dropped, opts)}
   </div>`;

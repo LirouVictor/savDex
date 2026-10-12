@@ -130,9 +130,9 @@ describe('equipes de referência', () => {
     expect(r.rejected).toBe(1);
     const res = runBuilder(save(), T, '', null, { saveGame: game, refs: table([{ id: 'x', members: none }]) });
     expect(res.every(x => x.kind === 'free')).toBe(true);
-    expect(resultsHtml(res, 0, T)).toContain('Nenhuma equipe de referência compatível');
+    expect(resultsHtml(res, 0, T)).toContain('Nenhuma equipe do competitivo tem 2 ou mais Pokémon seus');
     // Jogo sem referências ainda
-    expect(resultsHtml(runBuilder(save(), T, '', null, { saveGame: { id: 'emerald' }, refs: [] }), 0, T)).toContain('Ainda não há equipes de referência para este jogo');
+    expect(resultsHtml(runBuilder(save(), T, '', null, { saveGame: { id: 'emerald' }, refs: [] }), 0, T)).toContain('Este jogo ainda não tem equipes do competitivo');
   });
 
   it('tabela de outra geração ou de Doubles não entra (as regras dos papéis são as do jogo)', () => {
@@ -148,8 +148,20 @@ describe('equipes de referência', () => {
     const res = runBuilder(save(), T, '', null, { saveGame: game, refs: table([team]) });
     expect(res[0].kind).toBe('ref');
     const html = resultsHtml(res, 0, T);
-    for (const s of ['Equipe original', 'Sua equipe adaptada', 'Para reproduzir a original', 'Equipe de exemplo do Smogon', 'não conferidos no tópico',
-      'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda resultado nem reputação', 'Barraskewda: você não tem']) expect(html).toContain(s);
+    for (const s of ['Equipe original', 'Sua equipe adaptada', 'Trocas', 'Equipe de exemplo do Smogon', 'não conferidos no tópico',
+      'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda resultado nem reputação',
+      '1 equipes do competitivo combinam com o seu save (0 de finais de torneio).']) expect(html).toContain(s);
+    // A original vem antes da adaptada, e as trocas depois das duas; cada membro é um bloco que abre o card dele
+    expect(html.indexOf('Equipe original')).toBeLessThan(html.indexOf('Sua equipe adaptada'));
+    expect(html.indexOf('Sua equipe adaptada')).toBeLessThan(html.indexOf('>Trocas<'));
+    expect(html.match(/data-sheet="o\d"/g)).toHaveLength(6);
+    expect(html.match(/data-sheet="a\d"/g)).toHaveLength(6);
+    const card = html.slice(html.indexOf('<template data-sheet-id="o1">'), html.indexOf('</template>', html.indexOf('<template data-sheet-id="o1">')));
+    for (const s of ['Barraskewda', 'No seu save', 'você não tem', 'Na original']) expect(card).toContain(s);
+    // Sem contas, interações nem o painel antigo "Para reproduzir"; lista de equipes sem rolar para o lado (os próximos
+    // passos só aparecem sem o moveset, como aqui: com ele, o que fazer está no card de cada membro)
+    for (const s of ['Contas da equipe', 'Interações', 'Para reproduzir a original', 'builder-tabs']) expect(html).not.toContain(s);
+    expect(html).toContain('class="builder-list"');
     expect(html).not.toContain('data-free'); // sem o botão da montagem do zero (só quando nenhuma referência serve)
     // Equipe de exemplo nunca mostra resultado, nem com um registro na tabela
     const sample = resultsHtml(runBuilder(save(), T, '', null, { saveGame: game, refs: table([team], [{ team: 'rain', player: 'P', event: 'Torneio X', date: '2026', placement: 'champion', url: 'https://example.org/prova' }]) }), 0, T);
@@ -162,19 +174,19 @@ describe('equipes de referência', () => {
     const r = { team: 'rain-t', player: 'P', event: 'Torneio X', date: '2026-09-01', placement: 'champion', series: '2-1', games: 3, won: 2,
       url: 'https://replay.pokemonshowdown.com/smogtours-gen9ou-1', thread: 'https://www.smogon.com/forums/threads/torneio-x.1/', verification: 'verified' };
     const res = runBuilder(save(), T, '', null, { saveGame: game, refs: tour([r]) });
-    expect(res[0].name).toMatch(/^Campeã · /);
+    expect(res[0].tag).toBe('Campeã');
     const html = resultsHtml(res, 0, T);
     for (const s of ['Adaptada da campeã de Torneio X (P)', 'Equipe de P na final de Torneio X.', 'Campeão de Torneio X (2026-09-01), P: venceu a final por 2-1.',
       'href="https://replay.pokemonshowdown.com/smogtours-gen9ou-1"', 'href="https://www.smogon.com/forums/threads/torneio-x.1/"', 'não entrou na final',
-      'o replay só mostra o que apareceu', 'Das 1 equipes de finais de torneio']) expect(html).toContain(s);
+      '(1 de finais de torneio)', '<span class="builder-tag">Campeã</span>']) expect(html).toContain(s);
     expect(html).not.toContain('Resultado em torneio: nenhum registrado');
     // Finalista
     const fin = runBuilder(save(), T, '', null, { saveGame: game, refs: tour([{ ...r, placement: 'finalist', series: '1-2' }]) });
-    expect(fin[0].name).toMatch(/^Finalista · /);
+    expect(fin[0].tag).toBe('Finalista');
     expect(resultsHtml(fin, 0, T)).toContain('perdeu a final por 1-2');
     // Sem URL de prova: sem colocação
     const none = runBuilder(save(), T, '', null, { saveGame: game, refs: tour([{ ...r, url: undefined }]) });
-    expect(none[0].name).not.toMatch(/Campeã|Finalista/);
+    expect(none[0].tag).toBe(null);
   });
 });
 

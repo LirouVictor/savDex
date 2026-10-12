@@ -376,7 +376,7 @@ export function check(id, label, desc = '', on = false) {
 /**
  * Montar equipe, numa janela só: o app monta sozinho (sem IA; o pacote só carrega ao tocar no botão) e, no fim, a
  * parte opcional com IA (a chave é do usuário e fica só neste aparelho): comentar a equipe que o app montou, avaliar
- * a equipe atual ou montar do jeito da IA. O pedido é o mesmo para os dois. Fechada até o usuário abrir; os textos
+ * a equipe atual ou montar do jeito da IA. Fechada até o usuário abrir; os textos
  * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
  */
 export function builderWin(d, providers = []) {
@@ -386,15 +386,12 @@ export function builderWin(d, providers = []) {
   return `<details class="win win-fold" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
     <p class="ai-intro">${t('O app parte de equipes do competitivo (Smogon) e adapta cada uma aos seus Pokémon (equipe e PC), trocando os que faltam pelos que você tem. Nos jogos que ainda não têm equipes de referência, procura a melhor equipe para cada plano que o save comporta. Sem chave e sem cota.')}</p>
-    <label class="ai-label" for="builder-note">${t('Pedido (opcional)')}</label>
-    <input id="builder-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario; time de chuva')}">
-    <p class="hint builder-note-hint">${t('O app coloca na equipe os Pokémon que você citar pelo nome; a IA lê o pedido inteiro.')}</p>
-    ${check('builder-nolegend', t('Sem lendários e míticos'), t('Menos os que você pedir acima.'))}
+    ${check('builder-nolegend', t('Sem lendários e míticos'), t('Deixa de fora as espécies lendárias e míticas do seu save.'))}
     <div class="export-btns ai-actions ai-actions-one"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
     <details class="fold ai-fold" id="ai-win">
       <summary>${t('Com IA (opcional)')} <small id="ai-svc">${t('IA')}</small></summary>
-      <p class="ai-intro">${t('Com a sua chave grátis, a IA comenta a equipe que o app montou (botão no resultado), avalia a sua equipe atual ou monta uma do jeito dela, seguindo o pedido acima.')}</p>
+      <p class="ai-intro">${t('Com a sua chave grátis, a IA comenta a equipe que o app montou (botão no resultado), avalia a sua equipe atual ou monta uma do jeito dela.')}</p>
       <div class="ai-form ai-provider">
         <label class="ai-label" for="ai-provider">${t('Serviço de IA')}</label>
         <select id="ai-provider" class="ai-input">${opts}</select>
