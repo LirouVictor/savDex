@@ -6,7 +6,7 @@ import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { prepareBuild, freeTeams, altTeams, scoreParts, shownRoleBits, roleTeach, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
 import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
-import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP, ADAPT_N } from './reference.js';
+import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP } from './reference.js';
 import { SRC } from './moveset.js';
 import { makeResolver } from '../parser/describe.js';
 import { teamThreats, variantOf } from './threats.js';
@@ -375,20 +375,66 @@ export function freeOptions(results) {
 }
 
 /** Mais referências (as próximas pela estimativa), adaptadas agora. @returns {number} a posição da primeira nova, ou -1 */
-export function moreReferences(results) {
-  const info = results.refs;
-  if (!info || !info.candidates) return -1;
-  const c = info.candidates, ctx = results.ctx;
-  const next = c.list.filter(w => w.result === undefined).slice(0, ADAPT_N);
-  const added = next.map(w => adaptReference(ctx, w)).filter(Boolean).sort((a, b) => b.rank - a.rank).map(x => describeRef(x, ctx.types, ctx));
-  if (!added.length) return -1;
-  // Entram depois das referências que já estão na tela (antes da montagem livre)
-  const at = results.filter(x => x.kind === 'ref').length;
-  results.splice(at, 0, ...added);
+// Nome de uma referência na janela de escolha: o torneio e o jogador, ou o nome e o autor da equipe de exemplo
+function refTitle(ref, tb) {
+  if (tb.kind === 'tournament') return [ref.name, ref.author].filter(Boolean).join(' · ');
+  return [ref.name || t('Equipe sem nome'), ref.author].filter(Boolean).join(' · ');
+}
+const kindOf = tb => (tb.kind === 'tournament' ? 'tour' : 'sample');
+
+/**
+ * Todas as equipes que dá para escolher: as já montadas (referências adaptadas e montagem livre) e as referências
+ * compatíveis ainda não adaptadas (com a nota estimada). As referências na ordem do app: nota + fidelidade.
+ */
+export function teamChoices(results) {
+  const out = [];
+  results.forEach((x, k) => {
+    if (x.kind === 'ref') out.push({ key: `r${k}`, rank: x.ref.rank, kind: kindOf(x.ref.format), tag: x.tag, title: refTitle(x.ref.ref, x.ref.format), sub: x.name, score: x.score, approx: false });
+  });
+  const c = results.refs && results.refs.candidates;
+  if (c) c.list.forEach((w, j) => {
+    if (w.result !== undefined) return;
+    const r0 = w.format.kind === 'tournament' ? (w.format.results || []).find(r => r.team === w.ref.id && r.url) : null;
+    out.push({ key: `c${j}`, rank: w.estimate, kind: kindOf(w.format), tag: r0 ? (r0.placement === 'champion' ? t('Campeã') : t('Finalista')) : null,
+      title: refTitle(w.ref, w.format), sub: `${planName(w.target)} · ${formatShort(w.format)} (${w.keep.filter(Boolean).length}/6)`, score: w.quick, approx: true });
+  });
+  out.sort((a, b) => b.rank - a.rank);
+  results.forEach((x, k) => { if (x.kind === 'free') out.push({ key: `r${k}`, kind: 'free', tag: null, title: x.name, sub: '', score: x.score, approx: false }); });
+  return out;
+}
+
+/** A equipe escolhida na janela: o índice em results (uma referência ainda não adaptada é adaptada agora). -1 se não deu. */
+export function chooseTeam(results, key) {
+  if (key[0] === 'r') return +key.slice(1);
+  const c = results.refs && results.refs.candidates;
+  const w = c && c.list[+key.slice(1)];
+  if (!w) return -1;
+  const x = adaptReference(results.ctx, w);
+  if (!x) return -1;
+  const d = describeRef(x, results.ctx.types, results.ctx);
+  // Entra depois das referências que já estão na tela (antes da montagem livre)
+  const at = results.filter(y => y.kind === 'ref').length;
+  results.splice(at, 0, d);
   return at;
 }
-/** Quantas referências compatíveis ainda não foram adaptadas. */
-export const moreRefsLeft = results => (results.refs && results.refs.candidates ? results.refs.candidates.list.filter(w => w.result === undefined).length : 0);
+
+/** Janela "Escolher equipe": a ordem explicada, filtro por origem e uma linha por equipe. */
+export function pickerHtml(results, i) {
+  const list = teamChoices(results);
+  const cur = `r${i}`;
+  const n = k => list.filter(x => x.kind === k).length;
+  const refs = list.some(x => x.kind !== 'free');
+  const chip = (k, label, count) => `<button class="btn btn-ghost btn-small" type="button" data-filter="${k}" aria-pressed="${k === 'all'}">${esc(label)} <small>${count}</small></button>`;
+  const filters = refs && n('tour') && n('sample')
+    ? `<div class="dex-filters picker-filters" role="group" aria-label="${esc(t('Filtrar'))}">${chip('all', t('Todas'), list.length)}${chip('tour', t('Finais de torneio'), n('tour'))}${chip('sample', t('Exemplo'), n('sample'))}</div>` : '';
+  const rows = list.map(x => `<li data-kind="${x.kind}"><button class="builder-pick" type="button" data-choose="${x.key}" aria-pressed="${x.key === cur}">
+      ${x.tag ? `<span class="builder-tag">${esc(x.tag)}</span>` : ''}
+      <span class="builder-pick-name"><b>${esc(x.title)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</span>
+      <b class="builder-pick-score">${x.score == null ? '—' : `${x.approx ? '≈' : ''}${Math.round(x.score)}`}</b></button></li>`).join('');
+  return `<h2 id="detail-title" class="picker-title">${t('Escolher equipe')}</h2>
+    <p class="hint">${refs ? t('Na ordem do app: a nota da sua versão adaptada mais o quanto ela mantém da original (estratégias, papéis e plano). Campeãs não ganham bônus. “≈” é a nota estimada de quem ainda não foi montada.') : t('Uma equipe por plano que o seu save comporta, da melhor nota para a pior.')}</p>
+    ${filters}<ul class="builder-list picker-list">${rows}</ul>`;
+}
 
 /**
  * Alternativas do plano da equipe results[i] (a busca roda agora). Entram logo depois das equipes do plano.
@@ -825,29 +871,25 @@ function refsHeader(results) {
   const info = results.refs;
   if (!info) return '';
   const nRefs = results.filter(x => x.kind === 'ref').length;
-  const left = moreRefsLeft(results);
   // Uma linha só (no celular, o resto da tela é a equipe)
   const line = !info.tables ? t('Sem conexão para carregar as equipes do competitivo. Abaixo, a montagem livre.')
     : !info.tables.length ? t('Este jogo ainda não tem equipes do competitivo. Abaixo, a montagem livre.')
       : !nRefs ? t('Nenhuma equipe do competitivo tem {min} ou mais Pokémon seus. Abaixo, a montagem livre, que não se baseia em equipe competitiva.', { min: MIN_KEEP })
         : t('{n} equipes do competitivo combinam com o seu save ({k} de finais de torneio).', { n: info.total - info.rejected, k: info.tourOk });
-  const more = left ? ` <button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais ({n})', { n: left })}</button>` : '';
-  return `<p class="hint builder-head">${esc(line)}${more}</p>`;
+  return `<p class="hint builder-head">${esc(line)}</p>`;
 }
 
 /** Abas (as referências e, na montagem livre, uma por plano) e a equipe escolhida. */
 export function resultsHtml(results, i, T) {
   if (!results.length) return `${refsHeader(results)}<p class="hint">${t('Não deu para montar uma equipe de 6 com os Pokémon deste save.')}</p>`;
   const cur = results[i] || results[0];
-  // As equipes numa lista, uma por linha (sem rolar para o lado): colocação no torneio, plano · formato e a nota
-  const tab = (x, k) => `<li><button class="builder-pick" type="button" data-plan="${k}" aria-pressed="${k === i}">${x.tag ? `<span class="builder-tag">${esc(x.tag)}</span>` : ''}<span class="builder-pick-name">${esc(x.name)}</span><b>${Math.round(x.score)}</b></button></li>`;
-  const both = results.some(x => x.kind === 'ref') && results.some(x => x.kind === 'free');
-  const group = (kind, label) => {
-    const items = results.map((x, k) => [x, k]).filter(([x]) => x.kind === kind);
-    if (!items.length) return '';
-    return `${both ? `<p class="builder-group">${esc(label)}</p>` : ''}<ul class="builder-list" aria-label="${esc(label)}">${items.map(([x, k]) => tab(x, k)).join('')}</ul>`;
-  };
-  const tabs = group('ref', t('Equipes de referência (adaptadas)')) + group('free', t('Montagem livre (sem referência)'));
+  // A equipe escolhida numa barra; as outras, na janela "Escolher equipe" (no celular, uma lista com dezenas de equipes
+  // empurrava a equipe para baixo)
+  const total = teamChoices(results).length;
+  const pick = `<div class="builder-current">
+      <span class="builder-current-name">${cur.tag ? `<span class="builder-tag">${esc(cur.tag)}</span>` : ''}<b>${esc(cur.kind === 'ref' ? refTitle(cur.ref.ref, cur.ref.format) : cur.name)}</b>${cur.kind === 'ref' ? `<small>${esc(cur.name)}</small>` : ''}</span>
+      ${total > 1 ? `<button class="btn btn-small" type="button" data-pick>${t('Trocar equipe ({n})', { n: total })}</button>` : ''}
+    </div>`;
   const shown = shownParts(cur.parts, cur.score);
   // A parte "Ameaças" só aparece com a caixa marcada; a "Competitivo", com a referência do jogo carregada
   const parts = PARTS.filter(([k]) => shown[k] !== 0)
@@ -862,7 +904,7 @@ export function resultsHtml(results, i, T) {
       <p class="hint">${t('A IA comenta esta equipe: riscos, golpes e itens. A equipe e a nota continuam as do app.')}</p>
       <div class="builder-ai-out" aria-live="polite"></div>
     </div>`;
-  return `${refsHeader(results)}${tabs}
+  return `${refsHeader(results)}${pick}
     <div class="builder-score"><span class="score-badge">${t('Nota {n}', { n: `<b>${Math.round(cur.score)}</b>` })}</span>${parts}</div>${more}
     ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}
     ${ai}`;

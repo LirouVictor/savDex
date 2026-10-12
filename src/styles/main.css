@@ -850,8 +850,20 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 }
 .builder-pick:hover, .builder-pick:focus-visible { background: color-mix(in srgb, var(--accent) 14%, var(--win-2)); }
 .builder-pick[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; }
-.builder-pick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.builder-pick b { font: .78rem var(--pixel); color: var(--accent); }
+.builder-pick-name { flex: 1; min-width: 0; display: grid; }
+.builder-pick-name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-pick-name b { font-weight: 700; }
+.builder-pick-name small { color: var(--muted); font-size: .76rem; }
+.builder-pick-score { flex: none; font: .78rem var(--pixel); color: var(--accent); }
+/* A equipe escolhida (a janela "Escolher equipe" tem as outras) */
+.builder-current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 8px; padding: 8px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.builder-current-name { flex: 1 1 14rem; min-width: 0; display: grid; gap: 2px; justify-items: start; }
+.builder-current-name > b, .builder-current-name > small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-current-name > small { color: var(--muted); font-size: .78rem; }
+.builder-current .btn { flex: 1 1 auto; }
+.picker-title { min-height: 44px; margin: -6px 56px 8px 0; display: flex; align-items: center; font: .9rem var(--pixel); text-transform: uppercase; }
+.picker-filters { margin: 8px 0; flex-wrap: wrap; }
+.picker-list li[hidden] { display: none; }
 .builder-tag { flex: none; padding: 1px 6px; font: .58rem/1.5 var(--pixel); text-transform: uppercase; background: var(--gold); color: var(--ink); }
 /* Original e adaptada em blocos, como na seção Equipe (3 por linha; 6 em tela larga) */
 #builder-out { container-type: inline-size; }
@@ -866,7 +878,10 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ref-block-head h3 { margin: 0; font: .8rem var(--pixel); text-transform: uppercase; }
 .ref-origin { margin: 4px 0 0; font-size: .86rem; }
 .ref-source { margin-top: 6px; }
-/* Card de um membro (montador), na janela do detalhe */
+/* Card de um membro (montador), na janela do detalhe: o X dentro do bloco colorido, sem faixa em cima */
+.builder-sheet { position: relative; padding-top: 0; }
+.builder-sheet > .mon-hero { margin-top: -16px; padding-top: 18px; padding-right: 64px; }
+.sheet .sheet-x { position: absolute; top: -8px; right: -8px; z-index: 1; }
 .sheet-mon { display: flex; align-items: center; gap: 10px; }
 .sheet-mon img { width: 96px; height: 96px; flex: none; }
 .sheet-mon h2 { margin: 0; font-size: 1.1rem; }

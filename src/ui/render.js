@@ -386,7 +386,6 @@ export function builderWin(d, providers = []) {
   return `<details class="win win-fold" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
     <p class="ai-intro">${t('O app parte de equipes do competitivo (Smogon) e adapta cada uma aos seus Pokémon (equipe e PC), trocando os que faltam pelos que você tem. Nos jogos que ainda não têm equipes de referência, procura a melhor equipe para cada plano que o save comporta. Sem chave e sem cota.')}</p>
-    ${check('builder-nolegend', t('Sem lendários e míticos'), t('Deixa de fora as espécies lendárias e míticas do seu save.'))}
     <div class="export-btns ai-actions ai-actions-one"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
     <details class="fold ai-fold" id="ai-win">

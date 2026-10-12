@@ -764,7 +764,7 @@ function entry(m, bf, T, types, mult, learn = [], set = null) {
     learnSet, learnUse, learnCore, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
-    strat, auto, strong, core, wball, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
+    strat, auto, autoW: WEATHERS.reduce((w, f, i) => (auto.has(f) ? w | (1 << i) : w), 0), strong, core, wball, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
     lean: b[1] >= b[3] ? (phys ? 'phys' : spec ? 'spec' : '') : (spec ? 'spec' : phys ? 'phys' : ''), nPhys: phys, nSpec: spec,
     mega: isMegaStone(m.item), megaKnown: bf !== m,
     sweep: sweepKnown ? 1 : sweepTeach ? LEARN_ROLE : 0, sweepMove: sweepKnown || sweepTeach,
@@ -939,11 +939,21 @@ function partsOf(team, plan, types, byType, inc = null) {
     if (auto) p.plan += 16;
     if (plan.kind === 'weather') p.plan -= 10 * conflicts + 4 * risks;
   }
+  // Fora dos planos de clima (neles, quem põe outro clima já conta como conflito): dois climas automáticos na mesma
+  // equipe se apagam (vale o de quem entrou por último). Sand Stream do Tyranitar acabava com a neve da Ninetales de
+  // Alola, e a Aurora Veil dela falhava. Cada clima automático a mais tira o mesmo que um conflito no plano de clima
+  if (plan.kind !== 'weather') {
+    let w = 0;
+    for (const e of team) w |= e.autoW;
+    if (w & (w - 1)) { let k = -1; while (w) { w &= w - 1; k++; } p.plan -= CLASH.w * k; }
+  }
   if (!byType) { p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan); p.comp = compPart(team); }
   p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp + p.combo + p.strat;
   return p;
 }
 
+// Peso de cada clima automático a mais fora do plano de clima (o teste de comparação troca com BENCH_CLASH_W)
+export const CLASH = { w: 10 };
 // Referência competitiva (smogon.js): cada dupla da equipe soma o log2 do lift dela nos times do Smogon (Pelipper +
 // Basculegion 3,2: juntos ≈9× mais que o acaso; Landorus-T + Gliscor −4,5: dois Ground que se substituem), vezes COMP_W.
 // Espécie sem dados no formato (Pokémon sem evoluir, próprios do hack, pouco usados) conta como acaso (0)

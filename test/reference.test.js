@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import T from '../src/data/tables.js';
 import { prepareBuild, scoreParts, allowed, planHolds } from '../src/builder/build.js';
 import { referenceTeams, refPlan, normId, fidelity, FID_W, MIN_KEEP } from '../src/builder/reference.js';
-import { runBuilder, resultsHtml } from '../src/builder/index.js';
+import { runBuilder, resultsHtml, pickerHtml } from '../src/builder/index.js';
 import { setRoleKeys, STRATEGIES } from '../src/builder/strategies.js';
 
 const ivs = v => ({ hp: v, atk: v, def: v, spa: v, spd: v, spe: v });
@@ -161,7 +161,11 @@ describe('equipes de referência', () => {
     // Sem contas, interações nem o painel antigo "Para reproduzir"; lista de equipes sem rolar para o lado (os próximos
     // passos só aparecem sem o moveset, como aqui: com ele, o que fazer está no card de cada membro)
     for (const s of ['Contas da equipe', 'Interações', 'Para reproduzir a original', 'builder-tabs']) expect(html).not.toContain(s);
-    expect(html).toContain('class="builder-list"');
+    // A equipe escolhida numa barra (sem a lista na página); a janela tem todas as compatíveis, com a ordem explicada
+    expect(html).toContain('class="builder-current"');
+    expect(html).not.toContain('class="builder-list');
+    const pick = pickerHtml(res, 0);
+    for (const s of ['Escolher equipe', 'Na ordem do app', 'data-choose="r0"']) expect(pick).toContain(s);
     expect(html).not.toContain('data-free'); // sem o botão da montagem do zero (só quando nenhuma referência serve)
     // Equipe de exemplo nunca mostra resultado, nem com um registro na tabela
     const sample = resultsHtml(runBuilder(save(), T, '', null, { saveGame: game, refs: table([team], [{ team: 'rain', player: 'P', event: 'Torneio X', date: '2026', placement: 'champion', url: 'https://example.org/prova' }]) }), 0, T);
@@ -178,7 +182,7 @@ describe('equipes de referência', () => {
     const html = resultsHtml(res, 0, T);
     for (const s of ['Adaptada da campeã de Torneio X (P)', 'Equipe de P na final de Torneio X.', 'Campeão de Torneio X (2026-09-01), P: venceu a final por 2-1.',
       'href="https://replay.pokemonshowdown.com/smogtours-gen9ou-1"', 'href="https://www.smogon.com/forums/threads/torneio-x.1/"', 'não entrou na final',
-      '(1 de finais de torneio)', '<span class="builder-tag">Campeã</span>']) expect(html).toContain(s);
+      '(1 de finais de torneio)', '<span class="builder-tag">Campeã</span>', 'Torneio X · P']) expect(html).toContain(s);
     expect(html).not.toContain('Resultado em torneio: nenhum registrado');
     // Finalista
     const fin = runBuilder(save(), T, '', null, { saveGame: game, refs: tour([{ ...r, placement: 'finalist', series: '1-2' }]) });

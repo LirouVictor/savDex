@@ -219,6 +219,8 @@ export function referenceCandidates(ctx, tables, T, game, opts = {}) {
     w.pp = pps.get(planKey(w.target));
     const r = run(ctx, w, { ...ro, quick: true });
     w.estimate = r ? r.rank : -Infinity;
+    // A nota estimada (a janela de escolha mostra "≈" até a equipe ser adaptada de verdade)
+    w.quick = r ? r.score : null;
   }
   list.sort((a, b) => b.estimate - a.estimate);
   return { list, rejected, fidW };
@@ -306,7 +308,7 @@ function run(ctx, w, { fidW = FID_W, quick = false, beam, roleMoves = 'choose', 
   const adapted = { plan, team, score: parts.total, parts, fidelity: fid(team), holds: planHolds(team, plan), planKept };
   Object.defineProperty(adapted, 'pp', { value: pp });
   const rank = parts.total + fidW * adapted.fidelity;
-  if (quick) return { rank };
+  if (quick) return { rank, score: parts.total };
   // `reverted`: os mantidos que voltaram à versão sem o golpe do papel porque a equipe inteira rende mais assim
   return { ref: w.ref, format: w.format, orig: w.orig, keep: w.keep, kept, complete: w.complete, adapted, swaps: explain(w, kept, team, plan, forced), rank, reverted };
 }
