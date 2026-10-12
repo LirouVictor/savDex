@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-21';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-23',
+    pt: [
+      'App instalado no Android: a tela de abertura agora é toda azul-escura, com o logo no meio. Antes aparecia o ícone como um quadrado escuro sobre o fundo claro.',
+    ],
+    en: [
+      'Installed app on Android: the launch screen is now all dark blue, with the logo in the middle. Before, the icon showed as a dark square on the light background.',
+    ],
+  },
+  {
     date: '2026-10-22',
     pt: [
       'SoulGold: o app agora lê da ROM do jogo os golpes que cada Pokémon aprende por TM/HM, por tutor e por ovo. O detalhe do Pokémon ganhou as listas “Golpes por TM/HM” (com o número do TM), “Golpes por tutor” e “Golpes de ovo”.',
