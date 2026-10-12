@@ -55,7 +55,7 @@ suite('Moveset: os 4 golpes de cada um', () => {
     const set = pickMoveset(cands, { ...base, usage }).map(x => x.name);
     expect(set).toEqual(expect.arrayContaining(['Earthquake', 'Stealth Rock', 'Swords Dance']));
     const ice = new Map([['icebeam', 0.5], ['blizzard', 0.5], ['freezedry', 0.5]]);
-    const v = pickMoveset([cand('Ice Beam'), cand('Blizzard'), cand('Freeze-Dry'), cand('Flash Cannon'), cand('Aurora Veil')],
+    const v = pickMoveset([cand('Ice Beam'), cand('Blizzard'), cand('Freeze-Dry'), cand('Flash Cannon'), cand('Shadow Ball'), cand('Aurora Veil')],
       { ...ctx([71, 95, 85, 110, 95, 79], ['ice']), usage: ice }).map(x => x.name);
     expect(v.filter(n => ['Ice Beam', 'Blizzard', 'Freeze-Dry'].includes(n)).length).toBeLessThanOrEqual(2);
   });
@@ -132,5 +132,35 @@ suite('Smogon: golpes de cada espécie', () => {
     expect(pel.get('uturn')).toBeGreaterThan(0.5);
     expect(pel.get('hurricane')).toBeGreaterThan(0.5);
     expect(idx.moves(null)).toBe(null);
+  });
+});
+
+suite('Moveset do plano', () => {
+  const vanilluxe = () => [cand('Ice Beam'), cand('Blizzard'), cand('Flash Cannon'), cand('Aurora Veil'), cand('Shadow Ball'), cand('Freeze-Dry')];
+  const ice = ctx([71, 95, 85, 110, 95, 79], ['ice']);
+  it('neve: Blizzard não erra e Aurora Veil vale; fora da neve, Aurora Veil falha', () => {
+    const snow = pickMoveset(vanilluxe(), { ...ice, plan: { kind: 'weather', field: 'neve/granizo' } }).map(x => x.name);
+    expect(snow).toContain('Blizzard');
+    expect(snow).not.toContain('Ice Beam');
+    expect(snow).toContain('Aurora Veil');
+    const plain = pickMoveset(vanilluxe(), ice).map(x => x.name);
+    expect(plain).not.toContain('Aurora Veil');
+    expect(plain).toContain('Ice Beam');
+  });
+  it('chuva: Thunder no lugar do Thunderbolt; sol: Solar Beam sem carregar e Weather Ball de Fire', () => {
+    const elec = [cand('Thunderbolt'), cand('Thunder'), cand('Flash Cannon'), cand('Volt Switch')];
+    const raichu = ctx([60, 90, 55, 90, 80, 110], ['electric']);
+    expect(pickMoveset(elec, { ...raichu, plan: { kind: 'weather', field: 'chuva' } }).map(x => x.name)[0]).toBe('Thunder');
+    expect(pickMoveset(elec, raichu).map(x => x.name)[0]).toBe('Thunderbolt');
+    const zard = ctx([78, 104, 78, 159, 115, 100], ['fire', 'flying']);
+    const sun = pickMoveset([cand('Flamethrower'), cand('Solar Beam'), cand('Air Slash'), cand('Weather Ball'), cand('Focus Blast')],
+      { ...zard, plan: { kind: 'weather', field: 'sol' } }).map(x => x.name);
+    expect(sun).toContain('Solar Beam');
+    expect(pickMoveset([cand('Flamethrower'), cand('Solar Beam'), cand('Air Slash'), cand('Focus Blast'), cand('Roost')], zard).map(x => x.name)).not.toContain('Solar Beam');
+  });
+  it('Trick Room: sem Agility', () => {
+    const c = [cand('Earthquake'), cand('Stone Edge'), cand('Agility'), cand('Swords Dance')];
+    const slow = ctx([100, 130, 110, 60, 80, 70], ['ground', 'rock']);
+    expect(pickMoveset([...c, cand('Superpower')], { ...slow, plan: { kind: 'room', field: 'Trick Room' } }).map(x => x.name)).not.toContain('Agility');
   });
 });

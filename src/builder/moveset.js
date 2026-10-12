@@ -97,6 +97,28 @@ const SMOGON_STATUS = 0.15;
 const DUP_CUT = 0.8; // quanto do peso do Smogon some num segundo golpe de dano do mesmo tipo
 const moveId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
+// Moveset do plano (o campo dele em ctx.pf; o tipo em ctx.pkind): o que o clima, o terreno, o Trick Room e a Hiperofensiva
+// mudam nos golpes. Sem plano (equilibrada), a escolha de sempre
+const SURE_HIT = { Thunder: 'chuva', Hurricane: 'chuva', 'Bleakwind Storm': 'chuva', 'Wildbolt Storm': 'chuva', 'Sandsear Storm': 'chuva', Blizzard: 'neve/granizo' };
+const NO_CHARGE = { 'Solar Beam': 'sol', 'Solar Blade': 'sol', 'Electro Shot': 'chuva' };
+const WEATHER_BALL = { sol: 'fire', chuva: 'water', 'tempestade de areia': 'rock', 'neve/granizo': 'ice' };
+const SUN_HEAL = new Set(['Moonlight', 'Morning Sun', 'Synthesis']);
+const SPEED_SETUP = new Set(['Agility', 'Rock Polish', 'Autotomize']);
+const TERRAIN_TYPE = { 'Electric Terrain': 'electric', 'Grassy Terrain': 'grass', 'Psychic Terrain': 'psychic' };
+const TERRAIN_MOVE = { 'Rising Voltage': ['Electric Terrain', 2], 'Expanding Force': ['Psychic Terrain', 1.5] };
+/** O que o campo do plano faz com o dano do golpe: clima (1,5× ou metade), terreno (1,3× no tipo; golpes próprios). */
+function fieldMult(name, type, ctx) {
+  const pf = ctx.pf;
+  if (!pf) return 1;
+  if (pf === 'chuva') return type === 'water' ? 1.5 : type === 'fire' ? 0.5 : 1;
+  if (pf === 'sol') return name === 'Hydro Steam' ? 1.5 : type === 'fire' ? 1.5 : type === 'water' ? 0.5 : 1;
+  if (pf === 'Misty Terrain') return type === 'dragon' ? 0.5 : 1;
+  let k = 1;
+  if (TERRAIN_TYPE[pf] === type && ctx.grounded) k *= 1.3;
+  if (TERRAIN_MOVE[name] && TERRAIN_MOVE[name][0] === pf) k *= TERRAIN_MOVE[name][1];
+  return k;
+}
+
 // Força do ataque (Ataque ou Ataque Especial base): 80 ou menos não aproveita setup; 115 ou mais, tudo
 const strength = s => Math.max(0, Math.min(1, (s - 80) / 35));
 const DAMAGING = mv => (mv.category === 0 || mv.category === 1) && !!mv.type;
@@ -108,32 +130,56 @@ const DAMAGING = mv => (mv.category === 0 || mv.category === 1) && !!mv.type;
 function rate(x, ctx) {
   const name = x.name;
   const k = desc(name);
+  const pf = ctx.pf; // o campo do plano (chuva, sol, Electric Terrain…) ou null
   const out = { x, dmg: 0, phys: x.category === 0, group: null, gi: -1, util: 0, setup: null, side: null, prio: false, prioV: 0, type: null, vals: null, bonus: 0 };
-  const acc = ctx.noGuard || !x.accuracy ? 1 : Math.min(1, x.accuracy / 100 * ctx.accK * (ctx.hustle && x.category === 0 ? 0.8 : 1));
+  let acc = ctx.noGuard || !x.accuracy ? 1 : Math.min(1, x.accuracy / 100 * ctx.accK * (ctx.hustle && x.category === 0 ? 0.8 : 1));
+  // No clima: Thunder e Hurricane não erram na chuva (e erram mais no sol); Blizzard não erra na neve
+  if (pf && SURE_HIT[name] === pf) acc = 1;
+  if (pf === 'sol' && SURE_HIT[name] === 'chuva') acc = Math.min(acc, 0.5);
   const dmging = DAMAGING(x);
   if (dmging) {
-    const bx = x.boosted || x;
+    let bx = x.boosted || x;
     let p = k.est != null ? k.est : x.power || 60;
+    // Weather Ball no clima: 100 de poder e o tipo do clima
+    if (name === 'Weather Ball' && WEATHER_BALL[pf]) { bx = { ...bx, type: WEATHER_BALL[pf] }; p = 100; }
     if (bx !== x && bx.power && x.power) p *= bx.power / x.power; // a habilidade (Technician, Strong Jaw…)
     if (k.hits) p *= ctx.skillLink && k.multi ? 5 : k.hits;
     if (name === 'Gyro Ball' && ctx.b[5] <= 50) p = 110;
     if (name === 'Electro Ball' && ctx.b[5] >= 110) p = 100;
     let pen = k.pen;
+    if (pf && NO_CHARGE[name] === pf) pen = 1; // Solar Beam no sol, Electro Shot na chuva
     if (k.recoil && ctx.noRecoil) pen = Math.max(pen, 0.97);
     if (ctx.contrary && k.drop) { pen = 1.1; out.setup = 40; } // Leaf Storm no Serperior: sobe o Ataque Especial
     const stab = !k.fixed && (ctx.protean || ctx.types.includes(bx.type)) ? 1.5 : 1;
     const cat = k.fixed ? 1 : k.statOf != null ? ctx.catOf(ctx.b[k.statOf]) : x.category === 0 ? ctx.catP : ctx.catS;
     out.type = bx.type;
-    out.dmg = ctx.eff[bx.type] ? p * stab * cat * acc * pen : 0;
-    // Prioridade que bate de verdade (com o próprio tipo ou forte)
-    if (k.prio) { out.prio = true; out.prioV = name === 'Fake Out' ? 10 : stab > 1 || p >= 70 ? 20 * cat : 5; }
+    out.dmg = ctx.eff[bx.type] ? p * stab * cat * acc * pen * fieldMult(name, bx.type, ctx) : 0;
+    // Prioridade que bate de verdade (com o próprio tipo ou forte); no Psychic Terrain ela falha (contra quem está no chão)
+    if (k.prio && pf !== 'Psychic Terrain') { out.prio = true; out.prioV = name === 'Fake Out' ? 10 : stab > 1 || p >= 70 ? 20 * cat : 5; }
+    // Grassy Glide tem prioridade no Grassy Terrain
+    if (name === 'Grassy Glide' && pf === 'Grassy Terrain' && ctx.grounded) { out.prio = true; out.prioV = 20 * cat; }
   }
-  if (k.setup) { out.setup = k.setup; out.side = k.side; }
-  if (k.recover != null) { out.group = 'recover'; out.util = k.recover + ctx.bulk; }
+  if (k.setup) {
+    out.setup = k.setup * (ctx.pkind === 'offense' ? 1.3 : 1);
+    out.side = k.side;
+    // No Trick Room, subir a velocidade atrapalha (Agility, Rock Polish…)
+    if (ctx.pkind === 'room' && SPEED_SETUP.has(name)) out.setup = null;
+  }
+  if (k.recover != null) {
+    out.group = 'recover';
+    // Moonlight, Morning Sun e Synthesis curam mais no sol e menos nos outros climas; Shore Up cura mais na areia
+    const w = SUN_HEAL.has(name) ? (pf === 'sol' ? 12 : WEATHER_BALL[pf] ? -12 : 0) : name === 'Shore Up' && pf === 'tempestade de areia' ? 10 : 0;
+    out.util = k.recover + ctx.bulk + w;
+  }
   if (k.flat != null) { out.group = 'recover'; out.util = k.flat; }
   if (k.group) {
     // Golpe de dano com efeito (U-turn, Knock Off…): o efeito soma ao dano; os de status dependem da precisão
-    const u = k.gv * (dmging ? 1 : acc) * (ctx.prankster && !dmging ? 1.4 : 1) * (1 - (SUPPORT_CUT[k.group] || 0) * ctx.att);
+    let u = k.gv * (dmging ? 1 : acc) * (ctx.prankster && !dmging ? 1.4 : 1) * (1 - (SUPPORT_CUT[k.group] || 0) * ctx.att);
+    // Aurora Veil só funciona na neve (lá vale mais que as duas telas); Tailwind atrapalha no Trick Room; na Hiperofensiva,
+    // hazards e telas abrem o caminho
+    if (name === 'Aurora Veil') u = pf === 'neve/granizo' ? 30 : 0;
+    if (name === 'Tailwind' && ctx.pkind === 'room') u = 0;
+    if (ctx.pkind === 'offense' && (k.group === 'hazard' || k.group === 'screen')) u *= 1.4;
     if (!out.group || u > out.util) { out.group = k.group; out.util = u; }
   }
   return out;
@@ -229,6 +275,10 @@ export function pickMoveset(cands, ctx) {
   ctx.contrary = abs.includes('Contrary');
   ctx.protean = abs.includes('Protean') || abs.includes('Libero');
   ctx.prankster = abs.includes('Prankster');
+  // O plano: o campo (clima/terreno) e o tipo; quem voa ou levita não recebe o terreno
+  ctx.pf = ctx.plan && ctx.plan.kind !== 'room' ? ctx.plan.field || null : null;
+  ctx.pkind = ctx.plan ? ctx.plan.kind : null;
+  ctx.grounded = !ctx.types.includes('flying') && !abs.includes('Levitate');
   // O ataque que o golpe usa contra o maior dos dois (golpe especial num atacante físico rende menos)
   const hi = Math.max(b[1], b[3]);
   ctx.catOf = st => Math.pow((st + 20) / (Math.max(hi, st) + 20), 1.3);
@@ -241,6 +291,7 @@ export function pickMoveset(cands, ctx) {
     const use = usage && x.name ? usage.get(moveId(x.name)) || 0 : 0;
     if (force && force.has(x.name)) { if (!forced.some(r => r.x.name === x.name)) forced.push(Object.assign(rate(x, ctx), { bonus: 0 })); continue; }
     if (!x.name || PLAN_ONLY.has(x.name)) continue;
+    if (x.name === 'Aurora Veil' && ctx.pf !== 'neve/granizo') continue; // falha fora da neve
     const plain = x.category === 2 && !SETUP[x.name] && RECOVER[x.name] == null && !GROUP_OF.has(x.name);
     if (plain && x.src !== SRC.known && use < SMOGON_STATUS) continue;
     const r = rate(x, ctx);
@@ -312,6 +363,28 @@ export function pickMoveset(cands, ctx) {
   // Sem 4 golpes que valham algo, completa com os que já sabe (a vaga não muda nada)
   for (const x of cands) if (out.length < 4 && x.src === SRC.known && !out.includes(x)) out.push(x);
   return out;
+}
+
+/**
+ * O plano muda algo nos golpes possíveis deste Pokémon? (para não refazer a escolha à toa: num PC grande, centenas de
+ * Pokémon por plano)
+ */
+export function planSensitive(cands, plan) {
+  const pf = plan.kind === 'room' ? null : plan.field;
+  for (const x of cands) {
+    const n = x.name;
+    if (plan.kind === 'room') { if (SPEED_SETUP.has(n) || n === 'Tailwind') return true; continue; }
+    if (plan.kind === 'offense') { if (SETUP[n] || (GROUP_OF.get(n) && ['hazard', 'screen'].includes(GROUP_OF.get(n)[0]))) return true; continue; }
+    if (!pf) continue;
+    if (SURE_HIT[n] || NO_CHARGE[n] || n === 'Weather Ball' || n === 'Aurora Veil' || SUN_HEAL.has(n) || n === 'Shore Up' || n === 'Hydro Steam') return true;
+    if (DAMAGING(x)) {
+      if ((pf === 'chuva' || pf === 'sol') && (x.type === 'water' || x.type === 'fire')) return true;
+      if (TERRAIN_TYPE[pf] === x.type || (TERRAIN_MOVE[n] && TERRAIN_MOVE[n][0] === pf) || (pf === 'Misty Terrain' && x.type === 'dragon')) return true;
+      if (pf === 'Grassy Terrain' && n === 'Grassy Glide') return true;
+      if (pf === 'Psychic Terrain' && desc(n).prio) return true;
+    }
+  }
+  return false;
 }
 
 /** A tabela de eficácia contra os tipos puros (para pickMoveset), uma vez por jogo. */

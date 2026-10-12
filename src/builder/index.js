@@ -335,6 +335,8 @@ export function moreOptions(results, i, T) {
 
 function describeTeam(res, types, pool, ctx) {
   const threats = ctx.threats;
+  // Os Pokémon do plano (com o moveset dele, no Quetzal)
+  if (res.pp) pool = res.pp.pool;
   const { plan, team } = res;
   // As partes com as marcas do plano desta equipe (quem atrapalha o clima ou é fraco ao tipo que ele fortalece), como
   // na busca: sem isso valiam as do último plano buscado, e as partes não somavam a nota

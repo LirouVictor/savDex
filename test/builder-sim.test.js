@@ -261,7 +261,8 @@ it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: o moveset (sabe + nível + 
     const fmt = formatsFor(d.game);
     const sdex = Dex.forFormat(fmt.battle);
     const comp = compIndex(d.game);
-    const A = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), useTutor: false }, comp });
+    // SIM_PLANMOVES=1: o moveset genérico (o mesmo em todos os planos) contra o moveset do plano
+    const A = B.buildTeams(mons, T, { dex: process.env.SIM_PLANMOVES ? { ...quetzalLearnDex(QL, QT), planMoves: false } : { ...quetzalLearnDex(QL, QT), useTutor: false }, comp });
     const Bt = B.buildTeams(mons, T, { dex: quetzalLearnDex(QL, QT), comp });
     const opp = opponents(fmt.opp, NOPP, 5);
     const setsOf = r => { const s = leadOrder(r.team, r.plan).map(e => toSet(e, r.plan, sdex)); return s.some(x => !x) ? null : s; };
