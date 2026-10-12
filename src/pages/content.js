@@ -1,13 +1,23 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-11';
+export const UPDATED = '2026-10-12';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-12',
+    pt: [
+      'Montar equipe (Quetzal): o app agora escolhe os 4 golpes de cada Pokémon da equipe, entre os que ele já sabe, os que aprende por nível e os do tutor. No Quetzal, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça qualquer golpe do tutor e os por nível até o nível atual, então o app monta o moveset pelo competitivo: os golpes que os sets do Smogon daquela espécie mais usam (se ela aprende no jogo), completados por contas (golpes do próprio tipo, cobertura, setup, recuperação, hazards, pivô) para quem não tem dados. Cada card mostra os 4 golpes (com a marca “tutor”, “nível” ou o nível em que aprende), os próximos passos dizem o que ensinar, e o “Copiar (Showdown)” e o “Comentar com IA” levam esse moveset. Em batalhas simuladas, as equipes com o moveset venceram as de antes do mesmo plano em 84% dos jogos.',
+    ],
+    en: [
+      'Build team (Quetzal): the app now picks the 4 moves of each team member, from the ones it already knows, the ones it learns by level and the tutor ones. In Quetzal, the Pokémon menu (NEW MOVE) teaches any tutor move and the level moves up to the current level right away and for free, so the app builds the moveset from competitive play: the moves Smogon sets of that species use most (if it learns them in the game), filled in by calculations (same-type moves, coverage, setup, recovery, hazards, pivoting) for those without data. Each card shows the 4 moves (marked “tutor”, “level” or the level it learns them at), the next steps say what to teach, and “Copy (Showdown)” and “Comment with AI” take that moveset along. In simulated battles, teams with the moveset beat the previous ones of the same plan in 84% of the games.',
+    ],
+  },
+  {
     date: '2026-10-11',
     pt: [
+      'Detalhe do Pokémon (Quetzal): duas listas novas, tiradas da ROM do jogo. “Golpes por tutor” mostra tudo o que o menu NOVO MOV. → TUTOR do jogo ensina (qualquer golpe, a qualquer momento), e “Golpes de ovo”, os que passam no cruzamento.',
       'Montar equipe: nos PCs muito grandes (mais de 500 Pokémon), a busca olha o dobro de candidatos. Pokémon fortes que perdiam a vaga para os lendários agora entram, e as equipes que mudaram venceram as de antes do mesmo plano em batalhas simuladas (simulador do Pokémon Showdown). Nos PCs menores nada muda.',
       'Montar equipe: novo plano “Hiperofensiva”, o mais usado no competitivo de singles. Um Pokémon abre o caminho com hazards (Stealth Rock, Spikes…) ou telas (Reflect, Light Screen, Aurora Veil) e 3 ou mais atacantes fortes sobem os stats (Swords Dance, Dragon Dance, Nasty Plot…) e varrem. Aparece quando o save tem quem faça isso (também ensinando golpes que eles aprendem por nível), e a tela diz o que ensinar.',
       'Montar equipe mais objetiva: cada Pokémon mostra a função e até 3 motivos curtos (ex.: “Drizzle · pivô, recuperação”), os pontos fortes e fracos ficam nos 3 mais importantes, os próximos passos vêm logo depois, o ideal do competitivo e as ameaças cabem numa linha por item, e as contas detalhadas ficam recolhidas em “Contas da equipe”. A nota mostra só as partes que não são zero.',
@@ -20,6 +30,7 @@ export const NEWS = [
       'Detalhe do Pokémon: a linha evolutiva virou uma árvore, com cada ramo na sua fileira e setas entre os estágios. Linhas com forma regional (Goomy → Sliggoo → Goodra e, embaixo, Sliggoo de Hisui → Goodra de Hisui) ou com vários ramos (Eevee, Wurmple) não ficam mais embaralhadas; em tela estreita, a árvore rola para o lado em vez de quebrar.',
     ],
     en: [
+      'Pokémon details (Quetzal): two new lists, taken from the game ROM. “Tutor moves” shows everything the game’s NEW MOVE → TUTOR menu teaches (any move, at any time), and “Egg moves”, the ones passed on when breeding.',
       'Team builder: in very large PCs (over 500 Pokémon) the search looks at twice as many candidates. Strong Pokémon that lost their spot to legendaries now get in, and the teams that changed beat the old ones of the same plan in simulated battles (Pokémon Showdown simulator). Smaller PCs are unchanged.',
       'Build team: a new “Hyper Offense” plan, the most used in competitive singles. One Pokémon paves the way with hazards (Stealth Rock, Spikes…) or screens (Reflect, Light Screen, Aurora Veil) and 3 or more strong attackers boost their stats (Swords Dance, Dragon Dance, Nasty Plot…) and sweep. It shows up when the save has Pokémon for it (also by teaching moves they learn by level), and the screen says what to teach.',
       'A more to-the-point Build team: each Pokémon shows its role and up to 3 short reasons (e.g. “Drizzle · pivot, recovery”), strengths and weaknesses keep the 3 that matter most, next steps come right after, the competitive ideal and the threats fit in one line per item, and the detailed calculations are folded into “Team calculations”. The score shows only the parts that are not zero.',

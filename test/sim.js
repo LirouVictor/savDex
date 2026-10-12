@@ -9,6 +9,7 @@
 
 import { createRequire } from 'node:module';
 import { FIELD, FIELD_MOVES, MEGA_FIELD } from '../src/ai/strategy.js';
+import { finalMoveset } from '../src/builder/build.js';
 
 const require = createRequire(import.meta.url);
 let PS = null;
@@ -66,6 +67,15 @@ export function toSet(e, plan, dex) {
   if (plan.kind === 'offense') {
     if (e.sweep && e.sweep < 1 && e.sweepMove) teach.push(e.sweepMove.name);
     if (e.hoSup && e.hoSup < 1 && e.supMove) teach.push(e.supMove.name);
+  }
+  // Moveset do montador (Quetzal): os 4 golpes escolhidos, com os que o plano pede no lugar dos que menos fazem falta
+  if (e.set) {
+    const ids = finalMoveset(e, teach.filter(n => e.mcands && e.mcands.some(x => x.name === n))).map(mv => dex.moves.get(mv.name)).filter(mv => mv.exists).map(mv => mv.id);
+    if (!ids.length) return null;
+    const itemName = e.given || (m.item && m.item.name);
+    const item = itemName && dex.items.get(itemName).exists ? dex.items.get(itemName).name : '';
+    const ab = m.ability && m.ability.name && dex.abilities.get(m.ability.name).exists ? dex.abilities.get(m.ability.name).name : sp.abilities[0];
+    return { name: sp.name, species: sp.name, item, ability: ab, moves: [...new Set(ids)].slice(0, 4), nature: 'Serious', evs: EV85, ivs: IV31, level: 100, gender: '' };
   }
   const known = m.moves.map(mv => dex.moves.get(mv.name)).filter(mv => mv.exists);
   const rank = mv => {

@@ -375,7 +375,8 @@ function setupBuilder(out) {
     btn.disabled = true;
     try {
       // O "ideal × o que você tem" vai junto: a IA comenta se vale capturar o ideal ou usar a alternativa do save
-      const res = await askAi('review', slot, btn, { team: cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])),
+      // Com o moveset do app (Quetzal), a IA vê os golpes que o app sugere, não os do save
+      const res = await askAi('review', slot, btn, { team: cur.showdown || cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])),
         ideal: cur.r.ideal ? cur.r.ideal.lines : [], idealMons: cur.r.ideal ? cur.r.ideal.alts.map(m => m.evolvedFrom || m.stoneFrom || m) : [] });
       if (res) cur.review = { html: res.html, byRef: res.byRef };
     } finally {
@@ -451,7 +452,8 @@ function setupBuilder(out) {
     }
     const copy = e.target.closest('[data-ai-copy]');
     if (copy) {
-      const ok = await copyText(showdownTeam(cur.team));
+      // Com o moveset do app (Quetzal): os golpes sugeridos, prontos para o Showdown
+      const ok = await copyText(showdownTeam(cur.showdown || cur.team));
       copy.textContent = t(ok ? 'Copiado!' : 'Não foi possível copiar');
       return;
     }
@@ -572,7 +574,8 @@ function openDetail(m, opener) {
 
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
 // Quetzal, Unbound e SoulGold: golpes por nível da ROM (quetzal-learn.json / unbound-learn.json /
-// soulgold-learn.json) no lugar do dex.json; a evolução vem de T.quetzal / T.unbound / T.soulgold
+// soulgold-learn.json) no lugar do dex.json; a evolução vem de T.quetzal / T.unbound / T.soulgold.
+// No Quetzal, também os golpes por tutor e de ovo (quetzal-teach.json)
 const dexCache = {}, dexLoaded = new Set();
 const ROM_LEARN = ['quetzal', 'unbound', 'soulgold']; // jogos com golpes por nível da ROM (também usados pela IA)
 const dexKey = () => (T.quetzal ? 'quetzal' : T.unbound ? 'unbound' : T.soulgold ? 'soulgold' : 'dex');
@@ -581,8 +584,10 @@ function loadDex() {
   if (!dexCache[key]) {
     const data = key === 'quetzal' ? import('./data/quetzal-learn.json') : key === 'unbound' ? import('./data/unbound-learn.json')
       : key === 'soulgold' ? import('./data/soulgold-learn.json') : import('./data/dex.json');
-    dexCache[key] = Promise.all([data, import('./ui/dex.js')]).then(([d, ui]) => ({
-      dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound)
+    // Quetzal: também os golpes por tutor (menu NOVO MOV. do jogo) e de ovo (quetzal-teach.json)
+    const teach = key === 'quetzal' ? import('./data/quetzal-teach.json') : null;
+    dexCache[key] = Promise.all([data, import('./ui/dex.js'), teach]).then(([d, ui, tc]) => ({
+      dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default, tc && tc.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound)
         : key === 'soulgold' ? ui.soulgoldLearnDex(d.default, T.soulgold) : d.default,
       ui,
     })).catch(e => { delete dexCache[key]; throw e; });

@@ -13,7 +13,8 @@
 //     (17), nomes das espécies (13), dados das espécies (36 bytes: stats, tipos, gênero, curva, habilidades) e
 //     evoluções (88 bytes por espécie: até 11 × método, parâmetro, espécie alvo), dados dos golpes (24 bytes:
 //     tipo, poder, precisão, PP, categoria) e golpes por nível (ponteiro por
-//     espécie para uma lista de golpe + nível) → src/data/quetzal-learn.json.
+//     espécie para uma lista de golpe + nível) → src/data/quetzal-learn.json; golpes por tutor (a tabela de ponteiros
+//     seguinte, a lista do menu NOVO MOV. → TUTOR) e de ovo (gEggMoves) → src/data/quetzal-teach.json.
 //   - PokeAPI (CSV): forma correspondente de cada espécie > 898 (sprite, nome no Showdown, linha evolutiva),
 //     pelo nome da espécie + tipos + stats base.
 //
@@ -28,6 +29,7 @@ import { decodeText, encodeText } from '../src/parser/charset.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'src/data/quetzal.json');
 const OUT_LEARN = path.join(ROOT, 'src/data/quetzal-learn.json');
+const OUT_TEACH = path.join(ROOT, 'src/data/quetzal-teach.json');
 const PAPI = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv';
 const SPRITES = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 const ENGLISH = 9;
@@ -230,7 +232,45 @@ function tables(rom) {
     fail('Golpes por nível: Primeape/Rage Fist não confere.');
   }
 
-  return { items, moves, abilities, count: names.length - 1, info, evolutions, learnSets, learnOf, moveData };
+  // Golpes por tutor: a tabela de ponteiros logo depois da dos golpes por nível (u32 por espécie para uma lista de
+  // golpes u16 em ordem alfabética, que acaba em 0xFFFF). É a lista do menu NOVO MOV. → TUTOR do jogo (ensina qualquer um
+  // a qualquer momento, por ₽0). Conferido no jogo com o Pelipper: os mesmos 90 golpes, na mesma ordem.
+  const teachBase = learnBase + names.length * 4;
+  const readList = o => {
+    const r = [];
+    for (let k = 0; k < 500; k++) { const mv = rom.readUInt16LE(o + 2 * k); if (mv === 0xffff) return r; if (!mv || mv >= moves.length) return null; r.push(mv); }
+    return null;
+  };
+  const teachIndex = new Map(), teachSets = [], teachOf = [0];
+  let teachPelipper = null;
+  for (let id = 1; id < names.length; id++) {
+    const o = ptrAt(teachBase + id * 4), l = o >= 0 ? readList(o) : null;
+    if (!l) fail(`Golpes por tutor: lista inválida na espécie ${id}.`);
+    if (id === 279) teachPelipper = l.map(mv => moves[mv]); // na ordem do jogo, para a conferência
+    l.sort((a, b) => a - b); // guardadas em ordem numérica (o arquivo comprime melhor; a tela ordena pelo nome)
+    const key = l.join();
+    if (!teachIndex.has(key)) { teachIndex.set(key, teachSets.length); teachSets.push(l); }
+    teachOf.push(teachIndex.get(key));
+  }
+  const pelipper = teachPelipper;
+  if (pelipper.length !== 90 || pelipper[0] !== 'Acrobatics' || pelipper[5] !== 'Aqua Ring' || pelipper[89] !== 'Wing Attack') {
+    fail('Golpes por tutor: a lista do Pelipper não confere com a do jogo.');
+  }
+  // Golpes de ovo: lista única de u16, cada espécie marcada por 20000 + espécie e seguida dos golpes, até 0xFFFF
+  // (gEggMoves do pokeemerald). Achada pela do Bulbasaur (Skull Bash, Charm, Petal Dance…).
+  const eggSig = Buffer.alloc(8);
+  [20001, moves.indexOf('Skull Bash'), moves.indexOf('Charm'), moves.indexOf('Petal Dance')].forEach((v, i) => eggSig.writeUInt16LE(v, 2 * i));
+  const eggStart = rom.indexOf(eggSig);
+  if (eggStart < 0 || eggStart % 2) fail('Golpes de ovo não encontrados.');
+  const eggMoves = {};
+  for (let o = eggStart, cur = 0; ; o += 2) {
+    const v = rom.readUInt16LE(o);
+    if (v === 0xffff) break;
+    if (v > 20000) { cur = v - 20000; if (cur >= names.length) fail(`Golpes de ovo: espécie ${cur} inválida.`); eggMoves[cur] = []; continue; }
+    if (!cur || !v || v >= moves.length) fail(`Golpes de ovo: golpe ${v} inválido.`);
+    eggMoves[cur].push(v);
+  }
+  return { items, moves, abilities, count: names.length - 1, info, evolutions, learnSets, learnOf, moveData, teachSets, teachOf, eggMoves };
 }
 
 // Taxa de gênero da ROM (0 só macho, 254 só fêmea, 255 sem gênero, senão limite) → escala da PokeAPI (−1, 0..8)
@@ -347,6 +387,20 @@ async function main() {
   // sets: listas [nível, golpe, nível, golpe, …] sem repetir; species[id] = índice da lista daquela espécie
   await writeFile(OUT_LEARN, JSON.stringify({ meta: { source: meta.source, sha1, generatedAt: meta.generatedAt }, sets: T.learnSets, species: T.learnOf }) + '\n');
   console.log(`golpes por nível: ${T.learnSets.length} listas, ${T.learnSets.reduce((a, s) => a + s.length / 2, 0)} golpes`);
+  // Golpes por tutor e de ovo, noutro arquivo (carregado junto com o de golpes por nível). tutor: listas sem repetir e
+  // species[id] = índice; egg: { espécie: [golpes] } só da primeira da linha evolutiva (quem nasce do ovo), e eggOf[id] =
+  // a espécie da linha que tem a lista (as evoluídas herdam: o golpe de ovo continua com o Pokémon quando ele evolui)
+  const parent = {};
+  for (const [from, list] of Object.entries(T.evolutions)) for (const [, , to] of list) if (!(to in parent)) parent[to] = +from;
+  const eggOf = [0];
+  for (let id = 1; id <= T.count; id++) {
+    let base = id;
+    for (let k = 0; k < 4 && !T.eggMoves[base] && base in parent; k++) base = parent[base];
+    eggOf.push(T.eggMoves[base] ? base : 0);
+  }
+  await writeFile(OUT_TEACH, JSON.stringify({ meta: { source: meta.source, sha1, generatedAt: meta.generatedAt },
+    tutor: { sets: T.teachSets, species: T.teachOf }, egg: T.eggMoves, eggOf }) + '\n');
+  console.log(`golpes por tutor: ${T.teachSets.length} listas, ${T.teachSets.reduce((a, s) => a + s.length, 0)} golpes; de ovo: ${Object.keys(T.eggMoves).length} espécies (${eggOf.filter(Boolean).length} com a linha)`);
   console.log(`evoluções: ${Object.keys(T.evolutions).length} espécies`);
   console.log(`itens ${meta.items}, golpes ${meta.moves} (${Object.keys(out.moveNames).length} com nome próprio), espécies ${T.count}` +
     ` (> ${NATIONAL_UP_TO}: ${stat.unica} com forma, ${stat.aparencia} de aparência, ${stat.sem} sem correspondência)`);
