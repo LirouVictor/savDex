@@ -164,3 +164,36 @@ suite('Moveset do plano', () => {
     expect(pickMoveset([...c, cand('Superpower')], { ...slow, plan: { kind: 'room', field: 'Trick Room' } }).map(x => x.name)).not.toContain('Agility');
   });
 });
+
+suite('Item e habilidade do competitivo (Quetzal)', () => {
+  const TQ = { ...T, quetzal: { items: [null, 'Leftovers', 'Choice Scarf', 'Life Orb', 'Rocky Helmet'], moveNames: {} } };
+  const table = {
+    format: 'teste', ids: ['garchomp'], pairs: [], usage: [1],
+    moves: [['earthquake', 0.98, 'swordsdance', 0.5, 'outrage', 0.4]],
+    items: [['choicescarf', 0.4, 'rockyhelmet', 0.3, 'leftovers', 0.2]],
+    abilities: [['roughskin', 0.95]],
+  };
+  const chomp = () => ({
+    location: 'pc', where: 'BOX1', boxIndex: 0, slot: 1, speciesId: 445, nickname: 'Garchomp', hasNickname: false, level: 80,
+    species: { name: 'Garchomp', form: null, showdown: 'Garchomp', types: ['dragon', 'ground'], baseStats: [108, 130, 95, 80, 85, 102], abilities: ['Sand Veil', null, 'Rough Skin'] },
+    ability: { num: 0, name: 'Sand Veil' }, item: null, nature: { name: 'Jolly' }, ivs: {}, evs: {},
+    moves: [{ ...info('Dragon Claw'), id: id('Dragon Claw') }], shiny: false, gender: null,
+  });
+  const dex = { rom: true, learn: { 445: [0, 1, id('Dragon Claw')] }, tutor: { 445: ['Earthquake', 'Outrage', 'Swords Dance', 'Stone Edge'].map(id) } };
+  it('troca para a habilidade dos sets (Ability Patch para a oculta) e dá o item que combina com o moveset', async () => {
+    const { smogonIndex } = await import('../src/builder/smogon.js');
+    const comp = smogonIndex([table]);
+    const [e] = prepare([chomp()], TQ, dex, { comp });
+    expect(e.m.ability.name).toBe('Rough Skin');
+    expect(e.m.gear).toMatchObject({ ability: 'Rough Skin', from: 'Sand Veil', patch: true });
+    // Swords Dance no moveset: Choice Scarf não serve; vai o próximo do competitivo
+    expect(e.set.map(x => x.name)).toContain('Swords Dance');
+    expect(e.m.item.name).toBe('Rocky Helmet');
+    // O Pokémon do save continua o mesmo
+    expect(e.real.ability.name).toBe('Sand Veil');
+    expect(e.real.item).toBe(null);
+    // Desligado (testes de comparação), como antes
+    const [e0] = prepare([chomp()], TQ, { ...dex, gear: false }, { comp });
+    expect(e0.m.ability.name).toBe('Sand Veil');
+  });
+});

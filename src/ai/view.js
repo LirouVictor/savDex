@@ -76,6 +76,7 @@ function appPanels(r, byRef, check, dicas) {
   return `${panel('Próximos passos', 'swap', dicas)}
     ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
     ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}
+    ${r.interacoes ? `<details class="fold ai-facts"><summary>${t('Interações')}</summary>${bullets(r.interacoes.lines, byRef)}${note(r.interacoes)}</details>` : ''}
     ${check ? `<details class="fold ai-facts"><summary>${t('Contas da equipe')}</summary>${check}</details>` : ''}`;
 }
 
@@ -136,6 +137,14 @@ export function analysisView(r, byRef, model, opts = null) {
   </div>`;
 }
 
+/** Item e habilidade que o montador sugere (Quetzal): "@ Leftovers dar · Drizzle trocar". */
+function gearHtml(x) {
+  if (!x.item && !x.habilidade) return '';
+  const item = x.item ? `@ ${esc(x.item.name)}${x.item.give ? ` <i>${t('dar')}</i>` : ''}` : '';
+  const ab = x.habilidade ? `${esc(x.habilidade.name)} <i>${t('trocar')}</i>` : '';
+  return `<small class="ai-gear">${[item, ab].filter(Boolean).join(' · ')}</small>`;
+}
+
 /** Os 4 golpes do moveset do montador, com a cor do tipo e de onde vêm (tutor, nível já alcançado, nível a treinar). */
 function movesetHtml(golpes) {
   const tag = x => (x.src === 'tutor' ? t('tutor') : x.src === 'now' ? t('nível') : x.src === 'level' ? `${t('Nv.')} ${x.level}` : '');
@@ -160,13 +169,14 @@ export function buildView(r, byRef, model, T, opts = null) {
         <small>${esc(where(m))}</small>
         ${from ? `<small class="ai-evolve">${esc(t('Evolua: hoje é {name}{lv}', { name: from.species.name, lv: from.level ? ` (${t('Nv.')} ${from.level})` : '' }))}</small>` : ''}
         ${typeChips(m.species.types)}
+        ${gearHtml(x)}
         <span class="ai-why">${rich(x.motivo, byRef)}</span>
         ${x.golpes ? movesetHtml(x.golpes) : ''}
       </span>
     </button></li>`;
   }).join('');
   const setHint = r.membros.some(x => x.golpes)
-    ? `<p class="hint ai-moveset-hint">${t('Golpes de cada um: sem marca, ele já sabe; “tutor” e “nível”, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça; “Nv. N”, aprende ao chegar no nível.')}</p>` : '';
+    ? `<p class="hint ai-moveset-hint">${t('Golpes de cada um: sem marca, ele já sabe; “tutor” e “nível”, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça; “Nv. N”, aprende ao chegar no nível.')}${r.membros.some(x => x.item || x.habilidade) ? ' ' + t('Item e habilidade: os que o competitivo (Smogon) mais usa; “dar” e “trocar” = o que ainda falta.') : ''}</p>` : '';
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
   const issues = mons.length ? buildIssues(mons, T) : [];
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';

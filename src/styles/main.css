@@ -708,6 +708,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-mv small { flex: none; color: var(--accent); font-size: .66rem; font-weight: 700; }
 .ai-mv small.train { color: var(--gold); }
 .ai-moveset-hint { margin-top: 2px; }
+.ai-gear { color: var(--ink); font-size: .8rem; font-weight: 600; }
+.ai-gear i { font-style: normal; color: var(--accent); font-size: .68rem; font-weight: 700; margin-left: 2px; }
 .ai-foot { font-size: .8rem; }
 /* Confirmação antes de enviar à IA */
 .ai-confirm[open] { display: grid; gap: 12px; } /* só quando aberta: fechada, o navegador esconde */
