@@ -35,7 +35,7 @@ export const planName = plan => {
 };
 
 /** O golpe que já sabe, ou "ensine X (Nv. N)". */
-const moveOrTeach = (mv, known) => (known ? mv.name : t('ensine {move} ({when})', { move: mv.name, when: learnAt(mv.level) }));
+const moveOrTeach = (mv, known) => (known ? mv.name : t('ensine {move} ({when})', { move: mv.name, when: learnAt(mv) }));
 
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -87,8 +87,18 @@ function whyUses(m, f) {
   return why;
 }
 
-/** "aprende no Nv. 41" / "aprende ao evoluir" */
-const learnAt = level => (level === TUTOR ? t('pelo tutor') : level ? t('aprende no Nv. {n}', { n: level }) : t('aprende ao evoluir'));
+// SoulGold: os golpes da lista de TM/tutor da ROM pedem o TM (item do jogo) ou o tutor, e os por nível já alcançados
+// voltam pelo Relearn do resumo do Pokémon (no Quetzal, o menu NOVO MOV. ensina tudo na hora). Vale para o save aberto
+let itemTeach = false;
+/** "aprende no Nv. 41" / "aprende ao evoluir" / "com o TM13" (o golpe a ensinar, ou só o nível) */
+const learnAt = x => {
+  const level = x && typeof x === 'object' ? x.level : x;
+  if (x && x.src === SRC.tm) return x.tm ? t('com o {tm}', { tm: x.tm }) : t('com um tutor do jogo');
+  return level === TUTOR ? t('pelo tutor') : level ? t('aprende no Nv. {n}', { n: level }) : t('aprende ao evoluir');
+};
+/** Quando ensinar um golpe do moveset (estratégias, papéis da original). */
+const teachWhen = x => (x.src === SRC.level || x.src === SRC.tm ? learnAt(x) : x.src === SRC.known ? t('já sabe')
+  : itemTeach ? t('pelo Relearn do resumo') : t('na hora, pelo NOVO MOV.'));
 /** Golpe a ensinar que põe ou aproveita o campo f. */
 const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
   ? FIELD_MOVES[name] === f || (f === 'Trick Room' && name === 'Trick Room')
@@ -110,9 +120,9 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined,
     role = t('põe {field}', { field: t(f) });
     why.push(howSets(bf, f));
   } else if (f && e.learnSet.has(f)) {
-    const [mv, lv] = teachFor(e, f, 'set') || [];
+    const [mv, x] = teachFor(e, f, 'set') || [];
     role = t('pode pôr {field}', { field: t(f) });
-    if (mv) why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(lv) }));
+    if (mv) why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(x) }));
   }
   if (plan.kind !== 'room' && f && e.strong.has(f)) {
     // Sob o selo "aproveita chuva", só o porquê (Swift Swim); sob outro selo, com o verbo
@@ -122,10 +132,10 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined,
       if (uses.length) why.push(list(uses));
     } else if (uses.length) why.push(t('aproveita: {list}', { list: list(uses) }));
   } else if (plan.kind !== 'room' && f && e.learnUse.has(f) && !e.stab.has(f)) {
-    const [mv, lv] = teachFor(e, f, 'use') || [];
+    const [mv, x] = teachFor(e, f, 'use') || [];
     if (mv) {
       if (!role) role = t('aproveita {field}', { field: t(f) });
-      why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(lv) }));
+      why.push(t('ensine {move} ({when})', { move: mv, when: learnAt(x) }));
     }
   } else if (plan.kind === 'weather' && WEATHER[f] && (e.stab.has(f) || e.strat.boost.has(f)) && !role) {
     role = t('golpes {type} mais fortes', { type: cap(WEATHER[f].boosts) });
@@ -167,7 +177,7 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined,
   if (!why.length) why.push(t('atacante {kind}, stats base {bst}', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
   const out = { ref: refOf(m), papel: role, motivo: cap(why.slice(0, 3).join(' · ')) };
   // O moveset: o que já sabe, o que o menu do Pokémon ensina na hora (tutor, nível já alcançado) e o que precisa de treino
-  if (shownSet) out.golpes = shownSet.map(x => ({ name: x.name, type: x.type, src: x.src, level: x.level }));
+  if (shownSet) out.golpes = shownSet.map(x => ({ name: x.name, type: x.type, src: x.src, level: x.level, tm: x.tm }));
   // Item e habilidade do competitivo (Quetzal): o que dar e o que trocar
   const real = realOf(m), g = m.gear || {};
   if (item !== undefined && item) out.item = { name: item, give: !(real.item && real.item.name === item) };
@@ -192,37 +202,38 @@ function planMoves(team, plan) {
   let n = 0;
   const taken = new Set();
   // `own`: o golpe é dele (o que aproveita o clima e o card já cita): fora do limite de 3 e pode repetir em outro membro
-  const add = (e, mv, lv, why, own = false) => {
+  // `x`: o golpe a ensinar (nível, de onde vem, o TM)
+  const add = (e, mv, x, why, own = false) => {
     if (!e || !mv) return;
     if (!own && (n >= 3 || taken.has(mv) || taken.has(e))) return;
     if ((e.set || e.m.moves).some(x => x.name === mv) || (out.get(e) || []).some(x => x.name === mv)) return; // já está no moveset
     if (!own) { taken.add(mv); taken.add(e); n++; }
-    out.set(e, [...(out.get(e) || []), { name: mv, level: lv, why }]);
+    out.set(e, [...(out.get(e) || []), { name: mv, level: x && x.level, src: x && x.src, tm: x && x.tm, why }]);
   };
   const f = plan.field;
   if (f && !team.some(e => e.strat.set.has(f))) {
     const e = team.find(x => x.learnSet.has(f));
-    const [mv, lv] = (e && teachFor(e, f, 'set')) || [];
-    add(e, mv, lv, t('põe {field}', { field: t(f) }));
+    const [mv, x] = (e && teachFor(e, f, 'set')) || [];
+    add(e, mv, x, t('põe {field}', { field: t(f) }));
   }
   if (plan.kind === 'offense') {
     if (!team.some(e => e.hoSup === 1)) {
       const e = team.find(x => x.hoSup);
-      if (e) add(e, e.supMove.name, e.supMove.level, t('abre o caminho'));
+      if (e) add(e, e.supMove.name, e.supMove, t('abre o caminho'));
     }
-    for (const e of team) if (e.sweep && e.sweep < 1) add(e, e.sweepMove.name, e.sweepMove.level, t('setup'));
+    for (const e of team) if (e.sweep && e.sweep < 1) add(e, e.sweepMove.name, e.sweepMove, t('setup'));
   }
   for (const r of ['prioridade', 'recuperação', 'controle de velocidade', 'pivô', 'setup', 'hazards', 'tira hazards']) {
     if (team.some(e => e.roles.includes(r))) continue;
     const e = team.find(x => x.roleMoves.has(r));
-    if (e) add(e, e.roleMoves.get(r).name, e.roleMoves.get(r).level, t(r));
+    if (e) add(e, e.roleMoves.get(r).name, e.roleMoves.get(r), t(r));
   }
   // Com o moveset, o golpe que aproveita o clima e que o card já cita (Thunder na chuva…) também entra nele
   if (f && plan.kind !== 'room') {
     for (const e of team) {
       if (!e.set || e.strong.has(f) || e.stab.has(f) || !e.learnUse.has(f)) continue;
-      const [mv, lv] = teachFor(e, f, 'use') || [];
-      add(e, mv, lv, t('aproveita {field}', { field: t(f) }), true);
+      const [mv, x] = teachFor(e, f, 'use') || [];
+      add(e, mv, x, t('aproveita {field}', { field: t(f) }), true);
     }
   }
   return out;
@@ -287,24 +298,29 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
   const tips = [];
   // Golpes de dano que faltam (o app contou com eles): sempre aparecem
   for (const e of team) {
-    if (e.teachAtk && e.teachAtk.length) tips.push(t('Ensine {moves} a {ref}: golpes de dano.', { moves: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)), ref: refOf(e.m) }));
+    if (e.teachAtk && e.teachAtk.length) tips.push(t('Ensine {moves} a {ref}: golpes de dano.', { moves: list(e.teachAtk.map(x => `${x.name} (${learnAt(x)})`)), ref: refOf(e.m) }));
   }
   // O que o plano pede (até 3 golpes, sem repetir golpe nem Pokémon)
-  for (const [e, mvs] of extra) for (const x of mvs) tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: x.name, ref: refOf(e.m), when: learnAt(x.level), why: x.why }));
-  // Moveset: o resto dos golpes a ensinar, numa linha para o que o menu do Pokémon ensina na hora e outra para o treino
+  for (const [e, mvs] of extra) for (const x of mvs) tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: x.name, ref: refOf(e.m), when: learnAt(x), why: x.why }));
+  // Moveset: o resto dos golpes a ensinar, numa linha para o que o menu do Pokémon ensina na hora, outra para os TMs e
+  // tutores (SoulGold) e outra para o treino
   if (shown.size) {
     const planned = e => new Set((extra.get(e) || []).map(x => x.name));
-    const now = [], train = [];
+    const now = [], train = [], tms = [];
     for (const e of team) {
       const set = shown.get(e);
       if (!set) continue;
       const skip = planned(e);
       const q = set.filter(x => (x.src === SRC.tutor || x.src === SRC.now) && !skip.has(x.name)).map(x => x.name);
       const l = set.filter(x => x.src === SRC.level && !skip.has(x.name)).map(x => t('{move} no Nv. {n}', { move: x.name, n: x.level }));
+      const m = set.filter(x => x.src === SRC.tm && !skip.has(x.name)).map(x => `${x.name} (${learnAt(x)})`);
       if (q.length) now.push(`${refOf(e.m)}: ${list(q)}`);
       if (l.length) train.push(`${refOf(e.m)}: ${list(l)}`);
+      if (m.length) tms.push(`${refOf(e.m)}: ${list(m)}`);
     }
-    if (now.length) tips.push(t('Ensine pelo menu do Pokémon (NOVO MOV., na hora e de graça): {list}.', { list: now.join('; ') }));
+    if (now.length) tips.push(itemTeach ? t('Ensine pelo Relearn do resumo do Pokémon (golpes por nível já alcançados): {list}.', { list: now.join('; ') })
+      : t('Ensine pelo menu do Pokémon (NOVO MOV., na hora e de graça): {list}.', { list: now.join('; ') }));
+    if (tms.length) tips.push(t('Consiga o TM ou o tutor: {list}.', { list: tms.join('; ') }));
     if (train.length) tips.push(t('Treine até o nível para aprender: {list}.', { list: train.join('; ') }));
   }
   // Itens e habilidades do competitivo: o que dar e o que trocar (o jogador dá um jeito de conseguir)
@@ -338,6 +354,7 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
  *   (a montagem livre, para as alternativas)
  */
 export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null, comp = null, saveGame = null, refs = undefined } = {}) {
+  itemTeach = !!(dex && dex.teach === 'item');
   const ctx = prepareBuild(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game, comp });
   // "Ideal × o que você tem" e as referências precisam das espécies do jogo do save (com ou sem as ameaças)
   Object.assign(ctx, { T, saveGame });
@@ -534,7 +551,7 @@ function strategyCards(team, plan, shownSets, items) {
     const who = x.who.map(([ref, r]) => `${ref} (${t(ROLE_NAME[r] || r)})`);
     const prep = x.prep.map(p => (p.kind === 'item'
       ? t('dê {item} a {ref}', { item: p.name, ref: p.ref })
-      : t('ensine {move} a {ref} ({when})', { move: p.name, ref: p.ref, when: p.src === SRC.level ? t('Nv. {n}', { n: p.level }) : p.src === SRC.known ? t('já sabe') : t('na hora, pelo NOVO MOV.') })));
+      : t('ensine {move} a {ref} ({when})', { move: p.name, ref: p.ref, when: p.src === SRC.level ? t('Nv. {n}', { n: p.level }) : teachWhen(p) })));
     const parts = [`${cap(t(x.s.how))}.`, t('Quem faz: {list}.', { list: list(who) })];
     if (prep.length) parts.push(t('Falta: {list}.', { list: list(prep) }));
     parts.push(t('Dá: {gives}. Cuidado com: {list}.', { gives: t(x.s.gives), list: t(x.s.breaks) }));
@@ -750,7 +767,7 @@ function refPanels(x, ctx, bits, shownSets) {
     if (!lost.length || !e.mcands) return;
     const fix = lost.map(k => {
       const tch = roleTeach(e, shownSets.get(e), null, k);
-      return tch ? t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }) : null;
+      return tch ? t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level || tch.src === SRC.tm ? learnAt(tch) : itemTeach ? t('pelo Relearn do resumo') : t('o menu ensina na hora') }) : null;
     }).filter(Boolean);
     if (fix.length) lines.push(t('Para {ref} fazer o papel da original: {fix}.', { ref: refOf(e.m), fix: fix.join('; ') }));
   });
@@ -783,7 +800,7 @@ function spriteOf(T, spec) {
   return resolvers.get(T).species(spec.id).spriteId || null;
 }
 function itemNameOf(id, T) {
-  for (const it of (T.quetzal && T.quetzal.items) || T.items || []) {
+  for (const it of (T.quetzal && T.quetzal.items) || (T.soulgold && T.soulgold.items) || T.items || []) {
     const n = Array.isArray(it) ? it[0] : it;
     if (typeof n === 'string' && toId(n) === id) return n;
   }

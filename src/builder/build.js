@@ -110,7 +110,7 @@ function statValue(e, model) {
 function readyCost(e, ready, refLevel) {
   // Golpes do moveset a ensinar: na hora (tutor, nível já alcançado) ou treinando até o nível
   let now = 0, train = 0;
-  for (const x of e.setTeach) { if (x.src === SRC.level) train++; else now++; }
+  for (const x of e.setTeach) { if (x.src === SRC.level || x.src === SRC.tm) train++; else now++; }
   // Habilidade a trocar (Ability Capsule/Patch): como um golpe a ensinar na hora
   if (e.m.gear && e.m.gear.ability) now++;
   if (!ready) return TEACH_ATK * (e.teachAtk.length + train) + TEACH_NOW * now;
@@ -254,17 +254,21 @@ function movesetOf(m, bf, dex, T, ctx) {
   const abs = [...new Set([m.ability && m.ability.name, bf.ability && bf.ability.name].filter(Boolean))];
   const lvl = m.level || 0;
   const cands = [], have = new Set();
-  const add = (x, src, level) => {
+  const add = (x, src, level, tm) => {
     if (!x.name || have.has(x.name)) return;
     have.add(x.name);
-    cands.push({ name: x.name, type: x.type, power: x.power, category: x.category, accuracy: x.accuracy, src, level, boosted: boostMove(x, abs, ty) });
+    const c = { name: x.name, type: x.type, power: x.power, category: x.category, accuracy: x.accuracy, src, level, boosted: boostMove(x, abs, ty) };
+    if (tm) c.tm = tm;
+    cands.push(c);
   };
   for (const mv of m.moves) add(mv, SRC.known, null);
   const lv = levelMoves(m, dex, T);
   for (const x of lv) if (x.level <= lvl) add(x, SRC.now, x.level);
+  // SoulGold: TM do jogo (é preciso o item) ou tutor (é preciso achá-lo); Quetzal: o menu ensina na hora
+  const tsrc = dex.teach === 'item' ? SRC.tm : SRC.tutor;
   for (const id of dex.tutor[m.speciesId] || []) {
     const info = cachedMove(id, T);
-    if (info && info.known) add(info, SRC.tutor, TUTOR);
+    if (info && info.known) add(info, tsrc, TUTOR, dex.tm && dex.tm[id]);
   }
   for (const x of lv) add(x, SRC.level, x.level);
   // Referência competitiva: os golpes que os sets do Smogon da espécie levam (a forma de batalha: a mega, se tem dados)
@@ -278,12 +282,12 @@ function movesetOf(m, bf, dex, T, ctx) {
 /** O Pokémon do save por trás de uma cópia do montador (forma evoluída, megapedra a dar, habilidade e item sugeridos). */
 export const realOf = m => m.evolvedFrom || m.stoneFrom || m.planFrom || m;
 
-// Itens do jogo pelo ID do Showdown (Quetzal: tabela da ROM), para filtrar os do Smogon
+// Itens do jogo pelo ID do Showdown (Quetzal, SoulGold: tabela da ROM), para filtrar os do Smogon
 const itemCache = new WeakMap();
 function gameItems(T) {
   if (itemCache.has(T)) return itemCache.get(T);
   const out = new Map();
-  for (const it of (T.quetzal && T.quetzal.items) || []) { const n = Array.isArray(it) ? it[0] : it; if (typeof n === 'string') out.set(toId(n), n); }
+  for (const it of (T.quetzal && T.quetzal.items) || (T.soulgold && T.soulgold.items) || []) { const n = Array.isArray(it) ? it[0] : it; if (typeof n === 'string') out.set(toId(n), n); }
   itemCache.set(T, out);
   return out;
 }
@@ -437,7 +441,7 @@ function setCombos(e, w, sw = 0) {
 /** O que sobra para o plano, fora do moveset: os golpes por nível e, do tutor, os de planTutor. */
 const learnOf = (cands, set) => {
   const inSet = new Set(set.map(x => x.name));
-  return cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && (x.src !== SRC.tutor || planTutor(x.name)));
+  return cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && ((x.src !== SRC.tutor && x.src !== SRC.tm) || planTutor(x.name)));
 };
 
 /**
@@ -499,7 +503,7 @@ export function withRoles(e, keys, plan) {
   }
   const c = mechOf(m, e.bf === e.m ? m : e.bf, e.set, item);
   const usage = e.mctx.usage;
-  const SRC_RANK = { [SRC.known]: 0, [SRC.now]: 1, [SRC.tutor]: 1, [SRC.level]: 2 };
+  const SRC_RANK = { [SRC.known]: 0, [SRC.now]: 1, [SRC.tutor]: 1, [SRC.tm]: 2, [SRC.level]: 2 };
   const rank = x => -10 * (usage && usage.get(toId(x.name)) || 0) + SRC_RANK[x.src];
   const names = [];
   for (const r of keys) {
@@ -726,15 +730,15 @@ function entry(m, bf, T, types, mult, learn = [], set = null) {
     for (const k of ['set', 'use', 'boost']) for (const f of pre[k]) strat[k].add(f);
   }
   // Golpes a ensinar: põem o campo (Trick Room, Rain Dance…), aproveitam (Thunder, Solar Beam…) ou dão um papel
-  const teach = new Map(); // golpe → nível em que aprende
+  const teach = new Map(); // golpe → o candidato a ensinar (nível, de onde vem)
   // learnCore: o que aproveita por golpe a ensinar e sustenta o plano. Do tutor, só o golpe do próprio tipo (Blizzard num
   // Ice, Rising Voltage num Electric): quase todo Pokémon aprende Grassy Glide, Rising Voltage… e os planos de terreno
   // apareciam em todo PC grande
   const learnSet = new Set(), learnUse = new Set(), learnCore = new Set();
   for (const x of learn) {
     const f = FIELD_MOVES[x.name] || (x.name === 'Trick Room' ? 'Trick Room' : null);
-    if (f && !strat.set.has(f)) { learnSet.add(f); teach.set(x.name, x.level); }
-    if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); if (x.level !== TUTOR || bf.species.types.includes(x.type)) learnCore.add(g); teach.set(x.name, x.level); }
+    if (f && !strat.set.has(f)) { learnSet.add(f); teach.set(x.name, x); }
+    if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); if (x.level !== TUTOR || bf.species.types.includes(x.type)) learnCore.add(g); teach.set(x.name, x); }
   }
   // Prioridade só de golpe que bate de verdade; setup só em quem ataca forte (Agility no Pelipper não ajuda)
   const teachable = learn.filter(x => !TEACH_SKIP.has(x.name) && (!PRIORITY_MOVES.has(x.name) || realMove(x, bf.species.types))

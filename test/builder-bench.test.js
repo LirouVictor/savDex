@@ -27,6 +27,7 @@ import QL from '../src/data/quetzal-learn.json';
 import QT from '../src/data/quetzal-teach.json';
 import UL from '../src/data/unbound-learn.json';
 import SL from '../src/data/soulgold-learn.json';
+import SGT from '../src/data/soulgold-teach.json';
 import { quetzalLearnDex, unboundLearnDex, soulgoldLearnDex } from '../src/ui/dex.js';
 import * as B from '../src/builder/build.js';
 import { threatList, teamThreats, typeMult, variantOf } from '../src/builder/threats.js';
@@ -172,7 +173,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
       const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
       const g = d.game.id;
-      const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+      const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold, process.env.BENCH_NO_SG_TEACH ? null : SGT) : null;
       const types = B.attackTypes(T);
       const threats = threatList(T, d.game, dex);
       const comp = compIndex(d.game);
@@ -298,7 +299,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const g = d.game.id;
-    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold, process.env.BENCH_NO_SG_TEACH ? null : SGT) : null;
     const types = B.attackTypes(T);
     const mains = B.buildTeams(all, T, { dex, game: process.env.BENCH_NO_THREATS ? null : d.game, comp: compIndex(d.game) });
     const pool = mains.pool;
@@ -374,7 +375,7 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     if (!tables.length) continue;
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     // Golpes por nível da ROM de cada jogo (o tutor só existe no Quetzal)
-    const dex = d.game.id === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : quetzalLearnDex(QL, QT);
+    const dex = d.game.id === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold, process.env.BENCH_NO_SG_TEACH ? null : SGT) : quetzalLearnDex(QL, QT);
     const comp = compIndex(d.game);
     let t0 = performance.now();
     const anyItem = !!process.env.BENCH_ANYITEM;
