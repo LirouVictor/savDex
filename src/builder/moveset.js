@@ -88,6 +88,15 @@ const GROUPS = {
 const GROUP_IDS = ['recover', ...Object.keys(GROUPS)];
 const GROUP_OF = new Map();
 for (const [g, list] of Object.entries(GROUPS)) for (const [name, v] of Object.entries(list)) GROUP_OF.set(name, [g, v]);
+// Referência competitiva: a fração dos sets do Smogon que leva o golpe (smogon.js) soma até SMOGON_W (90% dos sets: +54).
+// Um golpe que quase todo set da espécie usa ganha de um que as contas acham um pouco melhor; sem dados (Pokémon sem
+// evoluir, próprios do hack, pouco usados), só as contas decidem
+const SMOGON_W = 60;
+// Golpe de efeito sem grupo nas contas (Protect, Trick…) entra quando o competitivo usa em 15% ou mais dos sets
+const SMOGON_STATUS = 0.15;
+const DUP_CUT = 0.8; // quanto do peso do Smogon some num segundo golpe de dano do mesmo tipo
+const moveId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
 // Força do ataque (Ataque ou Ataque Especial base): 80 ou menos não aproveita setup; 115 ou mais, tudo
 const strength = s => Math.max(0, Math.min(1, (s - 80) / 35));
 const DAMAGING = mv => (mv.category === 0 || mv.category === 1) && !!mv.type;
@@ -174,6 +183,16 @@ function extras(set, n, ctx) {
   }
   v += setup + prio;
   for (let k = 0; k < g.length; k++) v += g[k];
+  // Dois golpes de dano do mesmo tipo: o peso do Smogon do mais fraco quase não conta (cada set do competitivo leva um
+  // dos três golpes Ice do Vanilluxe; somar os três enchia o moveset de Ice)
+  for (let i = 0; i < n; i++) {
+    const r = set[i];
+    if (!r.use || !r.dmg) continue;
+    for (let j = 0; j < n; j++) {
+      const o = set[j];
+      if (j !== i && o.dmg && o.type === r.type && (o.use > r.use || (o.use === r.use && j < i))) { v -= DUP_CUT * SMOGON_W * r.use; break; }
+    }
+  }
   return v;
 }
 
@@ -217,20 +236,26 @@ export function pickMoveset(cands, ctx) {
   // Golpes que o plano pede (Trick Room, Thunder na chuva…): entram de qualquer jeito, e a escolha completa o resto
   const force = ctx.force || null;
   const rated = [], forced = [];
+  const usage = ctx.usage || null; // golpes do Smogon da espécie (Map ID → fração dos sets)
   for (const x of cands) {
+    const use = usage && x.name ? usage.get(moveId(x.name)) || 0 : 0;
     if (force && force.has(x.name)) { if (!forced.some(r => r.x.name === x.name)) forced.push(Object.assign(rate(x, ctx), { bonus: 0 })); continue; }
-    if (!x.name || PLAN_ONLY.has(x.name) || (x.category === 2 && x.src !== SRC.known && !SETUP[x.name] && RECOVER[x.name] == null && !GROUP_OF.has(x.name))) continue;
+    if (!x.name || PLAN_ONLY.has(x.name)) continue;
+    const plain = x.category === 2 && !SETUP[x.name] && RECOVER[x.name] == null && !GROUP_OF.has(x.name);
+    if (plain && x.src !== SRC.known && use < SMOGON_STATUS) continue;
     const r = rate(x, ctx);
-    if (!r.dmg && !r.setup && !r.group) { if (x.src !== SRC.known) continue; }
-    // O que já sabe vale um pouco mais (não precisa ensinar); o que precisa de treino, um pouco menos
-    r.bonus = x.src === SRC.known ? (r.dmg || r.setup || r.group ? 4 : 0) : x.src === SRC.level ? -6 : -1;
+    if (!r.dmg && !r.setup && !r.group && !use) { if (x.src !== SRC.known) continue; }
+    // O que já sabe vale um pouco mais (não precisa ensinar); o que precisa de treino, um pouco menos; o que o competitivo
+    // usa, bem mais
+    r.bonus = (x.src === SRC.known ? (r.dmg || r.setup || r.group ? 4 : 0) : x.src === SRC.level ? -6 : -1) + SMOGON_W * use;
+    r.use = use;
     rated.push(r);
   }
   // Menos contas: de cada tipo (e lado), só o golpe de dano puro mais forte; de cada grupo de efeito e de setup, o melhor
   // (os que já sabe ficam todos)
   const keep = [], top = new Map();
   for (const r of rated.sort((p, q) => q.dmg - p.dmg || (q.util || 0) + (q.setup || 0) - (p.util || 0) - (p.setup || 0))) {
-    if (r.x.src === SRC.known || r.prio) { keep.push(r); continue; }
+    if (r.x.src === SRC.known || r.prio || r.use) { keep.push(r); continue; }
     const k = r.setup ? 'setup' + (r.side || '') : r.group ? 'g' + r.group + (r.dmg ? r.type : '') : r.type + (r.phys ? 'p' : 's');
     const n = top.get(k);
     if (!n) { top.set(k, 1); keep.push(r); }

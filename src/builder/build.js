@@ -261,7 +261,9 @@ function movesetOf(m, bf, dex, T, ctx) {
     if (info && info.known) add(info, SRC.tutor, TUTOR);
   }
   for (const x of lv) add(x, SRC.level, x.level);
-  const mctx = { b: bf.species.baseStats, types: ty, abs, eff: ctx.eff, N: ctx.N };
+  // Referência competitiva: os golpes que os sets do Smogon da espécie levam (a forma de batalha: a mega, se tem dados)
+  const usage = ctx.comp ? ctx.comp.moves(ctx.comp.find(bf.species)) : null;
+  const mctx = { b: bf.species.baseStats, types: ty, abs, eff: ctx.eff, N: ctx.N, usage };
   const set = pickMoveset(cands, mctx);
   const inSet = new Set(set.map(x => x.name));
   const learn = cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && (x.src !== SRC.tutor || planTutor(x.name)));
@@ -283,7 +285,7 @@ export function finalMoveset(e, names) {
  * contas que a nota usa, na forma de batalha (a mega, se segura a própria megapedra).
  * @param {object|null} [dex] golpes por nível da ROM (os que o Pokémon aprende também contam)
  */
-export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst' } = {}) {
+export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst', comp = null } = {}) {
   const types = attackTypes(T);
   const idx = new Map(T.types.map((ty, i) => [ty, i]));
   const mult = (atk, def) => def.reduce((x, d) => x * (idx.has(d) ? T.typechart[idx.get(atk)][idx.get(d)] : 1), 1);
@@ -303,7 +305,7 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
   }
   const chosen = [...best.values()];
   const mset = movesetMode(dex);
-  const mctx = mset ? { eff: effTable(types, mult), N: types.length } : null;
+  const mctx = mset ? { eff: effTable(types, mult), N: types.length, comp } : null;
   // Sem restrição de item: quem tem mega no jogo entra também segurando a megapedra (uma entrada por pedra)
   if (anyItem) {
     for (const m of [...chosen]) {
@@ -861,7 +863,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     const asked = new Set(want.map(speciesKey));
     all = all.filter(m => !isLegendary(m) || asked.has(speciesKey(m)));
   }
-  const pool = prepare(all, T, dex, { anyItem, statModel });
+  const pool = prepare(all, T, dex, { anyItem, statModel, comp });
   // Modo "Prontos para usar": nível de referência = o do 6º Pokémon mais forte do save (a equipe que ele já tem)
   if (ready) {
     const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
@@ -981,7 +983,7 @@ export function outsiderEntry(spec, T, dex, like, plan) {
   // Com o moveset (Quetzal), os 4 golpes que ele usaria; senão, os golpes por nível completam os de dano
   let learn, set = null;
   let ms = null;
-  if (movesetMode(dex)) ({ set, learn } = (ms = movesetOf(m, m, dex, T, { eff: effTable(types, mult), N: types.length })));
+  if (movesetMode(dex)) ({ set, learn } = (ms = movesetOf(m, m, dex, T, { eff: effTable(types, mult), N: types.length, comp: like.sctx ? like.sctx.index : null })));
   else learn = levelMoves(m, dex, T);
   if (!learn.length && !(set && set.length)) {
     const physical = spec.stats[1] >= spec.stats[3];

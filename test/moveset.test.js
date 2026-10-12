@@ -48,6 +48,17 @@ suite('Moveset: os 4 golpes de cada um', () => {
     expect(set).toContain('Earthquake');
     expect(set).toHaveLength(4);
   });
+  it('referência do Smogon: o golpe que os sets usam ganha das contas; repetir o tipo não soma o peso de novo', () => {
+    const cands = [cand('Earthquake'), cand('Outrage'), cand('Swords Dance'), cand('Stone Edge'), cand('Stealth Rock'), cand('Fire Fang'), cand('Dragon Claw')];
+    const base = ctx([108, 130, 95, 80, 85, 102], ['dragon', 'ground']);
+    const usage = new Map([['earthquake', 0.98], ['stealthrock', 0.6], ['swordsdance', 0.53], ['firefang', 0.17]]);
+    const set = pickMoveset(cands, { ...base, usage }).map(x => x.name);
+    expect(set).toEqual(expect.arrayContaining(['Earthquake', 'Stealth Rock', 'Swords Dance']));
+    const ice = new Map([['icebeam', 0.5], ['blizzard', 0.5], ['freezedry', 0.5]]);
+    const v = pickMoveset([cand('Ice Beam'), cand('Blizzard'), cand('Freeze-Dry'), cand('Flash Cannon'), cand('Aurora Veil')],
+      { ...ctx([71, 95, 85, 110, 95, 79], ['ice']), usage: ice }).map(x => x.name);
+    expect(v.filter(n => ['Ice Beam', 'Blizzard', 'Freeze-Dry'].includes(n)).length).toBeLessThanOrEqual(2);
+  });
   it('habilidade: Adaptability e Technician contam uma vez; No Guard tira a precisão', () => {
     const noGuard = pickMoveset([cand('Zap Cannon'), cand('Thunderbolt')], ctx([60, 90, 55, 90, 80, 110], ['electric'], ['No Guard'])).map(x => x.name);
     expect(noGuard[0]).toBe('Zap Cannon');
@@ -108,5 +119,18 @@ suite('Moveset no montador (Quetzal, com a lista do tutor)', () => {
     expect(cur.showdown.some(m => m.plannedMoves && m.moves.some(mv => mv.name === 'Earthquake'))).toBe(true);
     // O Pokémon real (o detalhe e as equipes salvas) continua com os golpes do save
     expect(cur.team.every(m => !m.plannedMoves)).toBe(true);
+  });
+});
+
+suite('Smogon: golpes de cada espécie', () => {
+  it('a tabela traz a fração dos sets de cada golpe (o primeiro formato que conhece a espécie)', async () => {
+    const { smogonIndex } = await import('../src/builder/smogon.js');
+    const G9 = (await import('../src/data/smogon/gen9nationaldex.json')).default;
+    const G9U = (await import('../src/data/smogon/gen9nationaldexubers.json')).default;
+    const idx = smogonIndex([G9, G9U]);
+    const pel = idx.moves(idx.find({ name: 'Pelipper', form: null, showdown: 'Pelipper' }));
+    expect(pel.get('uturn')).toBeGreaterThan(0.5);
+    expect(pel.get('hurricane')).toBeGreaterThan(0.5);
+    expect(idx.moves(null)).toBe(null);
   });
 });
