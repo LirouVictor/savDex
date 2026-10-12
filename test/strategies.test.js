@@ -1,7 +1,7 @@
 // Biblioteca de estratégias (src/builder/strategies.js): quem executa cada estratégia, o que falta (golpe a ensinar, item
 // a dar), papéis no mesmo Pokémon, golpes que o competitivo não usa e a conta da nota pelos bits.
 import { describe, it, expect } from 'vitest';
-import { rolesOfMon, teamStrategies, roleBits, strategyValue, STRATEGIES, planText } from '../src/builder/strategies.js';
+import { rolesOfMon, teamStrategies, roleBits, strategyValue, strategiesOf, strategySeeds, STRATEGIES, planText } from '../src/builder/strategies.js';
 
 const mv = (name, type = 'normal', category = 0, power = 80) => ({ name, type, category, power });
 const mon = (o = {}) => ({ abs: [], item: null, moves: [], types: ['normal'], b: [80, 110, 80, 60, 80, 90], ...o });
@@ -59,6 +59,24 @@ describe('biblioteca de estratégias', () => {
       mon({ moves: [mv('Defog', 'flying', 2, 0)] })].map(c => ({ sbits: roleBits(c) }));
     const v = { 'volt-turn': 5, hazards: 5 };
     expect(strategyValue(team, { kind: 'balance' })).toBe(v['volt-turn'] + v.hazards);
+  });
+
+  it('nota: cada papel num Pokémon diferente (um Water/Grass não faz dois papéis do núcleo)', () => {
+    const e = types => ({ sbits: roleBits(mon({ types })) });
+    expect(strategiesOf([e(['fire']), e(['water']), e(['grass'])], { kind: 'balance' })).toContain('fwg');
+    expect(strategiesOf([e(['fire']), e(['water', 'grass'])], { kind: 'balance' })).not.toContain('fwg');
+    expect(strategiesOf([e(['fire']), e(['water', 'grass']), e(['grass'])], { kind: 'balance' })).toContain('fwg');
+  });
+
+  it('sementes da busca: quem executa a estratégia no PC, o melhor de cada papel', () => {
+    const e = (name, o, v) => ({ name, v, sbits: roleBits(mon(o)) });
+    const pool = [e('A', { moves: [mv('U-turn', 'bug')] }, 10), e('B', { moves: [mv('Volt Switch', 'electric', 1)] }, 30),
+      e('C', { moves: [mv('Flip Turn', 'water')] }, 20), e('D', { types: ['fire'] }, 50)];
+    const seeds = strategySeeds(pool, { kind: 'balance' }, [], x => x.v, () => true);
+    const pivots = seeds.find(x => x.id === 'volt-turn');
+    expect(pivots.seed.map(x => x.name)).toEqual(['B', 'C']);
+    // Quem já está na semente de sempre conta (e a estratégia que ela já executa não vira semente)
+    expect(strategySeeds(pool, { kind: 'balance' }, [pool[0], pool[1]], x => x.v, () => true).some(x => x.id === 'volt-turn')).toBe(false);
   });
 
   it('cada estratégia tem nome, como joga, o que dá, como é quebrada e valor; os planos têm explicação', () => {

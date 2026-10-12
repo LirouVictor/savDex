@@ -31,6 +31,7 @@ import { quetzalLearnDex, unboundLearnDex, soulgoldLearnDex } from '../src/ui/de
 import * as B from '../src/builder/build.js';
 import { threatList, teamThreats, typeMult, variantOf } from '../src/builder/threats.js';
 import { MAX_MEGAS } from '../src/ai/prompt.js';
+import { strategiesOf } from '../src/builder/strategies.js';
 import { smogonFormats, smogonIndex, pairSynergy } from '../src/builder/smogon.js';
 import SM3 from '../src/data/smogon/gen3ou.json';
 import SM4 from '../src/data/smogon/gen4ou.json';
@@ -154,6 +155,8 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null, comp 
     // Ameaças do jogo (threats.js): cobertura (super efetivo), dano (2 golpes), resposta (entra e vence / vence vindo de graça)
     thr: threats ? threatSummary(teamThreats(team, threats, typeMult(T), variantOf(plan))) : null,
     comp: comp ? compSummary(team, comp) : null,
+    // Estratégias da biblioteca que a equipe executa e as combinações do motor que rendem (Quetzal)
+    strats: strategiesOf(team, plan), combos: team.reduce((x, e) => x + (e.combos || []).filter(c => c.ok).length, 0),
   };
 }
 
@@ -169,7 +172,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
       const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
       const g = d.game.id;
-      const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+      const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
       const types = B.attackTypes(T);
       const threats = threatList(T, d.game, dex);
       const comp = compIndex(d.game);
@@ -233,6 +236,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
         lines.push(`      ${r.names.join(', ')}`);
         if (r.sets.some(Boolean)) lines.push(`      golpes (* tutor, + nível já alcançado, ^ treinar): ${r.sets.join(' | ')}`);
         if (r.thr) lines.push(`      ameaças ${r.thr.n}: super efetivo ${r.thr.se}, 2 golpes ${r.thr.hit2}, entra e vence ${r.thr.safe}, vence de graça ${r.thr.wins}, sem resposta ${r.thr.none} (${r.thr.noneNames.join(', ')})`);
+        if (r.strats.length || r.combos) lines.push(`      estratégias: ${r.strats.join(', ') || '—'}; combinações que rendem: ${r.combos}`);
         if (r.comp) lines.push(`      competitivo: conhecidos ${r.comp.known}/6, duplas ${r.comp.withData}, média ${r.comp.mean}, fortes ${r.comp.strong}, se evitam ${r.comp.avoid}${r.comp.top.length ? ` (${r.comp.top.join('; ')})` : ''}`);
       }
     }
@@ -245,7 +249,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
     // O que a parte competitiva custa nas outras medidas (equipes principais)
     const all = res.flatMap(s => s.plans.filter(r => !r.alt));
     const thr = all.filter(r => r.thr);
-    lines.push(`  RESUMO (${mode}): ${all.length} equipes; nota ${avg(all.map(r => r.score))}, sem a parte competitiva ${avg(all.map(r => r.noComp))}; críticos ${all.reduce((a, r) => a + r.critical, 0)}; pior fraqueza ${avg(all.map(r => r.worst.w))}; cobertura real ${avg(all.map(r => r.realCov))}%; ameaças sem resposta ${avg(thr.map(r => 100 * r.thr.none / r.thr.n))}%; ensinar ${avg(all.map(r => r.teach))} (na hora ${avg(all.map(r => r.teachNow))}); evoluir ${avg(all.map(r => r.evolve))}${TIERS ? `; tier nat ${avg(all.filter(r => r.tierNat).map(r => r.tierNat.avg))}` : ''}; tempo ${res.reduce((a, s) => a + s.ms, 0)} ms`);
+    lines.push(`  RESUMO (${mode}): ${all.length} equipes; nota ${avg(all.map(r => r.score))}, sem a parte competitiva ${avg(all.map(r => r.noComp))}; críticos ${all.reduce((a, r) => a + r.critical, 0)}; pior fraqueza ${avg(all.map(r => r.worst.w))}; cobertura real ${avg(all.map(r => r.realCov))}%; ameaças sem resposta ${avg(thr.map(r => 100 * r.thr.none / r.thr.n))}%; ensinar ${avg(all.map(r => r.teach))} (na hora ${avg(all.map(r => r.teachNow))}); estratégias ${avg(all.map(r => r.strats.length))}, combinações ${avg(all.map(r => r.combos))}, nota sem elas ${avg(all.map(r => r.score - (r.parts.strat || 0) - (r.parts.combo || 0)))}; evoluir ${avg(all.map(r => r.evolve))}${TIERS ? `; tier nat ${avg(all.filter(r => r.tierNat).map(r => r.tierNat.avg))}` : ''}; tempo ${res.reduce((a, s) => a + s.ms, 0)} ms`);
   }
   if (out.ref) lines.push(`\nREFERÊNCIA (equipe do jogador, chuva): ${out.ref.score} ${JSON.stringify(out.ref.parts)} pior ${out.ref.worst.type} ${out.ref.worst.w}/${out.ref.worst.r}${out.ref.comp ? `; competitivo: média ${out.ref.comp.mean}, fortes ${out.ref.comp.strong} (${out.ref.comp.top.join('; ')})` : ''}`);
   console.log(lines.join('\n'));
@@ -294,7 +298,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const g = d.game.id;
-    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
+    const dex = g === 'quetzal' ? ({ ...quetzalLearnDex(QL, QT), useTutor: !process.env.BENCH_NO_TUTOR, ...(process.env.BENCH_STRAT_W ? { stratW: +process.env.BENCH_STRAT_W } : {}), ...(process.env.BENCH_MECH_W ? { mechW: +process.env.BENCH_MECH_W } : {}) }) : g === 'unbound' ? unboundLearnDex(UL, T.unbound) : g === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : null;
     const types = B.attackTypes(T);
     const mains = B.buildTeams(all, T, { dex, game: process.env.BENCH_NO_THREATS ? null : d.game, comp: compIndex(d.game) });
     const pool = mains.pool;

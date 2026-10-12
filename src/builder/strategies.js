@@ -224,19 +224,71 @@ export function roleBits(c) {
   for (const s of STRATEGIES) if (s.same && s.same.every(r => x & roleBit(r))) x |= SAME_BIT.get(s.id);
   return x;
 }
-const COMPILED = STRATEGIES.map(s => ({ v: s.v, offense: s.offense, need: [...(s.same ? [[SAME_BIT.get(s.id), 1]] : []), ...(s.need || []).map(([r, n]) => [roleBit(r), n])] }));
-/** A soma do valor das estratégias que a equipe executa (cada papel contado em quantos membros o têm). */
+const COMPILED = STRATEGIES.map(s => ({ id: s.id, v: s.v, offense: s.offense,
+  need: [...(s.same ? [[SAME_BIT.get(s.id), 1]] : []), ...(s.need || []).map(([r, n]) => [roleBit(r), n])] }));
+const popc = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
+
+/**
+ * A equipe executa a estratégia: cada papel em Pokémon diferentes. Teorema de Hall com as quantidades: para cada
+ * conjunto de papéis, os membros que cumprem algum deles são pelo menos a soma do que eles pedem (até 3 papéis: 7
+ * conjuntos, sem montar listas). Um Water/Grass não faz dois papéis do núcleo Fire/Water/Grass.
+ */
+function executes(s, team) {
+  const k = s.need.length;
+  const masks = [];
+  for (const [bit] of s.need) {
+    let m = 0;
+    for (let i = 0; i < team.length; i++) if (team[i].sbits & bit) m |= 1 << i;
+    masks.push(m);
+  }
+  for (let sub = 1; sub < 1 << k; sub++) {
+    let union = 0, want = 0;
+    for (let j = 0; j < k; j++) if (sub & (1 << j)) { union |= masks[j]; want += s.need[j][1]; }
+    if (popc(union) < want) return false;
+  }
+  return true;
+}
+
+/** As estratégias que a equipe executa (os ids; para o teste de comparação). */
+export const strategiesOf = (team, plan) => COMPILED.filter(s => !(s.offense === false && plan.kind === 'offense') && executes(s, team)).map(s => s.id);
+
+/** A soma do valor das estratégias que a equipe executa (completas: meia estratégia não vale). */
 export function strategyValue(team, plan) {
   let v = 0;
   for (const s of COMPILED) {
     if (s.offense === false && plan.kind === 'offense') continue;
-    let ok = true;
-    for (const [bit, n] of s.need) {
-      let k = 0;
-      for (const e of team) if (e.sbits & bit) k++;
-      if (k < n) { ok = false; break; }
-    }
-    if (ok) v += s.v;
+    if (executes(s, team)) v += s.v;
   }
   return v;
+}
+
+/**
+ * Sementes da busca (build.js): para cada estratégia, quem a executa no PC, um Pokémon diferente por papel, os melhores
+ * pela nota sozinho (`rank`). `ok(seed, e)` diz se o Pokémon pode entrar junto (sem repetir espécie, megapedras…).
+ * Ficam as `max` estratégias de mais valor que dá para montar.
+ */
+export function strategySeeds(pool, plan, base, rank, ok, max = 2) {
+  const out = [];
+  for (const s of COMPILED) {
+    if (s.offense === false && plan.kind === 'offense') continue;
+    if (executes(s, base)) continue; // as sementes de sempre já a têm
+    const seed = [...base];
+    let fail = false;
+    for (const [bit, n] of s.need) {
+      let have = 0;
+      for (const e of seed) if (e.sbits & bit) have++;
+      for (let i = have; i < n && !fail; i++) {
+        let best = null, bv = -Infinity;
+        for (const e of pool) {
+          if (!(e.sbits & bit) || seed.includes(e) || !ok(seed, e)) continue;
+          const v = rank(e);
+          if (v > bv) { bv = v; best = e; }
+        }
+        if (best) seed.push(best); else fail = true;
+      }
+      if (fail) break;
+    }
+    if (!fail && seed.length <= 6 && seed.length > base.length && executes(s, seed)) out.push({ id: s.id, v: s.v, seed });
+  }
+  return out.sort((a, b) => b.v - a.v).slice(0, max);
 }
