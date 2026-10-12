@@ -16,7 +16,7 @@ import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
 import { pickMoveset, effTable, planSensitive, SRC } from './moveset.js';
 import { itemWorks, kitItem, combosOf, comboValue, teamBits, teamComboValue } from './mechanics.js';
-import { roleBits, strategyValue } from './strategies.js';
+import { roleBits, strategyValue, strategySeeds } from './strategies.js';
 export { teamCombos } from './mechanics.js';
 import speciesData from '../data/species.json';
 
@@ -32,14 +32,14 @@ const SLOW = 50, FAST = 90;
 const BEAM = 24; // equipes parciais guardadas a cada vaga
 // Candidatos por plano (os melhores sozinhos para ele): 110, ou 220 nos PCs grandes (mais de BIG_PC na busca). Com 110,
 // nos PCs de 700+ Pokémon ficavam de fora membros que deixam a equipe mais forte (os lendários levam as vagas pelo valor
-// sozinho): em batalhas simuladas (test/builder-sim.test.js), a equipe com 220 venceu a de 110 do mesmo plano nos 6 planos
-// em que mudou (68% frente a frente), o mesmo que sem corte nenhum. Nos PCs de 230 a 380, 220 não mudava nenhuma equipe
+// sozinho; a busca com 220 acha o mesmo que sem corte nenhum). Nos PCs de 230 a 380, 220 não mudava nenhuma equipe
 // e dobrava o tempo
 const CANDS = 110, CANDS_BIG = 220, BIG_PC = 500;
 const ALTS = 3; // equipes por plano: a melhor e até 2 alternativas
 const ALT_SHARED = 3; // uma alternativa divide no máximo 3 membros com cada equipe anterior do mesmo plano
 const ALT_MIN = 0.9; // e só aparece com 90% ou mais da nota da melhor
 const ALT_BEAM = 12; // busca das alternativas com menos equipes parciais (metade do tempo)
+const STRAT_BEAM = 8; // busca que parte de quem executa uma estratégia da biblioteca
 
 // Peso de cada papel (o primeiro membro com o papel conta; repetir não soma)
 const ROLE_W = { pivô: 5, prioridade: 5, recuperação: 4, 'controle de velocidade': 4, setup: 4, tanque: 3, intimidação: 3, hazards: 3, 'tira hazards': 3, status: 2, telas: 2 };
@@ -399,14 +399,16 @@ export function shownCombos(e, set, item, field) {
 /** As combinações de mecânicas do Pokémon (mechanics.js): o valor que rende sem campo e o que muda em cada campo. */
 const MECH_FIELDS = ['chuva', 'sol', 'Trick Room', 'Electric Terrain', 'Grassy Terrain', 'Psychic Terrain', 'Misty Terrain'];
 const FIELD_ITEMS = new Set(['Electric Seed', 'Grassy Seed', 'Psychic Seed', 'Misty Seed', 'Room Service', 'Power Herb']);
-// Peso da parte "Interações": 0 (medido no simulador, no mesmo plano, contra a montagem sem o motor: 0 → 51%, 0,25 → 50%,
-// 0,5 → 54% com resultados de 24% a 100%, 1 → 52% em 12 de 28 planos; o peso trocava Pokémon fortes por quem tem
-// combinação, sem ganho medido). As combinações aparecem na tela e na IA; os testes de comparação trocam com `dex.mechW`
-const COMBO_W = 0;
-// Peso da parte "Estratégias" (biblioteca de strategies.js; os testes de comparação trocam com `dex.stratW`): 0. Medido
-// no simulador, no mesmo plano, contra a montagem sem a parte: 0,5 → 49% frente a frente (14 de 28) e −1 ponto contra
-// os aleatórios, 1 → 54% (16 de 29) e −2, 2 → 44% (11 de 27) e −5, com planos de 0% a 100%; sem ganho, fica na tela
-const STRAT_W = 0;
+// Peso da parte "Interações" (combinações do motor que rendem; os testes de comparação trocam com `dex.mechW`): 0,5.
+// Escolhido pelo teste de comparação com saves reais (Quetzal, 5 saves, com as estratégias em 1): 0,5 leva de 0,8 a 1,5
+// combinações por equipe por 0,7% das outras partes; 1 chega a 2,4, mas as outras partes perdem 2,5% e as ameaças sem
+// resposta sobem de 0,7% para 0,9%
+const COMBO_W = 0.5;
+// Peso da parte "Estratégias" (biblioteca de strategies.js: só a estratégia completa, cada papel num Pokémon diferente; os
+// testes de comparação trocam com `dex.stratW`): 1. Pelo teste de comparação com saves reais (Quetzal, 5 saves): as
+// equipes vão de 0,6 a 2,7 estratégias completas por 2,7% das outras partes, mesma pior fraqueza, cobertura 95,4% → 95,3%;
+// com 2, 3,7 estratégias, mas as outras partes perdem 4,9% e as ameaças sem resposta sobem de 0,6% para 1%
+const STRAT_W = 1;
 function setCombos(e, w, sw = 0) {
   const item = e.m.item && !isMegaStone(e.m.item) ? e.m.item.name : null;
   const c = mechOf(e.m, e.bf, e.set || e.moves, item);
@@ -1055,8 +1057,15 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
       else if (allowed(forced, st, plan)) seeds.push([...forced, st]);
     }
   } else seeds.push([...forced]);
+  // Estratégias da biblioteca (strategies.js, com a parte "Estratégias" ligada): a busca também parte de quem executa cada
+  // uma (as 2 de mais valor que a semente de sempre não tem), com um feixe menor; o resto da equipe a busca completa
+  const sizes = seeds.map(() => beamSize);
+  if (!prev.length && seeds.length && pool.length && pool[0].stratW) {
+    for (const x of strategySeeds(usable, plan, seeds[0], e => solo(e, plan), (team, e) => allowed(team, e, plan))) { seeds.push(x.seed); sizes.push(STRAT_BEAM); }
+  }
   let best = null;
-  for (const seed of seeds) {
+  for (let si = 0; si < seeds.length; si++) {
+    const seed = seeds[si], size = sizes[si];
     if (seed.length > 6) continue;
     let beam = [{ team: seed, ids: seed.map(e => e.id).sort((a, b) => a - b), s: score(seed, plan, types) }];
     while (beam[0].team.length < 6) {
@@ -1078,12 +1087,14 @@ export function bestTeam(pool, plan, types, forced = [], prev = [], beamSize = B
         }
       }
       if (!next.size) break;
-      beam = [...next.values()].sort((a, b) => b.s - a.s).slice(0, beamSize);
+      beam = [...next.values()].sort((a, b) => b.s - a.s).slice(0, size);
     }
     // A melhor das equipes guardadas que sustenta o plano (a de nota mais alta pode ter deixado de fora quem
     // aproveita o clima, e aí o plano não vale)
-    const top = beam.find(st => st.team.length === 6 && planHolds(st.team, plan)) || beam[0];
-    if (top && (!best || top.s > best.score)) best = { plan, team: top.team, score: top.s };
+    const hold = beam.find(st => st.team.length === 6 && planHolds(st.team, plan));
+    const top = hold || beam[0];
+    // A que sustenta o plano ganha da que não sustenta (a busca que parte de uma estratégia pode não achar uma)
+    if (top && (!best || (!!hold && !best.holds) || (!!hold === best.holds && top.s > best.score))) best = { plan, team: top.team, score: top.s, holds: !!hold };
   }
   return best;
 }

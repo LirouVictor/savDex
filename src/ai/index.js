@@ -3,7 +3,7 @@
 // sendAi envia e desenha a resposta.
 
 import { provider } from './providers.js';
-import { refOf, freeAbilityMode, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, REVIEW_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, reviewPrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine } from './prompt.js';
+import { refOf, freeAbilityMode, systemPrompt, localizedSchema, ANALYSIS_SCHEMA, BUILD_SCHEMA, REFINE_SCHEMA, REVIEW_SCHEMA, REVIEW_STRAT_SCHEMA, analysisPrompt, buildPrompt, refinePrompt, reviewPrompt, buildPool, strategyLines, checkAnalysis, checkBuild, checkRefine, checkStrategies } from './prompt.js';
 import { analysisView, buildView, confirmView } from './view.js';
 import { repairTeam } from './repair.js';
 import { t } from '../i18n.js';
@@ -15,12 +15,12 @@ import { t } from '../i18n.js';
  * @param {{ all: object[], T: object, game?: object, note?: string, dex?: object, free?: boolean, team?: object[], plan?: string, roles?: Map }} ctx
  *   dex = golpes por nível (dex.json), opcional; free = modo livre (habilidade trocável por item, nos jogos em que o item existe)
  */
-export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false, team = null, plan = '', roles = new Map(), ideal = [], idealMons = [] }) {
+export function prepareAi(kind, { all, T, game = null, note = '', dex = null, free = false, team = null, plan = '', roles = new Map(), ideal = [], idealMons = [], strategies = null, check = null }) {
   const P = provider();
   const system = systemPrompt(game);
   const mode = free ? freeAbilityMode(game) : null;
   const prompt = kind === 'analyze' ? analysisPrompt(all, T, note, P.maxCandidates, { dex, game, free: mode })
-    : kind === 'review' ? reviewPrompt(all, T, team, note, P.maxCandidates, { dex, game, free: mode, plan, roles, ideal, idealMons })
+    : kind === 'review' ? reviewPrompt(all, T, team, note, P.maxCandidates, { dex, game, free: mode, plan, roles, ideal, idealMons, strategies: check ? { lines: strategies || [], known: check.known } : null })
       : buildPrompt(all, T, note, P.maxCandidates, { free: mode });
   const lines = prompt.split('\n');
   const refs = lines.filter(l => /^(E\d|C\d+-\d+) \|/.test(l)).length;
@@ -38,12 +38,13 @@ export function prepareAi(kind, { all, T, game = null, note = '', dex = null, fr
     hints: kind === 'build' && strategyLines(buildPool(all, P.maxCandidates, mode), mode, T).length > 0, // clima/terreno/Trick Room
     free: !!mode,
     ideal: kind === 'review' && ideal.length > 0, // ideal do competitivo × o que o jogador tem (contas do app)
+    strategies: kind === 'review' && !!check, // estratégias do app (Quetzal): a IA propõe e o app confere
   });
   // dex fica no preparo para o app conferir os golpes citados na resposta (na montagem, não vai no pedido)
   // Montagem do Quetzal/Unbound: a segunda etapa leva os golpes por nível dos 6 escolhidos
   counts.learn2 = kind === 'build' && !!dex && !!game && ['quetzal', 'unbound', 'soulgold'].includes(game.id);
-  const schema = kind === 'analyze' ? ANALYSIS_SCHEMA : kind === 'review' ? REVIEW_SCHEMA : BUILD_SCHEMA;
-  return { kind, P, system, prompt, schema: localizedSchema(schema), all, T, dex, game, note: note.trim(), counts, free: mode, team };
+  const schema = kind === 'analyze' ? ANALYSIS_SCHEMA : kind === 'review' ? (check ? REVIEW_STRAT_SCHEMA : REVIEW_SCHEMA) : BUILD_SCHEMA;
+  return { kind, P, system, prompt, schema: localizedSchema(schema), all, T, dex, game, note: note.trim(), counts, free: mode, team, check };
 }
 
 /** HTML da janela de confirmação ("o que vai ser enviado"). */
@@ -78,6 +79,8 @@ export async function sendAi(prep, { onStep = () => {} } = {}) {
     const shown = new Map(byRef);
     for (const m of prep.team) shown.set(refOf(m), m);
     const r = checkAnalysis(first.data, shown, new Set(prep.team.map(refOf)));
+    // Estratégias que a IA propôs (Quetzal): o app confere cada peça antes de mostrar
+    if (prep.check) r.estrategias = checkStrategies(first.data.estrategias, prep.check);
     return { html: analysisView(r, shown, `${P.service} (${first.model})`, { dex, T, lite, liteWhy, review: true }), byRef, team: null };
   }
   const r = checkBuild(first.data, byRef);
