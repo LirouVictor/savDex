@@ -16,6 +16,7 @@ import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
 import { pickMoveset, effTable, planSensitive, SRC } from './moveset.js';
 import { itemWorks, kitItem, combosOf, comboValue, teamBits, teamComboValue } from './mechanics.js';
+import { roleBits, strategyValue } from './strategies.js';
 export { teamCombos } from './mechanics.js';
 import speciesData from '../data/species.json';
 
@@ -372,6 +373,20 @@ function fallbackItem(bf, set, ok) {
 }
 
 /**
+ * O que a biblioteca de estratégias (strategies.js) precisa de um membro: o que ele tem com o moveset e o item que o card
+ * mostra, os golpes que pode aprender e se um item existe no jogo. null sem o item do competitivo (fora do Quetzal).
+ */
+const TEACH_SHARE = 0.1;
+export function strategyInput(e, set, item) {
+  const gear = e.mctx && e.mctx.gen && e.mctx.gen.gear;
+  if (!gear) return null;
+  const c = mechOf(e.m, e.bf, set || e.set || e.moves, item && !isMegaStone({ name: item }) ? item : null);
+  // Golpe a ensinar para uma estratégia: só o que os sets do competitivo da espécie usam (10%+); sem dados, qualquer um
+  const usage = e.mctx.usage;
+  const teachOk = name => !usage || !usage.size || (usage.get(toId(name)) || 0) >= TEACH_SHARE;
+  return { c, cands: e.mcands || [], itemOk: name => gear.items.has(toId(name)), teachOk };
+}
+/**
  * As combinações que a tela mostra (com o moveset, o item e o campo do plano que o card mostra) e os bits da equipe.
  * null sem o motor (fora do Quetzal, ou desligado nos testes de comparação).
  */
@@ -388,13 +403,19 @@ const FIELD_ITEMS = new Set(['Electric Seed', 'Grassy Seed', 'Psychic Seed', 'Mi
 // 0,5 → 54% com resultados de 24% a 100%, 1 → 52% em 12 de 28 planos; o peso trocava Pokémon fortes por quem tem
 // combinação, sem ganho medido). As combinações aparecem na tela e na IA; os testes de comparação trocam com `dex.mechW`
 const COMBO_W = 0;
-function setCombos(e, w) {
+// Peso da parte "Estratégias" (biblioteca de strategies.js; os testes de comparação trocam com `dex.stratW`): 0. Medido
+// no simulador, no mesmo plano, contra a montagem sem a parte: 0,5 → 49% frente a frente (14 de 28) e −1 ponto contra
+// os aleatórios, 1 → 54% (16 de 29) e −2, 2 → 44% (11 de 27) e −5, com planos de 0% a 100%; sem ganho, fica na tela
+const STRAT_W = 0;
+function setCombos(e, w, sw = 0) {
   const item = e.m.item && !isMegaStone(e.m.item) ? e.m.item.name : null;
   const c = mechOf(e.m, e.bf, e.set || e.moves, item);
   e.combos = combosOf(c);
   e.comboV = w * comboValue(e.combos);
   e.comboW = w;
   e.cbits = teamBits(c);
+  e.sbits = roleBits(c);
+  e.stratW = sw;
   if (FIELD_ITEMS.has(item) || c.abs.includes('Hydration')) {
     e.comboF = {};
     for (const f of MECH_FIELDS) e.comboF[f] = w * comboValue(combosOf({ ...c, field: f })) - e.comboV;
@@ -424,14 +445,14 @@ function tuned(e, plan) {
   const learn = learnOf(e.mcands, set);
   const x = Object.assign(entry(m, e.bf === e.m ? m : e.bf, g.T, g.types, g.mult, learn, set), { id: e.id });
   x.mcands = e.mcands; x.mctx = mctx;
-  if (g.gear && g.gear.mech) setCombos(x, g.gear.w);
+  if (g.gear && g.gear.mech) setCombos(x, g.gear.w, g.gear.sw);
   x.cost = readyCost(x, g.ready, g.refLevel);
   x.statVal = statValue(x, g.statModel);
   blankCaches(x);
   copyCtx(x, e, set, g.T);
   if (e.base) {
     x.base = Object.assign(entry(m, m, g.T, g.types, g.mult, learn, set), { id: e.id, real: x.real, key: x.key, given: x.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: x.cost });
-    if (g.gear && g.gear.mech) setCombos(x.base, g.gear.w);
+    if (g.gear && g.gear.mech) setCombos(x.base, g.gear.w, g.gear.sw);
     x.base.statVal = statValue(x.base, g.statModel);
     blankCaches(x.base);
     copyCtx(x.base, e.base, set, g.T);
@@ -526,7 +547,7 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
   }
   // Motor de interações (mechanics.js): o item tem que funcionar com a habilidade e os golpes, e as combinações contam
   // na nota (parte "Interações"); os testes de comparação desligam com `dex.mech = false`
-  const gear = mset && comp && dex.gear !== false ? { comp, items: gameItems(T), mech: dex.mech !== false, w: dex.mechW ?? COMBO_W } : null;
+  const gear = mset && comp && dex.gear !== false ? { comp, items: gameItems(T), mech: dex.mech !== false, w: dex.mechW ?? COMBO_W, sw: dex.stratW ?? STRAT_W } : null;
   if (gen) gen.gear = gear;
   return chosen.map((m, id) => {
     // Habilidade do competitivo (Quetzal, com a referência): a que os sets do Smogon mais usam, se a espécie a tem
@@ -541,14 +562,14 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
     else { const known = new Set(m.moves.map(mv => mv.name)); learn = levelMoves(m, dex, T).filter(x => !known.has(x.name)); }
     const e = Object.assign(entry(m, mf || m, T, types, mult, learn, set), { id });
     if (ms) { e.mcands = ms.cands; e.mctx = ms.mctx; e.mctx.gen = gen; }
-    if (gear && gear.mech) setCombos(e, gear.w);
+    if (gear && gear.mech) setCombos(e, gear.w, gear.sw);
     e.cost = readyCost(e, false, 0);
     e.statVal = statValue(e, statModel);
     blankCaches(e);
     // A forma comum de quem segura a megapedra: com duas megas na equipe, só uma megaevolui por batalha, e a outra
     // luta assim (habilidade, tipos e stats da forma comum)
     if (mf) e.base = Object.assign(entry(m, m, T, types, mult, learn, set), { id, real: e.real, key: e.key, given: e.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: e.cost });
-    if (mf) { e.base.statVal = statValue(e.base, statModel); blankCaches(e.base); if (gear && gear.mech) setCombos(e.base, gear.w); }
+    if (mf) { e.base.statVal = statValue(e.base, statModel); blankCaches(e.base); if (gear && gear.mech) setCombos(e.base, gear.w, gear.sw); }
     return e;
   });
 }
@@ -679,7 +700,7 @@ function entry(m, bf, T, types, mult, learn = [], set = null) {
   return {
     m, bf, real: realOf(m), key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
     moves: own, set, setTeach: set ? set.filter(x => x.src !== SRC.known) : [], mcands: null, mctx: null,
-    combos: null, comboV: 0, comboF: null, cbits: 0, comboW: 0, nfe: !!m.nfe,
+    combos: null, comboV: 0, comboF: null, cbits: 0, comboW: 0, sbits: 0, stratW: 0, nfe: !!m.nfe,
     given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
     learnSet, learnUse, learnCore, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
@@ -767,11 +788,11 @@ export function scoreParts(team, plan, types, inc = null) {
   const scen = megas.map(mg => partsOf(team.map(e => (e.base && e !== mg ? e.base : e)), plan, types, true));
   const avg = key => { let x = 0; for (const q of scen) x += q[key]; return x / scen.length; };
   const max = key => { let x = -Infinity; for (const q of scen) if (q[key] > x) x = q[key]; return x; };
-  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), threats: 0, comp: compPart(team), combo: max('combo'), total: 0 };
+  const p = { defense: 0, offense: max('offense'), roles: max('roles'), members: avg('members'), balance: avg('balance'), plan: max('plan'), ready: avg('ready'), threats: 0, comp: compPart(team), combo: max('combo'), strat: max('strat'), total: 0 };
   for (let a = 0; a < types.length; a++) { let x = -Infinity; for (const q of scen) if (q.defByType[a] > x) x = q.defByType[a]; p.defense += x; }
   // Ameaças: cada uma vale o cenário que a responde (as duas formas de quem segura a megapedra, em threatPart)
   p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan);
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp + p.combo;
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp + p.combo + p.strat;
   return p;
 }
 
@@ -783,7 +804,7 @@ export function scoreParts(team, plan, types, inc = null) {
 function partsOf(team, plan, types, byType, inc = null) {
   const n = team.length;
   const halved = halvedIndex(plan, types);
-  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, threats: 0, comp: 0, combo: 0, total: 0 };
+  const p = { defense: 0, offense: 0, roles: 0, members: 0, balance: 0, plan: 0, ready: 0, threats: 0, comp: 0, combo: 0, strat: 0, total: 0 };
   if (byType) p.defByType = new Array(types.length).fill(0);
   // Fraquezas em comum: 3 ou mais fracos ao mesmo tipo pesa muito; mais fracos que resistentes, um pouco
   for (let a = 0; a < types.length; a++) {
@@ -820,6 +841,8 @@ function partsOf(team, plan, types, byType, inc = null) {
     cbits |= e.cbits;
   }
   if (cbits && team[0].comboW) p.combo += team[0].comboW * teamComboValue(team, plan);
+  // Estratégias da biblioteca (strategies.js) que a equipe executa com o moveset e o item de cada um
+  if (n && team[0].stratW) p.strat = team[0].stratW * strategyValue(team, plan);
   // Com 2 megas da forma conhecida, só uma megaevolui por batalha: metade do ganho da menor não conta
   if (gains && gains.length > 1) p.members -= Math.min(...gains) / 2;
   // Físicos × especiais (só faz sentido com a equipe quase pronta), tipos repetidos, velocidade
@@ -858,7 +881,7 @@ function partsOf(team, plan, types, byType, inc = null) {
     if (plan.kind === 'weather') p.plan -= 10 * conflicts + 4 * risks;
   }
   if (!byType) { p.threats = inc ? threatPartInc(inc, team, plan) : threatPart(team, plan); p.comp = compPart(team); }
-  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp + p.combo;
+  p.total = p.defense + p.offense + p.roles + p.members + p.balance + p.plan + p.ready + p.threats + p.comp + p.combo + p.strat;
   return p;
 }
 

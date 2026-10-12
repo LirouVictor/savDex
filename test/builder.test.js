@@ -397,7 +397,7 @@ suite('Montador de equipes (sem IA)', () => {
     let sum = 0;
     for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) if (ids[i] && ids[j]) sum += comp.pair(ids[i], ids[j]);
     expect(parts.comp).toBeCloseTo(sum, 5);
-    expect(parts.total).toBeCloseTo(['defense', 'offense', 'roles', 'members', 'balance', 'plan', 'ready', 'threats', 'comp', 'combo'].reduce((a, k) => a + parts[k], 0), 6);
+    expect(parts.total).toBeCloseTo(['defense', 'offense', 'roles', 'members', 'balance', 'plan', 'ready', 'threats', 'comp', 'combo', 'strat'].reduce((a, k) => a + parts[k], 0), 6);
     // Sem a referência (ou com peso 0), a nota é a de antes
     const plain = buildTeams(pool(), T).map(r => [r.plan.field, names(r)]);
     expect(buildTeams(pool(), T, { comp, compWeight: 0 }).map(r => [r.plan.field, names(r)])).toEqual(plain);

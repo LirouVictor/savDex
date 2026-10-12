@@ -710,6 +710,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-moveset-hint { margin-top: 2px; }
 .ai-gear { color: var(--ink); font-size: .8rem; font-weight: 600; }
 .ai-gear i { font-style: normal; color: var(--accent); font-size: .68rem; font-weight: 700; margin-left: 2px; }
+.ai-strats li + li { margin-top: 6px; }
+.ai-strat-tag { color: var(--accent); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
 .ai-foot { font-size: .8rem; }
 /* Confirmação antes de enviar à IA */
 .ai-confirm[open] { display: grid; gap: 12px; } /* só quando aberta: fechada, o navegador esconde */
