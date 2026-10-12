@@ -263,9 +263,10 @@ it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: o moveset (sabe + nível + 
     const comp = compIndex(d.game);
     // SIM_PLANMOVES=1: o moveset genérico (o mesmo em todos os planos) contra o moveset do plano;
     // SIM_GEAR=1: sem o item e a habilidade do competitivo contra com eles; SIM_MECH=1: sem o motor de interações contra com ele
-    const A = B.buildTeams(mons, T, { dex: process.env.SIM_MECH ? { ...quetzalLearnDex(QL, QT), mech: false } : process.env.SIM_GEAR ? { ...quetzalLearnDex(QL, QT), gear: false } : process.env.SIM_PLANMOVES ? { ...quetzalLearnDex(QL, QT), planMoves: false } : { ...quetzalLearnDex(QL, QT), useTutor: false }, comp });
+    // SIM_STRAT=1: sem a parte "Estratégias" contra com ela (SIM_STRAT_W = o peso do lado com ela)
+    const A = B.buildTeams(mons, T, { dex: process.env.SIM_STRAT ? { ...quetzalLearnDex(QL, QT), stratW: 0 } : process.env.SIM_MECH ? { ...quetzalLearnDex(QL, QT), mech: false } : process.env.SIM_GEAR ? { ...quetzalLearnDex(QL, QT), gear: false } : process.env.SIM_PLANMOVES ? { ...quetzalLearnDex(QL, QT), planMoves: false } : { ...quetzalLearnDex(QL, QT), useTutor: false }, comp });
     // SIM_MECH_W: o peso da parte "Interações" no lado com o motor (0 = só a escolha do item)
-    const Bt = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), ...(process.env.SIM_MECH_W ? { mechW: +process.env.SIM_MECH_W } : {}) }, comp });
+    const Bt = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), ...(process.env.SIM_MECH_W ? { mechW: +process.env.SIM_MECH_W } : {}), ...(process.env.SIM_STRAT_W ? { stratW: +process.env.SIM_STRAT_W } : {}) }, comp });
     const opp = opponents(fmt.opp, NOPP, 5);
     const setsOf = r => { const s = leadOrder(r.team, r.plan).map(e => toSet(e, r.plan, sdex)); return s.some(x => !x) ? null : s; };
     for (const rb of Bt) {

@@ -4,7 +4,8 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
+import { rolesOfMon, teamStrategies, planText } from './strategies.js';
 import { SRC } from './moveset.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
@@ -321,7 +322,7 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo'], ['combo', 'Interações']];
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo'], ['combo', 'Interações'], ['strat', 'Estratégias']];
 
 /**
  * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
@@ -376,6 +377,7 @@ function describeTeam(res, types, pool, ctx) {
     membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan, extra, shownSets, items), dropped: [],
     ameacas: threats ? threatsHtml(res, threats) : null,
     interacoes: combos.size ? comboLines(team, plan, combos) : null,
+    estrategias: strategyCards(team, plan, shownSets, items),
   };
   const ideal = ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
   if (ideal) r.ideal = ideal;
@@ -392,6 +394,44 @@ function describeTeam(res, types, pool, ctx) {
     shown: new Map([...(ideal ? ideal.alts.map(realOf) : []), ...mons].map(m => [refOf(m), m])),
     evolved: new Map(mons.filter(m => m.evolvedFrom).map(m => [refOf(m), m])),
   };
+}
+
+// Nome de cada papel da biblioteca de estratégias na tela
+const ROLE_NAME = {
+  pivot: 'pivô', regen: 'Regenerator', hazard: 'hazards', removal: 'tira hazards', phaze: 'força a troca', screens: 'telas',
+  web: 'Sticky Web', sweeper: 'varre com setup', midAttacker: 'atacante', 'drum+priority': 'Belly Drum + prioridade',
+  'smash+smashItem': 'Shell Smash', 'pass+passable': 'Baton Pass', sacrifice: 'sacrifício', fire: 'Fire', water: 'Water',
+  grass: 'Grass', dragon: 'Dragon', steel: 'Steel', fairy: 'Fairy',
+};
+// Até quantas estratégias da biblioteca o painel mostra (além da do plano)
+const MAX_STRATEGIES = 3;
+
+/**
+ * Estratégias da equipe (strategies.js, Quetzal): a do plano, com a explicação, e as conhecidas do competitivo que a
+ * equipe executa com o moveset e o item dos cards (ou quase: falta um golpe a ensinar ou um item a dar). null sem a
+ * biblioteca (fora do Quetzal).
+ */
+function strategyCards(team, plan, shownSets, items) {
+  const members = [];
+  for (const e of team) {
+    const x = strategyInput(e, shownSets.get(e), items.get(e));
+    if (!x) return null;
+    members.push({ ref: refOf(e.m), roles: rolesOfMon(x.c, x.cands, x.itemOk, x.teachOk) });
+  }
+  const cards = [];
+  const pt = planText(plan);
+  if (pt) cards.push({ title: planName(plan), tag: t('plano'), text: `${cap(t(pt.how))}. ${t('Cuidado com: {list}.', { list: t(pt.breaks) })}` });
+  for (const x of teamStrategies(members, plan).slice(0, MAX_STRATEGIES)) {
+    const who = x.who.map(([ref, r]) => `${ref} (${t(ROLE_NAME[r] || r)})`);
+    const prep = x.prep.map(p => (p.kind === 'item'
+      ? t('dê {item} a {ref}', { item: p.name, ref: p.ref })
+      : t('ensine {move} a {ref} ({when})', { move: p.name, ref: p.ref, when: p.src === SRC.level ? t('Nv. {n}', { n: p.level }) : p.src === SRC.known ? t('já sabe') : t('na hora, pelo NOVO MOV.') })));
+    const parts = [`${cap(t(x.s.how))}.`, t('Quem faz: {list}.', { list: list(who) })];
+    if (prep.length) parts.push(t('Falta: {list}.', { list: list(prep) }));
+    parts.push(t('Dá: {gives}. Cuidado com: {list}.', { gives: t(x.s.gives), list: t(x.s.breaks) }));
+    cards.push({ title: t(x.s.name), tag: x.ready ? t('pronta') : t('falta preparo'), text: parts.join(' ') });
+  }
+  return cards.length ? { cards, note: t('Estratégias conhecidas dos times competitivos de singles; o app confere quem as executa com os golpes e o item dos cards.') } : null;
 }
 
 /**
