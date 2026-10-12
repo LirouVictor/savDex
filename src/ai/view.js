@@ -76,6 +76,7 @@ function appPanels(r, byRef, check, dicas) {
   return `${panel('Próximos passos', 'swap', dicas)}
     ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
     ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}
+    ${r.interacoes ? `<details class="fold ai-facts"><summary>${t('Interações')}</summary>${bullets(r.interacoes.lines, byRef)}${note(r.interacoes)}</details>` : ''}
     ${check ? `<details class="fold ai-facts"><summary>${t('Contas da equipe')}</summary>${check}</details>` : ''}`;
 }
 

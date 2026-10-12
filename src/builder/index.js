@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos } from './build.js';
 import { SRC } from './moveset.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
@@ -93,7 +93,7 @@ const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
  * Função de cada membro na equipe e até 3 motivos curtos, do mais importante para o menos (os nomes viram referências
  * E1/C3-12). O que é para fazer (ensinar, evoluir) fica nos próximos passos.
  */
-function describeMember(e, team, plan, types, shownSet = null, item = undefined) {
+function describeMember(e, team, plan, types, shownSet = null, item = undefined, combos = null) {
   const m = e.m, f = plan.field;
   // Com o moveset (Quetzal), os golpes que contam são os dele, não os do save
   const bf = shownSet ? { ...e.bf, moves: shownSet } : e.bf;
@@ -134,6 +134,9 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined)
     role = t('varre com setup');
     why.push(moveOrTeach(e.sweepMove, e.sweep === 1));
   }
+  // A melhor combinação de mecânicas que rende (Toxic Orb + Poison Heal…); o porquê fica em "Interações"
+  const combo = combos && combos.list.find(x => x.ok);
+  if (combo) why.push(combo.label);
   // A mega, se o plano não a citou (Dragonite: Multiscale)
   if (e.bf !== m && !e.given && !why.some(x => x.includes(m.item.name))) why.push(t('mega: {ability}', { ability: bf.ability.name }));
   // O que segura pela equipe: resiste ao que acerta 2+ colegas em cheio, anula pela habilidade
@@ -171,7 +174,7 @@ const ROCK = { sol: 'Heat Rock', chuva: 'Damp Rock', 'tempestade de areia': 'Smo
 /** O item que a tela mostra (com o item do competitivo): a pedra do clima para quem põe o clima do plano sem megapedra. */
 function shownItem(e, plan, set) {
   if (plan.kind === 'weather' && ROCK[plan.field] && e.auto.has(plan.field) && !e.mega) return ROCK[plan.field];
-  return itemFor(e, set || e.set);
+  return itemFor(e, set || e.set, plan.field || null);
 }
 
 /**
@@ -318,7 +321,7 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo']];
+const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo'], ['combo', 'Interações']];
 
 /**
  * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
@@ -363,13 +366,16 @@ function describeTeam(res, types, pool, ctx) {
   const shownSets = new Map(team.filter(e => e.set).map(e => [e, finalMoveset(e, (extra.get(e) || []).map(x => x.name))]));
   // Item do competitivo (só com o moveset, no Quetzal): o escolhido, ou a pedra do clima de quem põe o clima do plano
   const items = new Map(team.filter(e => e.set).map(e => [e, shownItem(e, plan, shownSets.get(e))]));
-  const membros = team.map(e => describeMember(e, team, plan, types, shownSets.get(e) || null, items.has(e) ? items.get(e) : undefined));
+  // Interações (Quetzal): as combinações de habilidade, item e golpes de cada um, com o campo do plano, e as da equipe
+  const combos = new Map(team.filter(e => e.set).map(e => [e, shownCombos(e, shownSets.get(e), items.get(e), plan.field || null)]).filter(([, x]) => x));
+  const membros = team.map(e => describeMember(e, team, plan, types, shownSets.get(e) || null, items.has(e) ? items.get(e) : undefined, combos.get(e) || null));
   const { good, bad } = teamPoints(team, plan, types);
   const r = {
     // Sem resumo: a aba e o título já dizem o plano
     nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: '',
     membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan, extra, shownSets, items), dropped: [],
     ameacas: threats ? threatsHtml(res, threats) : null,
+    interacoes: combos.size ? comboLines(team, plan, combos) : null,
   };
   const ideal = ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
   if (ideal) r.ideal = ideal;
@@ -378,13 +384,35 @@ function describeTeam(res, types, pool, ctx) {
     name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
     // Copiar (Showdown) e Comentar com IA: com o moveset do app no lugar dos golpes do save
     showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e), plannedMoves: true,
-      item: items.get(e) ? { id: null, name: items.get(e), confidence: 'confirmado' } : e.m.item } : e.m)),
+      item: items.get(e) ? { id: null, name: items.get(e), confidence: 'confirmado' } : e.m.item,
+      combos: combos.get(e) ? combos.get(e).list.filter(x => x.ok).map(x => x.label) : [] } : e.m)),
     // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
     // (as alternativas do "ideal × o que você tem" também: os textos citam o Pokémon pela referência)
     byRef: new Map([...(ideal ? ideal.alts : []), ...mons].map(m => [refOf(m), realOf(m)])),
     shown: new Map([...(ideal ? ideal.alts.map(realOf) : []), ...mons].map(m => [refOf(m), m])),
     evolved: new Map(mons.filter(m => m.evolvedFrom).map(m => [refOf(m), m])),
   };
+}
+
+/**
+ * Interações (mechanics.js): o que cada combinação faz na batalha, as da equipe e as que funcionam mas rendem pouco (não
+ * contam na nota).
+ */
+function comboLines(team, plan, combos) {
+  const lines = [], weak = [];
+  for (const e of team) {
+    const c = combos.get(e);
+    if (!c) continue;
+    for (const x of c.list) {
+      if (x.ok) lines.push(t('{ref}: {combo}: {how}.', { ref: refOf(e.m), combo: x.label, how: t(x.how) }));
+      else if (x.works) weak.push(`${refOf(e.m)} (${x.label})`);
+    }
+  }
+  const bits = team.map(e => (combos.get(e) ? combos.get(e).bits : 0));
+  for (const x of teamCombos(bits, plan)) lines.push(t('Equipe: {how}.', { how: t(x.how) }));
+  if (weak.length) lines.push(t('Funcionam, mas rendem pouco aqui (não contam na nota): {list}.', { list: list(weak) }));
+  if (!lines.length) return null;
+  return { lines, note: t('Combinações de habilidade, item e golpes que o app reconhece; o item é o sugerido (o jogador dá um jeito de conseguir).') };
 }
 
 /** "9×" para quem joga junto; "1/3" para quem se evita (log2 do lift). */
