@@ -963,7 +963,7 @@ export default {
   'Interações': 'Interactions',
   '{ref}: {combo}: {how}.': '{ref}: {combo}: {how}.',
   'Equipe: {how}.': 'Team: {how}.',
-  'Funcionam, mas rendem pouco aqui (não contam na nota): {list}.': 'Work, but add little here (not counted in the score): {list}.',
-  'Combinações de habilidade, item e golpes que o app reconhece; o item é o sugerido (o jogador dá um jeito de conseguir).': 'Ability, item and move combinations the app recognizes; the item is the suggested one (you find a way to get it).',
+  'Funcionam, mas rendem pouco aqui: {list}.': 'Work, but add little here: {list}.',
+  'Combinações de habilidade, item e golpes que o app reconhece; o item é o sugerido (o jogador dá um jeito de conseguir). Não mudam a nota: nas batalhas simuladas, contar com elas não melhorou as equipes.': 'Ability, item and move combinations the app recognizes; the item is the suggested one (you find a way to get it). They do not change the score: in simulated battles, counting them did not improve the teams.',
   'interações que o app reconhece: {list}': 'interactions the app recognizes: {list}',
 };

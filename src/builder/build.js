@@ -384,8 +384,10 @@ export function shownCombos(e, set, item, field) {
 /** As combinações de mecânicas do Pokémon (mechanics.js): o valor que rende sem campo e o que muda em cada campo. */
 const MECH_FIELDS = ['chuva', 'sol', 'Trick Room', 'Electric Terrain', 'Grassy Terrain', 'Psychic Terrain', 'Misty Terrain'];
 const FIELD_ITEMS = new Set(['Electric Seed', 'Grassy Seed', 'Psychic Seed', 'Misty Seed', 'Room Service', 'Power Herb']);
-// Peso da parte "Interações" (escolhido pelo simulador; os testes de comparação trocam com `dex.mechW`)
-const COMBO_W = 1;
+// Peso da parte "Interações": 0 (medido no simulador, no mesmo plano, contra a montagem sem o motor: 0 → 51%, 0,25 → 50%,
+// 0,5 → 54% com resultados de 24% a 100%, 1 → 52% em 12 de 28 planos; o peso trocava Pokémon fortes por quem tem
+// combinação, sem ganho medido). As combinações aparecem na tela e na IA; os testes de comparação trocam com `dex.mechW`
+const COMBO_W = 0;
 function setCombos(e, w) {
   const item = e.m.item && !isMegaStone(e.m.item) ? e.m.item.name : null;
   const c = mechOf(e.m, e.bf, e.set || e.moves, item);
@@ -817,7 +819,7 @@ function partsOf(team, plan, types, byType, inc = null) {
     if (e.comboF && plan.field) p.combo += e.comboF[plan.field] || 0;
     cbits |= e.cbits;
   }
-  if (cbits) p.combo += team[0].comboW * teamComboValue(team, plan);
+  if (cbits && team[0].comboW) p.combo += team[0].comboW * teamComboValue(team, plan);
   // Com 2 megas da forma conhecida, só uma megaevolui por batalha: metade do ganho da menor não conta
   if (gains && gains.length > 1) p.members -= Math.min(...gains) / 2;
   // Físicos × especiais (só faz sentido com a equipe quase pronta), tipos repetidos, velocidade
