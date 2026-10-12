@@ -1,0 +1,165 @@
+{
+ "format": "gen9uu",
+ "name": "Gen 9 UU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9uu.json",
+  "thread": "https://www.smogon.com/forums/threads/sv-uu-sample-teams-submissions-open.3720278/",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9uu-1lgg1k4",
+   "name": "standard dual steel",
+   "author": "spellcaster",
+   "verification": "unverified",
+   "members": [
+    { "s": "Excadrill", "r": [ "removal", "sweeper", "midAttacker", "passable" ], "at": [ "ground", "normal", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Cobalion", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "electric", "fighting" ], "dmg": 2, "cat": "M" },
+    { "s": "Hydrapple", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "grass", "ground" ], "dmg": 3, "cat": "S" },
+    { "s": "Latios", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying", "poison" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-nh9q16",
+   "name": "Band Gross Sand",
+   "author": "wind of schilt",
+   "verification": "unverified",
+   "members": [
+    { "s": "Tyranitar", "r": [ "hazard", "midAttacker" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "dark", "ground", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Excadrill", "r": [ "removal", "sweeper", "midAttacker", "passable" ], "use": [ "tempestade de areia" ], "at": [ "ground", "normal", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Hydrapple", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "ground" ], "dmg": 2, "cat": "S" },
+    { "s": "Metagross", "r": [ "midAttacker", "priority" ], "at": [ "dark", "psychic", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Rotom-Wash", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fighting", "flying" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-1b8ejac",
+   "name": "no title",
+   "author": "udongirl",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Slowking", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Excadrill", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ground", "normal", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Hydrapple", "r": [ "regen", "midAttacker" ], "at": [ "dragon", "grass", "ground" ], "dmg": 4, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fire", "flying" ], "dmg": 4, "cat": "M" },
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "fire", "flying" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-w0jpl",
+   "name": "Lokix pivot spam (Again)",
+   "author": "Pengui123",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Slowking", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Hydrapple", "r": [ "regen", "midAttacker" ], "at": [ "dragon", "grass", "ground" ], "dmg": 4, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Metagross", "r": [ "midAttacker", "priority" ], "at": [ "dark", "ground", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Rhyperior", "r": [ "hazard", "midAttacker" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "fire", "flying" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-5ltvca",
+   "verification": "unverified",
+   "members": [
+    { "s": "Latios", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Mienshao", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "bug", "dark", "fighting", "rock" ], "dmg": 4, "cat": "P" },
+    { "s": "Rhyperior", "r": [ "hazard", "sweeper", "midAttacker", "passable" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Tinkaton", "r": [ "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "fire", "flying" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-1yoek2j",
+   "name": "UU Mamo Hazard Stack",
+   "author": "Appleking123",
+   "verification": "unverified",
+   "members": [
+    { "s": "Mamoswine", "r": [ "midAttacker", "priority" ], "at": [ "grass", "ground", "ice" ], "dmg": 4, "cat": "P" },
+    { "s": "Cobalion", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "electric", "fighting", "steel" ], "dmg": 3, "cat": "M" },
+    { "s": "Ogerpon", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Sandy Shocks", "r": [ "pivot", "hazard", "midAttacker" ], "use": [ "sol" ], "at": [ "electric", "ground", "rock" ], "dmg": 3, "cat": "S" },
+    { "s": "Slowking", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fighting", "flying" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-1171h9r",
+   "verification": "unverified",
+   "members": [
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fighting", "flying" ], "dmg": 4, "cat": "M" },
+    { "s": "Excadrill", "r": [ "removal", "sweeper", "midAttacker", "passable" ], "at": [ "ground", "normal", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Hydrapple", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "grass", "ground" ], "dmg": 3, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Rhyperior", "r": [ "hazard", "midAttacker" ], "at": [ "bug", "ground", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-10b3skz",
+   "name": "shocks regenguys but with The Kicks",
+   "author": "Lily",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Sandy Shocks", "r": [ "pivot", "hazard", "midAttacker" ], "use": [ "sol" ], "at": [ "electric", "ground", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Hydrapple", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "grass", "ground" ], "dmg": 3, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Tinkaton", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fire", "flying" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-sg1qf3",
+   "author": "swapmert",
+   "verification": "unverified",
+   "members": [
+    { "s": "Sandy Shocks", "r": [ "pivot", "hazard", "midAttacker" ], "use": [ "sol" ], "at": [ "electric", "ground", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Mienshao", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "bug", "dark", "fighting", "ice" ], "dmg": 4, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Tinkaton", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "use": [ "chuva" ], "at": [ "fighting", "flying", "normal" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-v6lggi",
+   "name": "Triple Regen Core BO",
+   "author": "Seraphz ⁂",
+   "verification": "unverified",
+   "members": [
+    { "s": "Mienshao", "r": [ "pivot", "regen", "midAttacker" ], "at": [ "bug", "dark", "fighting", "ice" ], "dmg": 4, "cat": "P" },
+    { "s": "Hydrapple", "r": [ "regen", "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "grass", "ground" ], "dmg": 3, "cat": "S" },
+    { "s": "Mamoswine", "r": [ "midAttacker", "priority" ], "at": [ "dark", "ground", "ice" ], "dmg": 4, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "regen" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Tinkaton", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "fire", "flying" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-qgvdad",
+   "verification": "unverified",
+   "members": [
+    { "s": "Bellibolt", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Arcanine-Hisui", "r": [ "midAttacker", "priority" ], "use": [ "sol" ], "at": [ "fire", "normal", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Hippowdon", "r": [ "hazard", "midAttacker" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "dark" ], "dmg": 4, "cat": "P" },
+    { "s": "Mandibuzz", "r": [ "removal" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "regen", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "fire", "flying" ], "dmg": 4, "cat": "M" }
+   ]
+  }
+ ],
+ "results": []
+}

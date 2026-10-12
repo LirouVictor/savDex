@@ -4,8 +4,9 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
-import { rolesOfMon, teamStrategies, planText, STRATEGIES } from './strategies.js';
+import { prepareBuild, freeTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
+import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
+import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP, ADAPT_N } from './reference.js';
 import { SRC } from './moveset.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
@@ -13,8 +14,10 @@ import { buildView } from '../ai/view.js';
 import { refOf } from '../ai/prompt.js';
 import { FIELD, MEGA_FIELD, FIELD_MOVES, ABUSERS, MOVE_ABUSERS, MEGA_ABUSERS, WEATHER } from '../ai/strategy.js';
 
-// A referência competitiva do jogo (tabelas do Smogon em pacotes à parte): app.js carrega antes de montar
+// A referência competitiva do jogo (tabelas do Smogon em pacotes à parte) e as equipes de referência: app.js carrega
+// antes de montar
 export { loadSmogon } from './smogon.js';
+export { loadReferences } from './reference.js';
 
 const PLAN_NAME = {
   sol: 'Sol', chuva: 'Chuva', 'tempestade de areia': 'Areia', 'neve/granizo': 'Neve', 'Trick Room': 'Trick Room',
@@ -230,7 +233,9 @@ function teamPoints(team, plan, types) {
   const good = [], bad = [];
   const f = plan.field;
   if (plan.kind === 'offense') {
-    const sup = team.filter(e => e.hoSup), sweepers = team.filter(e => e.sweep && !sup.includes(e));
+    // Quem abre o caminho: os de maior valor (quem já tem o golpe ganha de quem só aprende; muitos aprendem Reflect)
+    const top = Math.max(0, ...team.map(e => e.hoSup || 0));
+    const sup = team.filter(e => e.hoSup && e.hoSup === top), sweepers = team.filter(e => e.sweep && !sup.includes(e));
     good.push(t('Hiperofensiva: {sup} abre o caminho; {list} varrem com setup.', { sup: list(sup.map(ref)), list: list(sweepers.map(ref)) }));
   }
   if (f) {
@@ -325,19 +330,63 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
 const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo'], ['combo', 'Interações'], ['strat', 'Estratégias']];
 
 /**
- * Monta as equipes (a melhor de cada plano; as alternativas só quando o jogador pede, em moreOptions) e prepara o que
- * a tela precisa de cada uma.
- * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map }>}
+ * Monta as equipes e prepara o que a tela precisa de cada uma. Com as equipes de referência do jogo (`refs`,
+ * loadReferences), o fluxo principal são elas, adaptadas ao save (reference.js); a montagem livre (a melhor de cada
+ * plano) só roda se nenhuma referência for compatível ou quando o jogador pede (freeOptions). Sem `refs` (undefined), só
+ * a montagem livre, como antes.
+ * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map, kind: 'ref'|'free' }>}
+ *   com as propriedades `refs` (o que a tela diz das referências: quantas, quantas ficaram de fora, se há mais) e `raw`
+ *   (a montagem livre, para as alternativas)
  */
-export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null, comp = null, saveGame = null } = {}) {
-  const raw = buildTeams(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game, comp });
-  // "Ideal × o que você tem" precisa das espécies do jogo do save (com ou sem as ameaças)
-  Object.assign(raw.ctx, { T, saveGame });
-  const types = attackTypes(T);
-  const results = raw.map(res => describeTeam(res, types, raw.pool, raw.ctx));
-  Object.defineProperty(results, 'raw', { value: raw });
+export function runBuilder(all, T, note = '', dex = null, { noLegends = false, anyItem = false, ready = false, game = null, comp = null, saveGame = null, refs = undefined } = {}) {
+  const ctx = prepareBuild(all, T, { want: wantedMons(all, note), dex, noLegends, anyItem, ready, game, comp });
+  // "Ideal × o que você tem" e as referências precisam das espécies do jogo do save (com ou sem as ameaças)
+  Object.assign(ctx, { T, saveGame });
+  const types = ctx.types;
+  const results = [];
+  let info = null;
+  if (refs !== undefined) {
+    info = { tables: refs, total: refs ? refs.reduce((a, tb) => a + tb.teams.length, 0) : 0, rejected: 0, candidates: null, free: false };
+    if (refs && refs.length && saveGame) {
+      const rt = referenceTeams(ctx, refs, T, saveGame);
+      Object.assign(info, { rejected: rt.rejected, candidates: rt.candidates });
+      results.push(...rt.map(x => describeRef(x, types, ctx)));
+    }
+  }
+  Object.defineProperty(results, 'refs', { value: info });
+  Object.defineProperty(results, 'ctx', { value: ctx });
+  Object.defineProperty(results, 'raw', { value: null, writable: true });
+  // Sem referência compatível (ou sem referências para o jogo): a montagem livre, com o aviso na tela
+  if (!results.length) freeOptions(results);
   return results;
 }
+
+/** A montagem livre (sem referência), uma equipe por plano, no fim da lista. @returns {number} a posição da primeira */
+export function freeOptions(results) {
+  if (results.raw) return results.findIndex(x => x.kind === 'free');
+  const raw = freeTeams(results.ctx);
+  results.raw = raw;
+  if (results.refs) results.refs.free = true;
+  const at = results.length;
+  results.push(...raw.map(res => describeTeam(res, raw.ctx.types, raw.pool, raw.ctx)));
+  return raw.length ? at : -1;
+}
+
+/** Mais referências (as próximas pela estimativa), adaptadas agora. @returns {number} a posição da primeira nova, ou -1 */
+export function moreReferences(results) {
+  const info = results.refs;
+  if (!info || !info.candidates) return -1;
+  const c = info.candidates, ctx = results.ctx;
+  const next = c.list.filter(w => w.result === undefined).slice(0, ADAPT_N);
+  const added = next.map(w => adaptReference(ctx, w, c.fidW)).filter(Boolean).sort((a, b) => b.rank - a.rank).map(x => describeRef(x, ctx.types, ctx));
+  if (!added.length) return -1;
+  // Entram depois das referências que já estão na tela (antes da montagem livre)
+  const at = results.filter(x => x.kind === 'ref').length;
+  results.splice(at, 0, ...added);
+  return at;
+}
+/** Quantas referências compatíveis ainda não foram adaptadas. */
+export const moreRefsLeft = results => (results.refs && results.refs.candidates ? results.refs.candidates.list.filter(w => w.result === undefined).length : 0);
 
 /**
  * Alternativas do plano da equipe results[i] (a busca roda agora). Entram logo depois das equipes do plano.
@@ -345,7 +394,7 @@ export function runBuilder(all, T, note = '', dex = null, { noLegends = false, a
  */
 export function moreOptions(results, i, T) {
   const main = results[i];
-  if (!main || main.alt || main.alts) return -1;
+  if (!main || main.alt || main.alts || main.kind === 'ref' || !results.raw) return -1;
   const types = attackTypes(T);
   const alts = altTeams(results.raw, main.src).map(res => describeTeam(res, types, results.raw.pool, results.raw.ctx));
   main.alts = { count: alts.length };
@@ -354,7 +403,7 @@ export function moreOptions(results, i, T) {
   return i + 1;
 }
 
-function describeTeam(res, types, pool, ctx) {
+function describeTeam(res, types, pool, ctx, { ref = false } = {}) {
   const threats = ctx.threats;
   // Os Pokémon do plano (com o moveset dele, no Quetzal)
   if (res.pp) pool = res.pp.pool;
@@ -379,7 +428,8 @@ function describeTeam(res, types, pool, ctx) {
     interacoes: combos.size ? comboLines(team, plan, combos) : null,
     estrategias: strategyCards(team, plan, shownSets, items),
   };
-  const ideal = ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
+  // Nas referências, o que falta fica em "Para reproduzir a original" (o ideal do competitivo seria outra sugestão)
+  const ideal = !ref && ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
   if (ideal) r.ideal = ideal;
   const mons = team.map(e => e.m);
   // Para conferir as estratégias que a IA propõe (Quetzal): o que cada membro pode ter (golpes que sabe ou aprende,
@@ -387,7 +437,7 @@ function describeTeam(res, types, pool, ctx) {
   const aiCheck = aiChecks(team, shownSets, items);
   return {
     aiCheck,
-    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
+    name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx, kind: ref ? 'ref' : 'free',
     // Copiar (Showdown) e Comentar com IA: com o moveset do app no lugar dos golpes do save
     showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e), plannedMoves: true,
       item: items.get(e) ? { id: null, name: items.get(e), confidence: 'confirmado' } : e.m.item,
@@ -405,7 +455,7 @@ const ROLE_NAME = {
   pivot: 'pivô', regen: 'Regenerator', hazard: 'hazards', removal: 'tira hazards', phaze: 'força a troca', screens: 'telas',
   web: 'Sticky Web', sweeper: 'varre com setup', midAttacker: 'atacante', 'drum+priority': 'Belly Drum + prioridade',
   'smash+smashItem': 'Shell Smash', 'pass+passable': 'Baton Pass', sacrifice: 'sacrifício', fire: 'Fire', water: 'Water',
-  grass: 'Grass', dragon: 'Dragon', steel: 'Steel', fairy: 'Fairy',
+  grass: 'Grass', dragon: 'Dragon', steel: 'Steel', fairy: 'Fairy', priority: 'prioridade',
 };
 // Até quantas estratégias da biblioteca o painel mostra (além da do plano)
 const MAX_STRATEGIES = 3;
@@ -506,6 +556,160 @@ function idealLines(res, pool, ctx) {
   return { lines, note, alts: swaps.filter(s => s.alt).map(s => s.alt.e.m) };
 }
 
+// ---- Equipes de referência (reference.js): a original, a adaptada e o que falta para reproduzir a original ----
+
+const roleNames = keys => list(keys.map(k => t(ROLE_NAME[k] || k)));
+const stratName = id => { const x = STRATEGIES.find(s => s.id === id); return x ? t(x.name) : id; };
+// Nome da forma na tela: o do Showdown (inglês, como no jogo), com a mega
+const refName = m => (m.x.mega ? `${m.x.s} (${m.x.mega})` : m.x.s);
+// "Gen 9 National Dex" → "National Dex" (a aba é curta)
+const formatShort = tb => tb.name.replace(/^Gen \d+ /, '');
+const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Uma referência adaptada no formato da tela (o mesmo das equipes da montagem livre, com os painéis da referência). */
+function describeRef(x, types, ctx) {
+  const res = { plan: x.adapted.plan, team: x.adapted.team, score: x.adapted.score };
+  Object.defineProperty(res, 'pp', { value: x.adapted.pp });
+  const d = describeTeam(res, types, x.adapted.pp.pool, ctx, { ref: true });
+  const kept = x.kept.length;
+  d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
+  d.r.nome = x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
+  d.r.referencia = refPanels(x, ctx);
+  // Quem o jogador tem em outra forma aparece nos textos: o toque abre o Pokémon do save
+  for (const m of d.r.referencia.extra) { d.byRef.set(refOf(m), realOf(m)); d.shown.set(refOf(m), m); }
+  d.ref = x;
+  return d;
+}
+
+/** Os três painéis: equipe original (com a origem), sua equipe adaptada e o que falta para reproduzir a original. */
+function refPanels(x, ctx) {
+  const { ref, format: tb, orig, adapted } = x;
+  const by = new Map(x.swaps.map(s => [s.orig, s]));
+  const keptSet = new Set(x.kept.map(e => e.real));
+  const own = orig.members.map((m, i) => (x.keep[i] && keptSet.has(x.keep[i].real) ? x.keep[i] : null));
+  // Equipe original
+  const head = ref.name && ref.author ? t('“{name}”, por {author}.', { name: ref.name, author: ref.author })
+    : ref.name ? t('“{name}” (sem autor na fonte).', { name: ref.name })
+      : ref.author ? t('Por {author} (sem nome na fonte).', { author: ref.author }) : t('Sem nome nem autor na fonte.');
+  const origin = [
+    t('Equipe de exemplo do Smogon ({format}, Singles), reunida pelo projeto pkmn/smogon.', { format: tb.name }),
+    ref.verification === 'partially_verified'
+      ? t('O autor aparece no tópico de equipes de exemplo do formato (conferido em {date}); o time inteiro não foi conferido.', { date: tb.source.retrieved })
+      : t('Nome e autor como a fonte dá; não conferidos no tópico do formato.'),
+  ];
+  // Resultados de torneio: só os registrados com fonte (equipes de exemplo não têm)
+  const results = (tb.results || []).filter(r => r.team === ref.id && r.url);
+  const resLines = results.length
+    ? results.map(r => t('{placement} em {event} ({date}), {player}.', r))
+    : [t('Resultado em torneio: nenhum registrado. É uma equipe de exemplo, não uma equipe campeã.')];
+  const planLine = orig.plan.kind === 'balance' ? t('Plano: equilibrada.') : t('Plano: {plan}.', { plan: planName(orig.plan) });
+  const stratLine = orig.strategies.length ? t('Estratégias: {list}.', { list: list(orig.strategies.map(stratName)) }) : '';
+  const members = orig.members.map((m, i) => {
+    const roles = [...FID_ROLES].filter(k => roleKeyIn(m.sbits, k));
+    const what = roles.length ? roleNames(roles) : t('sem papel da biblioteca');
+    const s = by.get(m);
+    const status = own[i] ? t('você tem') : !m.spec ? t('não existe neste jogo') : s && s.sub ? t('no lugar: {sub}', { sub: refOf(s.sub.m) }) : t('você não tem');
+    return { text: `${refName(m)}: ${what}`, status, ok: !!own[i] };
+  });
+  const original = { head, lines: [...origin, ...resLines, [planLine, stratLine].filter(Boolean).join(' ')], members,
+    links: [{ label: t('Tópico das equipes de exemplo'), url: tb.source.thread }, { label: t('Dados (pkmn/smogon)'), url: tb.source.dataset }] };
+
+  // Sua equipe adaptada
+  const lines = [];
+  lines.push(x.complete && kept6(x) ? t('Você tem a equipe inteira: nenhuma troca.')
+    : t('Ficam {n} de 6 da original: {list}.', { n: x.kept.length, list: list(x.kept.map(e => refOf(e.m))) }));
+  if (orig.plan.kind !== 'balance') {
+    lines.push(adapted.planKept && adapted.holds ? t('Plano da original mantido: {plan}.', { plan: planName(orig.plan) })
+      : t('Plano da original ({plan}) perdido: ninguém no seu save põe ou aproveita o campo o bastante.', { plan: planName(orig.plan) }));
+  }
+  if (orig.strategies.length) {
+    const have = new Set(strategiesOf(adapted.team, adapted.plan));
+    const ok = orig.strategies.filter(id => have.has(id)), miss = orig.strategies.filter(id => !have.has(id));
+    lines.push(miss.length ? t('Estratégias da original: {k} de {n} ({ok}); falta: {miss}.', { k: ok.length, n: orig.strategies.length, ok: ok.length ? list(ok.map(stratName)) : '—', miss: list(miss.map(stratName)) })
+      : t('Estratégias da original: todas ({list}).', { list: list(ok.map(stratName)) }));
+  }
+  for (const s of x.swaps) {
+    if (!s.sub) { lines.push(t('{orig}: sem substituto.', { orig: refName(s.orig) })); continue; }
+    const why = [];
+    if (s.wanted) why.push(t('pedido por você'));
+    if (s.kept.length) why.push(t('faz o mesmo papel ({roles})', { roles: roleNames(s.kept) }));
+    const shared = s.orig.types.filter(ty => s.sub.types.includes(ty));
+    if (shared.length) why.push(t('mesmo tipo ({types})', { types: shared.map(cap).join('/') }));
+    const f = adapted.plan.field;
+    if (f && adapted.plan.kind !== 'room' && sets(s.sub, f)) why.push(t('põe {field}', { field: t(f) }));
+    else if (f && adapted.plan.kind !== 'room' && (s.sub.value[f] || 0) >= 11) why.push(t('aproveita {field}', { field: t(f) }));
+    if (!why.length) why.push(t('o que mais rende na equipe inteira pela nota'));
+    const parts = [t('{orig} → {sub}: {why}.', { orig: refName(s.orig), sub: refOf(s.sub.m), why: why.join('; ') })];
+    if (s.covered.length) parts.push(t('Outro membro cobre: {roles}.', { roles: roleNames(s.covered) }));
+    if (s.lost.length) parts.push(t('Perde: {roles}.', { roles: roleNames(s.lost) }));
+    if (s.added.length) parts.push(t('Acrescenta: {roles}.', { roles: roleNames(s.added) }));
+    lines.push(parts.join(' '));
+  }
+  const adaptedPanel = { lines, note: t('A nota ({n}) é a do app para esta equipe: ela não herda resultado nem reputação da original. As trocas foram escolhidas juntas, pela equipe inteira; o par “sai → entra” é o mais parecido, só para explicar.', { n: Math.round(adapted.score) }) };
+
+  // Para reproduzir a original
+  const repro = [], extra = [];
+  const comp = ctx.comp && ctx.comp.index;
+  const T = ctx.T;
+  for (const g of missingMembers(x, ctx)) {
+    const name = refName(g.m);
+    const head2 = g.status === 'game' ? t('{name}: não existe neste jogo.', { name })
+      : g.status === 'form' ? t('{name}: você tem {other}, em outra forma.', { name, other: refOf(g.other.m) })
+        : g.status === 'excluded' ? t('{name}: você tem, mas ficou de fora pela opção Sem lendários e míticos.', { name })
+          : t('{name}: você não tem.', { name });
+    const extra = [];
+    if (g.roles.length) extra.push(t('Na original: {roles}.', { roles: roleNames(g.roles) }));
+    const usage = comp && g.status !== 'game' ? usageLine(comp, g.m, T) : '';
+    if (usage) extra.push(usage);
+    repro.push([head2, ...extra].join(' '));
+  }
+  // Quem ficou, mas com o moveset do app não faz um papel que fazia na original: o que ensinar ou dar
+  orig.members.forEach((m, i) => {
+    const e = own[i] && adapted.team.find(y => y.real === own[i].real);
+    if (!e) return;
+    const lost = FID_ROLES.filter(k => roleKeyIn(m.sbits, k) && !roleKeyIn(e.sbits, k));
+    if (!lost.length) return;
+    const fix = [];
+    if (e.set) {
+      const inp = strategyInput(e, e.set, e.m.item ? e.m.item.name : null);
+      const rr = rolesOfMon(inp.c, inp.cands, inp.itemOk, () => true);
+      for (const k of lost) {
+        const tch = rr.teach.get(k);
+        if (tch && tch.kind === 'move') fix.push(t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }));
+        else if (tch && tch.kind === 'item') fix.push(t('{role}: dê {item}', { role: t(ROLE_NAME[k] || k), item: tch.name }));
+        else fix.push(t('{role}: não aprende neste jogo', { role: t(ROLE_NAME[k] || k) }));
+      }
+    } else fix.push(t('não faz {roles} com os golpes que tem', { roles: roleNames(lost) }));
+    repro.push(t('{ref}: na original faz {roles}; {fix}.', { ref: refOf(e.m), roles: roleNames(lost), fix: fix.join('; ') }));
+  });
+  if (!repro.length) repro.push(t('Você já tem a original inteira.'));
+  const reproduce = { lines: repro, note: t('O app não guarda os sets da original (golpes, item e EVs são do Smogon e dos autores): os golpes citados são os mais usados no formato pelas estatísticas de uso. O set exato está no tópico.') };
+  return { original, adapted: adaptedPanel, reproduce, extra };
+}
+const kept6 = x => x.kept.length === 6;
+const roleKeyIn = (bits, k) => !!(bits & roleMask([k]));
+
+/** Os golpes e o item mais usados pela espécie no formato (estatísticas de uso do Smogon), com os nomes do jogo. */
+function usageLine(index, m, T) {
+  const id = index.find({ name: m.x.s, showdown: m.x.s }) || (m.spec && index.find(m.spec));
+  if (!id) return '';
+  const top = (map, n) => (map ? [...map].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k) : []);
+  const names = new Map();
+  for (const row of T.moves || []) if (row) names.set(toId(row[0]), row[0]);
+  const moves = top(index.moves(id), 4).map(k => names.get(k)).filter(Boolean);
+  const item = top(index.items(id), 1)[0];
+  const itemName = item ? itemNameOf(item, T) : null;
+  if (!moves.length) return '';
+  return itemName ? t('No competitivo costuma usar {moves}, com {item}.', { moves: list(moves), item: itemName }) : t('No competitivo costuma usar {moves}.', { moves: list(moves) });
+}
+function itemNameOf(id, T) {
+  for (const it of (T.quetzal && T.quetzal.items) || T.items || []) {
+    const n = Array.isArray(it) ? it[0] : it;
+    if (typeof n === 'string' && toId(n) === id) return n;
+  }
+  return null;
+}
+
 const threatName = x => (x.form ? `${x.name} (${x.form})` : x.name);
 const names = (xs, max) => list(xs.slice(0, max).map(threatName)) + (xs.length > max ? ' ' + t('e mais {n}', { n: xs.length - max }) : '');
 
@@ -549,17 +753,45 @@ export function shownParts(parts, score) {
   return out;
 }
 
-/** Abas (uma por plano) e a equipe escolhida. */
+/**
+ * O que a tela diz das equipes de referência: quantas são compatíveis, por que nenhuma é (o app não finge uma
+ * correspondência) e os botões para ver mais referências ou a montagem livre.
+ */
+function refsHeader(results) {
+  const info = results.refs;
+  if (!info) return '';
+  const nRefs = results.filter(x => x.kind === 'ref').length;
+  const left = moreRefsLeft(results);
+  const out = [];
+  if (!info.tables) out.push(`<p class="hint">${t('Não deu para carregar as equipes de referência (sem conexão?). As equipes abaixo são da montagem livre, sem referência.')}</p>`);
+  else if (!info.tables.length) out.push(`<p class="hint">${t('Ainda não há equipes de referência para este jogo. As equipes abaixo são da montagem livre, sem referência.')}</p>`);
+  else if (!nRefs) out.push(`<p class="hint">${t('Nenhuma equipe de referência compatível: das {total} equipes de exemplo do competitivo, nenhuma tem {min} ou mais Pokémon que você tem. As equipes abaixo são da montagem livre e não são baseadas em equipe competitiva.', { total: info.total, min: MIN_KEEP })}</p>`);
+  else out.push(`<p class="hint">${t('{n} de {total} equipes de exemplo do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
+  const btns = [];
+  if (left) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais referências ({n})', { n: left })}</button>`);
+  if (nRefs && !info.free) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-free>${t('Montar do zero (sem referência)')}</button>`);
+  if (btns.length) out.push(`<p class="builder-more">${btns.join(' ')}</p>`);
+  return out.join('');
+}
+
+/** Abas (as referências e, na montagem livre, uma por plano) e a equipe escolhida. */
 export function resultsHtml(results, i, T) {
-  if (!results.length) return `<p class="hint">${t('Não deu para montar uma equipe de 6 com os Pokémon deste save.')}</p>`;
+  if (!results.length) return `${refsHeader(results)}<p class="hint">${t('Não deu para montar uma equipe de 6 com os Pokémon deste save.')}</p>`;
   const cur = results[i] || results[0];
-  const tabs = results.map((x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`).join('');
+  const tab = (x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`;
+  const group = (kind, label) => {
+    const items = results.map((x, k) => [x, k]).filter(([x]) => x.kind === kind);
+    if (!items.length) return '';
+    const head = results.refs ? `<p class="builder-group">${esc(label)}</p>` : '';
+    return `${head}<div class="dex-filters builder-tabs" role="group" aria-label="${esc(label)}">${items.map(([x, k]) => tab(x, k)).join('')}</div>`;
+  };
+  const tabs = group('ref', t('Equipes de referência (adaptadas)')) + group('free', t('Montagem livre (sem referência)'));
   const shown = shownParts(cur.parts, cur.score);
   // A parte "Ameaças" só aparece com a caixa marcada; a "Competitivo", com a referência do jogo carregada
   const parts = PARTS.filter(([k]) => shown[k] !== 0)
     .map(([k, label]) => `<span class="part${shown[k] > 0 ? ' up' : shown[k] < 0 ? ' down' : ''}">${esc(t(label))} <b>${shown[k] > 0 ? '+' : ''}${shown[k]}</b></span>`).join('');
-  // Alternativas sob demanda: o botão fica na melhor equipe do plano até o jogador pedir
-  const more = cur.alt ? '' : !cur.alts
+  // Alternativas sob demanda (montagem livre): o botão fica na melhor equipe do plano até o jogador pedir
+  const more = cur.alt || cur.kind === 'ref' ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`
     : !cur.alts.count ? `<p class="hint builder-more">${t('Nenhuma outra opção deste plano com nota perto desta (90% ou mais).')}</p>` : '';
   // Os dois métodos juntos: a IA (com a chave do jogador) comenta a equipe que o app montou; o comentário entra aqui
@@ -568,7 +800,7 @@ export function resultsHtml(results, i, T) {
       <p class="hint">${t('A IA comenta esta equipe: riscos, golpes e itens. A equipe e a nota continuam as do app.')}</p>
       <div class="builder-ai-out" aria-live="polite"></div>
     </div>`;
-  return `<div class="dex-filters builder-tabs" role="group" aria-label="${esc(t('Planos'))}">${tabs}</div>
+  return `${refsHeader(results)}${tabs}
     <div class="builder-score"><span class="score-badge">${t('Nota {n}', { n: `<b>${Math.round(cur.score)}</b>` })}</span>${parts}</div>${more}
     ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}
     ${ai}`;

@@ -1,0 +1,84 @@
+{
+ "format": "gen9nationaldexubers",
+ "name": "Gen 9 National Dex Ubers",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9nationaldexubers.json",
+  "thread": "https://www.smogon.com/forums/threads/national-dex-ubers-sample-teams-updated-30-03-2025.3752303/",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9nationaldexubers-1tzkrxx",
+   "name": "3A Twave Pyogre + Offensive Ho-Oh",
+   "verification": "unverified",
+   "members": [
+    { "s": "Groudon", "mega": "Primal", "r": [ "hazard", "sweeper", "midAttacker", "passable" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Arceus-Dark", "r": [ "midAttacker" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Giratina-Origin", "r": [ "removal", "phaze", "midAttacker" ], "at": [ "dragon", "ghost" ], "dmg": 2, "cat": "P" },
+    { "s": "Ho-Oh", "r": [ "regen", "phaze", "midAttacker" ], "at": [ "fire", "flying", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Kyogre", "mega": "Primal", "r": [ "midAttacker" ], "set": [ "chuva" ], "auto": [ "chuva" ], "use": [ "chuva" ], "at": [ "electric", "ice", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Zacian", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "electric", "fighting", "steel" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldexubers-1x241uy",
+   "name": "Trapper Zygod",
+   "verification": "unverified",
+   "members": [
+    { "s": "Groudon", "mega": "Primal", "r": [ "hazard", "midAttacker" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Ho-Oh", "r": [ "regen", "removal", "phaze" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyogre", "mega": "Primal", "r": [ "sweeper", "midAttacker", "passable" ], "set": [ "chuva" ], "auto": [ "chuva" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Yveltal", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Zacian", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "electric", "normal", "steel" ], "dmg": 3, "cat": "M" },
+    { "s": "Zygarde", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldexubers-1my44gt",
+   "name": "Sp. Def Zygarde+ z Arc. Ground",
+   "verification": "unverified",
+   "members": [
+    { "s": "Groudon", "mega": "Primal", "r": [ "hazard", "midAttacker" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "fire", "ground", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Arceus-Ground", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Ho-Oh", "r": [ "regen", "removal", "phaze" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyogre", "mega": "Primal", "r": [ "sweeper", "midAttacker", "passable" ], "set": [ "chuva" ], "auto": [ "chuva" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Yveltal", "r": [ "midAttacker", "priority" ], "at": [ "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Zygarde", "r": [ "passable" ], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldexubers-1ozvy6k",
+   "name": "Deo-Speed Hyper Offense",
+   "author": "Entrocefalo",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Deoxys-Speed", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Arceus", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Groudon", "mega": "Primal", "r": [ "sweeper", "midAttacker", "passable" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Necrozma-Dusk-Mane", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground", "rock", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Yveltal", "r": [ "midAttacker", "priority" ], "at": [ "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Zacian", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "electric", "fairy", "fighting" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldexubers-89gb01",
+   "name": "eternatus full stall",
+   "verification": "unverified",
+   "members": [
+    { "s": "Dondozo", "r": [ "midAttacker" ], "at": [ "fighting", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Arceus-Dark", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Chansey", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Eternatus", "r": [ "hazard", "midAttacker" ], "at": [ "dragon", "poison" ], "dmg": 2, "cat": "S" },
+    { "s": "Giratina-Origin", "r": [ "removal" ], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Ho-Oh", "r": [ "regen", "removal", "phaze" ], "at": [ "fire" ], "dmg": 1, "cat": "P" }
+   ]
+  }
+ ],
+ "results": []
+}

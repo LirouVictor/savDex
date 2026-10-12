@@ -354,3 +354,53 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
   if (process.env.BENCH_OUT) writeFileSync(process.env.BENCH_OUT, JSON.stringify(rows, null, 1));
   if (process.env.BENCH_LOG) writeFileSync(process.env.BENCH_LOG, lines.join('\n') + '\n');
 }, 3600000);
+
+// Equipes de referência (opcional: BENCH_REFS=1; BENCH_OUT/BENCH_LOG como acima; BENCH_FID_W troca o peso da fidelidade,
+// BENCH_REF_ALL=1 adapta todas as compatíveis em vez das ADAPT_N melhores pela estimativa). Nos saves do Quetzal mede,
+// lado a lado com a montagem livre: quantas referências são compatíveis, a nota e a fidelidade das adaptadas, quanto das
+// estratégias, dos papéis e do plano da original a adaptada preserva, e o tempo.
+it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem livre', async () => {
+  const { referenceTeams, refFormats } = await import('../src/builder/reference.js');
+  const { roleMask } = await import('../src/builder/strategies.js');
+  const lines = [], rows = [];
+  const fidW = process.env.BENCH_FID_W ? +process.env.BENCH_FID_W : undefined;
+  for (const name of ['quetzal-7ins.sav', 'quetzal-en.sav', 'quetzal-en2.sav', ...(process.env.BENCH_USER_SAVE ? [process.env.BENCH_USER_SAVE] : [])]) {
+    const p = name.includes('/') ? name : `fixtures/${name}`;
+    if (!existsSync(p)) continue;
+    const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
+    const tables = refFormats(d.game).map(f => JSON.parse(readFileSync(`src/data/refteams/${f}.json`, 'utf8')));
+    if (!tables.length) continue;
+    const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+    const dex = quetzalLearnDex(QL, QT);
+    const comp = compIndex(d.game);
+    let t0 = performance.now();
+    const ctx = B.prepareBuild(all, T, { dex, comp });
+    const tPrep = performance.now() - t0;
+    t0 = performance.now();
+    const refs = referenceTeams(ctx, tables, T, d.game, { ...(fidW !== undefined ? { fidW } : {}), ...(process.env.BENCH_REF_ALL ? { adapt: 999 } : {}) });
+    const tRefs = performance.now() - t0;
+    t0 = performance.now();
+    const free = B.freeTeams(B.prepareBuild(all, T, { dex, comp }));
+    const tFree = performance.now() - t0;
+    let st = 0, stN = 0, ro = 0, roN = 0, pl = 0, plN = 0;
+    for (const r of refs) {
+      const have = new Set(strategiesOf(r.adapted.team, r.adapted.plan));
+      stN += r.orig.strategies.length; st += r.orig.strategies.filter(s => have.has(s)).length;
+      let u = 0; for (const e of r.adapted.team) u |= e.sbits;
+      roN += r.orig.roles.size; ro += [...r.orig.roles].filter(k => u & roleMask([k])).length;
+      if (r.orig.plan.kind !== 'balance') { plN++; if (r.adapted.planKept && r.adapted.holds) pl++; }
+    }
+    const best = refs[0] ? refs[0].adapted.score : null, bestFree = free[0] ? free[0].score : null;
+    const freeStrats = free.length ? free.reduce((a, r) => a + strategiesOf(r.team, r.plan).length, 0) / free.length : 0;
+    const row = { save: name, pc: all.length, compatible: refs.candidates.list.length, rejected: refs.rejected, adapted: refs.length,
+      best: best && r1(best), bestFree: bestFree && r1(bestFree), meanRef: refs.length ? r1(refs.reduce((a, r) => a + r.adapted.score, 0) / refs.length) : null,
+      meanFree: free.length ? r1(free.reduce((a, r) => a + r.score, 0) / free.length) : null,
+      kept: refs.map(r => r.kept.length), stratsKept: `${st}/${stN}`, rolesKept: `${ro}/${roN}`, planKept: `${pl}/${plN}`, freeStrats: r1(freeStrats),
+      ms: { prep: Math.round(tPrep), refs: Math.round(tRefs), free: Math.round(tFree) } };
+    rows.push(row);
+    lines.push(`${name} (${all.length}): ${row.compatible} compatíveis (${row.rejected} de fora), ${row.adapted} adaptadas; melhor ${row.best} × livre ${row.bestFree}; média ${row.meanRef} × ${row.meanFree}; mantidos ${row.kept.join(',')}; estratégias da original ${row.stratsKept}, papéis ${row.rolesKept}, plano ${row.planKept}; estratégias por equipe livre ${row.freeStrats}; tempo preparo ${row.ms.prep} ms, referências ${row.ms.refs} ms, livre ${row.ms.free} ms`);
+    for (const r of refs.slice(0, 3)) lines.push(`  [${r.format.format}] ${r.ref.name || '-'}: ${r.orig.members.map(m => m.x.s).join(', ')} → ${r.adapted.team.map(e => e.m.species.name).join(', ')} (nota ${r1(r.adapted.score)}, fidelidade ${r.adapted.fidelity})`);
+  }
+  if (process.env.BENCH_OUT) writeFileSync(process.env.BENCH_OUT, JSON.stringify(rows, null, 1));
+  if (process.env.BENCH_LOG) writeFileSync(process.env.BENCH_LOG, lines.join('\n') + '\n');
+}, 3600000);

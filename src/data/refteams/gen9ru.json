@@ -1,0 +1,72 @@
+{
+ "format": "gen9ru",
+ "name": "Gen 9 RU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9ru.json",
+  "thread": "https://www.smogon.com/forums/threads/sv-sample-teams-submissions-open.3733565/",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9ru-1hfljeg",
+   "name": "Barraskewda + Pawmot Balance",
+   "author": "Rarelyme",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Barraskewda", "r": [ "pivot", "midAttacker", "priority" ], "use": [ "chuva" ], "at": [ "psychic", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Brambleghast", "r": [ "removal", "midAttacker" ], "at": [ "ghost", "grass", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Fezandipiti", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fairy", "poison" ], "dmg": 3, "cat": "M" },
+    { "s": "Hippowdon", "r": [ "hazard", "phaze" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Pawmot", "r": [ "midAttacker", "priority" ], "at": [ "electric", "fighting", "grass" ], "dmg": 4, "cat": "P" },
+    { "s": "Umbreon", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-qhpdq0",
+   "name": "Pawmot + Red Card Mimikyu BO",
+   "author": "BpSnow_",
+   "verification": "unverified",
+   "members": [
+    { "s": "Hippowdon", "r": [ "hazard", "phaze" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Diancie", "r": [ "hazard", "midAttacker" ], "at": [ "fighting", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Mimikyu", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "fairy", "ghost" ], "dmg": 3, "cat": "P" },
+    { "s": "Noivern", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "dragon" ], "dmg": 2, "cat": "M" },
+    { "s": "Pawmot", "r": [ "midAttacker", "priority" ], "at": [ "electric", "fighting" ], "dmg": 3, "cat": "P" },
+    { "s": "Umbreon", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-4a7cjq",
+   "name": "Band Zoroark Balance",
+   "author": "BpSnow_",
+   "verification": "unverified",
+   "members": [
+    { "s": "Thundurus", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "electric", "grass", "poison" ], "dmg": 3, "cat": "S" },
+    { "s": "Cyclizar", "r": [ "pivot", "regen", "removal", "midAttacker" ], "at": [ "bug", "dark", "dragon", "normal" ], "dmg": 4, "cat": "M" },
+    { "s": "Hippowdon", "r": [ "hazard", "phaze" ], "use": [ "tempestade de areia" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Milotic", "r": [ "midAttacker" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Umbreon", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Zoroark-Hisui", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug", "fighting", "ghost" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-de4qnp",
+   "verification": "unverified",
+   "members": [
+    { "s": "Politoed", "r": [ "midAttacker" ], "set": [ "chuva" ], "auto": [ "chuva" ], "at": [ "ice", "normal", "water" ], "dmg": 3, "cat": "M" },
+    { "s": "Barraskewda", "r": [ "pivot", "midAttacker", "priority" ], "use": [ "chuva" ], "at": [ "fighting", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Bisharp", "r": [ "hazard", "midAttacker", "priority" ], "set": [ "chuva" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Kilowattrel", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "flying", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Tornadus", "r": [ "pivot", "midAttacker" ], "set": [ "chuva" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Toxicroak", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "chuva" ], "at": [ "fighting", "ground", "poison" ], "dmg": 3, "cat": "P" }
+   ]
+  }
+ ],
+ "results": []
+}

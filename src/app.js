@@ -412,11 +412,13 @@ function setupBuilder(out) {
       const dex = game && ROM_LEARN.includes(game.id) ? (await loadDex()).dex : null;
       // Referência competitiva (duplas dos times do Smogon): sem o pacote (offline na primeira vez), monta sem ela
       const comp = await mod.loadSmogon(game);
+      // Equipes de referência do competitivo ([] se o jogo ainda não tem; null se não carregaram): o fluxo principal
+      const refs = await mod.loadReferences(game);
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
       const noLegends = $('#builder-nolegend').checked, anyItem = !!$('#builder-anyitem')?.checked, ready = $('#builder-ready').value === 'ready';
       // Ameaças do jogo só com a caixa marcada (a busca fica 35–60% mais lenta no celular)
       const threats = $('#builder-threats').checked;
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp, saveGame: game }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, ready, game: threats ? game : null, comp, saveGame: game, refs }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
@@ -439,6 +441,18 @@ function setupBuilder(out) {
       await new Promise(r => setTimeout(r, 30)); // deixa a espera aparecer antes das contas
       if (state.builder !== b) return; // montou de novo enquanto isso
       const k = mod.moreOptions(b.results, i, T);
+      show(k >= 0 ? k : i);
+      return;
+    }
+    // Mais referências e a montagem livre: só calculam quando o jogador pede
+    const extra = e.target.closest('[data-more-refs], [data-free]');
+    if (extra) {
+      const b = state.builder, i = b.i;
+      extra.disabled = true;
+      extra.innerHTML = `${t(extra.hasAttribute('data-free') ? 'Montando as equipes' : 'Adaptando mais referências')}<span class="dots" aria-hidden="true"></span>`;
+      await new Promise(r => setTimeout(r, 30));
+      if (state.builder !== b) return;
+      const k = extra.hasAttribute('data-free') ? mod.freeOptions(b.results) : mod.moreReferences(b.results);
       show(k >= 0 ? k : i);
       return;
     }

@@ -73,12 +73,26 @@ function panel(title, kind, inner) {
  */
 function appPanels(r, byRef, check, dicas) {
   const note = x => `<p class="hint ai-threat-note">${esc(x.note)}</p>`;
-  return `${panel('Próximos passos', 'swap', dicas)}
+  return `${r.referencia ? refPanelsHtml(r.referencia, byRef) : ''}
+    ${panel('Próximos passos', 'swap', dicas)}
     ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
     ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}
     ${r.estrategias ? panel('Estratégias da equipe', 'info', `<ul class="ai-list ai-strats">${r.estrategias.cards.map(x => `<li><b>${esc(x.title)}</b> <small class="ai-strat-tag">${esc(x.tag)}</small><br>${rich(x.text, byRef)}</li>`).join('')}</ul><p class="hint ai-threat-note">${esc(r.estrategias.note)}</p>`) : ''}
     ${r.interacoes ? `<details class="fold ai-facts"><summary>${t('Interações')}</summary>${bullets(r.interacoes.lines, byRef)}${note(r.interacoes)}</details>` : ''}
     ${check ? `<details class="fold ai-facts"><summary>${t('Contas da equipe')}</summary>${check}</details>` : ''}`;
+}
+
+/**
+ * Equipe de referência (builder/reference.js): a original com a origem e os links da fonte, a adaptada (quem ficou, as
+ * trocas e o que se perdeu) e o que falta para reproduzir a original.
+ */
+function refPanelsHtml(x, byRef) {
+  const o = x.original;
+  const links = o.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join(' · ');
+  const members = `<ul class="ai-list ref-members">${o.members.map(m => `<li class="${m.ok ? 'ok' : 'miss'}">${esc(m.text)} <small class="ai-strat-tag${m.ok ? '' : ' warn'}">${rich(m.status, byRef)}</small></li>`).join('')}</ul>`;
+  return `${panel('Equipe original', 'info', `<p><b>${esc(o.head)}</b></p>${bullets(o.lines, byRef)}${members}<p class="hint ref-links">${links}</p>`)}
+    ${panel('Sua equipe adaptada', 'swap', bullets(x.adapted.lines, byRef) + `<p class="hint ai-threat-note">${esc(x.adapted.note)}</p>`)}
+    ${panel('Para reproduzir a original', 'swap', bullets(x.reproduce.lines, byRef) + `<p class="hint ai-threat-note">${esc(x.reproduce.note)}</p>`)}`;
 }
 
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');

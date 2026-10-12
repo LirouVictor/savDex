@@ -1,0 +1,85 @@
+{
+ "format": "gen9nu",
+ "name": "Gen 9 NU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "sample_team",
+ "source": {
+  "name": "Smogon sample teams (pkmn/smogon)",
+  "dataset": "https://github.com/pkmn/smogon/blob/main/data/teams/gen9nu.json",
+  "thread": "https://www.smogon.com/forums/threads/sample-teams.3739344/#post-10037637",
+  "list": "https://www.smogon.com/forums/threads/master-list-of-ps-sample-teams.3777422/",
+  "retrieved": "2026-10-12",
+  "license": "sets © Smogon e autores; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9nu-yrfn6f",
+   "name": "specs hoopa",
+   "verification": "unverified",
+   "members": [
+    { "s": "Hoopa", "r": [ "midAttacker" ], "at": [ "electric", "fighting", "ghost", "psychic" ], "dmg": 4, "cat": "S" },
+    { "s": "Copperajah", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Florges", "r": [ "passable" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gligar", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Scyther", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "fighting", "flying" ], "dmg": 3, "cat": "P" },
+    { "s": "Tatsugiri", "r": [ "midAttacker", "sacrifice" ], "at": [ "dragon", "normal", "water" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nu-9l04lj",
+   "name": "cm dudun knock salazzle",
+   "verification": "unverified",
+   "members": [
+    { "s": "Dudunsparce", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ghost", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Electrode-Hisui", "r": [ "pivot", "midAttacker" ], "at": [ "dark", "electric", "grass" ], "dmg": 4, "cat": "M" },
+    { "s": "Gligar", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "flying", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Klefki", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "fairy" ], "dmg": 2, "cat": "P" },
+    { "s": "Salazzle", "r": [ "midAttacker" ], "at": [ "dark", "fire", "poison" ], "dmg": 3, "cat": "M" },
+    { "s": "Scyther", "r": [ "pivot", "removal", "sweeper", "midAttacker", "passable" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-151726k",
+   "name": "some wonderful offense",
+   "verification": "unverified",
+   "members": [
+    { "s": "Persian-Alola", "r": [ "pivot", "midAttacker" ], "at": [ "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Bruxish", "r": [ "pivot", "midAttacker" ], "at": [ "dark", "psychic", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Goodra", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "fire" ], "dmg": 3, "cat": "M" },
+    { "s": "Klefki", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "fairy" ], "dmg": 2, "cat": "P" },
+    { "s": "Piloswine", "r": [ "hazard", "midAttacker", "priority" ], "at": [ "ground", "ice" ], "dmg": 3, "cat": "P" },
+    { "s": "Scyther", "r": [ "pivot", "removal", "sweeper", "midAttacker", "passable" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-ngsla2",
+   "name": "Meta is broken season 3",
+   "author": "Phantomistix",
+   "verification": "partially_verified",
+   "members": [
+    { "s": "Scyther", "r": [ "pivot", "removal", "sweeper", "midAttacker", "passable" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Bronzong", "r": [ "midAttacker" ], "at": [ "fighting", "psychic" ], "dmg": 2, "cat": "M" },
+    { "s": "Electrode-Hisui", "r": [ "pivot", "midAttacker" ], "at": [ "dark", "electric", "grass" ], "dmg": 3, "cat": "M" },
+    { "s": "Gligar", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Goodra", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "fire" ], "dmg": 3, "cat": "M" },
+    { "s": "Heracross", "r": [ "midAttacker" ], "at": [ "bug", "fighting", "grass", "normal" ], "dmg": 4, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t9r827",
+   "name": "new sun attempt",
+   "author": "give me nu games",
+   "verification": "unverified",
+   "members": [
+    { "s": "Uxie", "r": [ "hazard", "sacrifice" ], "set": [ "sol" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Goodra", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "fire", "poison" ], "dmg": 4, "cat": "M" },
+    { "s": "Jolteon", "r": [ "pivot", "sweeper", "midAttacker", "passable" ], "at": [ "electric", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Tauros-Paldea-Blaze", "r": [ "midAttacker" ], "at": [ "fighting", "fire", "ground", "rock" ], "dmg": 4, "cat": "P" },
+    { "s": "Victreebel", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "grass", "normal", "poison" ], "dmg": 3, "cat": "S" },
+    { "s": "Volbeat", "r": [ "pivot" ], "set": [ "sol" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  }
+ ],
+ "results": []
+}
