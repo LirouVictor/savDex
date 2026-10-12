@@ -705,9 +705,12 @@ function refPanels(x, ctx, bits, shownSets) {
       // Aprende o golpe: ou a equipe inteira rendeu mais sem ele (a busca comparou as duas versões), ou não coube
       if (can.length) parts.push(x.reverted && x.reverted.has(e.real)
         ? t('{ref} perde {roles}: aprende o golpe, mas a equipe inteira rende mais sem ele.', { ref: refOf(e.m), roles: roleNames(can) })
-        : t('{ref} perde {roles}: aprende o golpe, mas não coube no moveset (ver “Para reproduzir a original”).', { ref: refOf(e.m), roles: roleNames(can) }));
+        : t('{ref} perde {roles}: aprende o golpe, mas ele não coube nos 4 golpes.', { ref: refOf(e.m), roles: roleNames(can) }));
       const cannot = miss.filter(k => !can.includes(k));
-      if (cannot.length) parts.push(t('{ref} perde {roles}: não aprende o golpe neste jogo.', { ref: refOf(e.m), roles: roleNames(cannot) }));
+      // Sem a lista do tutor (fora do Quetzal), o app só conhece os golpes por nível: não dá para dizer que não aprende
+      if (cannot.length) parts.push(shownSets.has(e)
+        ? t('{ref} perde {roles}: não aprende o golpe neste jogo.', { ref: refOf(e.m), roles: roleNames(cannot) })
+        : t('{ref} perde {roles}: não aprende o golpe por nível (o app não lê os golpes de TM e tutor deste jogo).', { ref: refOf(e.m), roles: roleNames(cannot) }));
     }
     lines.push(parts.join(' '));
   });

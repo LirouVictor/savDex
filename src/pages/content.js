@@ -8,9 +8,11 @@ export const NEWS = [
   {
     date: '2026-10-21',
     pt: [
+      'Montar equipe no SoulGold: agora também parte das equipes do competitivo (exemplos e finais de torneio do Smogon da Gen 9, a mesma geração do SoulGold) e as adapta aos seus Pokémon. Quem não existe na Pokédex de Johto do jogo aparece como “não existe”. Cada jogo só recebe equipes da geração dele: os oficiais e o Unbound continuam com a montagem livre até as equipes da geração deles entrarem.',
       'Montar equipe: saiu o “Comentar com IA”. A equipe, as trocas e a estratégia já vêm das contas do app, conferidas; a IA continua opcional em “Com IA”, para analisar a sua equipe ou montar uma.',
     ],
     en: [
+      'Build team in SoulGold: it now also starts from competitive teams (Smogon Gen 9 samples and tournament finals, the same generation as SoulGold) and adapts them to your Pokémon. Species missing from the game’s Johto Pokédex show as “does not exist”. Each game only gets teams from its own generation: the official games and Unbound keep the free build until teams from their generation are added.',
       'Build team: “Comment with AI” is gone. The team, the swaps and the strategy already come from the app’s own checked math; the AI is still optional under “With AI”, to rate your party or build one.',
     ],
   },

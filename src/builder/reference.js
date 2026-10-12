@@ -21,11 +21,16 @@ import { normId, speciesIds } from './species-id.js';
 export { normId, speciesIds };
 import { WEATHER } from '../ai/strategy.js';
 
-/** Formatos de referência de cada jogo (só Singles; por enquanto o Quetzal) e a geração das mecânicas de cada jogo. */
-const FORMATS = {
-  quetzal: ['gen9nationaldex', 'gen9nationaldexubers', 'gen9ou', 'gen9uu', 'gen9ru', 'gen9nu', 'gen9pu'],
-};
-const GAME_GEN = { quetzal: 9 };
+/**
+ * Formatos de referência de cada jogo (só Singles) e a geração das mecânicas de cada jogo. Cada jogo só recebe equipes da
+ * geração dele (decisão do autor: equipe de outra geração usa golpes, habilidades e regras que o jogo não tem). Quetzal e
+ * SoulGold são do pokeemerald-expansion, com as mecânicas da Gen 9 (Fairy, golpes e espécies até a Gen 9): Gen 9. Os
+ * oficiais e o Unbound entram quando as tabelas da geração deles forem importadas (Gen 3: Emerald, FR/LG, R/S; Gen 4:
+ * D/P, Pt, HG/SS; Gen 5: B/W, B2/W2; Unbound: Gen 8 National Dex).
+ */
+const GEN9 = ['gen9nationaldex', 'gen9nationaldexubers', 'gen9ou', 'gen9uu', 'gen9ru', 'gen9nu', 'gen9pu'];
+const FORMATS = { quetzal: GEN9, soulgold: GEN9 };
+export const GAME_GEN = { quetzal: 9, soulgold: 9 };
 export const refFormats = game => (game && FORMATS[game.id]) || [];
 
 // Pacotes à parte, carregados só ao montar equipes: as equipes de exemplo (refteams, `npm run refteams`) e as de finais de
@@ -191,9 +196,10 @@ export function referenceCandidates(ctx, tables, T, game, opts = {}) {
   const list = [];
   // Só tabelas Singles da geração do jogo: os papéis e as estratégias são lidos com as regras da Gen 9 (Defog tira os
   // hazards dos dois lados, Sticky Web, terrenos), que não valem nas gerações antigas
+  // (sem a geração do jogo, nenhuma tabela: nunca uma equipe de outra geração)
   const gen = game && GAME_GEN[game.id];
   for (const tb of tables) {
-    if (tb.mode !== 'singles' || (gen && tb.gen !== gen)) continue;
+    if (tb.mode !== 'singles' || !gen || tb.gen !== gen) continue;
     for (const team of tb.teams) {
       const members = team.members.map(x => refMember(x, byId));
       const keep = members.map(m => pickOwned(owned.get(normId(m.x.s)) || [], m.x));
