@@ -377,7 +377,9 @@ function setupBuilder(out) {
       // O "ideal × o que você tem" vai junto: a IA comenta se vale capturar o ideal ou usar a alternativa do save
       // Com o moveset do app (Quetzal), a IA vê os golpes que o app sugere, não os do save
       const res = await askAi('review', slot, btn, { team: cur.showdown || cur.team, plan: mod.planName(cur.plan), roles: new Map(cur.r.membros.map(x => [x.ref, x.papel])),
-        ideal: cur.r.ideal ? cur.r.ideal.lines : [], idealMons: cur.r.ideal ? cur.r.ideal.alts.map(m => m.evolvedFrom || m.stoneFrom || m.planFrom || m) : [] });
+        ideal: cur.r.ideal ? cur.r.ideal.lines : [], idealMons: cur.r.ideal ? cur.r.ideal.alts.map(m => m.evolvedFrom || m.stoneFrom || m.planFrom || m) : [],
+        // Estratégias (Quetzal): as que o app conferiu e o que cada membro pode ter, para conferir as que a IA propõe
+        strategies: cur.r.estrategias ? cur.r.estrategias.ai : [], check: cur.aiCheck || null });
       if (res) cur.review = { html: res.html, byRef: res.byRef };
     } finally {
       btn.disabled = false;

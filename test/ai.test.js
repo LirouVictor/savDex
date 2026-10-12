@@ -528,7 +528,7 @@ suite('IA: transparência antes de enviar', () => {
   it('prepara o pedido sem enviar e conta o que vai junto', async () => {
     const { prepareAi, confirmHtml } = await import('../src/ai/index.js');
     const prep = prepareAi('build', { all, T, game: { id: 'quetzal', name: 'Pokémon Quetzal' }, note: 'quero o Lucario' });
-    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false, free: false, ideal: false });
+    expect(prep.counts).toEqual({ party: 2, pc: 2, pcTotal: 4, learn: false, hints: false, learn2: false, free: false, ideal: false, strategies: false });
     expect(prep.prompt).toContain('Pedido do jogador: quero o Lucario');
     const html = confirmHtml(prep);
     expect(html).toContain('2 Pokémon da equipe e 2 do PC (de 4: um por espécie;');
@@ -808,5 +808,35 @@ suite('IA: comentário sobre a equipe montada pelo app', () => {
     expect(res.html).toContain('data-ref="E2"'); // a troca sugerida, com alguém da equipe atual
     expect(res.byRef.get('C3-12')).toBe(all[2]); // o toque abre o Pokémon real
     expect(res.team).toBe(null);
+  });
+  it('estratégias (Quetzal): o pedido leva as do app; a IA propõe e o app confere cada peça antes de mostrar', async () => {
+    const { prepareAi, sendAi, confirmHtml } = await import('../src/ai/index.js');
+    const check = {
+      refs: new Map([['E1', { name: 'Lucario', moves: new Set(['Close Combat', 'Swords Dance', 'Extreme Speed']), abilities: new Set(['Steadfast', 'Inner Focus', 'Justified']) }],
+        ['C3-12', { name: 'Garchomp', moves: new Set(['Earthquake', 'Stealth Rock', 'Dragon Tail']), abilities: new Set(['Sand Veil', 'Rough Skin']) }]]),
+      itemOk: name => name === 'Rocky Helmet',
+      known: [{ id: 'hazard-phaze', name: 'Hazards e troca forçada' }],
+    };
+    const prep = prepareAi('review', { all, T, team, plan: 'Sol', roles, strategies: ['Hazards e troca forçada: pronta; quem faz: C3-12 (hazards)'], check });
+    expect(prep.prompt).toContain('Estratégias. Conhecidas pelo app (do competitivo de singles): Hazards e troca forçada.');
+    expect(prep.prompt).toContain('- Hazards e troca forçada: pronta; quem faz: C3-12 (hazards)');
+    expect(prep.schema.properties.estrategias).toBeTruthy();
+    expect(prep.counts.strategies).toBe(true);
+    expect(confirmHtml(prep)).toContain('a IA propõe outras e o app confere cada golpe, item e habilidade');
+    // Sem o contexto do app (fora do Quetzal), o pedido e o schema são os de antes
+    const plain = prepareAi('review', { all, T, team, plan: 'Sol', roles });
+    expect(plain.prompt).not.toContain('Estratégias. Conhecidas');
+    expect(plain.schema.properties.estrategias).toBeUndefined();
+    const P = { service: 'Gemini', maxCandidates: 250, getModel: () => '', generateJSON: async () => ({ model: 'gemini-x', fallback: false, data: {
+      nota: 7, resumo: '', pontos_fortes: [], pontos_fracos: [], sinergias: [], dicas: [], trocas: [],
+      estrategias: [
+        { nome: 'Hazards e troca forçada', origem: 'conhecida', membros: ['C3-12'], execucao: 'Stealth Rock e depois Dragon Tail.', pecas: [{ ref: 'C3-12', tipo: 'golpe', nome: 'Stealth Rock' }, { ref: 'C3-12', tipo: 'golpe', nome: 'Dragon Tail' }] },
+        { nome: 'Lucario com Swords Dance', origem: 'nova', membros: ['E1'], execucao: 'Suba o Ataque.', pecas: [{ ref: 'E1', tipo: 'golpe', nome: 'Swords Dance' }, { ref: 'E1', tipo: 'item', nome: 'Life Orb' }] },
+      ] } }) };
+    const res = await sendAi({ ...prep, P });
+    expect(res.html).toContain('Estratégias propostas pela IA');
+    expect(res.html).toContain('conhecida · conferida pelo app');
+    expect(res.html).toContain('não conferida');
+    expect(res.html).toContain('Life Orb não existe no jogo');
   });
 });

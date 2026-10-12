@@ -132,10 +132,29 @@ export function analysisView(r, byRef, model, opts = null) {
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
     </div>
     ${panel('Sinergia', 'info', bullets(r.sinergias, byRef))}
+    ${r.estrategias && r.estrategias.length ? panel('Estratégias propostas pela IA', 'info', strategiesHtml(r.estrategias, byRef)) : ''}
     ${panel('Trocas sugeridas', 'swap', trocas && `<ul class="ai-swaps">${trocas}</ul>`)}
     ${panel('Dicas por membro', 'info', dicas && `<ul class="ai-tips">${dicas}</ul>`)}
     ${footer(model, r.dropped, opts)}
   </div>`;
+}
+
+/**
+ * Estratégias que a IA propôs, com o que o app conferiu: conhecida (da biblioteca) e com todas as peças certas, ideia
+ * nova (peças certas, mas não comprovada no competitivo) ou com peças que o app não confirmou (e quais).
+ */
+function strategiesHtml(list, byRef) {
+  const why = b => (b.why === 'fora' ? t('{ref} não está na equipe', { ref: b.ref })
+    : b.why === 'golpe' ? t('{mon} não aprende {move}', { mon: b.mon, move: b.nome })
+      : b.why === 'habilidade' ? t('{ability} não é habilidade de {mon}', { ability: b.nome, mon: b.mon })
+        : t('{item} não existe no jogo', { item: b.nome }));
+  return `<ul class="ai-list ai-strats">${list.map(x => {
+    const tag = x.bad.length ? t('não conferida') : x.origem === 'conhecida' ? t('conhecida · conferida pelo app') : t('ideia da IA · peças conferidas');
+    const who = x.membros.length ? `<br><small>${rich(t('Quem faz: {list}.', { list: x.membros.join(', ') }), byRef)}</small>` : '';
+    const bad = x.bad.length ? `<br><small class="ai-movecheck no">⚠ ${rich(t('O app não confirmou: {list}.', { list: x.bad.map(why).join('; ') }), byRef)}</small>` : '';
+    const risk = !x.bad.length && x.origem === 'nova' ? `<br><small class="hint">${t('Ideia nova: as peças existem, mas a estratégia não é comprovada no competitivo.')}</small>` : '';
+    return `<li><b>${esc(x.nome)}</b> <small class="ai-strat-tag${x.bad.length ? ' warn' : ''}">${esc(tag)}</small><br>${rich(x.execucao, byRef)}${who}${bad}${risk}</li>`;
+  }).join('')}</ul>`;
 }
 
 /** Item e habilidade que o montador sugere (Quetzal): "@ Leftovers dar · Drizzle trocar". */
@@ -239,6 +258,7 @@ export function confirmView(prep) {
         ${analyze ? `<li>${t('Os cálculos do app sobre a equipe: fraquezas, cobertura, golpes físicos/especiais, velocidade base, megapedras e clima.')}</li>` : ''}
         ${review ? `<li>${t('O plano da equipe e a função de cada membro, calculados pelo app.')}</li>` : ''}
         ${counts.ideal ? `<li>${t('O ideal do competitivo que falta no save e a alternativa do save, calculados pelo app.')}</li>` : ''}
+        ${counts.strategies ? `<li>${t('As estratégias que o app conferiu na equipe e a lista das que ele conhece; a IA propõe outras e o app confere cada golpe, item e habilidade.')}</li>` : ''}
         ${counts.hints ? `<li>${t('Pistas de estratégia: quem põe clima ou terreno, quem aproveita e quem usa Trick Room.')}</li>` : ''}
         ${counts.free ? `<li>${t('Modo livre: as outras habilidades que cada um pode ter, trocando por item.')}</li>` : ''}
         ${analyze ? '' : `<li>${counts.learn2

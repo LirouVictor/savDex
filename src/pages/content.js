@@ -8,9 +8,11 @@ export const NEWS = [
   {
     date: '2026-10-13',
     pt: [
+      'Comentar com IA (Quetzal): a IA agora propõe até 3 estratégias para a equipe, as conhecidas do competitivo e ideias novas, explicando como executar e o que cada Pokémon precisa ter. O app confere cada golpe, item e habilidade antes de mostrar: marca o que é conhecido e conferido, o que é ideia nova (ainda não comprovada) e o que a IA errou, como um golpe que o Pokémon não aprende.',
       'Montar equipe (Quetzal): as estratégias conhecidas do competitivo (pivôs, hazards com quem os tira, telas para quem sobe os stats, Belly Drum com prioridade, núcleos Fire/Water/Grass e Dragon/Steel/Fairy…) e as combinações de habilidade, item e golpes (Toxic Orb + Poison Heal, Flame Orb + Guts…) agora contam na nota. Só a estratégia completa conta, e a montagem também parte de quem executa cada uma e procura no seu PC quem falta. No save do autor, a chuva passou a Pelipper, Basculegion e Rillaboom com pivôs.',
     ],
     en: [
+      'Comment with AI (Quetzal): the AI now proposes up to 3 strategies for the team, known competitive ones and new ideas, explaining how to execute them and what each Pokémon needs. The app checks every move, item and ability before showing them: it marks what is known and checked, what is a new idea (not proven yet) and what the AI got wrong, such as a move the Pokémon does not learn.',
       'Build team (Quetzal): known competitive strategies (pivots, hazards with removal, screens for setup sweepers, Belly Drum with priority, Fire/Water/Grass and Dragon/Steel/Fairy cores…) and ability, item and move combinations (Toxic Orb + Poison Heal, Flame Orb + Guts…) now count in the score. Only complete strategies count, and the builder also starts from whoever runs each one and looks in your PC for whoever is missing. On the author’s save, the rain team became Pelipper, Basculegion and Rillaboom with pivots.',
     ],
   },

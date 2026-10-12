@@ -204,6 +204,38 @@ export const REVIEW_SCHEMA = {
   },
 };
 
+/**
+ * Comentário com estratégias (Quetzal, com a biblioteca do app): a IA também propõe até 3 estratégias, conhecidas (da
+ * lista do app) ou novas (ideias dela), com quem faz, como executar e as peças (golpe, item, habilidade de cada membro);
+ * o app confere cada peça (checkStrategies).
+ */
+export const REVIEW_STRAT_SCHEMA = {
+  ...REVIEW_SCHEMA,
+  properties: {
+    ...REVIEW_SCHEMA.properties,
+    estrategias: {
+      type: 'ARRAY',
+      description: 'Até 3 estratégias que esta equipe executa ou quase executa: as conhecidas da lista do app que valem a pena e, se houver, ideias novas',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          nome: { type: 'STRING', description: 'Nome curto; para uma conhecida, o mesmo nome da lista do app' },
+          origem: { type: 'STRING', enum: ['conhecida', 'nova'], description: 'conhecida = da lista do app; nova = ideia sua, fora da lista' },
+          membros: { ...strList, description: 'Referências dos membros da equipe que a executam' },
+          execucao: { type: 'STRING', description: 'Como executar, em até 3 passos curtos' },
+          pecas: {
+            type: 'ARRAY',
+            description: 'O que cada membro precisa ter: golpe, item ou habilidade, com o nome em inglês',
+            items: { type: 'OBJECT', properties: { ref: str, tipo: { type: 'STRING', enum: ['golpe', 'item', 'habilidade'] }, nome: str }, required: ['ref', 'tipo', 'nome'] },
+          },
+        },
+        required: ['nome', 'origem', 'membros', 'execucao', 'pecas'],
+      },
+    },
+  },
+  required: [...REVIEW_SCHEMA.required, 'estrategias'],
+};
+
 export const BUILD_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -490,7 +522,7 @@ export function analysisPrompt(all, T, note = '', max = MAX_CANDIDATES, { dex = 
  * @param {object[]} team os 6 como o app contou (forma evoluída, megapedra a dar)
  * @param {{ plan?: string, roles?: Map<string, string> }} extra nome do plano e função de cada membro (pela referência)
  */
-export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null, plan = '', roles = new Map(), ideal = [], idealMons = [] } = {}) {
+export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { dex = null, game = null, free = null, plan = '', roles = new Map(), ideal = [], idealMons = [], strategies = null } = {}) {
   // As alternativas do "ideal × o que você tem" vão entre os candidatos (a IA pode sugerir a troca por elas)
   const alts = idealMons.filter(m => !team.includes(m));
   const pool = [...alts, ...analysisPool(all, T, Math.min(ANALYSIS_PC, max - team.length) - alts.length, team).filter(m => !alts.includes(m))];
@@ -518,10 +550,57 @@ export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { de
     teamFacts(team, T),
     ...learnLines(team, dex, T, game),
     ...(ideal.length ? ['', t('Referência competitiva (contas do app: o ideal NÃO está no save do jogador; a alternativa está). Diga se vale capturar o ideal ou usar a alternativa; o ideal não entra nas trocas:'), ...ideal] : []),
+    ...(strategies ? strategyPrompt(strategies) : []),
     '',
     t('Fora da equipe ({n} candidatos que mais ajudam a equipe):', { n: pool.length }),
     ...pool.map(m => monLine(m, free)),
   ].join('\n');
+}
+
+/**
+ * Estratégias (Quetzal): as conhecidas que o app conferiu na equipe e a lista das que ele conhece. A IA propõe até 3
+ * (conhecidas ou novas), com as peças que cada membro precisa; o app confere cada peça antes de mostrar.
+ */
+function strategyPrompt({ lines = [], known = [] }) {
+  return ['',
+    t('Estratégias. Conhecidas pelo app (do competitivo de singles): {list}.', { list: known.map(k => k.name).join('; ') }),
+    ...(lines.length ? [t('O app conferiu nesta equipe (com os golpes e itens sugeridos):'), ...lines.map(l => `- ${l}`)] : [t('O app não achou nenhuma delas completa nesta equipe.')]),
+    t('No campo estrategias, proponha até 3: as conhecidas que valem a pena (origem "conhecida", com o nome da lista) e, se houver, ideias novas que as mecânicas permitem (origem "nova"). Para cada uma: quem faz, como executar em até 3 passos e as peças (golpe, item ou habilidade de cada membro, nomes em inglês). Use só golpes que o membro tem ou aprende (por nível ou pelo tutor do jogo), habilidades da espécie e itens que existem no jogo: o app confere cada peça e marca o que não bater. Ideia nova não é estratégia comprovada: diga o risco.'),
+  ];
+}
+
+const normId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+/**
+ * Confere as estratégias que a IA propôs: membros da equipe, cada peça (golpe que o membro sabe ou aprende, habilidade da
+ * espécie, item que existe no jogo) e a origem (uma "conhecida" fora da lista do app vira "nova").
+ * @param {object} check { refs: Map(ref → { name, moves: Set, abilities: Set }), itemOk, known: [{ id, name }] } (aiChecks)
+ * @returns {Array<{ nome, origem, membros: string[], execucao, ok: object[], bad: Array<{ ref, tipo, nome, why }> }>}
+ */
+export function checkStrategies(list, check) {
+  if (!Array.isArray(list) || !check) return [];
+  const knownIds = new Set(check.known.map(k => normId(k.name)));
+  const out = [];
+  for (const x of list.slice(0, 3)) {
+    if (!x || !String(x.nome || '').trim()) continue;
+    const membros = (Array.isArray(x.membros) ? x.membros : []).map(r => String(r).trim()).filter(r => check.refs.has(r));
+    const ok = [], bad = [];
+    for (const p of Array.isArray(x.pecas) ? x.pecas : []) {
+      const ref = String((p && p.ref) || '').trim(), nome = String((p && p.nome) || '').trim(), tipo = p && p.tipo;
+      if (!nome) continue;
+      const mon = check.refs.get(ref);
+      const has = set => [...set].some(n => normId(n) === normId(nome));
+      const piece = { ref, tipo, nome };
+      if (!mon) bad.push({ ...piece, why: 'fora' });
+      else if (tipo === 'golpe') (has(mon.moves) ? ok : bad).push({ ...piece, why: 'golpe', mon: mon.name });
+      else if (tipo === 'habilidade') (has(mon.abilities) ? ok : bad).push({ ...piece, why: 'habilidade', mon: mon.name });
+      else if (tipo === 'item') (check.itemOk(nome) ? ok : bad).push({ ...piece, why: 'item', mon: mon.name });
+    }
+    // "Conhecida" só se o nome bate com uma da lista do app (sem diferenciar maiúsculas e pontuação)
+    const name = String(x.nome).trim();
+    const known = x.origem === 'conhecida' && [...knownIds].some(k => k === normId(name) || (normId(name).length >= 6 && k.includes(normId(name))) || normId(name).includes(k));
+    out.push({ nome: name, origem: known ? 'conhecida' : 'nova', membros, execucao: String(x.execucao || '').trim(), ok, bad });
+  }
+  return out;
 }
 
 /** Usa (ou põe) clima, terreno ou Trick Room: habilidade (no modo livre, também as trocáveis), golpe ou megapedra. */

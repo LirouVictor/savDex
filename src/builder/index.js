@@ -5,7 +5,7 @@
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
-import { rolesOfMon, teamStrategies, planText } from './strategies.js';
+import { rolesOfMon, teamStrategies, planText, STRATEGIES } from './strategies.js';
 import { SRC } from './moveset.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
@@ -382,7 +382,11 @@ function describeTeam(res, types, pool, ctx) {
   const ideal = ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
   if (ideal) r.ideal = ideal;
   const mons = team.map(e => e.m);
+  // Para conferir as estratégias que a IA propõe (Quetzal): o que cada membro pode ter (golpes que sabe ou aprende,
+  // habilidades da espécie) e os itens do jogo
+  const aiCheck = aiChecks(team, shownSets, items);
   return {
+    aiCheck,
     name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
     // Copiar (Showdown) e Comentar com IA: com o moveset do app no lugar dos golpes do save
     showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e), plannedMoves: true,
@@ -418,7 +422,7 @@ function strategyCards(team, plan, shownSets, items) {
     if (!x) return null;
     members.push({ ref: refOf(e.m), roles: rolesOfMon(x.c, x.cands, x.itemOk, x.teachOk) });
   }
-  const cards = [];
+  const cards = [], ai = [];
   const pt = planText(plan);
   if (pt) cards.push({ title: planName(plan), tag: t('plano'), text: `${cap(t(pt.how))}. ${t('Cuidado com: {list}.', { list: t(pt.breaks) })}` });
   for (const x of teamStrategies(members, plan).slice(0, MAX_STRATEGIES)) {
@@ -430,8 +434,25 @@ function strategyCards(team, plan, shownSets, items) {
     if (prep.length) parts.push(t('Falta: {list}.', { list: list(prep) }));
     parts.push(t('Dá: {gives}. Cuidado com: {list}.', { gives: t(x.s.gives), list: t(x.s.breaks) }));
     cards.push({ title: t(x.s.name), tag: x.ready ? t('pronta') : t('falta preparo'), text: parts.join(' ') });
+    // Para o Comentar com IA: o que o app conferiu (a IA não contradiz e pode propor outras)
+    ai.push(`${t(x.s.name)}: ${x.ready ? t('pronta') : t('falta {list}', { list: list(prep) })}; ${t('quem faz: {list}', { list: list(who) })}`);
   }
-  return cards.length ? { cards, note: t('Estratégias conhecidas dos times competitivos de singles; o app confere quem as executa com os golpes e o item dos cards.') } : null;
+  return cards.length ? { cards, ai, note: t('Estratégias conhecidas dos times competitivos de singles; o app confere quem as executa com os golpes e o item dos cards.') } : null;
+}
+
+/** O que a IA pode citar de cada membro (referência → golpes, habilidades) e os itens do jogo; null fora do Quetzal. */
+function aiChecks(team, shownSets, items) {
+  const refs = new Map();
+  let itemOk = null;
+  for (const e of team) {
+    const x = strategyInput(e, shownSets.get(e), items.get(e));
+    if (!x) return null;
+    itemOk = x.itemOk;
+    const moves = new Set([...x.cands.map(c => c.name), ...x.c.moves.map(m => m.name)]);
+    const abilities = new Set([...(e.m.species.abilities || []), ...(e.bf.species.abilities || []), e.m.ability && e.m.ability.name].filter(Boolean));
+    refs.set(refOf(e.m), { name: e.m.species.name, moves, abilities });
+  }
+  return { refs, itemOk, known: STRATEGIES.map(s => ({ id: s.id, name: t(s.name) })) };
 }
 
 /**
