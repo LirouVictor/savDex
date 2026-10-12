@@ -1,0 +1,15 @@
+{
+ "format": "gen9nationaldexubers",
+ "name": "Gen 9 National Dex Ubers",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [],
+ "results": []
+}

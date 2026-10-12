@@ -1,0 +1,2530 @@
+{
+ "format": "gen9ou",
+ "name": "Gen 9 OU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9ou-t1ip5h43",
+   "name": "Official Smogon Tournament XXII",
+   "author": "sirpeanutcronch",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "poison" ], "dmg": 2, "cat": "S" },
+    { "s": "Cresselia", "r": [ "screens" ], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Raging Bolt", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Iron Treads", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "phaze" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1pzjf49",
+   "name": "Official Smogon Tournament XXII",
+   "author": "Silent Waltzz",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kyurem", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "S" },
+    { "s": "Ceruledge", "r": [ "passable" ], "at": [ "ghost" ], "dmg": 1, "cat": "P" },
+    { "s": "Hatterene", "r": [ "midAttacker" ], "at": [ "electric", "fairy", "fire", "psychic" ], "dmg": 4, "cat": "M" },
+    { "s": "Iron Treads", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragonite", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "fire" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tgcanz2",
+   "name": "Official Smogon Tournament XXII",
+   "author": "sirpeanutcronch",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Landorus-Therian", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Arcanine-Hisui", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Kingambit", "r": [ "midAttacker" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "M" },
+    { "s": "Dragapult", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Ogerpon-Wellspring", "r": [ "midAttacker" ], "at": [ "fairy", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Scizor", "r": [ "priority" ], "at": [ "steel" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tkhpvdf",
+   "name": "Official Smogon Tournament XXII",
+   "author": "Silent Waltzz",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Crown", "r": [ "passable" ], "use": [ "Electric Terrain" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Pecharunt", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [ "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tcji8p6",
+   "name": "Official Smogon Tournament XXI",
+   "author": "oldspicemike",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales", "r": [ "sacrifice" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Walking Wake", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Venusaur", "r": [], "at": [ "grass" ], "dmg": 1, "cat": "S" },
+    { "s": "Corviknight", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Roaring Moon", "r": [ "passable" ], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tai2vz5",
+   "name": "Official Smogon Tournament XXI",
+   "author": "Fusien",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dondozo", "r": [ "midAttacker" ], "at": [ "fighting", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Weezing-Galar", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "ice", "poison", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Iron Treads", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Blissey", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Alomomola", "r": [ "pivot", "midAttacker" ], "at": [ "flying", "water" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t18g58mk",
+   "name": "Official Smogon Tournament XXI",
+   "author": "Fusien",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Deoxys-Speed", "r": [], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragonite", "r": [ "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Iron Moth", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Scizor", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Great Tusk", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-te0tjnd",
+   "name": "Official Smogon Tournament XXI",
+   "author": "oldspicemike",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragonite", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Hatterene", "r": [ "midAttacker" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Darkrai", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1wdd4h9",
+   "name": "Official Smogon Tournament XIX",
+   "author": "Stellar Flares",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragapult", "r": [ "passable" ], "at": [ "dragon" ], "dmg": 1, "cat": "P" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "at": [ "dark", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Toxapex", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Corviknight", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Skeledirge", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ou-t136v4mn",
+   "name": "Official Smogon Tournament XIX",
+   "author": "VertXXX",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Glimmora", "r": [ "hazard", "removal" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Orthworm", "r": [ "pivot", "hazard" ], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragapult", "r": [ "midAttacker", "passable" ], "at": [ "dragon", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Iron Moth", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fire", "grass", "normal", "psychic" ], "dmg": 4, "cat": "S" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "passable" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tsy3jfa",
+   "name": "Official Smogon Tournament XIX",
+   "author": "VertXXX",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Great Tusk", "r": [], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Torkoal", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Corviknight", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Ceruledge", "r": [ "midAttacker", "priority" ], "at": [ "fire", "ghost" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t3eweaj",
+   "name": "Official Smogon Tournament XIX",
+   "author": "Stellar Flares",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Orthworm", "r": [ "pivot" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Greninja", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ice" ], "dmg": 2, "cat": "M" },
+    { "s": "Iron Valiant", "r": [], "use": [ "Electric Terrain" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Moth", "r": [], "use": [ "Electric Terrain" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Roaring Moon", "r": [ "passable" ], "use": [ "sol" ], "at": [ "flying" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t52k329",
+   "name": "Official Smogon Tournament XIX",
+   "author": "Stellar Flares",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Great Tusk", "r": [ "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Dondozo", "r": [], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Scream Tail", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Hydreigon", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-trx9gfp",
+   "name": "Smogon Tour Season 38 Playoffs",
+   "author": "JustFranco‽",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kingambit", "r": [ "priority" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Latias", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Heatran", "r": [ "hazard" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Rillaboom", "r": [ "pivot" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Garchomp", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Hawlucha", "r": [], "at": [ "flying" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-ta6dvxg",
+   "name": "Smogon Tour Season 38 Playoffs",
+   "author": "MichaelderBeste2",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Garganacl", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Latios", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "at": [ "fighting", "ice", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Samurott-Hisui", "r": [ "hazard", "sweeper", "midAttacker", "passable" ], "at": [ "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot" ], "at": [ "ice" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-ta3ewq2",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #3])",
+   "author": "memphisdepayy",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Ursaluna", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fire", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Alomomola", "r": [ "pivot" ], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Weezing-Galar", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Lokix", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Corviknight", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dragon", "ghost" ], "dmg": 3, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ou-tj2r1mu",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #3])",
+   "author": "crosscode",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Dondozo", "r": [], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyurem", "r": [ "passable" ], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Ting-Lu", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Corviknight", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Weezing-Galar", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t31vk7h",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #2])",
+   "author": "NoName6293",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ogerpon", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Clefable", "r": [ "passable" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Hawlucha", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Gliscor", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Alomomola", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "fairy", "psychic", "water" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ou-tn5lg81",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #2])",
+   "author": "Fusien",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gholdengo", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Kyurem", "r": [ "midAttacker" ], "at": [ "fighting", "ice" ], "dmg": 3, "cat": "M" },
+    { "s": "Hatterene", "r": [ "midAttacker" ], "at": [ "electric", "fairy", "psychic" ], "dmg": 3, "cat": "M" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [ "priority" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "fire" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1bk9eb9",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #1])",
+   "author": "storm zone",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hatterene", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "fighting", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Raging Bolt", "r": [ "pivot" ], "use": [ "sol" ], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Ninetales", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [ "water" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1ecx91w",
+   "name": "Smogon Tour Season 38 (Week 7 [SV OU #1])",
+   "author": "BEN MENDES",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Walking Wake", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "fire", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Raging Bolt", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Hatterene", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Venusaur", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t9w9rwq",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #3])",
+   "author": "Kaif☆彡Plays♗",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gholdengo", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Raging Bolt", "r": [ "midAttacker", "passable" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "fighting", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Rillaboom", "r": [ "midAttacker" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Hawlucha", "r": [ "midAttacker" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t2dwx2q",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #3])",
+   "author": "Lime",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ogerpon-Wellspring", "r": [ "pivot", "hazard", "midAttacker" ], "use": [ "sol" ], "at": [ "bug", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Treads", "r": [ "removal", "midAttacker" ], "at": [ "dark", "ground", "ice", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Garganacl", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Moltres", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tt37kpv",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #2])",
+   "author": "MichaelderBeste2",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Walking Wake", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Iron Moth", "r": [], "use": [ "Electric Terrain", "sol" ], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Cresselia", "r": [], "use": [ "sol" ], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Raging Bolt", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tf3e6qo",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #2])",
+   "author": "Moat Cailin",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragonite", "r": [ "phaze", "midAttacker", "priority" ], "at": [ "dragon", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Garchomp", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Moltres", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Walking Wake", "r": [ "pivot", "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "water" ], "dmg": 3, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1x9jzn1",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #1])",
+   "author": "Peum",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Meowscarada", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "rock" ], "dmg": 2, "cat": "M" },
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Hatterene", "r": [], "at": [ "electric" ], "dmg": 1, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Samurott-Hisui", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Dragonite", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t3dtkon",
+   "name": "Smogon Tour Season 38 (Week 1 [SV OU #1])",
+   "author": "memphisdepayy",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Ting-Lu", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "electric", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Latios", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Tinkaton", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Rillaboom", "r": [ "midAttacker" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tafdx00",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #3])",
+   "author": "eliaspsy",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ogerpon-Wellspring", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "phaze" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Corviknight", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Darkrai", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Weezing-Galar", "r": [ "removal" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "ice", "poison", "water" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1rcj6em",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #3])",
+   "author": "vk",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Ceruledge", "r": [ "sweeper", "midAttacker", "smashItem", "passable" ], "at": [ "fire", "ghost" ], "dmg": 2, "cat": "P" },
+    { "s": "Venusaur", "r": [ "midAttacker" ], "at": [ "grass", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Hatterene", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard" ], "use": [ "sol" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-tmpfazb",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #2])",
+   "author": "Mada",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ting-Lu", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Iron Moth", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Great Tusk", "r": [], "use": [ "sol" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Raging Bolt", "r": [], "at": [ "electric" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tbxu6tk",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #2])",
+   "author": "Quamnckkk",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Deoxys-Speed", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Pecharunt", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Iron Treads", "r": [ "removal" ], "use": [ "Electric Terrain" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragonite", "r": [ "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tpti27m",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #1])",
+   "author": "ilritornodellojedi",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Tornadus-Therian", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "fire", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Ting-Lu", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Alomomola", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Weezing-Galar", "r": [ "removal" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gholdengo", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tpifjf",
+   "name": "Smogon Tour Season 37 (Week 7 [SV OU #1])",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "rock", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Rillaboom", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "use": [ "Grassy Terrain" ], "at": [ "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Hatterene", "r": [ "midAttacker" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Ogerpon-Wellspring", "r": [], "at": [ "grass" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1hzuu6a",
+   "name": "Smogon Tour Season 37 (Week 4 [SV OU #3])",
+   "author": "musicaleggerissima",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Great Tusk", "r": [ "hazard", "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug" ], "dmg": 3, "cat": "P" },
+    { "s": "Enamorus", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Iron Crown", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Pecharunt", "r": [ "pivot" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Alomomola", "r": [ "pivot" ], "at": [ "water" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tevcg49",
+   "name": "Smogon Tour Season 37 (Week 4 [SV OU #3])",
+   "author": "Lax",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Glimmora", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ground", "poison" ], "dmg": 2, "cat": "M" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Valiant", "r": [], "use": [ "Electric Terrain" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Samurott-Hisui", "r": [ "hazard", "midAttacker", "priority" ], "at": [ "dark" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tl5ayva",
+   "name": "Smogon Tour Season 37 (Week 4 [SV OU #2])",
+   "author": "storm zone",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kyurem", "r": [ "midAttacker", "passable" ], "at": [ "ground", "ice", "steel" ], "dmg": 3, "cat": "S" },
+    { "s": "Garganacl", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gliscor", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Weezing-Galar", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1capk1r",
+   "name": "Smogon Tour Season 37 (Week 4 [SV OU #2])",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragonite", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Scizor", "r": [ "midAttacker", "priority" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Kyurem", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "M" },
+    { "s": "Heatran", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Pecharunt", "r": [ "pivot" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1tffxfd",
+   "name": "Smogon Tour Season 37 (Week 1 [SV OU #3])",
+   "author": "sand castle",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Valiant", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Darkrai", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Enamorus", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Roaring Moon", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1gykw0k",
+   "name": "Smogon Tour Season 37 (Week 1 [SV OU #3])",
+   "author": "Zentrox Boost",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Deoxys-Speed", "r": [ "passable" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Moth", "r": [ "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Samurott-Hisui", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1xhypwt",
+   "name": "Smogon Tour Season 36 (Week 7 [SV OU #3])",
+   "author": "Fabriisse",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragapult", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowking-Galar", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Samurott-Hisui", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Clefable", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Ting-Lu", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t9101vf",
+   "name": "Smogon Tour Season 36 (Week 7 [SV OU #3])",
+   "author": "Kaif☆彡Plays♗",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Glimmora", "r": [ "removal" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragapult", "r": [ "smashItem" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Great Tusk", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Gouging Fire", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9ou-t1mc3umk",
+   "name": "Smogon Tour Season 36 (Week 7 [SV OU #2])",
+   "author": "umpa umpa",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Ribombee", "r": [ "web" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Great Tusk", "r": [], "use": [ "sol" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Raging Bolt", "r": [], "use": [ "sol" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t12kq79d",
+   "name": "Smogon Tour Season 36 (Week 7 [SV OU #2])",
+   "author": "Finch",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Gholdengo", "r": [ "passable" ], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Slowking-Galar", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze", "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Skarmory", "r": [], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Walking Wake", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tdxff10",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #3])",
+   "author": "Lily",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Garganacl", "r": [], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Gliscor", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Corviknight", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Clefable", "r": [ "hazard" ], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "rock", "steel" ], "dmg": 4, "cat": "P" },
+    { "s": "Kingambit", "r": [ "midAttacker", "priority" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t771e0e",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #3])",
+   "author": "georgiethefirst",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Haxorus", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dragon", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Mamoswine", "r": [ "hazard", "midAttacker", "smashItem" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Magnezone", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Hatterene", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Dragapult", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tts0lv1",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #2])",
+   "author": "Yovan33321",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Primarina", "r": [ "passable" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "priority" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Roaring Moon", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [ "priority" ], "at": [ "normal" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1yeozsa",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #2])",
+   "author": "Empo",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kyurem", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ground", "ice" ], "dmg": 3, "cat": "S" },
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dragon" ], "dmg": 2, "cat": "M" },
+    { "s": "Landorus-Therian", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "priority" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Cinderace", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Zapdos", "r": [ "pivot" ], "at": [ "electric" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-ty7kwxh",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #1])",
+   "author": "s7a",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Glimmora", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Darkrai", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Roaring Moon", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Enamorus", "r": [ "sacrifice" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t5cnd18",
+   "name": "Smogon Tour Season 36 (Week 4 [SV OU #1])",
+   "author": "VertXXX",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Moltres", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Darkrai", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Tinkaton", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragapult", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Raging Bolt", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1e6y79s",
+   "name": "Smogon Tour Season 36 (Week 1 [SV OU #2])",
+   "author": "roxie",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Blissey", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "fighting" ], "dmg": 2, "cat": "M" },
+    { "s": "Dondozo", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Clodsire", "r": [ "hazard", "midAttacker" ], "at": [ "ground", "poison" ], "dmg": 2, "cat": "P" },
+    { "s": "Gliscor", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Clefable", "r": [ "hazard" ], "use": [ "sol" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Vileplume", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t2yuhhy",
+   "name": "Smogon Tour Season 36 (Week 1 [SV OU #2])",
+   "author": "ChrisPBacon",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Volcanion", "r": [ "midAttacker" ], "at": [ "fire", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Weavile", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragapult", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Clefable", "r": [ "passable" ], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot", "midAttacker" ], "at": [ "poison", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1a7lra8",
+   "name": "Smogon Tour Season 35 Playoffs",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "bug", "poison" ], "dmg": 2, "cat": "S" },
+    { "s": "Hatterene", "r": [], "at": [ "electric" ], "dmg": 1, "cat": "P" },
+    { "s": "Ceruledge", "r": [ "passable" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Great Tusk", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Corviknight", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1ctu6zv",
+   "name": "Smogon Tour Season 35 Playoffs",
+   "author": "MichaelderBeste2",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Valiant", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Great Tusk", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Amoonguss", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Baxcalibur", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dragon", "ice" ], "dmg": 3, "cat": "P" },
+    { "s": "Hydreigon", "r": [ "hazard" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t5d23ti",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #3])",
+   "author": "Pirlo20",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Great Tusk", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Dragonite", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Cinderace", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Kingambit", "r": [ "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Garganacl", "r": [], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Rotom-Wash", "r": [ "pivot" ], "at": [ "electric" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1nmtd1s",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #3])",
+   "author": "Huarguensy",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kingambit", "r": [ "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Glimmora", "r": [ "hazard", "removal" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "at": [ "electric", "fairy" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal", "sweeper", "midAttacker", "passable" ], "at": [ "dark", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Gholdengo", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragonite", "r": [ "passable" ], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t13c1aew",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #2])",
+   "author": "Garay oak",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Great Tusk", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Hydreigon", "r": [ "hazard" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Gholdengo", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Azumarill", "r": [ "midAttacker", "priority" ], "at": [ "normal", "water" ], "dmg": 3, "cat": "M" },
+    { "s": "Glimmora", "r": [ "hazard", "midAttacker" ], "at": [ "fairy", "rock" ], "dmg": 2, "cat": "S" },
+    { "s": "Iron Valiant", "r": [ "priority", "passable" ], "use": [ "Electric Terrain" ], "at": [ "ghost" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tmrhjh1",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #2])",
+   "author": "EeveetoTheN00b",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Mismagius", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "ghost", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Great Tusk", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Corviknight", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot" ], "set": [ "Trick Room" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Dondozo", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Kingambit", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tfkfx4i",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #1])",
+   "author": "heavenisguiding",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Avalugg", "r": [ "midAttacker" ], "at": [ "ground", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Skeledirge", "r": [ "midAttacker" ], "at": [ "fire", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Cinderace", "r": [ "removal" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Hydreigon", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "bug", "water" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-twadeaa",
+   "name": "Smogon Tour Season 35 (Week 7 [SV OU #1])",
+   "author": "3d",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kingambit", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Moth", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fire", "grass", "normal" ], "dmg": 3, "cat": "S" },
+    { "s": "Glimmora", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragapult", "r": [ "midAttacker" ], "at": [ "dragon", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-trioc3y",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #3])",
+   "author": "lanactrlaltdelrey",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Tinkaton", "r": [ "hazard" ], "at": [ "fairy" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Moth", "r": [ "hazard" ], "use": [ "Electric Terrain" ], "at": [ "grass" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragonite", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "fire", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Ceruledge", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "fire", "ghost" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragapult", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1s70ue0",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #3])",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Corviknight", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Skeledirge", "r": [ "midAttacker" ], "at": [ "fire", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "dark", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Walking Wake", "r": [ "midAttacker" ], "at": [ "dragon", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Meowscarada", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-trteyvh",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #2])",
+   "author": "DonSalvatore",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Zoroark-Hisui", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Hatterene", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "electric", "fairy", "psychic" ], "dmg": 3, "cat": "M" },
+    { "s": "Orthworm", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Baxcalibur", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Iron Valiant", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9ou-tkt4fzq",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #2])",
+   "author": "other to another",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragapult", "r": [ "midAttacker" ], "at": [ "dragon", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Ting-Lu", "r": [ "phaze" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Skeledirge", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Toxapex", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Corviknight", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Great Tusk", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9ou-tytxpc",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #1])",
+   "author": "ima",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Glimmora", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Azumarill", "r": [ "sweeper", "midAttacker", "drum", "priority", "passable" ], "at": [ "fairy", "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Hatterene", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Kingambit", "r": [ "midAttacker", "priority" ], "at": [ "dark", "normal" ], "dmg": 3, "cat": "M" },
+    { "s": "Orthworm", "r": [ "pivot", "hazard" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-tha6me9",
+   "name": "Smogon Tour Season 35 (Week 4 [SV OU #1])",
+   "author": "xImRaptor ☾",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Baxcalibur", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Dondozo", "r": [ "midAttacker" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Cinderace", "r": [ "removal" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Scream Tail", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "bug", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-ts0n2di",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #4])",
+   "author": "myjava",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hydreigon", "r": [ "midAttacker", "passable" ], "at": [ "dark", "dragon" ], "dmg": 2, "cat": "S" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Volcarona", "r": [ "phaze" ], "use": [ "sol" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Garganacl", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot", "midAttacker" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t380q8h",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #4])",
+   "author": "Booty",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Walking Wake", "r": [ "phaze", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dragon", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Meowscarada", "r": [ "hazard", "smashItem" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Dragonite", "r": [ "midAttacker", "priority" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Iron Valiant", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "ghost", "psychic" ], "dmg": 3, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tzrn47b",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #3])",
+   "author": "cryingg",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Azumarill", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zoroark-Hisui", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragapult", "r": [ "midAttacker" ], "at": [ "fighting", "ghost", "normal" ], "dmg": 3, "cat": "M" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1k51vze",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #3])",
+   "author": "ImDoneThrowing",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Gyarados", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "normal", "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Indeedee", "r": [ "midAttacker" ], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Hawlucha", "r": [ "passable" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cloyster", "r": [ "midAttacker" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Polteageist", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1qr3b0y",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #1])",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Amoonguss", "r": [ "midAttacker" ], "at": [ "grass", "ground" ], "dmg": 2, "cat": "M" },
+    { "s": "Toxapex", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Corviknight", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Dragapult", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ghost" ], "dmg": 2, "cat": "M" },
+    { "s": "Volcarona", "r": [ "midAttacker" ], "at": [ "fire", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-td31png",
+   "name": "Smogon Tour Season 35 (Week 1 [SV OU #1])",
+   "author": "pdt",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "dark", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Rotom-Wash", "r": [ "passable" ], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Garchomp", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Volcarona", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9ou-t1xv2bv1",
+   "name": "Smogon's Official Ladder Tournament XII",
+   "author": "Electric win",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gholdengo", "r": [ "passable" ], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Primarina", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ground", "ice", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Kyurem", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Darkrai", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "fighting", "rock" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-tw5y3b0",
+   "name": "Smogon's Official Ladder Tournament XII",
+   "author": "Separation",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Zapdos", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "electric", "flying" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "at": [ "fighting", "ground", "ice", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Tinkaton", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Hoopa-Unbound", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyurem", "r": [ "passable" ], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragonite", "r": [ "priority" ], "at": [ "normal" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-ta854sh",
+   "name": "Smogon's Official Ladder Tournament XII",
+   "author": "Electric win",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hatterene", "r": [ "passable" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Latias", "r": [ "midAttacker" ], "at": [ "dragon", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Kyurem", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ice", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Kingambit", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Zamazenta", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-thip4el",
+   "name": "Smogon's Official Ladder Tournament XII",
+   "author": "Separation",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Deoxys-Speed", "r": [ "screens" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Ceruledge", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Zamazenta", "r": [ "phaze", "midAttacker" ], "at": [ "fighting", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Ogerpon-Wellspring", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Glimmora", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Moltres-Galar", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t928gx2",
+   "name": "Smogon's Official Ladder Tournament XI",
+   "author": "clean",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gliscor", "r": [ "passable" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Blissey", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Clefable", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Toxapex", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slither Wing", "r": [], "use": [ "sol" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Dondozo", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-tqzvbbw",
+   "name": "Smogon's Official Ladder Tournament XI",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Clodsire", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Skarmory", "r": [ "hazard", "phaze" ], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Clefable", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "fairy" ], "dmg": 2, "cat": "M" },
+    { "s": "Kyurem", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-teollov",
+   "name": "Smogon's Official Ladder Tournament XI",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dragapult", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Dragonite", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Kingambit", "r": [ "midAttacker", "priority" ], "at": [ "dark", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Moltres", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "use": [ "Electric Terrain" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t12wk2a3",
+   "name": "Smogon's Official Ladder Tournament XI",
+   "author": "clean",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Deoxys-Speed", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Roaring Moon", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "dark", "flying", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Iron Moth", "r": [], "use": [ "Electric Terrain" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "removal", "midAttacker" ], "use": [ "sol" ], "at": [ "ice", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Kyurem", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Iron Valiant", "r": [ "midAttacker" ], "at": [ "electric", "fairy" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-ts5oi12",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "VertXXX",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Skeledirge", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Milotic", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Clefable", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gliscor", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragapult", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Mandibuzz", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1nqguod",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "lax",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Valiant", "r": [ "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Azumarill", "r": [ "midAttacker", "priority" ], "at": [ "fairy", "ice", "water" ], "dmg": 4, "cat": "P" },
+    { "s": "Dragapult", "r": [ "midAttacker" ], "at": [ "dragon", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard" ], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Kingambit", "r": [ "passable" ], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Moth", "r": [], "use": [ "Electric Terrain" ], "at": [ "poison" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-tb7776l",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "VertXXX",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Valiant", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "fairy", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Glimmora", "r": [ "removal", "smashItem" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Greninja", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1ai4vsc",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "lax",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Amoonguss", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zamazenta", "r": [ "midAttacker" ], "at": [ "dark", "fighting", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Gholdengo", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Dragonite", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Ting-Lu", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t2umxhf",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "lax",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Sneasler", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Dragapult", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Gholdengo", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Zamazenta", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Roaring Moon", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9ou-t748rnn",
+   "name": "Smogon's Official Ladder Tournament X",
+   "author": "VertXXX",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Roaring Moon", "r": [], "use": [ "sol" ], "at": [ "dragon" ], "dmg": 1, "cat": "P" },
+    { "s": "Torkoal", "r": [ "hazard" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Enamorus", "r": [ "passable" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Walking Wake", "r": [], "use": [ "sol" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Ceruledge", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "fire", "grass" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1nr4qtl",
+   "name": "SV OU No Johns Release Tournament",
+   "author": "Guldkatt",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Pawmot", "r": [ "midAttacker" ], "at": [ "electric", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Dragonite", "r": [ "priority", "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Treads", "r": [], "use": [ "Electric Terrain" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Annihilape", "r": [ "passable" ], "at": [ "ghost" ], "dmg": 1, "cat": "P" },
+    { "s": "Chi-Yu", "r": [ "midAttacker" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Kingambit", "r": [ "passable" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1ezwka",
+   "name": "SV OU No Johns Release Tournament",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Rotom-Wash", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Garganacl", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Dragonite", "r": [ "midAttacker" ], "use": [ "chuva" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "M" },
+    { "s": "Kingambit", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Garchomp", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Chien-Pao", "r": [ "midAttacker", "priority" ], "at": [ "dark", "ice" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1kya8q6",
+   "name": "SV OU No Johns Release Tournament",
+   "author": "Guldkatt",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Indeedee", "r": [ "sacrifice" ], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Hatterene", "r": [ "passable" ], "at": [ "electric" ], "dmg": 1, "cat": "P" },
+    { "s": "Garchomp", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Iron Valiant", "r": [], "use": [ "Electric Terrain" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cloyster", "r": [ "smash", "passable" ], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Polteageist", "r": [ "sweeper", "midAttacker", "smash", "passable" ], "at": [ "ghost", "psychic" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ou-t1ljze0l",
+   "name": "SV OU No Johns Release Tournament",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hatterene", "r": [ "midAttacker" ], "at": [ "fairy", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Chi-Yu", "r": [ "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Roaring Moon", "r": [ "pivot", "midAttacker" ], "use": [ "sol" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Ceruledge", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Torkoal", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9ou-ta6dvxg",
+   "player": "MichaelderBeste2",
+   "event": "Smogon Tour Season 38 Playoffs",
+   "date": "2026-08-03",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-961595",
+   "thread": "https://www.smogon.com/forums/threads/smogon-tour-season-38-playoffs-won-by-michaelderbeste2.3784722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-trx9gfp",
+   "player": "JustFranco‽",
+   "event": "Smogon Tour Season 38 Playoffs",
+   "date": "2026-08-03",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-961595",
+   "thread": "https://www.smogon.com/forums/threads/smogon-tour-season-38-playoffs-won-by-michaelderbeste2.3784722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tj2r1mu",
+   "player": "crosscode",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #3])",
+   "date": "2026-06-14",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-947154",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-3-won-by-memphisdepay.3783863/",
+   "verification": "partially_verified",
+   "titleWinner": "MemphisDepay"
+  },
+  {
+   "team": "gen9ou-ta3ewq2",
+   "player": "memphisdepayy",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #3])",
+   "date": "2026-06-14",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-947154",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-3-won-by-memphisdepay.3783863/",
+   "verification": "partially_verified",
+   "titleWinner": "MemphisDepay"
+  },
+  {
+   "team": "gen9ou-t1ecx91w",
+   "player": "BEN MENDES",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #1])",
+   "date": "2026-06-13",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-945834",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-1-won-by-storm-zone.3783809/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1bk9eb9",
+   "player": "storm zone",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #1])",
+   "date": "2026-06-13",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-945834",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-1-won-by-storm-zone.3783809/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tn5lg81",
+   "player": "Fusien",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #2])",
+   "date": "2026-06-13",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-946365",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-2-won-by-fusien.3783830/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t31vk7h",
+   "player": "NoName6293",
+   "event": "Smogon Tour Season 38 (Week 7 [SV OU #2])",
+   "date": "2026-06-13",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-946365",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-7-sv-ou-2-won-by-fusien.3783830/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t2dwx2q",
+   "player": "Lime",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #3])",
+   "date": "2026-05-03",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-933072",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-3-won-by-lime.3781825/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t9w9rwq",
+   "player": "Kaif☆彡Plays♗",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #3])",
+   "date": "2026-05-03",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-933072",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-3-won-by-lime.3781825/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t3dtkon",
+   "player": "memphisdepayy",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #1])",
+   "date": "2026-05-02",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-931557",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-1-won-by-memphisdepay.3781739/",
+   "verification": "partially_verified",
+   "titleWinner": "MemphisDepay"
+  },
+  {
+   "team": "gen9ou-t1x9jzn1",
+   "player": "Peum",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #1])",
+   "date": "2026-05-02",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-931557",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-1-won-by-memphisdepay.3781739/",
+   "verification": "partially_verified",
+   "titleWinner": "MemphisDepay"
+  },
+  {
+   "team": "gen9ou-tf3e6qo",
+   "player": "Moat Cailin",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #2])",
+   "date": "2026-05-02",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-932256",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-2-won-by-michaelderbeste2.3781780/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tt37kpv",
+   "player": "MichaelderBeste2",
+   "event": "Smogon Tour Season 38 (Week 1 [SV OU #2])",
+   "date": "2026-05-02",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-932256",
+   "thread": "https://www.smogon.com/forums/threads/season-38-week-1-sv-ou-2-won-by-michaelderbeste2.3781780/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tkhpvdf",
+   "player": "Silent Waltzz",
+   "event": "Official Smogon Tournament XXII",
+   "date": "2026-04-11",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-925237",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxii-finals-won-by-sirpeanutcronch.3780035/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tgcanz2",
+   "player": "sirpeanutcronch",
+   "event": "Official Smogon Tournament XXII",
+   "date": "2026-04-11",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-925237",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxii-finals-won-by-sirpeanutcronch.3780035/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1pzjf49",
+   "player": "Silent Waltzz",
+   "event": "Official Smogon Tournament XXII",
+   "date": "2026-04-11",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-925226",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxii-finals-won-by-sirpeanutcronch.3780035/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1ip5h43",
+   "player": "sirpeanutcronch",
+   "event": "Official Smogon Tournament XXII",
+   "date": "2026-04-11",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-925226",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxii-finals-won-by-sirpeanutcronch.3780035/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-thip4el",
+   "player": "Separation",
+   "event": "Smogon's Official Ladder Tournament XII",
+   "date": "2025-10-26",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-883082",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xii-finals-won-by-separation.3772729/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-ta854sh",
+   "player": "Electric win",
+   "event": "Smogon's Official Ladder Tournament XII",
+   "date": "2025-10-26",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-883082",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xii-finals-won-by-separation.3772729/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tw5y3b0",
+   "player": "Separation",
+   "event": "Smogon's Official Ladder Tournament XII",
+   "date": "2025-10-26",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-883064",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xii-finals-won-by-separation.3772729/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1xv2bv1",
+   "player": "Electric win",
+   "event": "Smogon's Official Ladder Tournament XII",
+   "date": "2025-10-26",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-883064",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xii-finals-won-by-separation.3772729/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1rcj6em",
+   "player": "vk",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #3])",
+   "date": "2025-05-11",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-842020",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-3-won-by-vk.3764754/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tafdx00",
+   "player": "eliaspsy",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #3])",
+   "date": "2025-05-11",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-842020",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-3-won-by-vk.3764754/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tpifjf",
+   "player": "xavgb",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #1])",
+   "date": "2025-05-10",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-840848",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-1-won-by-xavgb.3764634/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tpti27m",
+   "player": "ilritornodellojedi",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #1])",
+   "date": "2025-05-10",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-840848",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-1-won-by-xavgb.3764634/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tbxu6tk",
+   "player": "Quamnckkk",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #2])",
+   "date": "2025-05-10",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-841450",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-2-won-by-mada.3764691/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tmpfazb",
+   "player": "Mada",
+   "event": "Smogon Tour Season 37 (Week 7 [SV OU #2])",
+   "date": "2025-05-10",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-841450",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-7-sv-ou-2-won-by-mada.3764691/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tevcg49",
+   "player": "Lax",
+   "event": "Smogon Tour Season 37 (Week 4 [SV OU #3])",
+   "date": "2025-04-20",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-835736",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-4-sv-ou-3-won-by-lax.3763512/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1hzuu6a",
+   "player": "musicaleggerissima",
+   "event": "Smogon Tour Season 37 (Week 4 [SV OU #3])",
+   "date": "2025-04-20",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-835736",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-4-sv-ou-3-won-by-lax.3763512/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1capk1r",
+   "player": "xavgb",
+   "event": "Smogon Tour Season 37 (Week 4 [SV OU #2])",
+   "date": "2025-04-19",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-835139",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-4-sv-ou-2-won-by-xavgb.3763472/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tl5ayva",
+   "player": "storm zone",
+   "event": "Smogon Tour Season 37 (Week 4 [SV OU #2])",
+   "date": "2025-04-19",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-835139",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-4-sv-ou-2-won-by-xavgb.3763472/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-te0tjnd",
+   "player": "oldspicemike",
+   "event": "Official Smogon Tournament XXI",
+   "date": "2025-04-05",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-830502",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxi-finals-won-by-fusien.3762412/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t18g58mk",
+   "player": "Fusien",
+   "event": "Official Smogon Tournament XXI",
+   "date": "2025-04-05",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-830502",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxi-finals-won-by-fusien.3762412/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tai2vz5",
+   "player": "Fusien",
+   "event": "Official Smogon Tournament XXI",
+   "date": "2025-04-05",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-830454",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxi-finals-won-by-fusien.3762412/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tcji8p6",
+   "player": "oldspicemike",
+   "event": "Official Smogon Tournament XXI",
+   "date": "2025-04-05",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-830454",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xxi-finals-won-by-fusien.3762412/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1gykw0k",
+   "player": "Zentrox Boost",
+   "event": "Smogon Tour Season 37 (Week 1 [SV OU #3])",
+   "date": "2025-03-30",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-829211",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-1-sv-ou-3-won-by-sand-castle.3762384/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1tffxfd",
+   "player": "sand castle",
+   "event": "Smogon Tour Season 37 (Week 1 [SV OU #3])",
+   "date": "2025-03-30",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-829211",
+   "thread": "https://www.smogon.com/forums/threads/season-37-week-1-sv-ou-3-won-by-sand-castle.3762384/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t12wk2a3",
+   "player": "clean",
+   "event": "Smogon's Official Ladder Tournament XI",
+   "date": "2024-10-27",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-802928",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xi-finals-won-by-xavgb.3753542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-teollov",
+   "player": "xavgb",
+   "event": "Smogon's Official Ladder Tournament XI",
+   "date": "2024-10-27",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-802928",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xi-finals-won-by-xavgb.3753542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tqzvbbw",
+   "player": "xavgb",
+   "event": "Smogon's Official Ladder Tournament XI",
+   "date": "2024-10-27",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-802878",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xi-finals-won-by-xavgb.3753542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t928gx2",
+   "player": "clean",
+   "event": "Smogon's Official Ladder Tournament XI",
+   "date": "2024-10-27",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-802878",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-xi-finals-won-by-xavgb.3753542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t9101vf",
+   "player": "Kaif☆彡Plays♗",
+   "event": "Smogon Tour Season 36 (Week 7 [SV OU #3])",
+   "date": "2024-05-05",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-766196",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-7-sv-ou-3-won-by-kaif.3742674/",
+   "verification": "partially_verified",
+   "titleWinner": "Kaif"
+  },
+  {
+   "team": "gen9ou-t1xhypwt",
+   "player": "Fabriisse",
+   "event": "Smogon Tour Season 36 (Week 7 [SV OU #3])",
+   "date": "2024-05-05",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-766196",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-7-sv-ou-3-won-by-kaif.3742674/",
+   "verification": "partially_verified",
+   "titleWinner": "Kaif"
+  },
+  {
+   "team": "gen9ou-t12kq79d",
+   "player": "Finch",
+   "event": "Smogon Tour Season 36 (Week 7 [SV OU #2])",
+   "date": "2024-05-04",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-765714",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-7-sv-ou-2-won-by-finchinator.3742606/",
+   "verification": "partially_verified",
+   "titleWinner": "Finchinator"
+  },
+  {
+   "team": "gen9ou-t1mc3umk",
+   "player": "umpa umpa",
+   "event": "Smogon Tour Season 36 (Week 7 [SV OU #2])",
+   "date": "2024-05-04",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-765714",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-7-sv-ou-2-won-by-finchinator.3742606/",
+   "verification": "partially_verified",
+   "titleWinner": "Finchinator"
+  },
+  {
+   "team": "gen9ou-t771e0e",
+   "player": "georgiethefirst",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #3])",
+   "date": "2024-04-14",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-761443",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-3-won-by-lily.3741197/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tdxff10",
+   "player": "Lily",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #3])",
+   "date": "2024-04-14",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-761443",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-3-won-by-lily.3741197/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t5cnd18",
+   "player": "VertXXX",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #1])",
+   "date": "2024-04-13",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-760614",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-1-won-by-vert.3741100/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-ty7kwxh",
+   "player": "s7a",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #1])",
+   "date": "2024-04-13",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-760614",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-1-won-by-vert.3741100/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-t1yeozsa",
+   "player": "Empo",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #2])",
+   "date": "2024-04-13",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-760986",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-2-won-by-empo.3741152/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tts0lv1",
+   "player": "Yovan33321",
+   "event": "Smogon Tour Season 36 (Week 4 [SV OU #2])",
+   "date": "2024-04-13",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-760986",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-4-sv-ou-2-won-by-empo.3741152/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t2yuhhy",
+   "player": "ChrisPBacon",
+   "event": "Smogon Tour Season 36 (Week 1 [SV OU #2])",
+   "date": "2024-03-24",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-755454",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-1-sv-ou-2-won-by-chrispbacon.3739582/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1e6y79s",
+   "player": "roxie",
+   "event": "Smogon Tour Season 36 (Week 1 [SV OU #2])",
+   "date": "2024-03-24",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-755454",
+   "thread": "https://www.smogon.com/forums/threads/season-36-week-1-sv-ou-2-won-by-chrispbacon.3739582/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t748rnn",
+   "player": "VertXXX",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727248",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t2umxhf",
+   "player": "lax",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727248",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1ai4vsc",
+   "player": "lax",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727236",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tb7776l",
+   "player": "VertXXX",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727236",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1nqguod",
+   "player": "lax",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727234",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-ts5oi12",
+   "player": "VertXXX",
+   "event": "Smogon's Official Ladder Tournament X",
+   "date": "2023-10-29",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-727234",
+   "thread": "https://www.smogon.com/forums/threads/smogons-official-ladder-tournament-x-finals-won-by-lax.3730114/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1ctu6zv",
+   "player": "MichaelderBeste2",
+   "event": "Smogon Tour Season 35 Playoffs",
+   "date": "2023-06-13",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-697075",
+   "thread": "https://www.smogon.com/forums/threads/smogon-tour-season-35-playoffs-won-by-michaelderbeste2.3721426/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1a7lra8",
+   "player": "SOULWIND",
+   "event": "Smogon Tour Season 35 Playoffs",
+   "date": "2023-06-13",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-697075",
+   "thread": "https://www.smogon.com/forums/threads/smogon-tour-season-35-playoffs-won-by-michaelderbeste2.3721426/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-twadeaa",
+   "player": "3d",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #1])",
+   "date": "2023-04-22",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-688711",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-1-won-by-3d.3720133/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tfkfx4i",
+   "player": "heavenisguiding",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #1])",
+   "date": "2023-04-22",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-688711",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-1-won-by-3d.3720133/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-tmrhjh1",
+   "player": "EeveetoTheN00b",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #2])",
+   "date": "2023-04-22",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-688821",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-2-won-by-eeveeto.3720145/",
+   "verification": "partially_verified",
+   "titleWinner": "Eeveeto"
+  },
+  {
+   "team": "gen9ou-t13c1aew",
+   "player": "Garay oak",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #2])",
+   "date": "2023-04-22",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-688821",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-2-won-by-eeveeto.3720145/",
+   "verification": "partially_verified",
+   "titleWinner": "Eeveeto"
+  },
+  {
+   "team": "gen9ou-t1nmtd1s",
+   "player": "Huarguensy",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #3])",
+   "date": "2023-04-22",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-689092",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-3-won-by-pirlo20.3720166/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t5d23ti",
+   "player": "Pirlo20",
+   "event": "Smogon Tour Season 35 (Week 7 [SV OU #3])",
+   "date": "2023-04-22",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-689092",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-7-sv-ou-3-won-by-pirlo20.3720166/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t52k329",
+   "player": "Stellar Flares",
+   "event": "Official Smogon Tournament XIX",
+   "date": "2023-04-16",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-687996",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xix-finals-won-by-vert.3719631/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-t3eweaj",
+   "player": "Stellar Flares",
+   "event": "Official Smogon Tournament XIX",
+   "date": "2023-04-16",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-687964",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xix-finals-won-by-vert.3719631/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-tsy3jfa",
+   "player": "VertXXX",
+   "event": "Official Smogon Tournament XIX",
+   "date": "2023-04-16",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-687964",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xix-finals-won-by-vert.3719631/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-t136v4mn",
+   "player": "VertXXX",
+   "event": "Official Smogon Tournament XIX",
+   "date": "2023-04-16",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 2,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-687963",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xix-finals-won-by-vert.3719631/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-t1wdd4h9",
+   "player": "Stellar Flares",
+   "event": "Official Smogon Tournament XIX",
+   "date": "2023-04-16",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-687963",
+   "thread": "https://www.smogon.com/forums/threads/official-smogon-tournament-xix-finals-won-by-vert.3719631/",
+   "verification": "partially_verified",
+   "titleWinner": "Vert"
+  },
+  {
+   "team": "gen9ou-tha6me9",
+   "player": "xImRaptor ☾",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #1])",
+   "date": "2023-04-01",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684137",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-1-won-by-raptor.3719004/",
+   "verification": "partially_verified",
+   "titleWinner": "Raptor"
+  },
+  {
+   "team": "gen9ou-tytxpc",
+   "player": "ima",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #1])",
+   "date": "2023-04-01",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684137",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-1-won-by-raptor.3719004/",
+   "verification": "partially_verified",
+   "titleWinner": "Raptor"
+  },
+  {
+   "team": "gen9ou-tkt4fzq",
+   "player": "other to another",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #2])",
+   "date": "2023-04-01",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684233",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-2-won-by-donsalvatore.3719021/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-trteyvh",
+   "player": "DonSalvatore",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #2])",
+   "date": "2023-04-01",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684233",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-2-won-by-donsalvatore.3719021/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1s70ue0",
+   "player": "xavgb",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #3])",
+   "date": "2023-04-01",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684695",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-3-won-by-xavgb.3719047/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-trioc3y",
+   "player": "lanactrlaltdelrey",
+   "event": "Smogon Tour Season 35 (Week 4 [SV OU #3])",
+   "date": "2023-04-01",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-684695",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-4-sv-ou-3-won-by-xavgb.3719047/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t380q8h",
+   "player": "Booty",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #4])",
+   "date": "2023-03-12",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-680154",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-4-won-by-myjava.3717875/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-ts0n2di",
+   "player": "myjava",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #4])",
+   "date": "2023-03-12",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-680154",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-4-won-by-myjava.3717875/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-td31png",
+   "player": "pdt",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #1])",
+   "date": "2023-03-11",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-679206",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-1-won-by-pdt.3717787/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1qr3b0y",
+   "player": "xavgb",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #1])",
+   "date": "2023-03-11",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-679206",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-1-won-by-pdt.3717787/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1k51vze",
+   "player": "ImDoneThrowing",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #3])",
+   "date": "2023-03-11",
+   "placement": "finalist",
+   "series": "0-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-679757",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-3-won-by-crying.3717830/",
+   "verification": "partially_verified",
+   "titleWinner": "crying"
+  },
+  {
+   "team": "gen9ou-tzrn47b",
+   "player": "cryingg",
+   "event": "Smogon Tour Season 35 (Week 1 [SV OU #3])",
+   "date": "2023-03-11",
+   "placement": "champion",
+   "series": "1-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-679757",
+   "thread": "https://www.smogon.com/forums/threads/season-35-week-1-sv-ou-3-won-by-crying.3717830/",
+   "verification": "partially_verified",
+   "titleWinner": "crying"
+  },
+  {
+   "team": "gen9ou-t1ljze0l",
+   "player": "xavgb",
+   "event": "SV OU No Johns Release Tournament",
+   "date": "2023-01-03",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-667092",
+   "thread": "https://www.smogon.com/forums/threads/sv-ou-no-johns-release-tournament-finals-won-by-xavgb.3713542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1kya8q6",
+   "player": "Guldkatt",
+   "event": "SV OU No Johns Release Tournament",
+   "date": "2023-01-03",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-667092",
+   "thread": "https://www.smogon.com/forums/threads/sv-ou-no-johns-release-tournament-finals-won-by-xavgb.3713542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1ezwka",
+   "player": "xavgb",
+   "event": "SV OU No Johns Release Tournament",
+   "date": "2023-01-03",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-667090",
+   "thread": "https://www.smogon.com/forums/threads/sv-ou-no-johns-release-tournament-finals-won-by-xavgb.3713542/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ou-t1nr4qtl",
+   "player": "Guldkatt",
+   "event": "SV OU No Johns Release Tournament",
+   "date": "2023-01-03",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ou-667090",
+   "thread": "https://www.smogon.com/forums/threads/sv-ou-no-johns-release-tournament-finals-won-by-xavgb.3713542/",
+   "verification": "verified"
+  }
+ ]
+}

@@ -368,7 +368,9 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const p = name.includes('/') ? name : `fixtures/${name}`;
     if (!existsSync(p)) continue;
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
-    const tables = refFormats(d.game).map(f => JSON.parse(readFileSync(`src/data/refteams/${f}.json`, 'utf8')));
+    // Equipes de exemplo e, sem BENCH_NO_TOUR, as de finais de torneio
+    const tables = refFormats(d.game).flatMap(f => ['refteams', ...(process.env.BENCH_NO_TOUR ? [] : ['tourteams'])]
+      .map(dir => `src/data/${dir}/${f}.json`).filter(existsSync).map(x => JSON.parse(readFileSync(x, 'utf8')))).filter(tb => tb.teams.length);
     if (!tables.length) continue;
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const dex = quetzalLearnDex(QL, QT);
@@ -407,8 +409,18 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
       meanFree: free.length ? r1(free.reduce((a, r) => a + r.score, 0) / free.length) : null,
       kept: refs.map(r => r.kept.length), stratsKept: `${st}/${stN}`, rolesKept: `${ro}/${roN}`, keptOwnRoles: `${kr}/${krN}`, planKept: `${pl}/${plN}`, freeStrats: r1(freeStrats),
       ms: { prep: Math.round(tPrep), refs: Math.round(tRefs), free: Math.round(tFree) } };
+    // Equipes de finais de torneio: compatíveis, adaptadas, entre as 6 primeiras e a melhor nota
+    const isTour = r => r.format.kind === 'tournament';
+    const tours = refs.filter(isTour);
+    Object.assign(row, { tourCompatible: refs.candidates.list.filter(w => w.format.kind === 'tournament').length, tourAdapted: tours.length,
+      tourTop6: refs.slice(0, 6).filter(isTour).length, bestTour: tours[0] ? r1(tours[0].adapted.score) : null });
     rows.push(row);
     lines.push(`${name} (${all.length}): ${row.compatible} compatíveis (${row.rejected} de fora), ${row.adapted} adaptadas; melhor ${row.best} × livre ${row.bestFree}; média ${row.meanRef} × ${row.meanFree}; mantidos ${row.kept.join(',')}; estratégias da original ${row.stratsKept}, papéis ${row.rolesKept}, papéis dos mantidos ${row.keptOwnRoles}, plano ${row.planKept}; estratégias por equipe livre ${row.freeStrats}; tempo preparo ${row.ms.prep} ms, referências ${row.ms.refs} ms, livre ${row.ms.free} ms`);
+    lines.push(`  torneio: ${row.tourCompatible} compatíveis, ${row.tourAdapted} adaptadas, ${row.tourTop6} entre as 6 primeiras, melhor ${row.bestTour}`);
+    for (const r of tours.slice(0, 3)) {
+      const res = (r.format.results || []).find(x => x.team === r.ref.id);
+      lines.push(`  [torneio ${r.format.format}] ${res ? `${res.placement} ${res.player}, ${res.event}` : '-'}: ${r.orig.members.map(m => m.x.s).join(', ')} → ${r.adapted.team.map(e => e.m.species.name).join(', ')} (nota ${r1(r.adapted.score)}, fidelidade ${r.adapted.fidelity}, mantidos ${r.kept.length})`);
+    }
     for (const r of refs.slice(0, 3)) lines.push(`  [${r.format.format}] ${r.ref.name || '-'}: ${r.orig.members.map(m => m.x.s).join(', ')} → ${r.adapted.team.map(e => e.m.species.name).join(', ')} (nota ${r1(r.adapted.score)}, fidelidade ${r.adapted.fidelity})`);
   }
   if (process.env.BENCH_OUT) writeFileSync(process.env.BENCH_OUT, JSON.stringify(rows, null, 1));

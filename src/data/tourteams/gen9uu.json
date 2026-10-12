@@ -1,0 +1,469 @@
+{
+ "format": "gen9uu",
+ "name": "Gen 9 UU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9uu-t1gpz312",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "zugubu royale",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Conkeldurr", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Donphan", "r": [ "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Heatran", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Rotom-Wash", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Latios", "r": [ "midAttacker" ], "at": [ "electric", "fighting", "water" ], "dmg": 3, "cat": "S" },
+    { "s": "Zapdos-Galar", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1dcchby",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "arce9",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Tyranitar", "r": [], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Clodsire", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Skarmory", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Azumarill", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Latios", "r": [ "passable" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Excadrill", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1pmjb31",
+   "name": "The UU Open XV",
+   "author": "StepC",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "use": [ "sol" ], "at": [ "grass" ], "dmg": 1, "cat": "S" },
+    { "s": "Excadrill", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Arcanine-Hisui", "r": [ "priority" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Scovillain", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Lilligant-Hisui", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Slither Wing", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1chj1w9",
+   "name": "The UU Open XV",
+   "author": "Meru",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Sandy Shocks", "r": [], "use": [ "sol" ], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Manaphy", "r": [ "sweeper", "midAttacker", "passable" ], "set": [ "chuva" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Bisharp", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Sinistcha", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Zapdos-Galar", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Latios", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9uu-todcjm2",
+   "name": "The UU Open XV",
+   "author": "StepC",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Blissey", "r": [ "hazard", "passable" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Toxapex", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Hydrapple", "r": [ "midAttacker" ], "at": [ "dragon", "grass" ], "dmg": 2, "cat": "S" },
+    { "s": "Talonflame", "r": [ "removal" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Mandibuzz", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Clodsire", "r": [ "midAttacker" ], "at": [ "fighting", "ground" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1duvv1x",
+   "name": "The UU Open XV",
+   "author": "Meru",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales-Alola", "r": [ "screens" ], "set": [ "neve/granizo" ], "auto": [ "neve/granizo" ], "use": [ "neve/granizo" ], "at": [ "ice" ], "dmg": 1, "cat": "S" },
+    { "s": "Manaphy", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Slither Wing", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "sol" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Thundurus-Therian", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Krookodile", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Scizor", "r": [ "passable" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9uu-t3pbd44",
+   "name": "The UU Open XV",
+   "author": "StepC",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Skeledirge", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cresselia", "r": [ "passable" ], "use": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Skarmory", "r": [ "midAttacker" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Toxapex", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Clodsire", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Blissey", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9uu-t7ndwlv",
+   "name": "The UU Open XV",
+   "author": "Meru",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Thwackey", "r": [ "pivot", "midAttacker" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Arcanine-Hisui", "r": [ "midAttacker" ], "at": [ "fire", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Manaphy", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Serperior", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Hawlucha", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Donphan", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9uu-tqfvmw3",
+   "name": "The UU Open XIII",
+   "author": "mncmt",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Lokix", "r": [ "pivot", "midAttacker", "priority" ], "at": [ "bug" ], "dmg": 2, "cat": "P" },
+    { "s": "Cobalion", "r": [ "hazard" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Golurk", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "P" },
+    { "s": "Gardevoir", "r": [ "midAttacker" ], "at": [ "fire", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Mandibuzz", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Greninja", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1jvkkp7",
+   "name": "The UU Open XIII",
+   "author": "Kate",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hydrapple", "r": [], "at": [ "grass" ], "dmg": 1, "cat": "S" },
+    { "s": "Cobalion", "r": [ "pivot", "hazard" ], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Excadrill", "r": [ "midAttacker" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Tornadus-Therian", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "dark", "flying" ], "dmg": 3, "cat": "M" },
+    { "s": "Slowking", "r": [ "pivot" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Raikou", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "normal", "water" ], "dmg": 4, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1y7am0j",
+   "name": "The UU Open XIII",
+   "author": "mncmt",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Slowking", "r": [ "pivot" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Ogerpon", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Pecharunt", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Sandy Shocks", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "electric", "rock" ], "dmg": 2, "cat": "S" },
+    { "s": "Mandibuzz", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Empoleon", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9uu-t1iimp8k",
+   "name": "The UU Open XIII",
+   "author": "Kate",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ursaluna", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "ground", "ice" ], "dmg": 3, "cat": "P" },
+    { "s": "Tinkaton", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Slowking", "r": [ "pivot" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Lokix", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Mandibuzz", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Greninja", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9uu-tj8mcqo",
+   "name": "UULT 2026",
+   "author": "wssi",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Ribombee", "r": [ "screens", "web" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Tinkaton", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "ground", "steel" ], "dmg": 3, "cat": "P" },
+    { "s": "Iron Thorns", "r": [ "passable" ], "use": [ "Electric Terrain" ], "at": [ "electric" ], "dmg": 1, "cat": "P" },
+    { "s": "Thundurus-Therian", "r": [ "passable" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gyarados", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Sinistcha", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true }
+   ]
+  },
+  {
+   "id": "gen9uu-t68acmh",
+   "name": "UULT 2026",
+   "author": "kitoothe",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Latios", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Mandibuzz", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Hippowdon", "r": [ "hazard" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Magnezone", "r": [ "midAttacker" ], "at": [ "fighting", "steel" ], "dmg": 2, "cat": "M" },
+    { "s": "Lokix", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Keldeo-Resolute", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9uu-talqnhy",
+   "name": "UULT 2026",
+   "author": "kitoothe",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Clodsire", "r": [ "hazard" ], "at": [ "poison" ], "dmg": 1, "cat": "P" },
+    { "s": "Thundurus", "r": [ "midAttacker" ], "at": [ "dark", "electric" ], "dmg": 2, "cat": "M" },
+    { "s": "Toxapex", "r": [ "hazard" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Reuniclus", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "chuva" ], "at": [ "electric", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Tyranitar", "r": [ "phaze" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Skarmory", "r": [ "hazard", "phaze" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9uu-tsi68ep",
+   "name": "UULT 2026",
+   "author": "wssi",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Clodsire", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Sinistcha", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "ghost", "grass" ], "dmg": 2, "cat": "S" },
+    { "s": "Blissey", "r": [ "hazard", "passable" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Skarmory", "r": [ "hazard", "midAttacker" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Weavile", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting", "ice" ], "dmg": 3, "cat": "P" },
+    { "s": "Talonflame", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fire" ], "dmg": 2, "cat": "P" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9uu-tsi68ep",
+   "player": "wssi",
+   "event": "UULT 2026",
+   "date": "2026-08-22",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-965347",
+   "thread": "https://www.smogon.com/forums/threads/uult-2026-finals-won-by-wssi-preps.3786961/",
+   "verification": "partially_verified",
+   "titleWinner": "wssi preps"
+  },
+  {
+   "team": "gen9uu-talqnhy",
+   "player": "kitoothe",
+   "event": "UULT 2026",
+   "date": "2026-08-22",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-965347",
+   "thread": "https://www.smogon.com/forums/threads/uult-2026-finals-won-by-wssi-preps.3786961/",
+   "verification": "partially_verified",
+   "titleWinner": "wssi preps"
+  },
+  {
+   "team": "gen9uu-t68acmh",
+   "player": "kitoothe",
+   "event": "UULT 2026",
+   "date": "2026-08-22",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-965344",
+   "thread": "https://www.smogon.com/forums/threads/uult-2026-finals-won-by-wssi-preps.3786961/",
+   "verification": "partially_verified",
+   "titleWinner": "wssi preps"
+  },
+  {
+   "team": "gen9uu-tj8mcqo",
+   "player": "wssi",
+   "event": "UULT 2026",
+   "date": "2026-08-22",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-965344",
+   "thread": "https://www.smogon.com/forums/threads/uult-2026-finals-won-by-wssi-preps.3786961/",
+   "verification": "partially_verified",
+   "titleWinner": "wssi preps"
+  },
+  {
+   "team": "gen9uu-t1dcchby",
+   "player": "arce9",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-959278",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1gpz312",
+   "player": "zugubu royale",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-959278",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t7ndwlv",
+   "player": "Meru",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947422",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t3pbd44",
+   "player": "StepC",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947422",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1duvv1x",
+   "player": "Meru",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947420",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-todcjm2",
+   "player": "StepC",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947420",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1chj1w9",
+   "player": "Meru",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947419",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1pmjb31",
+   "player": "StepC",
+   "event": "The UU Open XV",
+   "date": "2026-06-15",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-947419",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xv-finals-won-by-meru.3783439/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1iimp8k",
+   "player": "Kate",
+   "event": "The UU Open XIII",
+   "date": "2024-06-26",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-776775",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xiii-finals-won-by-mncmt.3745840/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1y7am0j",
+   "player": "mncmt",
+   "event": "The UU Open XIII",
+   "date": "2024-06-26",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-776775",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xiii-finals-won-by-mncmt.3745840/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-t1jvkkp7",
+   "player": "Kate",
+   "event": "The UU Open XIII",
+   "date": "2024-06-26",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-776774",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xiii-finals-won-by-mncmt.3745840/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9uu-tqfvmw3",
+   "player": "mncmt",
+   "event": "The UU Open XIII",
+   "date": "2024-06-26",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-776774",
+   "thread": "https://www.smogon.com/forums/threads/the-uu-open-xiii-finals-won-by-mncmt.3745840/",
+   "verification": "verified"
+  }
+ ]
+}

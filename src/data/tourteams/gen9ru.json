@@ -1,0 +1,441 @@
+{
+ "format": "gen9ru",
+ "name": "Gen 9 RU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9ru-t1umufas",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "zugubu royale",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Maushold", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Mimikyu", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "fighting", "ghost" ], "dmg": 3, "cat": "P" },
+    { "s": "Bisharp", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Gallade", "r": [ "midAttacker" ], "at": [ "fighting", "psychic" ], "dmg": 2, "cat": "P" },
+    { "s": "Kleavor", "r": [ "hazard", "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "grass" ], "dmg": 2, "cat": "P" },
+    { "s": "Crawdaunt", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ru-t1pjtjdy",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "arce9",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Breloom", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gardevoir", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gastrodon", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Registeel", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Noivern", "r": [ "removal", "midAttacker" ], "at": [ "dragon", "normal" ], "dmg": 2, "cat": "M" },
+    { "s": "Krookodile", "r": [], "at": [ "rock" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-tpc73fg",
+   "name": "The RU Open XV",
+   "author": "arce9",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Krookodile", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Chesnaught", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Jirachi", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Basculegion-F", "r": [ "pivot", "midAttacker" ], "at": [ "ghost", "water" ], "dmg": 3, "cat": "M" },
+    { "s": "Tornadus", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cyclizar", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "dark", "dragon", "normal" ], "dmg": 4, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ru-t1t8tmr4",
+   "name": "The RU Open XV",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ninetales", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowbro", "r": [ "midAttacker" ], "at": [ "fighting", "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Entei", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Krookodile", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Scovillain", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Cyclizar", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "dark", "normal" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-twapdrm",
+   "name": "The RU Open XV",
+   "author": "arce9",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Slowbro", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Cyclizar", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Breloom", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gligar", "r": [ "pivot", "hazard" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Registeel", "r": [ "hazard" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Ditto", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-t12ca96d",
+   "name": "The RU Open XV",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Entei", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Krookodile", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Bisharp", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Noivern", "r": [ "midAttacker" ], "at": [ "dragon", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Necrozma", "r": [ "passable" ], "use": [ "sol" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Kleavor", "r": [ "hazard", "smashItem" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-t14ew4p6",
+   "name": "The RU Open XIV",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Froslass", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Mew", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Cloyster", "r": [ "smash", "passable" ], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Porygon-Z", "r": [ "midAttacker" ], "at": [ "ghost", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Gyarados", "r": [], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Mimikyu", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "ghost" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-t12p58ih",
+   "name": "The RU Open XIV",
+   "author": "Flasveaudu09",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Lycanroc-Dusk", "r": [ "midAttacker", "priority" ], "at": [ "dark", "psychic", "rock" ], "dmg": 3, "cat": "P" },
+    { "s": "Cyclizar", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "dark", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Rotom-Heat", "r": [ "pivot", "sweeper", "midAttacker", "passable" ], "at": [ "electric", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Goodra-Hisui", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "poison" ], "dmg": 3, "cat": "M" },
+    { "s": "Hippowdon", "r": [ "hazard" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gardevoir", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ru-t13146pm",
+   "name": "The RU Open XIV",
+   "author": "Flasveaudu09",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Iron Thorns", "r": [ "sweeper", "midAttacker", "passable" ], "use": [ "Electric Terrain" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "M" },
+    { "s": "Reuniclus", "r": [ "midAttacker" ], "at": [ "ghost", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Krookodile", "r": [ "midAttacker", "passable" ], "at": [ "dark", "ground", "poison" ], "dmg": 3, "cat": "P" },
+    { "s": "Ditto", "r": [], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Weezing-Galar", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Empoleon", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ru-t1x43qf2",
+   "name": "The RU Open XIV",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gardevoir", "r": [ "sacrifice" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gastrodon", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Jirachi", "r": [ "hazard" ], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Zapdos-Galar", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Goodra-Hisui", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "electric", "steel" ], "dmg": 4, "cat": "M" },
+    { "s": "Noivern", "r": [ "midAttacker" ], "at": [ "dragon", "normal" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ru-tus1fb9",
+   "name": "The RU Open XIV",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Chansey", "r": [ "hazard" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Quagsire", "r": [ "midAttacker" ], "at": [ "ground", "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Talonflame", "r": [ "removal" ], "at": [ "flying" ], "dmg": 1, "cat": "P" },
+    { "s": "Muk-Alola", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Chesnaught", "r": [ "hazard" ], "use": [ "sol" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Slowbro", "r": [ "midAttacker" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9ru-t515e35",
+   "name": "The RU Open XIII",
+   "author": "entrocefalo",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Chansey", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Milotic", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Chesnaught", "r": [], "use": [ "sol" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Quagsire", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Talonflame", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Muk-Alola", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-t1cve6aq",
+   "name": "The RU Open XIII",
+   "author": "Unviabriel",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Bisharp", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Blastoise", "r": [ "sweeper", "midAttacker", "smash", "smashItem", "passable" ], "at": [ "ice", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Maushold", "r": [], "at": [ "grass" ], "dmg": 1, "cat": "P" },
+    { "s": "Mimikyu", "r": [], "at": [ "fairy" ], "dmg": 1, "cat": "P" },
+    { "s": "Revavroom", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "poison", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Terrakion", "r": [ "midAttacker" ], "at": [ "fighting", "rock" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9ru-t12b7bld",
+   "name": "The RU Open XIII",
+   "author": "Unviabriel",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Cobalion", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Hippowdon", "r": [ "hazard" ], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cyclizar", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Jirachi", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowbro", "r": [], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Thundurus", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "fighting" ], "dmg": 2, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9ru-t1pru88t",
+   "name": "The RU Open XIII",
+   "author": "entrocefalo",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Cobalion", "r": [ "hazard" ], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Yanmega", "r": [ "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "S" },
+    { "s": "Maushold", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Krookodile", "r": [ "midAttacker" ], "at": [ "dark", "dragon", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Armarouge", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Feraligatr", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "water" ], "dmg": 3, "cat": "P" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9ru-t1pjtjdy",
+   "player": "arce9",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-959413",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t1umufas",
+   "player": "zugubu royale",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-959413",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t12ca96d",
+   "player": "mind gaming",
+   "event": "The RU Open XV",
+   "date": "2026-06-14",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-946927",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xv-finals-won-by-mind-gaming.3783671/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-twapdrm",
+   "player": "arce9",
+   "event": "The RU Open XV",
+   "date": "2026-06-14",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-946927",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xv-finals-won-by-mind-gaming.3783671/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t1t8tmr4",
+   "player": "mind gaming",
+   "event": "The RU Open XV",
+   "date": "2026-06-14",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-946837",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xv-finals-won-by-mind-gaming.3783671/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-tpc73fg",
+   "player": "arce9",
+   "event": "The RU Open XV",
+   "date": "2026-06-14",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-946837",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xv-finals-won-by-mind-gaming.3783671/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-tus1fb9",
+   "player": "SOULWIND",
+   "event": "The RU Open XIV",
+   "date": "2025-06-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-853136",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiv-finals-won-by-soulwind.3766698/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t1x43qf2",
+   "player": "SOULWIND",
+   "event": "The RU Open XIV",
+   "date": "2025-06-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-853116",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiv-finals-won-by-soulwind.3766698/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t13146pm",
+   "player": "Flasveaudu09",
+   "event": "The RU Open XIV",
+   "date": "2025-06-29",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-853116",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiv-finals-won-by-soulwind.3766698/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t12p58ih",
+   "player": "Flasveaudu09",
+   "event": "The RU Open XIV",
+   "date": "2025-06-29",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 2,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-853093",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiv-finals-won-by-soulwind.3766698/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t14ew4p6",
+   "player": "SOULWIND",
+   "event": "The RU Open XIV",
+   "date": "2025-06-29",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-853093",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiv-finals-won-by-soulwind.3766698/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9ru-t1pru88t",
+   "player": "entrocefalo",
+   "event": "The RU Open XIII",
+   "date": "2024-07-02",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-778014",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiii-finals-won-by-abriel.3745746/",
+   "verification": "partially_verified",
+   "titleWinner": "abriel"
+  },
+  {
+   "team": "gen9ru-t12b7bld",
+   "player": "Unviabriel",
+   "event": "The RU Open XIII",
+   "date": "2024-07-02",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-778014",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiii-finals-won-by-abriel.3745746/",
+   "verification": "partially_verified",
+   "titleWinner": "abriel"
+  },
+  {
+   "team": "gen9ru-t1cve6aq",
+   "player": "Unviabriel",
+   "event": "The RU Open XIII",
+   "date": "2024-07-02",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-778008",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiii-finals-won-by-abriel.3745746/",
+   "verification": "partially_verified",
+   "titleWinner": "abriel"
+  },
+  {
+   "team": "gen9ru-t515e35",
+   "player": "entrocefalo",
+   "event": "The RU Open XIII",
+   "date": "2024-07-02",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9ru-778008",
+   "thread": "https://www.smogon.com/forums/threads/the-ru-open-xiii-finals-won-by-abriel.3745746/",
+   "verification": "partially_verified",
+   "titleWinner": "abriel"
+  }
+ ]
+}
