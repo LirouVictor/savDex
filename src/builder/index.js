@@ -4,7 +4,7 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { prepareBuild, freeTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
+import { prepareBuild, freeTeams, altTeams, scoreParts, shownRoleBits, roleTeach, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
 import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
 import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP, ADAPT_N } from './reference.js';
 import { SRC } from './moveset.js';
@@ -378,7 +378,7 @@ export function moreReferences(results) {
   if (!info || !info.candidates) return -1;
   const c = info.candidates, ctx = results.ctx;
   const next = c.list.filter(w => w.result === undefined).slice(0, ADAPT_N);
-  const added = next.map(w => adaptReference(ctx, w, c.fidW)).filter(Boolean).sort((a, b) => b.rank - a.rank).map(x => describeRef(x, ctx.types, ctx));
+  const added = next.map(w => adaptReference(ctx, w)).filter(Boolean).sort((a, b) => b.rank - a.rank).map(x => describeRef(x, ctx.types, ctx));
   if (!added.length) return -1;
   // Entram depois das referências que já estão na tela (antes da montagem livre)
   const at = results.filter(x => x.kind === 'ref').length;
@@ -413,7 +413,8 @@ function describeTeam(res, types, pool, ctx, { ref = false } = {}) {
   setPlanFlags(pool, plan);
   // Moveset (Quetzal): o escolhido para cada membro, com os golpes que o plano pede no lugar dos que menos fazem falta
   const extra = planMoves(team, plan);
-  const shownSets = new Map(team.filter(e => e.set).map(e => [e, finalMoveset(e, (extra.get(e) || []).map(x => x.name))]));
+  // (com os golpes de papel da equipe de referência, que não podem sair para dar lugar aos do plano)
+  const shownSets = new Map(team.filter(e => e.set).map(e => [e, finalMoveset(e, [...(extra.get(e) || []).map(x => x.name), ...(e.keepMoves || [])])]));
   // Item do competitivo (só com o moveset, no Quetzal): o escolhido, ou a pedra do clima de quem põe o clima do plano
   const items = new Map(team.filter(e => e.set).map(e => [e, shownItem(e, plan, shownSets.get(e))]));
   // Interações (Quetzal): as combinações de habilidade, item e golpes de cada um, com o campo do plano, e as da equipe
@@ -436,7 +437,7 @@ function describeTeam(res, types, pool, ctx, { ref = false } = {}) {
   // habilidades da espécie) e os itens do jogo
   const aiCheck = aiChecks(team, shownSets, items);
   return {
-    aiCheck,
+    aiCheck, shownSets, shownItems: items,
     name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx, kind: ref ? 'ref' : 'free',
     // Copiar (Showdown) e Comentar com IA: com o moveset do app no lugar dos golpes do save
     showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e), plannedMoves: true,
@@ -571,10 +572,13 @@ function describeRef(x, types, ctx) {
   const res = { plan: x.adapted.plan, team: x.adapted.team, score: x.adapted.score };
   Object.defineProperty(res, 'pp', { value: x.adapted.pp });
   const d = describeTeam(res, types, x.adapted.pp.pool, ctx, { ref: true });
+  // Os papéis de cada membro com o moveset e o item que o card mostra (os painéis não podem dizer que um papel ficou se o
+  // card não o cumpre)
+  const bits = new Map(x.adapted.team.map(e => [e, shownRoleBits(e, d.shownSets.get(e) || null, d.shownItems.has(e) ? d.shownItems.get(e) : (e.m.item && e.m.item.name) || null)]));
   const kept = x.kept.length;
   d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
   d.r.nome = x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
-  d.r.referencia = refPanels(x, ctx);
+  d.r.referencia = refPanels(x, ctx, bits, d.shownSets);
   // Quem o jogador tem em outra forma aparece nos textos: o toque abre o Pokémon do save
   for (const m of d.r.referencia.extra) { d.byRef.set(refOf(m), realOf(m)); d.shown.set(refOf(m), m); }
   d.ref = x;
@@ -582,9 +586,12 @@ function describeRef(x, types, ctx) {
 }
 
 /** Os três painéis: equipe original (com a origem), sua equipe adaptada e o que falta para reproduzir a original. */
-function refPanels(x, ctx) {
+function refPanels(x, ctx, bits, shownSets) {
   const { ref, format: tb, orig, adapted } = x;
   const by = new Map(x.swaps.map(s => [s.orig, s]));
+  // Tudo com os papéis do card (bits): o que a equipe mostrada cumpre de verdade
+  const roleSet = b => new Set(FID_ROLES.filter(k => roleKeyIn(b, k)));
+  const shownTeam = adapted.team.map(e => ({ sbits: bits.get(e) }));
   const keptSet = new Set(x.kept.map(e => e.real));
   const own = orig.members.map((m, i) => (x.keep[i] && keptSet.has(x.keep[i].real) ? x.keep[i] : null));
   // Equipe original
@@ -623,16 +630,44 @@ function refPanels(x, ctx) {
       : t('Plano da original ({plan}) perdido: ninguém no seu save põe ou aproveita o campo o bastante.', { plan: planName(orig.plan) }));
   }
   if (orig.strategies.length) {
-    const have = new Set(strategiesOf(adapted.team, adapted.plan));
+    const have = new Set(strategiesOf(shownTeam, adapted.plan));
     const ok = orig.strategies.filter(id => have.has(id)), miss = orig.strategies.filter(id => !have.has(id));
     lines.push(miss.length ? t('Estratégias da original: {k} de {n} ({ok}); falta: {miss}.', { k: ok.length, n: orig.strategies.length, ok: ok.length ? list(ok.map(stratName)) : '—', miss: list(miss.map(stratName)) })
       : t('Estratégias da original: todas ({list}).', { list: list(ok.map(stratName)) }));
   }
+  // Quem ficou: os papéis da original que ele mantém (e com que golpe, quando o app ensinou um para isso) e os que perde
+  orig.members.forEach((m, i) => {
+    const e = own[i] && adapted.team.find(y => y.real === own[i].real);
+    const want = e ? FID_ROLES.filter(k => roleKeyIn(m.sbits, k)) : [];
+    if (!want.length) return;
+    const has = want.filter(k => roleKeyIn(bits.get(e), k)), miss = want.filter(k => !roleKeyIn(bits.get(e), k));
+    const fixed = (e.keepMoves || []).filter(n => (shownSets.get(e) || []).some(y => y.name === n));
+    const parts = [];
+    if (has.length) parts.push(fixed.length ? t('{ref} mantém o papel da original ({roles}), com {moves}.', { ref: refOf(e.m), roles: roleNames(has), moves: list(fixed) })
+      : t('{ref} mantém o papel da original ({roles}).', { ref: refOf(e.m), roles: roleNames(has) }));
+    if (miss.length) {
+      const can = miss.filter(k => roleTeach(e, shownSets.get(e), null, k));
+      // Aprende o golpe: ou a equipe inteira rendeu mais sem ele (a busca comparou as duas versões), ou não coube
+      if (can.length) parts.push(x.reverted && x.reverted.has(e.real)
+        ? t('{ref} perde {roles}: aprende o golpe, mas a equipe inteira rende mais sem ele.', { ref: refOf(e.m), roles: roleNames(can) })
+        : t('{ref} perde {roles}: aprende o golpe, mas não coube no moveset (ver “Para reproduzir a original”).', { ref: refOf(e.m), roles: roleNames(can) }));
+      const cannot = miss.filter(k => !can.includes(k));
+      if (cannot.length) parts.push(t('{ref} perde {roles}: não aprende o golpe neste jogo.', { ref: refOf(e.m), roles: roleNames(cannot) }));
+    }
+    lines.push(parts.join(' '));
+  });
   for (const s of x.swaps) {
     if (!s.sub) { lines.push(t('{orig}: sem substituto.', { orig: refName(s.orig) })); continue; }
+    // O que o substituto cumpre com o moveset do card (e o que outro membro cobre)
+    const a = roleSet(s.orig.sbits), b2 = roleSet(bits.get(s.sub));
+    let others = 0;
+    for (const e of adapted.team) if (e !== s.sub) others |= bits.get(e);
+    const kept = [...a].filter(r => b2.has(r)), lost0 = [...a].filter(r => !b2.has(r));
+    const covered = lost0.filter(r => roleKeyIn(others, r)), lostR = lost0.filter(r => !roleKeyIn(others, r));
+    const added = [...b2].filter(r => !a.has(r));
     const why = [];
     if (s.wanted) why.push(t('pedido por você'));
-    if (s.kept.length) why.push(t('faz o mesmo papel ({roles})', { roles: roleNames(s.kept) }));
+    if (kept.length) why.push(t('faz o mesmo papel ({roles})', { roles: roleNames(kept) }));
     const shared = s.orig.types.filter(ty => s.sub.types.includes(ty));
     if (shared.length) why.push(t('mesmo tipo ({types})', { types: shared.map(cap).join('/') }));
     const f = adapted.plan.field;
@@ -640,9 +675,9 @@ function refPanels(x, ctx) {
     else if (f && adapted.plan.kind !== 'room' && (s.sub.value[f] || 0) >= 11) why.push(t('aproveita {field}', { field: t(f) }));
     if (!why.length) why.push(t('o que mais rende na equipe inteira pela nota'));
     const parts = [t('{orig} → {sub}: {why}.', { orig: refName(s.orig), sub: refOf(s.sub.m), why: why.join('; ') })];
-    if (s.covered.length) parts.push(t('Outro membro cobre: {roles}.', { roles: roleNames(s.covered) }));
-    if (s.lost.length) parts.push(t('Perde: {roles}.', { roles: roleNames(s.lost) }));
-    if (s.added.length) parts.push(t('Acrescenta: {roles}.', { roles: roleNames(s.added) }));
+    if (covered.length) parts.push(t('Outro membro cobre: {roles}.', { roles: roleNames(covered) }));
+    if (lostR.length) parts.push(t('Perde: {roles}.', { roles: roleNames(lostR) }));
+    if (added.length) parts.push(t('Acrescenta: {roles}.', { roles: roleNames(added) }));
     lines.push(parts.join(' '));
   }
   const adaptedPanel = { lines, note: t('A nota ({n}) é a do app para esta equipe: ela não herda resultado nem reputação da original. As trocas foram escolhidas juntas, pela equipe inteira; o par “sai → entra” é o mais parecido, só para explicar.', { n: Math.round(adapted.score) }) };
@@ -667,16 +702,13 @@ function refPanels(x, ctx) {
   orig.members.forEach((m, i) => {
     const e = own[i] && adapted.team.find(y => y.real === own[i].real);
     if (!e) return;
-    const lost = FID_ROLES.filter(k => roleKeyIn(m.sbits, k) && !roleKeyIn(e.sbits, k));
+    const lost = FID_ROLES.filter(k => roleKeyIn(m.sbits, k) && !roleKeyIn(bits.get(e), k));
     if (!lost.length) return;
     const fix = [];
-    if (e.set) {
-      const inp = strategyInput(e, e.set, e.m.item ? e.m.item.name : null);
-      const rr = rolesOfMon(inp.c, inp.cands, inp.itemOk, () => true);
+    if (e.mcands) {
       for (const k of lost) {
-        const tch = rr.teach.get(k);
-        if (tch && tch.kind === 'move') fix.push(t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }));
-        else if (tch && tch.kind === 'item') fix.push(t('{role}: dê {item}', { role: t(ROLE_NAME[k] || k), item: tch.name }));
+        const tch = roleTeach(e, shownSets.get(e), null, k);
+        if (tch) fix.push(t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }));
         else fix.push(t('{role}: não aprende neste jogo', { role: t(ROLE_NAME[k] || k) }));
       }
     } else fix.push(t('não faz {roles} com os golpes que tem', { roles: roleNames(lost) }));

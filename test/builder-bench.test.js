@@ -356,7 +356,7 @@ it.skipIf(!process.env.BENCH_SEARCH)('montador: o que a busca em feixe deixa esc
 }, 3600000);
 
 // Equipes de referência (opcional: BENCH_REFS=1; BENCH_OUT/BENCH_LOG como acima; BENCH_FID_W troca o peso da fidelidade,
-// BENCH_REF_ALL=1 adapta todas as compatíveis em vez das ADAPT_N melhores pela estimativa). Nos saves do Quetzal mede,
+// BENCH_FID_MODE=v1|v2 troca a conta da fidelidade, BENCH_ROLE_MOVES=off|always troca a escolha das versões com os papéis da original nos mantidos, BENCH_REF_ALL=1 adapta todas as compatíveis em vez das ADAPT_N melhores pela estimativa). Nos saves do Quetzal mede,
 // lado a lado com a montagem livre: quantas referências são compatíveis, a nota e a fidelidade das adaptadas, quanto das
 // estratégias, dos papéis e do plano da original a adaptada preserva, e o tempo.
 it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem livre', async () => {
@@ -377,13 +377,22 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const ctx = B.prepareBuild(all, T, { dex, comp });
     const tPrep = performance.now() - t0;
     t0 = performance.now();
-    const refs = referenceTeams(ctx, tables, T, d.game, { ...(fidW !== undefined ? { fidW } : {}), ...(process.env.BENCH_REF_ALL ? { adapt: 999 } : {}) });
+    const rm = process.env.BENCH_ROLE_MOVES;
+    const refs = referenceTeams(ctx, tables, T, d.game, { ...(fidW !== undefined ? { fidW } : {}), ...(process.env.BENCH_REF_ALL ? { adapt: 999 } : {}),
+      ...(rm ? { roleMoves: rm === 'off' ? false : rm } : {}), ...(process.env.BENCH_FID_MODE ? { fidMode: process.env.BENCH_FID_MODE } : {}) });
     const tRefs = performance.now() - t0;
     t0 = performance.now();
     const free = B.freeTeams(B.prepareBuild(all, T, { dex, comp }));
     const tFree = performance.now() - t0;
-    let st = 0, stN = 0, ro = 0, roN = 0, pl = 0, plN = 0;
+    let st = 0, stN = 0, ro = 0, roN = 0, pl = 0, plN = 0, kr = 0, krN = 0;
+    const FIDR = ['pivot', 'regen', 'hazard', 'removal', 'phaze', 'screens', 'web', 'sweeper', 'priority', 'sacrifice'];
     for (const r of refs) {
+      // Papéis da original que o próprio Pokémon mantido ainda cumpre (com o moveset da equipe adaptada)
+      r.orig.members.forEach((m, i) => {
+        const k = r.keep[i] && r.adapted.team.find(e => e.real === r.keep[i].real);
+        if (!k) return;
+        for (const role of FIDR) if (m.sbits & roleMask([role])) { krN++; if (k.sbits & roleMask([role])) kr++; }
+      });
       const have = new Set(strategiesOf(r.adapted.team, r.adapted.plan));
       stN += r.orig.strategies.length; st += r.orig.strategies.filter(s => have.has(s)).length;
       let u = 0; for (const e of r.adapted.team) u |= e.sbits;
@@ -395,10 +404,10 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const row = { save: name, pc: all.length, compatible: refs.candidates.list.length, rejected: refs.rejected, adapted: refs.length,
       best: best && r1(best), bestFree: bestFree && r1(bestFree), meanRef: refs.length ? r1(refs.reduce((a, r) => a + r.adapted.score, 0) / refs.length) : null,
       meanFree: free.length ? r1(free.reduce((a, r) => a + r.score, 0) / free.length) : null,
-      kept: refs.map(r => r.kept.length), stratsKept: `${st}/${stN}`, rolesKept: `${ro}/${roN}`, planKept: `${pl}/${plN}`, freeStrats: r1(freeStrats),
+      kept: refs.map(r => r.kept.length), stratsKept: `${st}/${stN}`, rolesKept: `${ro}/${roN}`, keptOwnRoles: `${kr}/${krN}`, planKept: `${pl}/${plN}`, freeStrats: r1(freeStrats),
       ms: { prep: Math.round(tPrep), refs: Math.round(tRefs), free: Math.round(tFree) } };
     rows.push(row);
-    lines.push(`${name} (${all.length}): ${row.compatible} compatíveis (${row.rejected} de fora), ${row.adapted} adaptadas; melhor ${row.best} × livre ${row.bestFree}; média ${row.meanRef} × ${row.meanFree}; mantidos ${row.kept.join(',')}; estratégias da original ${row.stratsKept}, papéis ${row.rolesKept}, plano ${row.planKept}; estratégias por equipe livre ${row.freeStrats}; tempo preparo ${row.ms.prep} ms, referências ${row.ms.refs} ms, livre ${row.ms.free} ms`);
+    lines.push(`${name} (${all.length}): ${row.compatible} compatíveis (${row.rejected} de fora), ${row.adapted} adaptadas; melhor ${row.best} × livre ${row.bestFree}; média ${row.meanRef} × ${row.meanFree}; mantidos ${row.kept.join(',')}; estratégias da original ${row.stratsKept}, papéis ${row.rolesKept}, papéis dos mantidos ${row.keptOwnRoles}, plano ${row.planKept}; estratégias por equipe livre ${row.freeStrats}; tempo preparo ${row.ms.prep} ms, referências ${row.ms.refs} ms, livre ${row.ms.free} ms`);
     for (const r of refs.slice(0, 3)) lines.push(`  [${r.format.format}] ${r.ref.name || '-'}: ${r.orig.members.map(m => m.x.s).join(', ')} → ${r.adapted.team.map(e => e.m.species.name).join(', ')} (nota ${r1(r.adapted.score)}, fidelidade ${r.adapted.fidelity})`);
   }
   if (process.env.BENCH_OUT) writeFileSync(process.env.BENCH_OUT, JSON.stringify(rows, null, 1));
