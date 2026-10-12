@@ -8,6 +8,7 @@ import { prepareBuild, freeTeams, altTeams, scoreParts, shownRoleBits, roleTeach
 import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
 import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP, ADAPT_N } from './reference.js';
 import { SRC } from './moveset.js';
+import { makeResolver } from '../parser/describe.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
 import { buildView } from '../ai/view.js';
@@ -584,7 +585,8 @@ function describeRef(x, types, ctx) {
   // Equipe de torneio: a colocação na aba e no título (do resultado com a prova)
   const res0 = tourResult(x);
   const place = res0 ? (res0.placement === 'champion' ? t('Campeã') : t('Finalista')) : '';
-  d.name = `${place ? `${place} · ` : ''}${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
+  d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
+  d.tag = place || null;
   d.r.nome = res0 ? (res0.placement === 'champion' ? t('Adaptada da campeã de {event} ({player})', res0) : t('Adaptada da finalista de {event} ({player})', res0))
     : x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
   d.r.referencia = refPanels(x, ctx, bits, d.shownSets);
@@ -594,7 +596,7 @@ function describeRef(x, types, ctx) {
   return d;
 }
 
-/** Os três painéis: equipe original (com a origem), sua equipe adaptada e o que falta para reproduzir a original. */
+/** A equipe original (com a origem e um card por membro) e as trocas da adaptada. */
 function refPanels(x, ctx, bits, shownSets) {
   const { ref, format: tb, orig, adapted } = x;
   const by = new Map(x.swaps.map(s => [s.orig, s]));
@@ -637,14 +639,29 @@ function refPanels(x, ctx, bits, shownSets) {
   }
   const planLine = orig.plan.kind === 'balance' ? t('Plano: equilibrada.') : t('Plano: {plan}.', { plan: planName(orig.plan) });
   const stratLine = orig.strategies.length ? t('Estratégias: {list}.', { list: list(orig.strategies.map(stratName)) }) : '';
+  const comp = ctx.comp && ctx.comp.index;
+  const T = ctx.T;
+  // Cada membro da original vira um bloco (como na seção Equipe) com um card: tipos, situação no save, papéis e campo
+  // na original e o que o formato costuma usar com ele (estatísticas de uso, não o set da original)
+  const why = new Map(missingMembers(x, ctx).map(g => [g.m, g]));
   const members = orig.members.map((m, i) => {
     const roles = [...FID_ROLES].filter(k => roleKeyIn(m.sbits, k));
-    const what = roles.length ? roleNames(roles) : m.x.hidden ? t('não entrou na final') : t('sem papel da biblioteca');
-    const s = by.get(m);
-    const status = own[i] ? t('você tem') : !m.spec ? t('não existe neste jogo') : s && s.sub ? t('no lugar: {sub}', { sub: refOf(s.sub.m) }) : t('você não tem');
-    return { text: `${refName(m)}: ${what}`, status, ok: !!own[i] };
+    const s = by.get(m), g = why.get(m);
+    const base = own[i] ? t('você tem') : !m.spec ? t('não existe neste jogo')
+      : g && g.status === 'form' ? t('você tem {other}, em outra forma', { other: refOf(g.other.m) })
+        : g && g.status === 'excluded' ? t('você tem, mas ficou de fora pela opção Sem lendários e míticos') : t('você não tem');
+    const status = !own[i] && s && s.sub ? `${base} · ${t('no lugar: {sub}', { sub: refOf(s.sub.m) })}` : base;
+    const field = [...m.set].map(f => t('põe {field}', { field: t(f) })).concat([...m.use].filter(f => !m.set.has(f)).map(f => t('aproveita {field}', { field: t(f) })));
+    return {
+      name: refName(m), status, ok: !!own[i], game: !!m.spec, sub: !own[i] && s && s.sub ? s.sub.m : null,
+      sprite: spriteOf(T, m.spec), types: m.spec ? m.spec.types : [],
+      roles: roles.length ? roleNames(roles) : m.x.hidden ? t('não entrou na final') : t('sem papel da biblioteca'),
+      field, attacks: (m.x.at || []).map(cap), cat: m.x.cat === 'P' ? t('físico') : m.x.cat === 'S' ? t('especial') : m.x.cat === 'M' ? t('físico e especial') : '',
+      usage: comp && m.spec ? usageOf(comp, m, T) : null,
+    };
   });
-  const original = { head, lines: [...origin, ...resLines, [planLine, stratLine].filter(Boolean).join(' ')], members, links };
+  const original = { head, lines: [...origin, ...resLines], plan: [planLine, stratLine].filter(Boolean).join(' '), members, links,
+    tag: tour && results[0] ? (results[0].placement === 'champion' ? t('Campeã') : t('Finalista')) : t('Equipe de exemplo') };
 
   // Sua equipe adaptada
   const lines = [];
@@ -707,59 +724,47 @@ function refPanels(x, ctx, bits, shownSets) {
   }
   const adaptedPanel = { lines, note: t('A nota ({n}) é a do app para esta equipe: ela não herda resultado nem reputação da original. As trocas foram escolhidas juntas, pela equipe inteira; o par “sai → entra” é o mais parecido, só para explicar.', { n: Math.round(adapted.score) }) };
 
-  // Para reproduzir a original
-  const repro = [], extra = [];
-  const comp = ctx.comp && ctx.comp.index;
-  const T = ctx.T;
-  for (const g of missingMembers(x, ctx)) {
-    const name = refName(g.m);
-    const head2 = g.status === 'game' ? t('{name}: não existe neste jogo.', { name })
-      : g.status === 'form' ? t('{name}: você tem {other}, em outra forma.', { name, other: refOf(g.other.m) })
-        : g.status === 'excluded' ? t('{name}: você tem, mas ficou de fora pela opção Sem lendários e míticos.', { name })
-          : t('{name}: você não tem.', { name });
-    const extra = [];
-    if (g.roles.length) extra.push(t('Na original: {roles}.', { roles: roleNames(g.roles) }));
-    const usage = comp && g.status !== 'game' ? usageLine(comp, g.m, T) : '';
-    if (usage) extra.push(usage);
-    repro.push([head2, ...extra].join(' '));
-  }
-  // Quem ficou, mas com o moveset do app não faz um papel que fazia na original: o que ensinar ou dar
+  // Quem ficou, mas com o moveset do app não faz um papel que fazia na original: o que ensinar ou dar (quem falta está no
+  // card de cada membro da original)
+  const extra = [];
   orig.members.forEach((m, i) => {
     const e = own[i] && adapted.team.find(y => y.real === own[i].real);
     if (!e) return;
     const lost = FID_ROLES.filter(k => roleKeyIn(m.sbits, k) && !roleKeyIn(bits.get(e), k));
-    if (!lost.length) return;
-    const fix = [];
-    if (e.mcands) {
-      for (const k of lost) {
-        const tch = roleTeach(e, shownSets.get(e), null, k);
-        if (tch) fix.push(t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }));
-        else fix.push(t('{role}: não aprende neste jogo', { role: t(ROLE_NAME[k] || k) }));
-      }
-    } else fix.push(t('não faz {roles} com os golpes que tem', { roles: roleNames(lost) }));
-    repro.push(t('{ref}: na original faz {roles}; {fix}.', { ref: refOf(e.m), roles: roleNames(lost), fix: fix.join('; ') }));
+    if (!lost.length || !e.mcands) return;
+    const fix = lost.map(k => {
+      const tch = roleTeach(e, shownSets.get(e), null, k);
+      return tch ? t('{role}: ensine {move} ({when})', { role: t(ROLE_NAME[k] || k), move: tch.name, when: tch.src === SRC.level ? learnAt(tch.level) : t('o menu ensina na hora') }) : null;
+    }).filter(Boolean);
+    if (fix.length) lines.push(t('Para {ref} fazer o papel da original: {fix}.', { ref: refOf(e.m), fix: fix.join('; ') }));
   });
-  if (!repro.length) repro.push(t('Você já tem a original inteira.'));
-  const reproduce = { lines: repro, note: tour
-    ? t('O app não guarda os sets da original, e o replay só mostra o que apareceu na partida: os golpes citados são os mais usados no formato pelas estatísticas de uso. A partida inteira está no replay.')
-    : t('O app não guarda os sets da original (golpes, item e EVs são do Smogon e dos autores): os golpes citados são os mais usados no formato pelas estatísticas de uso. O set exato está no tópico.') };
-  return { original, adapted: adaptedPanel, reproduce, extra };
+  return { original, adapted: adaptedPanel, extra };
 }
 const kept6 = x => x.kept.length === 6;
 const roleKeyIn = (bits, k) => !!(bits & roleMask([k]));
 
 /** Os golpes e o item mais usados pela espécie no formato (estatísticas de uso do Smogon), com os nomes do jogo. */
-function usageLine(index, m, T) {
+// O que o formato costuma usar com a espécie (estatísticas de uso do Smogon): até 4 golpes, o item e a habilidade mais
+// usados, com a fração dos sets (o app não guarda o set da original)
+function usageOf(index, m, T) {
   const id = index.find({ name: m.x.s, showdown: m.x.s }) || (m.spec && index.find(m.spec));
-  if (!id) return '';
-  const top = (map, n) => (map ? [...map].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k) : []);
+  if (!id) return null;
+  const top = (map, n) => (map ? [...map].sort((a, b) => b[1] - a[1]).slice(0, n) : []);
   const names = new Map();
   for (const row of T.moves || []) if (row) names.set(toId(row[0]), row[0]);
-  const moves = top(index.moves(id), 4).map(k => names.get(k)).filter(Boolean);
-  const item = top(index.items(id), 1)[0];
-  const itemName = item ? itemNameOf(item, T) : null;
-  if (!moves.length) return '';
-  return itemName ? t('No competitivo costuma usar {moves}, com {item}.', { moves: list(moves), item: itemName }) : t('No competitivo costuma usar {moves}.', { moves: list(moves) });
+  const pct = x => Math.round(x * 100);
+  const moves = top(index.moves(id), 4).map(([k, v]) => names.has(k) && { name: names.get(k), pct: pct(v) }).filter(Boolean);
+  const [item] = top(index.items(id), 1).map(([k, v]) => { const n = itemNameOf(k, T); return n && { name: n, pct: pct(v) }; });
+  const abNames = new Map((T.abilityNames || []).filter(Boolean).map(n => [toId(n), n]));
+  const [ability] = top(index.abilities(id), 1).map(([k, v]) => abNames.has(k) && { name: abNames.get(k), pct: pct(v) });
+  return moves.length ? { moves, item: item || null, ability: ability || null } : null;
+}
+// Sprite da espécie do jogo (até 898, o número da Dex Nacional; depois, a forma achada na tabela da ROM)
+const resolvers = new WeakMap();
+function spriteOf(T, spec) {
+  if (!spec) return null;
+  if (!resolvers.has(T)) resolvers.set(T, makeResolver(T));
+  return resolvers.get(T).species(spec.id).spriteId || null;
 }
 function itemNameOf(id, T) {
   for (const it of (T.quetzal && T.quetzal.items) || T.items || []) {
@@ -821,33 +826,26 @@ function refsHeader(results) {
   if (!info) return '';
   const nRefs = results.filter(x => x.kind === 'ref').length;
   const left = moreRefsLeft(results);
-  const out = [];
-  if (!info.tables) out.push(`<p class="hint">${t('Não deu para carregar as equipes de referência (sem conexão?). As equipes abaixo são da montagem livre, sem referência.')}</p>`);
-  else if (!info.tables.length) out.push(`<p class="hint">${t('Ainda não há equipes de referência para este jogo. As equipes abaixo são da montagem livre, sem referência.')}</p>`);
-  else if (!nRefs) out.push(`<p class="hint">${t('Nenhuma equipe de referência compatível: das {total} equipes do competitivo ({tour} de finais de torneio), nenhuma tem {min} ou mais Pokémon que você tem. As equipes abaixo são da montagem livre e não são baseadas em equipe competitiva.', { total: info.total, tour: info.tour, min: MIN_KEEP })}</p>`);
-  else {
-    out.push(`<p class="hint">${t('{n} de {total} equipes do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
-    // Campeãs e finalistas: só com o replay da final como prova; nenhuma compatível é dito, não escondido
-    out.push(`<p class="hint">${info.tourOk
-      ? t('Das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova), {n} são compatíveis. As abas sem “Campeã” ou “Finalista” são equipes de exemplo.', { tour: info.tour, n: info.tourOk })
-      : t('Nenhuma das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova) tem {min} ou mais Pokémon que você tem; as abaixo são equipes de exemplo.', { tour: info.tour, min: MIN_KEEP })}</p>`);
-  }
-  const btns = [];
-  if (left) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais referências ({n})', { n: left })}</button>`);
-  if (btns.length) out.push(`<p class="builder-more">${btns.join(' ')}</p>`);
-  return out.join('');
+  // Uma linha só (no celular, o resto da tela é a equipe)
+  const line = !info.tables ? t('Sem conexão para carregar as equipes do competitivo. Abaixo, a montagem livre.')
+    : !info.tables.length ? t('Este jogo ainda não tem equipes do competitivo. Abaixo, a montagem livre.')
+      : !nRefs ? t('Nenhuma equipe do competitivo tem {min} ou mais Pokémon seus. Abaixo, a montagem livre, que não se baseia em equipe competitiva.', { min: MIN_KEEP })
+        : t('{n} equipes do competitivo combinam com o seu save ({k} de finais de torneio).', { n: info.total - info.rejected, k: info.tourOk });
+  const more = left ? ` <button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais ({n})', { n: left })}</button>` : '';
+  return `<p class="hint builder-head">${esc(line)}${more}</p>`;
 }
 
 /** Abas (as referências e, na montagem livre, uma por plano) e a equipe escolhida. */
 export function resultsHtml(results, i, T) {
   if (!results.length) return `${refsHeader(results)}<p class="hint">${t('Não deu para montar uma equipe de 6 com os Pokémon deste save.')}</p>`;
   const cur = results[i] || results[0];
-  const tab = (x, k) => `<button class="btn btn-ghost btn-small" type="button" data-plan="${k}" aria-pressed="${k === i}">${esc(x.name)} <small>${Math.round(x.score)}</small></button>`;
+  // As equipes numa lista, uma por linha (sem rolar para o lado): colocação no torneio, plano · formato e a nota
+  const tab = (x, k) => `<li><button class="builder-pick" type="button" data-plan="${k}" aria-pressed="${k === i}">${x.tag ? `<span class="builder-tag">${esc(x.tag)}</span>` : ''}<span class="builder-pick-name">${esc(x.name)}</span><b>${Math.round(x.score)}</b></button></li>`;
+  const both = results.some(x => x.kind === 'ref') && results.some(x => x.kind === 'free');
   const group = (kind, label) => {
     const items = results.map((x, k) => [x, k]).filter(([x]) => x.kind === kind);
     if (!items.length) return '';
-    const head = results.refs ? `<p class="builder-group">${esc(label)}</p>` : '';
-    return `${head}<div class="dex-filters builder-tabs" role="group" aria-label="${esc(label)}">${items.map(([x, k]) => tab(x, k)).join('')}</div>`;
+    return `${both ? `<p class="builder-group">${esc(label)}</p>` : ''}<ul class="builder-list" aria-label="${esc(label)}">${items.map(([x, k]) => tab(x, k)).join('')}</ul>`;
   };
   const tabs = group('ref', t('Equipes de referência (adaptadas)')) + group('free', t('Montagem livre (sem referência)'));
   const shown = shownParts(cur.parts, cur.score);

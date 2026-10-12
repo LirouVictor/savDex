@@ -302,11 +302,9 @@ function setupAi(out) {
   });
 }
 
-// Pedido da IA: o campo da janela (o mesmo do montador) e, com a caixa marcada, sem lendários
+// Pedido da IA: só a opção da janela (sem lendários); o campo de pedido saiu (decisão do autor)
 function aiNote() {
-  const out = document.getElementById('out');
-  const note = out.querySelector('#builder-note').value.trim();
-  return out.querySelector('#builder-nolegend').checked ? [note, t('Sem lendários e míticos.')].filter(Boolean).join('; ') : note;
+  return document.getElementById('out').querySelector('#builder-nolegend').checked ? t('Sem lendários e míticos.') : '';
 }
 
 const AI_WAIT = { analyze: 'Analisando a equipe', build: 'Montando a equipe', review: 'Comentando a equipe' };
@@ -407,7 +405,7 @@ function setupBuilder(out) {
       // Sem as antigas opções (preparo, ameaças, sem restrição de item): o item é só informado (o jogador dá um jeito de
       // conseguir), então quem tem mega conta com a megapedra nos jogos com a tabela de megas da ROM
       const anyItem = R.MEGA_GAMES.includes(game && game.id);
-      state.builder = { results: mod.runBuilder(state.all, T, $('#builder-note').value, dex, { noLegends, anyItem, comp, saveGame: game, refs }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, '', dex, { noLegends, anyItem, comp, saveGame: game, refs }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
@@ -447,6 +445,17 @@ function setupBuilder(out) {
     }
     const ask = e.target.closest('[data-ai-review]');
     if (ask) { review(cur, ask); return; }
+    // Bloco de um membro (original ou adaptada): abre o card dele; dentro do card, "Ver o Pokémon do save" abre o detalhe
+    const tile = e.target.closest('[data-sheet]');
+    if (tile) {
+      const tpl = bOut.querySelector(`template[data-sheet-id="${tile.dataset.sheet}"]`);
+      if (tpl) openSheet(tpl.innerHTML, tile, sheet => sheet.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-ref]');
+        const m = b && cur.byRef.get(b.dataset.ref);
+        if (m) openDetail(m, tile);
+      }));
+      return;
+    }
     const card = e.target.closest('[data-ref]');
     if (card) {
       // No comentário da IA aparecem também Pokémon de fora da equipe (trocas sugeridas)
@@ -548,8 +557,26 @@ function renderBox() {
   document.getElementById('pc-count').textContent = t('{n} Pokémon no total', { n: total });
 }
 
+/** Card do montador (membro da equipe original ou da adaptada) na mesma janela do detalhe. */
+function openSheet(html, opener, wire) {
+  const dlg = document.getElementById('detail');
+  const wasOpen = dlg.open;
+  dlg.innerHTML = `<div class="sheet-bar"><b class="sheet-bar-name" aria-hidden="true"></b><button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button></div><div class="mon builder-sheet">${html}</div>`;
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  if (wire) wire(dlg.querySelector('.builder-sheet'));
+  if (wasOpen) { dlg.scrollTop = 0; return; }
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+}
+
 function openDetail(m, opener) {
   const dlg = document.getElementById('detail');
+  // Aberto a partir de um card do montador: troca o conteúdo da mesma janela (que já volta para o bloco ao fechar)
+  const wasOpen = dlg.open;
   dlg.innerHTML = R.monDetail(m, T);
   fillDex(dlg, m);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
@@ -568,6 +595,7 @@ function openDetail(m, opener) {
     io.observe(hero);
     dlg.addEventListener('close', () => io.disconnect(), { once: true });
   }
+  if (wasOpen) { dlg.scrollTop = 0; return; }
   // Ao fechar, volta exatamente para onde a página estava.
   const scroll = window.scrollY;
   dlg.addEventListener('close', () => {

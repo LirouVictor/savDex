@@ -164,7 +164,7 @@ suite('Montador de equipes (sem IA)', () => {
 
   it('uma janela só: o app monta, a IA (opcional) comenta a equipe do app, avalia a atual ou monta do jeito dela', () => {
     const html = builderWin({ party: [{}], game: { id: 'quetzal' } }, [{ id: 'gemini', label: 'Gemini' }]);
-    expect(html.match(/id="builder-note"/g)).toHaveLength(1); // o mesmo pedido para os dois
+    expect(html).not.toContain('id="builder-note"'); // sem o campo de pedido (decisão do autor)
     expect(html).not.toContain('id="ai-note"');
     expect(html).toMatch(/id="builder-run"[\s\S]*id="builder-out"[\s\S]*<details class="fold ai-fold" id="ai-win">/);
     expect(html).toContain('data-ai="analyze"');

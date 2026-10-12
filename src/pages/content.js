@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-16';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-18',
+    pt: [
+      'Montar equipe mais simples no celular: as equipes aparecem numa lista, uma por linha, e cada equipe mostra primeiro a original e depois a sua adaptada, com os Pokémon em blocos como na seção Equipe. Toque num Pokémon da original para ver se você tem, o que ele faz na equipe e o que o formato costuma usar com ele; toque num da sua equipe para ver golpes, item e o que ensinar. Embaixo ficam as trocas e a estratégia. Saíram o campo de pedido, os próximos passos, as contas e as interações.',
+    ],
+    en: [
+      'Build team is simpler on phones: teams show up in a list, one per row, and each team shows the original first and then your adapted one, with the Pokémon in blocks like the Team section. Tap a Pokémon from the original to see whether you have it, what it does in the team and what the format usually runs on it; tap one from your team to see moves, item and what to teach. Swaps and the strategy come below. The request field, next steps, team math and interactions are gone.',
+    ],
+  },
+  {
     date: '2026-10-17',
     pt: [
       'Montar equipe: agora entram também equipes de finais de torneio do Smogon (campeãs e finalistas), com o replay da final como prova. A aba diz “Campeã” ou “Finalista”, e a “Equipe original” traz o torneio, o placar da final e os links do replay e do tópico. Como o replay só mostra o que apareceu na partida, os papéis de cada Pokémon são os que ele mostrou na final.',

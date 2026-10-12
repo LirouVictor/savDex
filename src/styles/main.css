@@ -840,8 +840,41 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .dex-gens { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .dex-filters .btn, .dex-gens .btn { flex: none; width: auto; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
 .dex-filters small, .dex-gens small { opacity: .75; }
-/* Abas dos planos numa linha só, rolando para o lado (como as gerações da Pokédex) */
-.builder-tabs { flex-wrap: nowrap; overflow-x: auto; padding: 3px 3px 6px; scrollbar-width: thin; }
+/* As equipes do montador numa lista, uma por linha (sem rolar para o lado): colocação, plano · formato e a nota */
+.builder-head { margin: 4px 0 8px; }
+.builder-head .btn { margin-left: 4px; }
+.builder-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.builder-pick {
+  width: 100%; min-height: 40px; padding: 6px 10px; border: 0; display: flex; align-items: center; gap: 8px; text-align: left;
+  font: inherit; font-size: .86rem; color: var(--ink); cursor: pointer; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi);
+}
+.builder-pick:hover, .builder-pick:focus-visible { background: color-mix(in srgb, var(--accent) 14%, var(--win-2)); }
+.builder-pick[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; }
+.builder-pick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-pick b { font: .78rem var(--pixel); color: var(--accent); }
+.builder-tag { flex: none; padding: 1px 6px; font: .58rem/1.5 var(--pixel); text-transform: uppercase; background: var(--gold); color: var(--ink); }
+/* Original e adaptada em blocos, como na seção Equipe (3 por linha; 6 em tela larga) */
+#builder-out { container-type: inline-size; }
+@container (min-width: 600px) { .builder-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.builder-grid { margin: 6px 0; }
+.builder-grid > li { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.ref-tile-status { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: .66rem; font-weight: 700; color: var(--accent); }
+.ref-tile.miss .ref-tile-status, .ref-tile.none .ref-tile-status { color: var(--muted); }
+.ref-tile.miss .ptile img, .ref-tile.none .ptile img { opacity: .55; }
+.ref-block { margin: 6px 0 14px; padding-bottom: 12px; border-bottom: 3px dashed var(--hi); }
+.ref-block-head { display: flex; align-items: center; gap: 8px; }
+.ref-block-head h3 { margin: 0; font: .8rem var(--pixel); text-transform: uppercase; }
+.ref-origin { margin: 4px 0 0; font-size: .86rem; }
+.ref-source { margin-top: 6px; }
+/* Card de um membro (montador), na janela do detalhe */
+.sheet-mon { display: flex; align-items: center; gap: 10px; }
+.sheet-mon img { width: 96px; height: 96px; flex: none; }
+.sheet-mon h2 { margin: 0; font-size: 1.1rem; }
+.sheet-body { gap: 6px; }
+.sheet-facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: .88rem; }
+.sheet-facts dt { color: var(--muted); }
+.sheet-facts dd { margin: 0; }
+.sheet-h { margin: 4px 0 0; font: .72rem var(--pixel); text-transform: uppercase; }
 /* Nota e partes em selos: verde soma, vermelho tira */
 .builder-score { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0 0; }
 .score-badge { padding: 4px 10px; font: .78rem var(--pixel); text-transform: uppercase; background: var(--top-bg); color: var(--top-ink); }
@@ -853,7 +886,6 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .builder-more { margin: 8px 0 0; }
 .builder-more .btn { line-height: 1.5; }
 /* Montar equipe: o mesmo pedido para o app e para a IA; a parte com IA no fim; o comentário da IA embaixo da equipe do app */
-.builder-note-hint { margin: 4px 0 10px; }
 .ai-fold { margin-top: 14px; }
 .ai-fold > summary small { margin-left: auto; font: .62rem var(--pixel); opacity: .8; text-transform: none; }
 .builder-ai { margin-top: 14px; padding-top: 12px; border-top: 3px dashed var(--hi); }
@@ -873,5 +905,4 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 
 /* Equipes de referência (montador): o grupo das abas, os membros da original e os links da fonte */
 .builder-group { margin: .6rem 0 .2rem; font-size: .8rem; font-weight: 700; color: var(--muted); }
-.ref-members li.miss { color: var(--muted); }
 .ref-links a { color: var(--accent); }

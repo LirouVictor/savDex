@@ -89,6 +89,12 @@ describe('qualidade das equipes adaptadas', () => {
     // O moveset mostrado (card, Showdown) leva o golpe do papel
     const corv = res[0].showdown.find(m => m.species.name === 'Corviknight');
     expect(corv.moves.map(x => x.name)).toContain('Defog');
+    // Com o moveset, o que fazer com cada um fica no card dele (sem "Próximos passos")
+    const raw = resultsHtml(res, 0, T);
+    expect(raw).not.toContain('Próximos passos');
+    const i = res[0].team.findIndex(m => m.species.name === 'Corviknight');
+    const tpl = raw.slice(raw.indexOf(`<template data-sheet-id="a${i}">`), raw.indexOf('</template>', raw.indexOf(`<template data-sheet-id="a${i}">`)));
+    expect(tpl).toContain('Defog');
   });
 
   it('quem fica mas não aprende o golpe do papel: a perda aparece como perda real ("não aprende o golpe neste jogo")', () => {
