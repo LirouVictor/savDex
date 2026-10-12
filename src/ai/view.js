@@ -198,12 +198,12 @@ function gearHtml(x) {
   return `<small class="ai-gear">${[item, ab].filter(Boolean).join(' · ')}</small>`;
 }
 
-/** Os 4 golpes do moveset do montador, com a cor do tipo e de onde vêm (tutor, nível já alcançado, nível a treinar). */
+/** Os 4 golpes do moveset do montador, com a cor do tipo e de onde vêm (tutor, TM, nível já alcançado, nível a treinar). */
 function movesetHtml(golpes) {
-  const tag = x => (x.src === 'tutor' ? t('tutor') : x.src === 'now' ? t('nível') : x.src === 'level' ? `${t('Nv.')} ${x.level}` : '');
+  const tag = x => (x.src === 'tutor' ? t('tutor') : x.src === 'tm' ? x.tm || t('tutor') : x.src === 'now' ? t('nível') : x.src === 'level' ? `${t('Nv.')} ${x.level}` : '');
   return `<span class="ai-moveset">${golpes.map(x => {
     const k = tag(x);
-    return `<span class="ai-mv t-${esc(x.type || 'none')}"><span>${esc(x.name)}</span>${k ? `<small${x.src === 'level' ? ' class="train"' : ''}>${esc(k)}</small>` : ''}</span>`;
+    return `<span class="ai-mv t-${esc(x.type || 'none')}"><span>${esc(x.name)}</span>${k ? `<small${x.src === 'level' || x.src === 'tm' ? ' class="train"' : ''}>${esc(k)}</small>` : ''}</span>`;
   }).join('')}</span>`;
 }
 

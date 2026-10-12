@@ -106,8 +106,24 @@ export function unboundLearnDex(L, U, version = 'Pokémon Unbound') {
   return { rom: true, versions: [version], learn };
 }
 
-/** O mesmo para o SoulGold (src/data/soulgold-learn.json, mesmo formato e mesma tabela de golpes do Unbound). */
-export const soulgoldLearnDex = (L, SG) => unboundLearnDex(L, SG, 'Pokémon SoulGold');
+/**
+ * O mesmo para o SoulGold (src/data/soulgold-learn.json, mesmo formato e mesma tabela de golpes do Unbound) e, com
+ * soulgold-teach.json, os golpes por TM/HM e tutor (`tutor`, com o número do TM/HM de cada golpe em `tm`; no SoulGold o
+ * TM é um item que o jogador precisa conseguir: `teach: 'item'`) e de ovo (da primeira da linha).
+ */
+export function soulgoldLearnDex(L, SG, TC = null) {
+  const dex = unboundLearnDex(L, SG, 'Pokémon SoulGold');
+  if (!TC) return dex;
+  const app = v => (typeof SG.moves[v] === 'number' ? SG.moves[v] : -v);
+  dex.teach = 'item';
+  dex.tutor = {};
+  TC.teach.species.forEach((set, id) => { if (id && TC.teach.sets[set]) dex.tutor[id] = TC.teach.sets[set].map(app); });
+  dex.tm = {};
+  for (const [v, label] of Object.entries(TC.tm)) dex.tm[app(+v)] = label;
+  dex.egg = {};
+  TC.eggOf.forEach((base, id) => { if (id && base && TC.egg[base]) dex.egg[id] = TC.egg[base].map(app); });
+  return dex;
+}
 
 export function learnsetHtml(m, dex, T) {
   const pid = dex.rom ? m.speciesId : dexIds(m, dex).pid;
@@ -139,19 +155,34 @@ export function learnsetHtml(m, dex, T) {
   return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.rom ? '' : probable()}<span class="learn-count">${count}</span></summary>
     <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
     <ul class="learn-list">${items.join('')}</ul>
-  </details>${dex.tutor ? moveListHtml(m, dex.tutor[m.speciesId], T, t('Golpes por tutor'), t('No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.')) : ''}${
-  dex.egg ? moveListHtml(m, dex.egg[m.speciesId], T, t('Golpes de ovo'), t('Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.')) : ''}`;
+  </details>${teachHtml(m, dex, T)}${
+  dex.egg ? moveListHtml(m, dex.egg[m.speciesId], T, t('Golpes de ovo'), dex.teach === 'item'
+    ? t('Passados ao filhote no cruzamento (lista da ROM). ✓ = já conhece.')
+    : t('Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.')) : ''}`;
 }
 
-/** Uma lista de golpes sem nível (tutor, ovo), em ordem alfabética, com o tipo, a categoria e o poder. */
-function moveListHtml(m, ids, T, title, hint) {
+/**
+ * Golpes ensinados fora do nível. Quetzal: o tutor do menu do Pokémon (qualquer um, a qualquer momento). SoulGold: os
+ * TMs/HMs (itens que o jogador precisa conseguir; o número de cada um) e, à parte, os de tutor.
+ */
+function teachHtml(m, dex, T) {
+  const ids = dex.tutor && dex.tutor[m.speciesId];
+  if (!ids) return '';
+  if (dex.teach !== 'item') return moveListHtml(m, ids, T, t('Golpes por tutor'), t('No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.'));
+  const tm = ids.filter(id => dex.tm[id]), npc = ids.filter(id => !dex.tm[id]);
+  return moveListHtml(m, tm, T, t('Golpes por TM/HM'), t('Com o TM ou HM do jogo (é preciso conseguir o item). ✓ = já conhece.'), id => dex.tm[id])
+    + moveListHtml(m, npc, T, t('Golpes por tutor'), t('Ensinados por tutores do jogo; o app não sabe onde eles ficam. ✓ = já conhece.'));
+}
+
+/** Uma lista de golpes sem nível (tutor, ovo), em ordem alfabética, com o tipo, a categoria e o poder (e o TM, `label`). */
+function moveListHtml(m, ids, T, title, hint, label = null) {
   if (!ids || !ids.length) return '';
   const known = new Set(m.moves.map(mv => mv.id));
   const rows = ids.map(id => ({ id, info: moveInfo(id, T) })).filter(x => x.info && x.info.name)
     .sort((a, b) => a.info.name.localeCompare(b.info.name));
   const items = rows.map(({ id, info }) => {
     const has = known.has(id);
-    const meta = [categoryName(info.category), info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
+    const meta = [label && label(id), categoryName(info.category), info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
     return `<li class="lm lm-nolv${info.type ? ` t-${esc(info.type)}` : ''}${has ? ' has' : ''}">
       <span class="lm-main"><b>${esc(info.name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
       ${info.type ? typeChip(info.type) : ''}

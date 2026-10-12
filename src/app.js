@@ -587,7 +587,7 @@ function openDetail(m, opener) {
 // Linha evolutiva e golpes por nível: dados carregados na primeira vez que um detalhe é aberto
 // Quetzal, Unbound e SoulGold: golpes por nível da ROM (quetzal-learn.json / unbound-learn.json /
 // soulgold-learn.json) no lugar do dex.json; a evolução vem de T.quetzal / T.unbound / T.soulgold.
-// No Quetzal, também os golpes por tutor e de ovo (quetzal-teach.json)
+// No Quetzal, também os golpes por tutor e de ovo (quetzal-teach.json); no SoulGold, por TM/HM, tutor e ovo (soulgold-teach.json)
 const dexCache = {}, dexLoaded = new Set();
 const ROM_LEARN = ['quetzal', 'unbound', 'soulgold']; // jogos com golpes por nível da ROM (também usados pela IA)
 const dexKey = () => (T.quetzal ? 'quetzal' : T.unbound ? 'unbound' : T.soulgold ? 'soulgold' : 'dex');
@@ -596,11 +596,11 @@ function loadDex() {
   if (!dexCache[key]) {
     const data = key === 'quetzal' ? import('./data/quetzal-learn.json') : key === 'unbound' ? import('./data/unbound-learn.json')
       : key === 'soulgold' ? import('./data/soulgold-learn.json') : import('./data/dex.json');
-    // Quetzal: também os golpes por tutor (menu NOVO MOV. do jogo) e de ovo (quetzal-teach.json)
-    const teach = key === 'quetzal' ? import('./data/quetzal-teach.json') : null;
+    // Quetzal: também os golpes por tutor (menu NOVO MOV. do jogo) e de ovo (quetzal-teach.json); SoulGold: TM/HM, tutor e ovo
+    const teach = key === 'quetzal' ? import('./data/quetzal-teach.json') : key === 'soulgold' ? import('./data/soulgold-teach.json') : null;
     dexCache[key] = Promise.all([data, import('./ui/dex.js'), teach]).then(([d, ui, tc]) => ({
       dex: key === 'quetzal' ? ui.quetzalLearnDex(d.default, tc && tc.default) : key === 'unbound' ? ui.unboundLearnDex(d.default, T.unbound)
-        : key === 'soulgold' ? ui.soulgoldLearnDex(d.default, T.soulgold) : d.default,
+        : key === 'soulgold' ? ui.soulgoldLearnDex(d.default, T.soulgold, tc && tc.default) : d.default,
       ui,
     })).catch(e => { delete dexCache[key]; throw e; });
   }

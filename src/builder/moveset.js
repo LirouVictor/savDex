@@ -1,7 +1,8 @@
 // Moveset de cada Pokémon no montador: os 4 golpes que ele usaria, entre os que já sabe e os que pode aprender. No
 // Quetzal, o menu do Pokémon (NOVO MOV.) ensina na hora e por ₽0 qualquer golpe do tutor (TUTOR) e os golpes por nível
 // até o nível atual (NÍVEL; conferido no jogo: um Tyranitar Nv. 47 lista até o Rock Blast do Nv. 40, sem o Hyper Beam
-// do 48). Os golpes por nível acima do nível atual precisam de treino.
+// do 48). Os golpes por nível acima do nível atual precisam de treino. No SoulGold, os golpes da lista de TM/tutor da
+// ROM (TM) precisam do item ou de achar o tutor no jogo: custam mais que os do menu do Quetzal.
 //
 // A escolha não depende do plano: dano contra cada tipo (o melhor golpe contra cada um dos 18 tipos puros, na média;
 // isso já soma golpe do próprio tipo, cobertura e poder sem contar duas vezes golpes do mesmo tipo), mais o que os
@@ -12,7 +13,7 @@
 import { PRIORITY_MOVES } from '../ai/strategy.js';
 
 /** De onde vem o golpe do moveset. */
-export const SRC = { known: 'known', now: 'now', tutor: 'tutor', level: 'level' };
+export const SRC = { known: 'known', now: 'now', tutor: 'tutor', tm: 'tm', level: 'level' };
 
 // Poder de quem não tem poder fixo, ou bate mais (ou menos) do que o número diz
 const EST = {
@@ -298,7 +299,7 @@ export function pickMoveset(cands, ctx) {
     if (!r.dmg && !r.setup && !r.group && !use) { if (x.src !== SRC.known) continue; }
     // O que já sabe vale um pouco mais (não precisa ensinar); o que precisa de treino, um pouco menos; o que o competitivo
     // usa, bem mais
-    r.bonus = (x.src === SRC.known ? (r.dmg || r.setup || r.group ? 4 : 0) : x.src === SRC.level ? -6 : -1) + SMOGON_W * use;
+    r.bonus = (x.src === SRC.known ? (r.dmg || r.setup || r.group ? 4 : 0) : x.src === SRC.level ? -6 : x.src === SRC.tm ? -3 : -1) + SMOGON_W * use;
     r.use = use;
     rated.push(r);
   }

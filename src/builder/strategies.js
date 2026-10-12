@@ -160,7 +160,7 @@ export function rolesOfMon(c, cands = [], itemOk = () => true, teachOk = () => t
       continue;
     }
     const best = teachMove(c, r, cands, teachOk);
-    if (best) teach.set(r, { kind: 'move', name: best.name, src: best.src, level: best.level });
+    if (best) teach.set(r, { kind: 'move', name: best.name, src: best.src, level: best.level, tm: best.tm });
   }
   return { has, teach };
 }
@@ -174,7 +174,7 @@ export function teachMove(c, r, cands, teachOk = () => true, rank = x => SRC_RAN
   return cands.filter(x => t.moves.has(x.name) && teachOk(x.name) && hasRole({ ...c, moves: [...c.moves, x] }, r))
     .sort((a, b) => rank(a) - rank(b))[0] || null;
 }
-const SRC_RANK = { known: 0, now: 1, tutor: 1, level: 2 };
+const SRC_RANK = { known: 0, now: 1, tutor: 1, tm: 2, level: 2 };
 
 /**
  * As estratégias que a equipe executa (`ready`) ou quase executa (`near`: falta até `maxPrep` passos: golpe a ensinar ou

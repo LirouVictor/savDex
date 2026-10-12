@@ -9,6 +9,8 @@ import T from '../src/data/tables.js';
 import G from '../src/data/gen3.json';
 import SG from '../src/data/soulgold.json';
 import SGL from '../src/data/soulgold-learn.json';
+import SGT from '../src/data/soulgold-teach.json';
+import { prepareBuild, movesetMode } from '../src/builder/build.js';
 import { soulgoldChain, soulgoldEvoMethod } from '../src/ui/evo-rom.js';
 import { soulgoldLearnDex, learnsetHtml, evolutionHtml } from '../src/ui/dex.js';
 import { learnLines, levelMoveNames } from '../src/ai/prompt.js';
@@ -72,6 +74,40 @@ suite('SoulGold: evoluções e golpes por nível da ROM', () => {
     expect(html).not.toContain('provável');
     const lines = learnLines([{ ...m, location: 'party', slot: 1 }], dex, TS, { id: 'soulgold' });
     expect(lines[1]).toBe('Aprende por nível (tabela do próprio jogo):');
+  });
+  it('golpes de TM/HM, tutor e ovo da ROM: no detalhe, com o número do TM', () => {
+    const dex = soulgoldLearnDex(SGL, SG, SGT);
+    expect(dex.teach).toBe('item');
+    const app = name => { const id = sgMove(name); return typeof SG.moves[id] === 'number' ? SG.moves[id] : -id; };
+    const id = sid('Froakie');
+    expect(dex.tutor[id]).toEqual(expect.arrayContaining([app('Ice Beam'), app('Hydro Pump'), app('U-turn')]));
+    expect(dex.tm[app('Ice Beam')]).toBe('TM13');
+    expect(dex.tm[app('Work Up')]).toBe('TM01');
+    expect(dex.tm[app('Hydro Pump')]).toBeUndefined(); // só tutor
+    expect(dex.egg[sid('Greninja')]).toEqual(dex.egg[id]); // a evolução herda a lista da primeira da linha
+    const m = { speciesId: id, level: 9, species: soulgoldSpecies(id, SG, TS), moves: [] };
+    const html = learnsetHtml(m, dex, TS);
+    const tm = html.slice(html.indexOf('Golpes por TM/HM'), html.indexOf('Golpes por tutor'));
+    expect(tm).toContain('Ice Beam');
+    expect(tm).toContain('TM13');
+    expect(tm).not.toContain('Hydro Pump');
+    const tutor = html.slice(html.indexOf('Golpes por tutor'), html.indexOf('Golpes de ovo'));
+    expect(tutor).toContain('Hydro Pump');
+    expect(html).not.toContain('NOVO MOV.');
+  });
+  it('montador: moveset com os golpes de TM (é preciso o item: custam mais que os do menu do Quetzal)', () => {
+    const dex = soulgoldLearnDex(SGL, SG, SGT);
+    expect(movesetMode(dex)).toBe(true);
+    expect(movesetMode(soulgoldLearnDex(SGL, SG))).toBe(false);
+    const id = sid('Greninja');
+    const m = { speciesId: id, level: 40, exp: 0, species: soulgoldSpecies(id, SG, TS), moves: [{ name: 'Water Gun', type: 'water', power: 40, category: 'special', accuracy: 100 }],
+      ability: { name: 'Torrent', num: 0 }, ivs: [31, 31, 31, 31, 31, 31], evs: [0, 0, 0, 0, 0, 0], nature: { name: 'Timid' }, location: 'party', slot: 1 };
+    const [e] = prepareBuild([m], TS, { dex }).pool;
+    expect(e.set).toHaveLength(4);
+    const tm = e.set.filter(x => x.src === 'tm');
+    expect(tm.length).toBeGreaterThan(0);
+    const ice = e.set.find(x => x.name === 'Ice Beam');
+    if (ice) expect(ice).toMatchObject({ src: 'tm', tm: 'TM13' });
   });
 });
 

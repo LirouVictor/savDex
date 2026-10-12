@@ -6,6 +6,17 @@ export const UPDATED = '2026-10-21';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-22',
+    pt: [
+      'SoulGold: o app agora lê da ROM do jogo os golpes que cada Pokémon aprende por TM/HM, por tutor e por ovo. O detalhe do Pokémon ganhou as listas “Golpes por TM/HM” (com o número do TM), “Golpes por tutor” e “Golpes de ovo”.',
+      'Montar equipe no SoulGold: o app passa a escolher os 4 golpes, o item e a habilidade de cada Pokémon, como no Quetzal, em vez de ficar com os golpes do save (Growl, Tackle…). Cada golpe mostra de onde vem (“TM13”, “tutor”, “nível” ou o nível em que aprende), e os próximos passos dizem qual TM ou tutor conseguir. Como no SoulGold é preciso conseguir o TM ou achar o tutor, esses golpes pesam mais no preparo que os do menu do Quetzal.',
+    ],
+    en: [
+      'SoulGold: the app now reads from the game’s ROM the moves each Pokémon learns by TM/HM, from tutors and by breeding. The Pokémon detail has new “TM/HM moves” (with the TM number), “Tutor moves” and “Egg moves” lists.',
+      'Build team in SoulGold: the app now picks the 4 moves, the item and the ability of each Pokémon, as in Quetzal, instead of keeping the save’s moves (Growl, Tackle…). Each move shows where it comes from (“TM13”, “tutor”, “level” or the level it is learned at), and the next steps say which TM or tutor to get. Since in SoulGold you must get the TM or find the tutor, these moves weigh more in the preparation than the ones from the Quetzal menu.',
+    ],
+  },
+  {
     date: '2026-10-21',
     pt: [
       'Montar equipe no SoulGold: agora também parte das equipes do competitivo (exemplos e finais de torneio do Smogon da Gen 9, a mesma geração do SoulGold) e as adapta aos seus Pokémon. Quem não existe na Pokédex de Johto do jogo aparece como “não existe”. Cada jogo só recebe equipes da geração dele: os oficiais e o Unbound continuam com a montagem livre até as equipes da geração deles entrarem.',
