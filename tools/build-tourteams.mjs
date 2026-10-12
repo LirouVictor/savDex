@@ -45,6 +45,8 @@ const FORUMS = [
 ];
 const SERIES_DAYS = 4;
 const SKIP_TITLE = /\b(draft|team tour|randbats|random battle|vgc|doubles|monotype|little cup|\blc\b)/i;
+// Tópicos de gerações antigas (RBY … SS) pelo título: nenhum replay deles é da Gen 9, e os torneios semanais têm muitas páginas
+const OLD_GEN = /(^|[\s[(])(rby|gsc|adv|dpp|bw|b2w2|oras|xy|sm|usum|ss|swsh|gen ?[1-8])\b/i;
 
 const UA = 'savDex tourteams importer (dados derivados; https://github.com/LirouVictor/savDex)';
 // Com proxy (HTTPS_PROXY), pelo curl, que o respeita (o fetch do Node 22 não); sem proxy, pelo fetch
@@ -90,7 +92,7 @@ async function threads() {
           const title = unescape(a[2]).trim();
           const won = /won by:?\s*([^\])]+?)\s*[\])]?\s*$/i.exec(title);
           n++;
-          if (!won || SKIP_TITLE.test(title)) continue;
+          if (!won || SKIP_TITLE.test(title) || OLD_GEN.test(title)) continue;
           const winner = won[1].replace(/[\])].*$/, '').trim();
           if (/^team\b/i.test(winner) || /^nobody$/i.test(winner)) continue;
           out.set(a[1], { url: `https://www.smogon.com${a[1]}`, title, winner });
