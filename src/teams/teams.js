@@ -42,12 +42,12 @@ export const cleanName = s => String(s || '').trim().replace(/\s+/g, ' ').slice(
 export const teamSig = team => team.members.map(m => [m.location, m.boxIndex, m.slot, m.speciesId, m.exp].join(',')).sort().join(';');
 
 /**
- * Onde está cada membro no save aberto agora.
+ * Onde está cada membro no save aberto agora (`evolves`: evolutionCheck(T), para "evoluiu" ser só evolução de verdade).
  * @returns {Array<{ saved: object, now: object|null }>} now = o Pokémon no save (null se não foi achado)
  */
-export function locateTeam(team, data) {
+export function locateTeam(team, data, evolves = null) {
   const quetzal = !!(data.game && data.game.id === 'quetzal');
-  const { pairs } = matchMons(team.members, allMons(data), quetzal);
+  const { pairs } = matchMons(team.members, allMons(data), quetzal, evolves);
   const found = new Map(pairs);
   return team.members.map(saved => ({ saved, now: found.get(saved) || null }));
 }

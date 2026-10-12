@@ -82,7 +82,6 @@ function statRows(m, { withStats }) {
   }).join('');
   const head = `<thead><tr><td></td>${withStats ? '<td></td>' : ''}<td></td><th scope="col" class="iv">IV</th><th scope="col" class="ev">EV</th></tr></thead>`;
   const caption = t(!withStats ? 'Barras = IV (0–31). Stats não calculados (espécie sem stats base conhecidos).'
-    : m.statsCalculated ? 'Stats calculados (o PC não guarda stats): stats base oficiais + nível, IVs, EVs e natureza. Barras relativas ao maior stat.'
     : 'Barras relativas ao maior stat deste Pokémon.');
   return `<table class="stats"><caption>${caption}</caption>${head}<tbody>${rows}</tbody></table>`;
 }
@@ -289,10 +288,6 @@ function factsGrid(m) {
 export function monDetail(m, T) {
   const sp = m.species;
   const where = `${m.location === 'party' ? t('Equipe') : m.where}, ${t('posição {n}', { n: m.slot })}`;
-  const note = m.location !== 'pc' ? ''
-    : `<p class="unread-list">${t(m.complete
-      ? 'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados.'
-      : 'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.', { exp: num(m.exp) })}</p>`;
   const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
   // Barra fixa no topo (copiar e fechar sempre à mão; o nome aparece nela quando o cabeçalho sai da tela)
   return `<div class="sheet-bar${tc}">
@@ -308,7 +303,6 @@ export function monDetail(m, T) {
     ${factsGrid(m)}
     ${movesList(m.moves)}
     ${m.stats ? statsTable(m) : ivEvTable(m)}
-    ${note}
     ${T ? matchupTable(m, T) : ''}
     <div class="dex-slot" data-dex></div>
     <details class="fold adv"><summary>${t('Avançado')}</summary>

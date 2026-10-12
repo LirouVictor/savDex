@@ -9,7 +9,7 @@ import { download, downloadBlob, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
 import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
-import { saveKey, signature, diffSaves, orderSaves } from './history/diff.js';
+import { saveKey, signature, diffSaves, orderSaves, evolutionCheck } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
 import { listHistory, addHistory, clearHistory, listTeams, addTeam, putTeam, deleteTeam } from './ui/store.js';
 
@@ -645,7 +645,7 @@ async function showChanges(base) {
   if (state !== cur) return; // outro save foi aberto nesse meio-tempo
   // Sempre do mais antigo para o mais novo (pelo tempo de jogo), mesmo se o save mais antigo foi aberto por último
   const { older, newer, swapped } = orderSaves(old, cur.data);
-  const { html, mons } = changesWin(diffSaves(older, newer), base, cur.history.list.length, { swapped });
+  const { html, mons } = changesWin(diffSaves(older, newer, evolutionCheck(T)), base, cur.history.list.length, { swapped });
   cur.history.baseId = base.id;
   const slot = document.getElementById('changes-slot');
   slot.innerHTML = html;
@@ -769,7 +769,8 @@ async function refreshTeams() {
   if (!list.length) { cur.teams = null; slot.innerHTML = ''; return; }
   const V = await loadTeams();
   if (state !== cur) return;
-  cur.teams = { list, located: list.map(team => V.locateTeam(team, cur.data)) };
+  const evolves = evolutionCheck(T);
+  cur.teams = { list, located: list.map(team => V.locateTeam(team, cur.data, evolves)) };
   slot.innerHTML = V.teamsWin(list, cur.teams.located, T, cur.openTeam ?? null);
 }
 

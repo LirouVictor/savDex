@@ -9,10 +9,14 @@ export const NEWS = [
     date: '2026-10-21',
     pt: [
       'Montar equipe no SoulGold: agora também parte das equipes do competitivo (exemplos e finais de torneio do Smogon da Gen 9, a mesma geração do SoulGold) e as adapta aos seus Pokémon. Quem não existe na Pokédex de Johto do jogo aparece como “não existe”. Cada jogo só recebe equipes da geração dele: os oficiais e o Unbound continuam com a montagem livre até as equipes da geração deles entrarem.',
+      'Equipes salvas e “O que mudou”: um Pokémon só conta como “evoluiu” para uma espécie que é evolução dele de verdade. Um Golisopod que trocou de natureza aparecia como um Goodra de Hisui que “evoluiu de Golisopod” (os dois tinham IVs todos 31, a mesma natureza, bola e gênero); agora o Golisopod é achado onde está.',
+      'Detalhe do Pokémon: saíram os avisos do PC sobre nível e stats calculados.',
       'Montar equipe: saiu o “Comentar com IA”. A equipe, as trocas e a estratégia já vêm das contas do app, conferidas; a IA continua opcional em “Com IA”, para analisar a sua equipe ou montar uma.',
     ],
     en: [
       'Build team in SoulGold: it now also starts from competitive teams (Smogon Gen 9 samples and tournament finals, the same generation as SoulGold) and adapts them to your Pokémon. Species missing from the game’s Johto Pokédex show as “does not exist”. Each game only gets teams from its own generation: the official games and Unbound keep the free build until teams from their generation are added.',
+      'Saved teams and “What changed”: a Pokémon only counts as “evolved” into a species that really is its evolution. A Golisopod that changed nature showed up as a Hisuian Goodra “evolved from Golisopod” (both had all IVs at 31, the same nature, ball and gender); now the Golisopod is found where it is.',
+      'Pokémon detail: the PC notes about calculated level and stats are gone.',
       'Build team: “Comment with AI” is gone. The team, the swaps and the strategy already come from the app’s own checked math; the AI is still optional under “With AI”, to rate your party or build one.',
     ],
   },

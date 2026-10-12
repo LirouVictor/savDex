@@ -1,7 +1,8 @@
 import { describe as suite, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { loadSave } from '../src/parser/load.js';
-import { diffSaves, saveKey, signature, orderSaves } from '../src/history/diff.js';
+import { diffSaves, saveKey, signature, orderSaves, evolutionCheck, matchMons } from '../src/history/diff.js';
+import { locateTeam } from '../src/teams/teams.js';
 import { changesWin, historyList } from '../src/history/view.js';
 import { mediumSlow } from '../src/parser/describe.js';
 import { makeSave } from './helpers/make-save.js';
@@ -48,6 +49,32 @@ suite('histórico: comparação entre versões do save', () => {
     expect([d.added, d.removed]).toEqual([[], []]);
     expect(d.trained.map(e => [e.mon.species.name, e.what])).toEqual([['Pelipper', ['IVs', 'natureza']], ['Dragonair', ['IVs', 'natureza', 'habilidade']]]);
     expect(d.evolved.map(e => e.to.species.name)).toEqual(['Dragonair']);
+  });
+
+  it('Quetzal: espécie diferente só é "evoluiu" se for evolução de verdade (Golisopod não vira Goodra de Hisui)', () => {
+    // Caso real: o Golisopod trocou de natureza (mint) e um Goodra de Hisui ficou com a assinatura antiga dele
+    // (IVs todos 31, Adamant, mesma bola e gênero); sem as evoluções, o app dizia "Goodra, evoluiu de Golisopod"
+    const b = load({ pc: { 16: { species: 768, exp: mediumSlow(100), ivs: ivs(31), nature: 3, ball: 1 } } });
+    const a = load({ pc: {
+      12: { species: 706, exp: mediumSlow(100), ivs: ivs(31), nature: 3, ball: 1 },
+      16: { species: 768, exp: mediumSlow(100), ivs: ivs(31), nature: 4, ball: 1 },
+    } });
+    const evolves = evolutionCheck({ quetzal: { evolutions: { 767: [[4, 30, 768]], 704: [[4, 40, 705]], 705: [[4, 50, 706]] } } });
+    expect(evolves(767, 768)).toBe(true);
+    expect(evolves(704, 706)).toBe(true); // duas etapas
+    expect(evolves(768, 706)).toBe(false);
+    expect(evolutionCheck({})).toBe(null); // sem a tabela (jogos oficiais: o PID decide)
+    const d = diffSaves(b, a, evolves);
+    expect(d.evolved).toEqual([]);
+    expect(d.trained.map(x => [x.mon.species.name, x.what])).toEqual([['Golisopod', ['natureza']]]);
+    expect(d.added.map(m => m.species.name)).toEqual(['Goodra']);
+    // Equipe salva: o Golisopod é achado (treinado), não o Goodra
+    const team = { members: b.pc.boxes[0].slots };
+    expect(locateTeam(team, a, evolves).map(x => x.now && x.now.species.name)).toEqual(['Golisopod']);
+    // Evolução de verdade continua valendo, com a mesma assinatura
+    const c = load({ pc: { 16: { species: 767, exp: mediumSlow(20), ivs: ivs(31), nature: 3, ball: 1 } } });
+    expect(diffSaves(c, b, evolves).evolved.map(e => [e.from.species.name, e.to.species.name])).toEqual([['Wimpod', 'Golisopod']]);
+    expect(matchMons(c.pc.boxes[0].slots, a.pc.boxes[0].slots, true, evolves).pairs.map(([, n]) => n.species.name)).toEqual(['Golisopod']);
   });
 
   it('ordem pelo tempo de jogo: o save mais antigo aberto por último continua como "antes"', () => {

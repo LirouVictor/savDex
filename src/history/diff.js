@@ -9,8 +9,30 @@
 //   IVs, natureza e habilidade podem mudar no jogo (itens de treino): quem sobra é pareado de novo pela
 //   espécie, Poké Ball, shiny e gênero (e, se a espécie mudou, pela mesma posição), com a experiência sem
 //   diminuir; esses aparecem como "treinados". (Nos jogos com PID, PID diferente é sempre outro Pokémon.)
+// - Espécie diferente só vale como o mesmo Pokémon se a nova for uma evolução da antiga (tabela de evoluções da ROM,
+//   `evolutionCheck`) ou a mesma espécie em outra forma. Sem isso, dois Pokémon com a mesma assinatura (IVs todos 31
+//   com IV Max, mesma natureza, bola e gênero) viravam "evoluiu": um Golisopod que saiu aparecia como um Goodra de
+//   Hisui que "evoluiu de Golisopod".
 
 const allMons = d => [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
+
+/**
+ * "A espécie `to` é evolução de `from`?" pela tabela de evoluções da ROM (Quetzal, Unbound, SoulGold; IDs do save).
+ * null sem a tabela (jogos oficiais: lá o PID já diz quem é quem).
+ */
+export function evolutionCheck(T) {
+  const R = T && (T.quetzal || T.unbound || T.soulgold);
+  if (!R || !R.evolutions) return null;
+  const memo = new Map();
+  const reach = id => {
+    if (memo.has(id)) return memo.get(id);
+    const seen = new Set(), stack = [id];
+    while (stack.length) for (const e of R.evolutions[stack.pop()] || []) if (e[2] && !seen.has(e[2])) { seen.add(e[2]); stack.push(e[2]); }
+    memo.set(id, seen);
+    return seen;
+  };
+  return (from, to) => reach(from).has(to);
+}
 
 /** Identifica o save (mesmo treinador no mesmo jogo), para separar o histórico de cada um. */
 export function saveKey(d) {
@@ -52,9 +74,14 @@ const samePlace = (a, b) => a.location === b.location && a.boxIndex === b.boxInd
 
 /**
  * Pareia os mesmos Pokémon entre duas listas (regras no começo do arquivo).
+ * @param {((from: number, to: number) => boolean)|null} [evolves] evolutionCheck: com ela, espécie diferente só pareia
+ *   se for evolução (ou a mesma espécie em outra forma)
  * @returns {{ pairs: Array<[object, object]>, added: object[], removed: object[] }} added = só na nova; removed = só na antiga
  */
-export function matchMons(oldList, newList, quetzal) {
+export function matchMons(oldList, newList, quetzal, evolves = null) {
+  // Espécie diferente: só a evolução ou a mesma espécie em outra forma (sem a tabela, como antes)
+  const related = (o, n) => o.speciesId === n.speciesId || !evolves || evolves(o.speciesId, n.speciesId)
+    || !!(o.species && n.species && o.species.name === n.species.name);
   const group = list => {
     const g = new Map();
     for (const m of list) {
@@ -78,7 +105,7 @@ export function matchMons(oldList, newList, quetzal) {
       pairs.push([o, n]);
     }
     for (const n of rest) {
-      const cand = olds.filter(o => (o.exp ?? 0) <= (n.exp ?? 0));
+      const cand = olds.filter(o => (o.exp ?? 0) <= (n.exp ?? 0) && related(o, n));
       if (!cand.length) { added.push(n); continue; }
       const o = cand.reduce((a, b) => ((n.exp - b.exp) < (n.exp - a.exp) ? b : a));
       olds.splice(olds.indexOf(o), 1);
@@ -103,17 +130,18 @@ export function matchMons(oldList, newList, quetzal) {
     }
   };
   rematch((o, n) => o.speciesId === n.speciesId, (o, n) => (samePlace(o, n) ? -1 : n.exp - o.exp));
-  rematch((o, n) => samePlace(o, n), (o, n) => n.exp - o.exp);
+  rematch((o, n) => samePlace(o, n) && related(o, n), (o, n) => n.exp - o.exp);
   return { pairs, added, removed };
 }
 
 /**
  * @param {object} before dados da versão antiga
  * @param {object} after dados da versão nova
+ * @param {((from: number, to: number) => boolean)|null} [evolves] evolutionCheck(T) do jogo
  */
-export function diffSaves(before, after) {
+export function diffSaves(before, after, evolves = null) {
   const quetzal = !!(after.game && after.game.id === 'quetzal');
-  const { pairs, added, removed } = matchMons(allMons(before), allMons(after), quetzal);
+  const { pairs, added, removed } = matchMons(allMons(before), allMons(after), quetzal, evolves);
 
   const evolved = [], leveled = [], learned = [], trained = [];
   for (const [o, n] of pairs) {

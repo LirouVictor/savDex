@@ -100,8 +100,6 @@ export default {
   'Poder': 'Power',
   'Precisão': 'Accuracy',
   'Barras = IV (0–31). Stats não calculados (espécie sem stats base conhecidos).': 'Bars = IV (0–31). Stats not calculated (species without known base stats).',
-  'Stats calculados (o PC não guarda stats): stats base oficiais + nível, IVs, EVs e natureza. Barras relativas ao maior stat.':
-    'Calculated stats (the PC doesn’t store stats): official base stats + level, IVs, EVs and nature. Bars relative to the highest stat.',
   'Barras relativas ao maior stat deste Pokémon.': 'Bars relative to this Pokémon’s highest stat.',
   'Bola': 'Ball',
   'não lida': 'not read',
@@ -138,9 +136,6 @@ export default {
   'posição {n}': 'slot {n}',
   'Dano recebido': 'Damage taken',
   'Só pelos tipos; não considera habilidade (Levitate etc.) nem item.': 'Types only; ignores abilities (Levitate etc.) and items.',
-  'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados.': 'In the PC, the level comes from experience ({exp} exp) and the stats are calculated.',
-  'No PC, o nível vem da experiência ({exp} exp) e os stats são calculados. Amizade e treinador original não são guardados no registro do PC.':
-    'In the PC, the level comes from experience ({exp} exp) and the stats are calculated. Friendship and original trainer are not stored in the PC record.',
   'Fechar': 'Close',
   'Copiar (Showdown)': 'Copy (Showdown)',
   'Bytes do registro': 'Record bytes',
