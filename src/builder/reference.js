@@ -12,7 +12,7 @@
 //   4. explica cada troca: quem entrou no lugar de quem (o par mais parecido em papéis, tipos e campo; só para a tela, a
 //      escolha foi da equipe inteira), papéis preservados e perdidos, e o que falta para reproduzir a original.
 // A equipe adaptada não herda nada da original: a nota é a do montador, e resultado de torneio só existe com fonte
-// (`results` das tabelas, hoje vazio: as referências importadas são equipes de exemplo).
+// (`results` das tabelas: vazio nas equipes de exemplo; nas de torneio, a colocação com o replay da final como prova).
 
 import { bestTeam, plans, planPool, setPlanFlags, planHolds, scoreParts, sets, allowed, withRoles, WEATHERS } from './build.js';
 import { refRoleBits, roleKeysOf, roleMask, strategiesOf, STRATEGIES } from './strategies.js';
@@ -28,7 +28,8 @@ const FORMATS = {
 const GAME_GEN = { quetzal: 9 };
 export const refFormats = game => (game && FORMATS[game.id]) || [];
 
-// Pacotes à parte, carregados só ao montar equipes
+// Pacotes à parte, carregados só ao montar equipes: as equipes de exemplo (refteams, `npm run refteams`) e as de finais de
+// torneio com o replay como prova (tourteams, `npm run tourteams`)
 const LOAD = {
   gen9nationaldex: () => import('../data/refteams/gen9nationaldex.json'),
   gen9nationaldexubers: () => import('../data/refteams/gen9nationaldexubers.json'),
@@ -38,6 +39,15 @@ const LOAD = {
   gen9nu: () => import('../data/refteams/gen9nu.json'),
   gen9pu: () => import('../data/refteams/gen9pu.json'),
 };
+const LOAD_TOUR = {
+  gen9nationaldex: () => import('../data/tourteams/gen9nationaldex.json'),
+  gen9nationaldexubers: () => import('../data/tourteams/gen9nationaldexubers.json'),
+  gen9ou: () => import('../data/tourteams/gen9ou.json'),
+  gen9uu: () => import('../data/tourteams/gen9uu.json'),
+  gen9ru: () => import('../data/tourteams/gen9ru.json'),
+  gen9nu: () => import('../data/tourteams/gen9nu.json'),
+  gen9pu: () => import('../data/tourteams/gen9pu.json'),
+};
 const loaded = new Map();
 /** As tabelas de referência do jogo do save ([] se o jogo ainda não tem; null se não carregaram, ex.: offline). */
 export async function loadReferences(game) {
@@ -46,7 +56,8 @@ export async function loadReferences(game) {
   const k = fs.join('+');
   if (!loaded.has(k)) {
     try {
-      loaded.set(k, await Promise.all(fs.map(f => LOAD[f]().then(m => m.default))));
+      const all = await Promise.all([...fs.map(f => LOAD[f]()), ...fs.filter(f => LOAD_TOUR[f]).map(f => LOAD_TOUR[f]())]);
+      loaded.set(k, all.map(m => m.default).filter(tb => tb.teams.length));
     } catch (err) {
       console.warn('Equipes de referência indisponíveis', err);
       return null;
@@ -150,6 +161,8 @@ export const FID_MODE = 'v2';
 // estão entre as 6 primeiras da estimativa nos PCs grandes (5 de 6 no pequeno); estimar todas custa ~0,45 s no desktop
 // nos PCs de 400–700 Pokémon (55 referências), adaptar 6 ~0,4 s. As outras, sob demanda ("ver mais").
 export const ADAPT_N = 6;
+// E as melhores de finais de torneio pela estimativa, mesmo fora das ADAPT_N (o jogador vê logo as campeãs compatíveis)
+export const TOUR_N = 2;
 
 /**
  * As referências compatíveis com o save (MIN_KEEP membros ou mais que o jogador tem), com a original no jogo (plano,
@@ -217,12 +230,13 @@ export function adaptReference(ctx, w) {
 /**
  * As referências do jogo no save, adaptadas: as ADAPT_N melhores pela estimativa e as que o jogador tem inteiras, da
  * melhor para a pior (nota + fidelidade). `candidates` (propriedade): referenceCandidates, para adaptar mais depois.
- * @param {{ fidW?: number, minKeep?: number, adapt?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
+ * @param {{ fidW?: number, minKeep?: number, adapt?: number, tour?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
  */
 export function referenceTeams(ctx, tables, T, game, opts = {}) {
   const c = referenceCandidates(ctx, tables, T, game, opts);
-  const n = opts.adapt ?? ADAPT_N;
-  const out = c.list.filter((w, i) => i < n || w.complete).map(w => adaptReference(ctx, w)).filter(Boolean);
+  const n = opts.adapt ?? ADAPT_N, nt = opts.tour ?? TOUR_N;
+  const tours = new Set(c.list.filter(w => w.format.kind === 'tournament').slice(0, nt));
+  const out = c.list.filter((w, i) => i < n || w.complete || tours.has(w)).map(w => adaptReference(ctx, w)).filter(Boolean);
   out.sort((a, b) => b.rank - a.rank);
   Object.defineProperty(out, 'candidates', { value: c });
   return Object.defineProperty(out, 'rejected', { value: c.rejected });

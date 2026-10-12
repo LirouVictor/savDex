@@ -346,10 +346,11 @@ export function runBuilder(all, T, note = '', dex = null, { noLegends = false, a
   const results = [];
   let info = null;
   if (refs !== undefined) {
-    info = { tables: refs, total: refs ? refs.reduce((a, tb) => a + tb.teams.length, 0) : 0, rejected: 0, candidates: null, free: false };
+    const count = kind => (refs ? refs.filter(tb => (tb.kind === 'tournament') === kind).reduce((a, tb) => a + tb.teams.length, 0) : 0);
+    info = { tables: refs, total: count(false) + count(true), tour: count(true), tourOk: 0, rejected: 0, candidates: null, free: false };
     if (refs && refs.length && saveGame) {
       const rt = referenceTeams(ctx, refs, T, saveGame);
-      Object.assign(info, { rejected: rt.rejected, candidates: rt.candidates });
+      Object.assign(info, { rejected: rt.rejected, candidates: rt.candidates, tourOk: rt.candidates.list.filter(w => w.format.kind === 'tournament').length });
       results.push(...rt.map(x => describeRef(x, types, ctx)));
     }
   }
@@ -567,6 +568,10 @@ const refName = m => (m.x.mega ? `${m.x.s} (${m.x.mega})` : m.x.s);
 const formatShort = tb => tb.name.replace(/^Gen \d+ /, '');
 const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
+// O resultado de torneio de uma referência (só os registrados com o replay como prova)
+const tourResults = x => (x.format.results || []).filter(r => r.team === x.ref.id && r.url);
+const tourResult = x => (x.format.kind === 'tournament' ? tourResults(x)[0] || null : null);
+
 /** Uma referência adaptada no formato da tela (o mesmo das equipes da montagem livre, com os painéis da referência). */
 function describeRef(x, types, ctx) {
   const res = { plan: x.adapted.plan, team: x.adapted.team, score: x.adapted.score };
@@ -576,8 +581,12 @@ function describeRef(x, types, ctx) {
   // card não o cumpre)
   const bits = new Map(x.adapted.team.map(e => [e, shownRoleBits(e, d.shownSets.get(e) || null, d.shownItems.has(e) ? d.shownItems.get(e) : (e.m.item && e.m.item.name) || null)]));
   const kept = x.kept.length;
-  d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
-  d.r.nome = x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
+  // Equipe de torneio: a colocação na aba e no título (do resultado com a prova)
+  const res0 = tourResult(x);
+  const place = res0 ? (res0.placement === 'champion' ? t('Campeã') : t('Finalista')) : '';
+  d.name = `${place ? `${place} · ` : ''}${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
+  d.r.nome = res0 ? (res0.placement === 'champion' ? t('Adaptada da campeã de {event} ({player})', res0) : t('Adaptada da finalista de {event} ({player})', res0))
+    : x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
   d.r.referencia = refPanels(x, ctx, bits, d.shownSets);
   // Quem o jogador tem em outra forma aparece nos textos: o toque abre o Pokémon do save
   for (const m of d.r.referencia.extra) { d.byRef.set(refOf(m), realOf(m)); d.shown.set(refOf(m), m); }
@@ -595,31 +604,45 @@ function refPanels(x, ctx, bits, shownSets) {
   const keptSet = new Set(x.kept.map(e => e.real));
   const own = orig.members.map((m, i) => (x.keep[i] && keptSet.has(x.keep[i].real) ? x.keep[i] : null));
   // Equipe original
-  const head = ref.name && ref.author ? t('“{name}”, por {author}.', { name: ref.name, author: ref.author })
-    : ref.name ? t('“{name}” (sem autor na fonte).', { name: ref.name })
-      : ref.author ? t('Por {author} (sem nome na fonte).', { author: ref.author }) : t('Sem nome nem autor na fonte.');
-  const origin = [
-    t('Equipe de exemplo do Smogon ({format}, Singles), reunida pelo projeto pkmn/smogon.', { format: tb.name }),
-    ref.verification === 'partially_verified'
-      ? t('O autor aparece no tópico de equipes de exemplo do formato (conferido em {date}); o time inteiro não foi conferido.', { date: tb.source.retrieved })
-      : t('Nome e autor como a fonte dá; não conferidos no tópico do formato.'),
-  ];
-  // Resultados de torneio: só os registrados com fonte (equipes de exemplo não têm)
-  const results = (tb.results || []).filter(r => r.team === ref.id && r.url);
-  const resLines = results.length
-    ? results.map(r => t('{placement} em {event} ({date}), {player}.', r))
-    : [t('Resultado em torneio: nenhum registrado. É uma equipe de exemplo, não uma equipe campeã.')];
+  const tour = tb.kind === 'tournament';
+  const results = tourResults(x);
+  let head, origin, resLines, links;
+  if (tour) {
+    const r0 = results[0] || { event: ref.name, player: ref.author };
+    head = t('Equipe de {player} na final de {event}.', r0);
+    origin = [
+      t('Final de torneio do Smogon ({format}, Singles): a equipe e o resultado vêm do replay da partida no Pokémon Showdown.', { format: tb.name }),
+      t('Conferido em {date}: quem venceu a série nos replays é o campeão do título do tópico; as 6 espécies são as da pré-visualização do replay.', { date: tb.source.retrieved }),
+      t('Os papéis são os que apareceram nos jogos da final (golpes usados, item e habilidade revelados): quem não entrou ou não usou um golpe fica sem esse papel.'),
+    ];
+    resLines = results.map(r => (r.placement === 'champion'
+      ? t('Campeão de {event} ({date}), {player}: venceu a final por {series}.', r)
+      : t('Finalista de {event} ({date}), {player}: perdeu a final por {series}.', r)));
+    links = [{ label: t('Replay da final'), url: results[0] && results[0].url }, { label: t('Tópico do torneio'), url: results[0] && results[0].thread }].filter(l => l.url);
+  } else {
+    head = ref.name && ref.author ? t('“{name}”, por {author}.', { name: ref.name, author: ref.author })
+      : ref.name ? t('“{name}” (sem autor na fonte).', { name: ref.name })
+        : ref.author ? t('Por {author} (sem nome na fonte).', { author: ref.author }) : t('Sem nome nem autor na fonte.');
+    origin = [
+      t('Equipe de exemplo do Smogon ({format}, Singles), reunida pelo projeto pkmn/smogon.', { format: tb.name }),
+      ref.verification === 'partially_verified'
+        ? t('O autor aparece no tópico de equipes de exemplo do formato (conferido em {date}); o time inteiro não foi conferido.', { date: tb.source.retrieved })
+        : t('Nome e autor como a fonte dá; não conferidos no tópico do formato.'),
+    ];
+    // Equipes de exemplo não têm resultado de torneio
+    resLines = [t('Resultado em torneio: nenhum registrado. É uma equipe de exemplo, não uma equipe campeã.')];
+    links = [{ label: t('Tópico das equipes de exemplo'), url: tb.source.thread }, { label: t('Dados (pkmn/smogon)'), url: tb.source.dataset }];
+  }
   const planLine = orig.plan.kind === 'balance' ? t('Plano: equilibrada.') : t('Plano: {plan}.', { plan: planName(orig.plan) });
   const stratLine = orig.strategies.length ? t('Estratégias: {list}.', { list: list(orig.strategies.map(stratName)) }) : '';
   const members = orig.members.map((m, i) => {
     const roles = [...FID_ROLES].filter(k => roleKeyIn(m.sbits, k));
-    const what = roles.length ? roleNames(roles) : t('sem papel da biblioteca');
+    const what = roles.length ? roleNames(roles) : m.x.hidden ? t('não entrou na final') : t('sem papel da biblioteca');
     const s = by.get(m);
     const status = own[i] ? t('você tem') : !m.spec ? t('não existe neste jogo') : s && s.sub ? t('no lugar: {sub}', { sub: refOf(s.sub.m) }) : t('você não tem');
     return { text: `${refName(m)}: ${what}`, status, ok: !!own[i] };
   });
-  const original = { head, lines: [...origin, ...resLines, [planLine, stratLine].filter(Boolean).join(' ')], members,
-    links: [{ label: t('Tópico das equipes de exemplo'), url: tb.source.thread }, { label: t('Dados (pkmn/smogon)'), url: tb.source.dataset }] };
+  const original = { head, lines: [...origin, ...resLines, [planLine, stratLine].filter(Boolean).join(' ')], members, links };
 
   // Sua equipe adaptada
   const lines = [];
@@ -715,7 +738,9 @@ function refPanels(x, ctx, bits, shownSets) {
     repro.push(t('{ref}: na original faz {roles}; {fix}.', { ref: refOf(e.m), roles: roleNames(lost), fix: fix.join('; ') }));
   });
   if (!repro.length) repro.push(t('Você já tem a original inteira.'));
-  const reproduce = { lines: repro, note: t('O app não guarda os sets da original (golpes, item e EVs são do Smogon e dos autores): os golpes citados são os mais usados no formato pelas estatísticas de uso. O set exato está no tópico.') };
+  const reproduce = { lines: repro, note: tour
+    ? t('O app não guarda os sets da original, e o replay só mostra o que apareceu na partida: os golpes citados são os mais usados no formato pelas estatísticas de uso. A partida inteira está no replay.')
+    : t('O app não guarda os sets da original (golpes, item e EVs são do Smogon e dos autores): os golpes citados são os mais usados no formato pelas estatísticas de uso. O set exato está no tópico.') };
   return { original, adapted: adaptedPanel, reproduce, extra };
 }
 const kept6 = x => x.kept.length === 6;
@@ -797,8 +822,14 @@ function refsHeader(results) {
   const out = [];
   if (!info.tables) out.push(`<p class="hint">${t('Não deu para carregar as equipes de referência (sem conexão?). As equipes abaixo são da montagem livre, sem referência.')}</p>`);
   else if (!info.tables.length) out.push(`<p class="hint">${t('Ainda não há equipes de referência para este jogo. As equipes abaixo são da montagem livre, sem referência.')}</p>`);
-  else if (!nRefs) out.push(`<p class="hint">${t('Nenhuma equipe de referência compatível: das {total} equipes de exemplo do competitivo, nenhuma tem {min} ou mais Pokémon que você tem. As equipes abaixo são da montagem livre e não são baseadas em equipe competitiva.', { total: info.total, min: MIN_KEEP })}</p>`);
-  else out.push(`<p class="hint">${t('{n} de {total} equipes de exemplo do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
+  else if (!nRefs) out.push(`<p class="hint">${t('Nenhuma equipe de referência compatível: das {total} equipes do competitivo ({tour} de finais de torneio), nenhuma tem {min} ou mais Pokémon que você tem. As equipes abaixo são da montagem livre e não são baseadas em equipe competitiva.', { total: info.total, tour: info.tour, min: MIN_KEEP })}</p>`);
+  else {
+    out.push(`<p class="hint">${t('{n} de {total} equipes do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
+    // Campeãs e finalistas: só com o replay da final como prova; nenhuma compatível é dito, não escondido
+    out.push(`<p class="hint">${info.tourOk
+      ? t('Das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova), {n} são compatíveis; as outras são equipes de exemplo.', { tour: info.tour, n: info.tourOk })
+      : t('Nenhuma das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova) tem {min} ou mais Pokémon que você tem; as abaixo são equipes de exemplo.', { tour: info.tour, min: MIN_KEEP })}</p>`);
+  }
   const btns = [];
   if (left) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais referências ({n})', { n: left })}</button>`);
   if (btns.length) out.push(`<p class="builder-more">${btns.join(' ')}</p>`);

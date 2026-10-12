@@ -368,7 +368,9 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
     const p = name.includes('/') ? name : `fixtures/${name}`;
     if (!existsSync(p)) continue;
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
-    const tables = refFormats(d.game).map(f => JSON.parse(readFileSync(`src/data/refteams/${f}.json`, 'utf8')));
+    // Equipes de exemplo e, sem BENCH_NO_TOUR, as de finais de torneio
+    const tables = refFormats(d.game).flatMap(f => ['refteams', ...(process.env.BENCH_NO_TOUR ? [] : ['tourteams'])]
+      .map(dir => `src/data/${dir}/${f}.json`).filter(existsSync).map(x => JSON.parse(readFileSync(x, 'utf8')))).filter(tb => tb.teams.length);
     if (!tables.length) continue;
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
     const dex = quetzalLearnDex(QL, QT);

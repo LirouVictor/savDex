@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-16';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-17',
+    pt: [
+      'Montar equipe: agora entram também equipes de finais de torneio do Smogon (campeãs e finalistas), com o replay da final como prova. A aba diz “Campeã” ou “Finalista”, e a “Equipe original” traz o torneio, o placar da final e os links do replay e do tópico. Como o replay só mostra o que apareceu na partida, os papéis de cada Pokémon são os que ele mostrou na final.',
+    ],
+    en: [
+      'Build team: Smogon tournament final teams (champions and finalists) now join too, with the replay of the final as proof. The tab says “Champion” or “Finalist”, and “Original team” shows the tournament, the final’s score and links to the replay and the thread. Since a replay only shows what came up in the game, each Pokémon’s roles are the ones it showed in the final.',
+    ],
+  },
+  {
     date: '2026-10-16',
     pt: [
       'Montar equipe: a janela ficou mais simples. Saíram as opções que não fazem mais sentido com as equipes de referência (Preparo, Sem restrição de item, Ameaças do jogo) e o botão “Montar do zero”. A megapedra agora sempre conta (o app só diz qual pedra dar), e a montagem do zero só aparece quando nenhuma equipe de referência combina com o seu save, com o aviso. Também: Pokémon com Air Lock ou Cloud Nine (Rayquaza, Golduck…) não entram mais em equipes de clima, porque anulam o clima da própria equipe.',
