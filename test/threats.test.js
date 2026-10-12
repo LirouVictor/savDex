@@ -79,9 +79,9 @@ suite('Ameaças concretas', () => {
     expect(t.wins).toBe(1);
   });
 
-  it('caixa "Considerar as ameaças do jogo": desligada por padrão; sem ela, nota e tela como antes', () => {
+  it('sem a caixa "Considerar as ameaças do jogo" (tirada da janela): nota e tela sem as ameaças', () => {
     const html = builderWin({ game: { id: 'quetzal' } });
-    expect(html).toMatch(/<input type="checkbox" id="builder-threats">/); // sem "checked"
+    expect(html).not.toContain('builder-threats');
     slot = 0;
     const all = ['Swampert', 'Lucario', 'Gengar', 'Togekiss', 'Arcanine', 'Scizor'].map(n => mon(n, ['water'], [80, 80, 80, 80, 80, 80], { moves: [atk('Surf', 'water', 1), atk('Ice Beam', 'ice', 1)] }));
     const rs = runBuilder(all, T, '', null, {}); // o app não passa o jogo com a caixa desligada

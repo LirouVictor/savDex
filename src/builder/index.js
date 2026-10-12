@@ -332,7 +332,7 @@ const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'
 /**
  * Monta as equipes e prepara o que a tela precisa de cada uma. Com as equipes de referência do jogo (`refs`,
  * loadReferences), o fluxo principal são elas, adaptadas ao save (reference.js); a montagem livre (a melhor de cada
- * plano) só roda se nenhuma referência for compatível ou quando o jogador pede (freeOptions). Sem `refs` (undefined), só
+ * plano) só roda se nenhuma referência for compatível (freeOptions), com o aviso na tela. Sem `refs` (undefined), só
  * a montagem livre, como antes.
  * @returns {Array<{ name: string, plan: object, score: number, parts: object, team: object[], r: object, byRef: Map, evolved: Map, kind: 'ref'|'free' }>}
  *   com as propriedades `refs` (o que a tela diz das referências: quantas, quantas ficaram de fora, se há mais) e `raw`
@@ -801,7 +801,6 @@ function refsHeader(results) {
   else out.push(`<p class="hint">${t('{n} de {total} equipes de exemplo do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
   const btns = [];
   if (left) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-more-refs>${t('Ver mais referências ({n})', { n: left })}</button>`);
-  if (nRefs && !info.free) btns.push(`<button class="btn btn-ghost btn-small" type="button" data-free>${t('Montar do zero (sem referência)')}</button>`);
   if (btns.length) out.push(`<p class="builder-more">${btns.join(' ')}</p>`);
   return out.join('');
 }

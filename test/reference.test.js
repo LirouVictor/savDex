@@ -150,7 +150,7 @@ describe('equipes de referência', () => {
     const html = resultsHtml(res, 0, T);
     for (const s of ['Equipe original', 'Sua equipe adaptada', 'Para reproduzir a original', 'Equipe de exemplo do Smogon', 'não conferidos no tópico',
       'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda resultado nem reputação', 'Barraskewda: você não tem']) expect(html).toContain(s);
-    expect(html).toContain('data-free'); // a montagem livre só quando o jogador pede
+    expect(html).not.toContain('data-free'); // sem o botão da montagem do zero (só quando nenhuma referência serve)
     // Um resultado sem URL de prova não aparece; com URL, aparece na original (nunca na adaptada)
     const withRes = r => resultsHtml(runBuilder(save(), T, '', null, { saveGame: game, refs: table([team], [r]) }), 0, T);
     expect(withRes({ team: 'rain', player: 'P', event: 'Torneio X', date: '2026', placement: '1º' })).not.toContain('Torneio X');

@@ -364,15 +364,10 @@ export function analysisWin(d, T) {
   </section>`;
 }
 
-// Jogos com a tabela de megas da ROM (o modo sem restrição de item conta com megapedras que o Pokémon não segura)
-const MEGA_GAMES = ['quetzal', 'unbound', 'soulgold'];
+// Jogos com a tabela de megas da ROM (o montador conta com as megapedras que o Pokémon ainda não segura)
+export const MEGA_GAMES = ['quetzal', 'unbound', 'soulgold'];
 
 /** Explicação embaixo do seletor de preparo (app.js troca ao mudar a escolha). */
-export const READY_HINT = {
-  train: () => t('Conta o que dá para conseguir evoluindo e ensinando golpes.'),
-  ready: () => t('Prefere quem já está pronto; quem precisa evoluir ou aprender golpes ainda entra, se compensar.'),
-};
-
 /** Caixa de marcar no estilo do app: o nome da opção e, embaixo, o que ela faz. */
 export function check(id, label, desc = '', on = false) {
   return `<label class="ai-skip"><input type="checkbox" id="${id}"${on ? ' checked' : ''}><span class="chk-text"><b>${label}</b>${desc ? `<small>${desc}</small>` : ''}</span></label>`;
@@ -385,25 +380,16 @@ export function check(id, label, desc = '', on = false) {
  * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
  */
 export function builderWin(d, providers = []) {
-  const megas = d && d.game && MEGA_GAMES.includes(d.game.id);
   const noParty = !(d && d.party && d.party.length);
   const free = freeAbilityMode(d && d.game);
   const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
   return `<details class="win win-fold" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
-    <p class="ai-intro">${t('O app procura em todos os seus Pokémon (equipe e PC) a melhor equipe para cada plano que o save comporta: clima, terreno, Trick Room, Hiperofensiva ou equilibrada. Sem chave, sem internet e sem cota.')} ${t('A nota também conta as duplas que jogam juntas nos times do competitivo (estatísticas públicas de uso do Smogon).')}</p>
+    <p class="ai-intro">${t('O app parte de equipes do competitivo (Smogon) e adapta cada uma aos seus Pokémon (equipe e PC), trocando os que faltam pelos que você tem. Nos jogos que ainda não têm equipes de referência, procura a melhor equipe para cada plano que o save comporta. Sem chave e sem cota.')}</p>
     <label class="ai-label" for="builder-note">${t('Pedido (opcional)')}</label>
     <input id="builder-note" class="ai-input" type="text" maxlength="300" autocomplete="off" placeholder="${t('Ex.: Charizard, Lucario; time de chuva')}">
     <p class="hint builder-note-hint">${t('O app coloca na equipe os Pokémon que você citar pelo nome; a IA lê o pedido inteiro.')}</p>
-    <label class="ai-label" for="builder-ready">${t('Preparo')}</label>
-    <select id="builder-ready" class="ai-input" aria-describedby="builder-ready-hint">
-      <option value="train">${t('Posso treinar')}</option>
-      <option value="ready">${t('Prontos para usar')}</option>
-    </select>
-    <p class="hint builder-note-hint" id="builder-ready-hint">${READY_HINT.train()}</p>
     ${check('builder-nolegend', t('Sem lendários e míticos'), t('Menos os que você pedir acima.'))}
-    ${megas ? check('builder-anyitem', t('Sem restrição de item'), t('Conta com a megapedra de quem tem mega, mesmo que ainda não a segure.')) : ''}
-    ${check('builder-threats', t('Considerar as ameaças do jogo'), t('Prefere quem entra e vence os Pokémon fortes do jogo (estimativa; a montagem fica mais lenta).'))}
     <div class="export-btns ai-actions ai-actions-one"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
     <div id="builder-out" class="ai-out" aria-live="polite"></div>
     <details class="fold ai-fold" id="ai-win">

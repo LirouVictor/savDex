@@ -123,7 +123,11 @@ export function rolesOf(m) {
  * O Pokémon atrapalha o clima `f` da equipe: tem a fraqueza que o clima fortalece, ou é do tipo que o clima
  * enfraquece e tem golpe de dano desse tipo (fora os que o próprio clima ajuda, como Hydro Steam no sol).
  */
+// Habilidades que anulam o clima enquanto o Pokémon está em campo (inclusive o da própria equipe)
+const NO_WEATHER = new Set(['Air Lock', 'Cloud Nine']);
 export function weatherConflict(m, f, T, idx = new Map(T.types.map((ty, i) => [ty, i]))) {
+  if (!['sol', 'chuva', 'tempestade de areia', 'neve/granizo'].includes(f)) return null;
+  if ([m.ability && m.ability.name, ...(m.abs || [])].some(a => NO_WEATHER.has(a))) return 'nullify';
   const w = WEATHER[f];
   if (!w) return null;
   if (isWeak(T, idx, w.boosts, m.species.types)) return 'weak';
