@@ -7,7 +7,8 @@
 // Opcionais: BENCH_STAT_MODEL (um de STAT_MODELS em build.js; padrão 'bst') e BENCH_TIERS (JSON { id do Showdown:
 // { nat, sv } } com os tiers competitivos, tirado do formats-data do Pokémon Showdown; não versionado), para a média
 // de tier dos membros como medida externa
-// Quetzal: o montador conta os golpes do tutor (quetzal-teach.json); BENCH_NO_TUTOR=1 tira, para comparar.
+// Quetzal: o montador escolhe o moveset de cada um (moveset.js, com os golpes do tutor); BENCH_NO_TUTOR=1 volta aos golpes
+// do save, para comparar. BENCH_ONLY (expressão regular) escolhe os saves de fixtures/.
 // Saves: os de fixtures/ (não versionados) e, se existir, o de BENCH_USER_SAVE. Para cada save e plano mede a nota
 // e as partes, a pior fraqueza em comum, a cobertura real (contra os dois tipos dos Pokémon com stats base 450+),
 // o trabalho pendente (evoluir, ensinar, nível), a diversidade entre as equipes, o tempo (o inicial e o das alternativas
@@ -132,7 +133,7 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null, comp 
     if (w >= 3 && rs === 0) critical++;
   });
   const atk = new Set();
-  for (const e of team) for (const mv of [...e.m.moves, ...(e.teachAtk || [])]) if ((mv.category === 0 || mv.category === 1) && mv.type && (!mv.power || mv.power >= 70)) atk.add(mv.type);
+  for (const e of team) for (const mv of [...(e.moves || e.m.moves), ...(e.teachAtk || [])]) if ((mv.category === 0 || mv.category === 1) && mv.type && (!mv.power || mv.power >= 70)) atk.add(mv.type);
   let hit = 0, wall = 0;
   for (const o of OPP) { const best = Math.max(...[...atk].map(a => eff(a, o))); if (best > 1) hit++; if (best < 1) wall++; }
   const parts = B.scoreParts(team, plan, types);
@@ -140,7 +141,10 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null, comp 
     names: team.map(e => e.m.species.name + (e.given ? '@' + e.given : '') + (e.m.evolvedFrom ? '(de ' + e.m.evolvedFrom.species.name + ')' : '')),
     score: r1(parts.total), noComp: r1(parts.total - (parts.comp || 0)), parts: Object.fromEntries(Object.entries(parts).filter(([k]) => k !== 'total').map(([k, v]) => [k, r1(v)])),
     worst, critical, pureCov: popc(team.reduce((x, e) => x | e.cov, 0)), realCov: Math.round(100 * hit / OPP.length), walls: Math.round(100 * wall / OPP.length),
-    evolve: team.filter(e => e.m.evolvedFrom).length, teach: team.reduce((x, e) => x + (e.teachAtk || []).length, 0),
+    evolve: team.filter(e => e.m.evolvedFrom).length, teach: team.reduce((x, e) => x + (e.teachAtk || []).length + (e.setTeach || []).filter(y => y.src === 'level').length, 0),
+    // Moveset (Quetzal): golpes que o menu do Pokémon ensina na hora (tutor, nível já alcançado)
+    teachNow: team.reduce((x, e) => x + (e.setTeach || []).filter(y => y.src !== 'level').length, 0),
+    sets: team.map(e => (e.set ? e.set.map(y => y.name + (y.src === 'known' ? '' : y.src === 'tutor' ? '*' : y.src === 'now' ? '+' : '^')).join('/') : '')),
     belowLevel: team.filter(e => (e.real.level || 0) < refLevel - 15).length,
     legends: team.filter(e => B.isLegendary(e.m)).length, megas: team.filter(e => e.mega).length,
     bst: Math.round(team.reduce((x, e) => x + e.bst, 0) / team.length),
@@ -154,7 +158,7 @@ function teamMetrics(team, plan, T, types, refLevel, opts, threats = null, comp 
 }
 
 it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
-  const files = FILES.map(f => ['fixtures/' + f, f]);
+  const files = FILES.filter(f => !process.env.BENCH_ONLY || new RegExp(process.env.BENCH_ONLY).test(f)).map(f => ['fixtures/' + f, f]);
   if (process.env.BENCH_USER_SAVE) files.unshift([process.env.BENCH_USER_SAVE, 'user.sav']);
   const out = { modes: {}, ref: null };
   const modes = [['train', {}], ['ready', { ready: true }]];
@@ -227,6 +231,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
       for (const r of s.plans) {
         lines.push(`  ${(r.plan + (r.alt ? ' #' + (r.alt + 1) : '')).padEnd(22)} ${String(r.score).padStart(6)} ${JSON.stringify(r.parts)} pior ${r.worst.type} ${r.worst.w}/${r.worst.r} crit ${r.critical} cob ${r.pureCov}/${r.realCov}% pend evo${r.evolve} ens${r.teach} nv${r.belowLevel} leg${r.legends} ls+${r.lsGain}`);
         lines.push(`      ${r.names.join(', ')}`);
+        if (r.sets.some(Boolean)) lines.push(`      golpes (* tutor, + nível já alcançado, ^ treinar): ${r.sets.join(' | ')}`);
         if (r.thr) lines.push(`      ameaças ${r.thr.n}: super efetivo ${r.thr.se}, 2 golpes ${r.thr.hit2}, entra e vence ${r.thr.safe}, vence de graça ${r.thr.wins}, sem resposta ${r.thr.none} (${r.thr.noneNames.join(', ')})`);
         if (r.comp) lines.push(`      competitivo: conhecidos ${r.comp.known}/6, duplas ${r.comp.withData}, média ${r.comp.mean}, fortes ${r.comp.strong}, se evitam ${r.comp.avoid}${r.comp.top.length ? ` (${r.comp.top.join('; ')})` : ''}`);
       }
@@ -240,7 +245,7 @@ it.skipIf(!RUN)('montador: linha de base nos saves reais', () => {
     // O que a parte competitiva custa nas outras medidas (equipes principais)
     const all = res.flatMap(s => s.plans.filter(r => !r.alt));
     const thr = all.filter(r => r.thr);
-    lines.push(`  RESUMO (${mode}): ${all.length} equipes; nota ${avg(all.map(r => r.score))}, sem a parte competitiva ${avg(all.map(r => r.noComp))}; críticos ${all.reduce((a, r) => a + r.critical, 0)}; pior fraqueza ${avg(all.map(r => r.worst.w))}; cobertura real ${avg(all.map(r => r.realCov))}%; ameaças sem resposta ${avg(thr.map(r => 100 * r.thr.none / r.thr.n))}%; ensinar ${avg(all.map(r => r.teach))}; evoluir ${avg(all.map(r => r.evolve))}${TIERS ? `; tier nat ${avg(all.filter(r => r.tierNat).map(r => r.tierNat.avg))}` : ''}; tempo ${res.reduce((a, s) => a + s.ms, 0)} ms`);
+    lines.push(`  RESUMO (${mode}): ${all.length} equipes; nota ${avg(all.map(r => r.score))}, sem a parte competitiva ${avg(all.map(r => r.noComp))}; críticos ${all.reduce((a, r) => a + r.critical, 0)}; pior fraqueza ${avg(all.map(r => r.worst.w))}; cobertura real ${avg(all.map(r => r.realCov))}%; ameaças sem resposta ${avg(thr.map(r => 100 * r.thr.none / r.thr.n))}%; ensinar ${avg(all.map(r => r.teach))} (na hora ${avg(all.map(r => r.teachNow))}); evoluir ${avg(all.map(r => r.evolve))}${TIERS ? `; tier nat ${avg(all.filter(r => r.tierNat).map(r => r.tierNat.avg))}` : ''}; tempo ${res.reduce((a, s) => a + s.ms, 0)} ms`);
   }
   if (out.ref) lines.push(`\nREFERÊNCIA (equipe do jogador, chuva): ${out.ref.score} ${JSON.stringify(out.ref.parts)} pior ${out.ref.worst.type} ${out.ref.worst.w}/${out.ref.worst.r}${out.ref.comp ? `; competitivo: média ${out.ref.comp.mean}, fortes ${out.ref.comp.strong} (${out.ref.comp.top.join('; ')})` : ''}`);
   console.log(lines.join('\n'));

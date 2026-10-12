@@ -702,6 +702,12 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-member-body small { color: var(--muted); font-size: .78rem; }
 .ai-member-body .ai-evolve { color: var(--accent-2); font-weight: 600; }
 .ai-why { font-size: .88rem; line-height: 1.4; }
+.ai-moveset { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 3px; margin-top: 4px; }
+.ai-mv { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; min-width: 0; padding: 2px 5px 2px 8px; font-size: .78rem; line-height: 1.25; background: var(--win-2); box-shadow: inset 3px 0 0 var(--t, var(--bar)); }
+.ai-mv > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-mv small { flex: none; color: var(--accent); font-size: .66rem; font-weight: 700; }
+.ai-mv small.train { color: var(--gold); }
+.ai-moveset-hint { margin-top: 2px; }
 .ai-foot { font-size: .8rem; }
 /* Confirmação antes de enviar à IA */
 .ai-confirm[open] { display: grid; gap: 12px; } /* só quando aberta: fechada, o navegador esconde */

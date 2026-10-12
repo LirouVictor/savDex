@@ -14,6 +14,7 @@ import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
 import { evolvedVersions, megaForm, megaStonesFor } from '../ai/evolve.js';
 import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
+import { pickMoveset, effTable, SRC } from './moveset.js';
 import speciesData from '../data/species.json';
 
 // Lendários e míticos (PokeAPI), pelo nome sem pontuação: o mesmo em todos os jogos (Ho-Oh → hooh)
@@ -70,10 +71,12 @@ const TEACH_SKIP = new Set(['String Shot', 'Scary Face', 'Cotton Spore', 'Low Sw
 
 // Golpe de dano que ainda precisa ensinar: pena pequena (o Pokémon pronto vale um pouco mais)
 const TEACH_ATK = 3;
+// Golpe do moveset que o menu do Pokémon ensina na hora (Quetzal: tutor ou nível já alcançado): pena menor ainda
+const TEACH_NOW = 0.5;
 // Modo "Prontos para usar": o trabalho que falta pesa mais (evoluir, ensinar golpes de dano, dar a megapedra do modo
 // sem restrição, níveis abaixo dos Pokémon mais fortes do save). Não zera ninguém: um Pokémon bom que precisa
 // de preparo ainda entra se compensar
-const READY = { evolve: 6, teach: 5, stone: 3, perLevels: 5, maxLevels: 10 };
+const READY = { evolve: 6, teach: 5, now: 1, stone: 3, perLevels: 5, maxLevels: 10 };
 
 // Valor dos stats base na parte "Pokémon" da nota. 'bst' (padrão): o total. Os outros só existem para o teste de
 // comparação (test/builder-bench.test.js), que mede o efeito de cada um nos saves reais antes de qualquer troca:
@@ -101,9 +104,12 @@ function statValue(e, model) {
 
 /** Quanto falta para o Pokémon estar pronto, em pontos da nota (parte "Preparo"). */
 function readyCost(e, ready, refLevel) {
-  if (!ready) return TEACH_ATK * e.teachAtk.length;
+  // Golpes do moveset a ensinar: na hora (tutor, nível já alcançado) ou treinando até o nível
+  let now = 0, train = 0;
+  for (const x of e.setTeach) { if (x.src === SRC.level) train++; else now++; }
+  if (!ready) return TEACH_ATK * (e.teachAtk.length + train) + TEACH_NOW * now;
   const gap = Math.max(0, refLevel - (e.real.level || 0));
-  return READY.evolve * (e.m.evolvedFrom ? 1 : 0) + READY.teach * e.teachAtk.length + (e.given ? READY.stone : 0)
+  return READY.evolve * (e.m.evolvedFrom ? 1 : 0) + READY.teach * (e.teachAtk.length + train) + READY.now * now + (e.given ? READY.stone : 0)
     + Math.min(READY.maxLevels, gap / READY.perLevels);
 }
 
@@ -199,9 +205,9 @@ export function levelMoves(m, dex, T) {
   if (!raw) return [];
   const out = [];
   for (let i = 2; i < raw.length; i += 2) {
-    const info = typeof raw[i] === 'number' ? moveInfo(raw[i], T) : null;
+    const info = typeof raw[i] === 'number' ? cachedMove(raw[i], T) : null;
     const name = info ? (info.known ? info.name : null) : String(raw[i]);
-    if (name && !out.some(x => x.name === name)) out.push({ name, level: raw[i - 1], type: info && info.type, power: info && info.power, category: info && info.category });
+    if (name && !out.some(x => x.name === name)) out.push({ name, level: raw[i - 1], type: info && info.type, power: info && info.power, category: info && info.category, accuracy: info && info.accuracy });
   }
   return out;
 }
@@ -210,23 +216,65 @@ export function levelMoves(m, dex, T) {
 export const TUTOR = -1;
 
 /**
- * Os golpes que o Pokémon pode aprender: os por nível (levelMoves) e, no Quetzal, os do tutor (`dex.tutor`: o menu
- * NOVO MOV. → TUTOR do jogo ensina qualquer um, a qualquer momento), com o nível TUTOR. Os de ovo ficam de fora (só no
- * cruzamento). Um golpe que ele aprende pelos dois aparece uma vez, com o nível.
+ * Moveset (Quetzal, com a lista do tutor): o menu do Pokémon (NOVO MOV.) ensina na hora qualquer golpe do tutor e os
+ * por nível até o nível atual, então o montador escolhe os 4 golpes de cada um (moveset.js) em vez de ficar com os do
+ * save. Os testes de comparação desligam com `useTutor: false`.
  */
-export function learnableMoves(m, dex, T) {
-  const out = levelMoves(m, dex, T);
-  // Em avaliação: só com dex.useTutor (os testes de comparação ligam; o app ainda não)
-  const tutor = dex && dex.tutor && dex.useTutor ? dex.tutor[m.speciesId] : null;
-  if (!tutor) return out;
-  const have = new Set(out.map(x => x.name));
-  for (const id of tutor) {
-    const info = moveInfo(id, T);
-    if (!info || !info.known || have.has(info.name)) continue;
-    have.add(info.name);
-    out.push({ name: info.name, level: TUTOR, type: info.type, power: info.power, category: info.category });
+export const movesetMode = dex => !!(dex && dex.rom && dex.tutor && dex.useTutor !== false);
+
+// Do tutor, o que fica para o plano (fora do moveset, com peso menor, como os golpes por nível a ensinar): golpes que
+// aproveitam o clima/terreno (Thunder na chuva…), o Trick Room e os da Hiperofensiva (setup, hazards, telas). Pôr clima
+// ou terreno pelo golpe do tutor (Rain Dance…) não conta: quase todo Pokémon aprende, e o plano passava a girar em torno
+// de quem põe pelo golpe em vez de quem aproveita
+const planTutor = name => !!MOVE_ABUSERS[name] || name === 'Trick Room' || SWEEP_MOVES.has(name) || SUPPORT_MOVES.has(name);
+
+/**
+ * Os 4 golpes do Pokémon (moveset.js), entre os que sabe, os por nível (na hora até o nível atual; acima, treinando) e
+ * os do tutor, e o que sobra para o plano (golpes por nível e os do tutor de planTutor).
+ * @returns {{ set: object[], learn: object[] }}
+ */
+// moveInfo dos golpes do tutor, uma vez por jogo (cada Pokémon tem ~90; o PC, centenas de Pokémon)
+const moveCache = new WeakMap();
+function cachedMove(id, T) {
+  let c = moveCache.get(T);
+  if (!c) moveCache.set(T, (c = new Map()));
+  let x = c.get(id);
+  if (x === undefined) c.set(id, (x = moveInfo(id, T)));
+  return x;
+}
+
+function movesetOf(m, bf, dex, T, ctx) {
+  const ty = bf.species.types;
+  const abs = [...new Set([m.ability && m.ability.name, bf.ability && bf.ability.name].filter(Boolean))];
+  const lvl = m.level || 0;
+  const cands = [], have = new Set();
+  const add = (x, src, level) => {
+    if (!x.name || have.has(x.name)) return;
+    have.add(x.name);
+    cands.push({ name: x.name, type: x.type, power: x.power, category: x.category, accuracy: x.accuracy, src, level, boosted: boostMove(x, abs, ty) });
+  };
+  for (const mv of m.moves) add(mv, SRC.known, null);
+  const lv = levelMoves(m, dex, T);
+  for (const x of lv) if (x.level <= lvl) add(x, SRC.now, x.level);
+  for (const id of dex.tutor[m.speciesId] || []) {
+    const info = cachedMove(id, T);
+    if (info && info.known) add(info, SRC.tutor, TUTOR);
   }
-  return out;
+  for (const x of lv) add(x, SRC.level, x.level);
+  const mctx = { b: bf.species.baseStats, types: ty, abs, eff: ctx.eff, N: ctx.N };
+  const set = pickMoveset(cands, mctx);
+  const inSet = new Set(set.map(x => x.name));
+  const learn = cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && (x.src !== SRC.tutor || planTutor(x.name)));
+  return { set, learn, cands, mctx };
+}
+
+/**
+ * O moveset que a tela mostra: o escolhido, com os golpes que o plano pede (`names`: Trick Room, Thunder na chuva, o
+ * setup da Hiperofensiva…) no lugar dos que menos fazem falta.
+ */
+export function finalMoveset(e, names) {
+  if (!e.set || !e.mcands || !names.length || names.every(n => e.set.some(x => x.name === n))) return e.set;
+  return pickMoveset(e.mcands, { ...e.mctx, force: new Set(names) });
 }
 
 /**
@@ -254,6 +302,8 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
     for (const e of evolvedVersions(m, T)) add(e);
   }
   const chosen = [...best.values()];
+  const mset = movesetMode(dex);
+  const mctx = mset ? { eff: effTable(types, mult), N: types.length } : null;
   // Sem restrição de item: quem tem mega no jogo entra também segurando a megapedra (uma entrada por pedra)
   if (anyItem) {
     for (const m of [...chosen]) {
@@ -261,16 +311,18 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
     }
   }
   return chosen.map((m, id) => {
-    const known = new Set(m.moves.map(mv => mv.name));
-    const learn = learnableMoves(m, dex, T).filter(x => !known.has(x.name));
     const mf = megaForm(m, T);
-    const e = Object.assign(entry(m, mf || m, T, types, mult, learn), { id });
+    let learn, set = null, ms = null;
+    if (mset) ({ set, learn } = (ms = movesetOf(m, mf || m, dex, T, mctx)));
+    else { const known = new Set(m.moves.map(mv => mv.name)); learn = levelMoves(m, dex, T).filter(x => !known.has(x.name)); }
+    const e = Object.assign(entry(m, mf || m, T, types, mult, learn, set), { id });
+    if (ms) { e.mcands = ms.cands; e.mctx = ms.mctx; }
     e.cost = readyCost(e, false, 0);
     e.statVal = statValue(e, statModel);
     blankCaches(e);
     // A forma comum de quem segura a megapedra: com duas megas na equipe, só uma megaevolui por batalha, e a outra
     // luta assim (habilidade, tipos e stats da forma comum)
-    if (mf) e.base = Object.assign(entry(m, m, T, types, mult, learn), { id, real: e.real, key: e.key, given: e.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: e.cost });
+    if (mf) e.base = Object.assign(entry(m, m, T, types, mult, learn, set), { id, real: e.real, key: e.key, given: e.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: e.cost });
     if (mf) { e.base.statVal = statValue(e.base, statModel); blankCaches(e.base); }
     return e;
   });
@@ -287,31 +339,32 @@ function blankCaches(e) {
 /**
  * Contas de um Pokémon. `m` é o que a tela mostra (o do save, ou a forma evoluída); `bf`, a forma de batalha
  * (a mega, se segura a própria megapedra): tipos, stats base e habilidade vêm dela. `learn`: golpes por nível
- * que ele ainda não sabe.
+ * que ele ainda não sabe. `set`: o moveset escolhido (moveset.js), no lugar dos golpes do save.
  */
-function entry(m, bf, T, types, mult, learn = []) {
+function entry(m, bf, T, types, mult, learn = [], set = null) {
+  const own = set || m.moves;
   const b = bf.species.baseStats;
   // Habilidades: a da forma de batalha (a mega) e, antes de megaevoluir, a da forma comum (Lightning Rod no Raichu,
   // Intimidate no Staraptor): as duas contam
   const ab = bf.ability && bf.ability.name;
   const abBase = m.ability && m.ability.name;
   const abs = [...new Set([abBase, ab].filter(Boolean))];
-  const pairs = m.moves.map(mv => [mv, boostMove(mv, abs, bf.species.types)]);
+  const pairs = own.map(mv => [mv, boostMove(mv, abs, bf.species.types)]);
   const real = pairs.filter(([, x]) => realMove(x, bf.species.types));
   const moves = real.map(([, x]) => x);
   const boosted = real.filter(([o, x]) => x !== o).map(([, x]) => x);
   const realSet = new Set(real.map(([o]) => o));
   // Os golpes fracos ficam de fora das contas (cobertura, clima); os de efeito (Icy Wind, Nuzzle…) continuam
-  const useful = m.moves.filter(mv => !damaging(mv) || realSet.has(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
+  const useful = own.filter(mv => !damaging(mv) || realSet.has(mv) || (!PRIORITY_MOVES.has(mv.name) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out');
   // Com menos de 2 golpes de dano e espaço no moveset (golpes fracos ou sem papel), os que ele aprende por nível
   // completam: os do próprio tipo primeiro, depois os mais fortes, no lado (físico/especial) em que ele ataca melhor.
   // Contam como os outros, com uma pena pequena por ter que ensinar (teachAtk)
-  const slots = 4 - m.moves.filter(mv => realSet.has(mv) || (!damaging(mv) && useful.includes(mv) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out').length;
+  const slots = 4 - own.filter(mv => realSet.has(mv) || (!damaging(mv) && useful.includes(mv) && rolesOf({ species: {}, moves: [mv] }).length) || mv.name === 'Fake Out').length;
   const need = Math.min(Math.max(0, 2 - moves.length), slots);
   const teachAtk = [];
   if (need > 0) {
     const physical = b[1] >= b[3];
-    const known = new Set(m.moves.map(mv => mv.name));
+    const known = new Set(own.map(mv => mv.name));
     const score = x => (bf.species.types.includes(x.type) ? 1.5 : 1) * (x.power || 60) * ((x.category === 0) === physical ? 1 : 0.7);
     const cands = learn.filter(x => !known.has(x.name)).map(x => boostMove(x, abs, bf.species.types))
       .filter(x => realMove(x, bf.species.types)).sort((x, y) => score(y) - score(x));
@@ -336,13 +389,13 @@ function entry(m, bf, T, types, mult, learn = []) {
   types.forEach((d, i) => { if (moves.some(mv => mult(mv.type, [d]) > 1)) cov |= 1 << i; });
   const roles = rolesOf({ ...m, moves: useful });
   for (const a of abs) if (ABILITY_ROLES[a] && !roles.includes(ABILITY_ROLES[a])) roles.push(ABILITY_ROLES[a]);
-  const contrary = abs.includes('Contrary') ? m.moves.filter(mv => DROP_MOVES.has(mv.name)).map(mv => mv.name) : [];
+  const contrary = abs.includes('Contrary') ? own.filter(mv => DROP_MOVES.has(mv.name)).map(mv => mv.name) : [];
   // Hiperofensiva: varre com setup (quem ataca forte: Ataque ou Ataque Especial base 100+, 2+ golpes de dano) e abre o
   // caminho (hazards ou telas); o que já sabe vale 1, o que aprende por nível vale LEARN_ROLE
   const strongAtk = Math.max(b[1], b[3]) >= 100 && moves.length >= 2;
-  const sweepKnown = strongAtk ? m.moves.find(mv => SWEEP_MOVES.has(mv.name)) || (contrary.length ? { name: contrary[0] } : null) : null;
+  const sweepKnown = strongAtk ? own.find(mv => SWEEP_MOVES.has(mv.name)) || (contrary.length ? { name: contrary[0] } : null) : null;
   const sweepTeach = strongAtk && !sweepKnown ? learn.find(x => SWEEP_MOVES.has(x.name)) || null : null;
-  const supKnown = m.moves.find(mv => SUPPORT_MOVES.has(mv.name)) || null;
+  const supKnown = own.find(mv => SUPPORT_MOVES.has(mv.name)) || null;
   const supTeach = supKnown ? null : learn.find(x => SUPPORT_MOVES.has(x.name)) || null;
   if (contrary.length && !roles.includes('setup')) roles.push('setup');
   let roleMask = 0;
@@ -370,11 +423,14 @@ function entry(m, bf, T, types, mult, learn = []) {
   }
   // Golpes a ensinar: põem o campo (Trick Room, Rain Dance…), aproveitam (Thunder, Solar Beam…) ou dão um papel
   const teach = new Map(); // golpe → nível em que aprende
-  const learnSet = new Set(), learnUse = new Set();
+  // learnCore: o que aproveita por golpe a ensinar e sustenta o plano. Do tutor, só o golpe do próprio tipo (Blizzard num
+  // Ice, Rising Voltage num Electric): quase todo Pokémon aprende Grassy Glide, Rising Voltage… e os planos de terreno
+  // apareciam em todo PC grande
+  const learnSet = new Set(), learnUse = new Set(), learnCore = new Set();
   for (const x of learn) {
     const f = FIELD_MOVES[x.name] || (x.name === 'Trick Room' ? 'Trick Room' : null);
     if (f && !strat.set.has(f)) { learnSet.add(f); teach.set(x.name, x.level); }
-    if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); teach.set(x.name, x.level); }
+    if (x.name !== 'Weather Ball') for (const g of MOVE_ABUSERS[x.name] || []) if (!strong.has(g)) { learnUse.add(g); if (x.level !== TUTOR || bf.species.types.includes(x.type)) learnCore.add(g); teach.set(x.name, x.level); }
   }
   // Prioridade só de golpe que bate de verdade; setup só em quem ataca forte (Agility no Pelipper não ajuda)
   const teachable = learn.filter(x => !TEACH_SKIP.has(x.name) && (!PRIORITY_MOVES.has(x.name) || realMove(x, bf.species.types))
@@ -397,8 +453,9 @@ function entry(m, bf, T, types, mult, learn = []) {
   const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
     m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
+    moves: own, set, setTeach: set ? set.filter(x => x.src !== SRC.known) : [], mcands: null, mctx: null,
     given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
-    learnSet, learnUse, learnRoles, learnRoleMask, roleMoves, teach,
+    learnSet, learnUse, learnCore, learnRoles, learnRoleMask, roleMoves, teach,
     megaGain: bf !== m ? (b.reduce((x, y) => x + y, 0) - baseBst) / 12 : 0,
     bad: BAD_ABILITIES[ab] || 0, rock: WEATHER_ROCK[m.item && m.item.name] || null,
     strat, auto, strong, core, wball, stab, value, bst: b.reduce((x, y) => x + y, 0), spe: b[SPE], dmg: moves.length,
@@ -432,11 +489,12 @@ export function plans(pool) {
 }
 
 /**
- * Aproveita o campo de verdade: habilidade forte, megapedra ou golpe próprio (ou um golpe próprio a ensinar). Golpe do
+ * Aproveita o campo de verdade: habilidade forte, megapedra ou golpe próprio (ou um golpe próprio a ensinar por nível,
+ * ou pelo tutor se for do tipo dele: learnCore). Golpe do
  * tipo com STAB (Water na chuva, Fire no sol) e Weather Ball só contam quando alguém põe o campo sem gastar turno
  * (Drizzle, Drought, Charizardite Y…): pôr chuva com Rain Dance para ganhar 1,5× em golpes Water não sustenta um plano.
  */
-const realUse = (e, f, auto) => e.core.has(f) || e.learnUse.has(f) || (auto && (e.stab.has(f) || e.wball.has(f)));
+const realUse = (e, f, auto) => e.core.has(f) || e.learnCore.has(f) || (auto && (e.stab.has(f) || e.wball.has(f)));
 
 /** O plano tem núcleo: quem põe e 2 ou mais que aproveitam de verdade, não só quem põe. */
 function coreHolds(list, f) {
@@ -823,7 +881,7 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     for (const e of x.base ? [x, x.base] : [x]) {
       e.tctx = tctx;
       e.conflictBy = {};
-      for (const f of WEATHERS) e.conflictBy[f] = weatherConflict(e.bf, f, T);
+      for (const f of WEATHERS) e.conflictBy[f] = weatherConflict({ ...e.bf, moves: e.moves }, f, T);
     }
   }
   // Quem o jogador pediu: todas as versões dele (com cada megapedra, no modo sem restrição de item); em cada plano
@@ -920,19 +978,24 @@ export function outsiderEntry(spec, T, dex, like, plan) {
   const ab = spec.abilities.find(a => f && (ABUSERS[a] === f || FIELD[a] === f)) || spec.abilities[0] || null;
   const species = { name: spec.name, form: spec.form, showdown: spec.showdown, types: spec.types, baseStats: spec.stats, abilities: spec.abilities };
   const m = { species, speciesId: spec.id, ability: ab ? { name: ab, num: Math.max(0, spec.abilities.indexOf(ab)) } : null, item: null, moves: [], level: 100, outsider: true };
-  const learn = learnableMoves(m, dex, T);
-  if (!learn.length) {
+  // Com o moveset (Quetzal), os 4 golpes que ele usaria; senão, os golpes por nível completam os de dano
+  let learn, set = null;
+  let ms = null;
+  if (movesetMode(dex)) ({ set, learn } = (ms = movesetOf(m, m, dex, T, { eff: effTable(types, mult), N: types.length })));
+  else learn = levelMoves(m, dex, T);
+  if (!learn.length && !(set && set.length)) {
     const physical = spec.stats[1] >= spec.stats[3];
     m.moves = spec.types.map(ty => ({ name: null, type: ty, power: 90, category: T.gen3 ? (SPECIAL_G3.has(ty) ? 1 : 0) : physical ? 0 : 1 }));
   }
-  const e = Object.assign(entry(m, m, T, types, mult, learn), { id: -1 - spec.id });
+  const e = Object.assign(entry(m, m, T, types, mult, learn, set && set.length ? set : null), { id: -1 - spec.id });
+  if (ms && e.set) { e.mcands = ms.cands; e.mctx = ms.mctx; }
   e.cost = 0;
   e.statVal = statValue(e, 'bst');
   blankCaches(e);
   e.tctx = like.tctx;
   e.sctx = like.sctx;
   e.conflictBy = {};
-  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict(e.bf, w, T);
+  for (const w of WEATHERS) e.conflictBy[w] = weatherConflict({ ...e.bf, moves: e.moves }, w, T);
   planFlags(e, plan);
   return e;
 }

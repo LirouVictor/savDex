@@ -242,10 +242,10 @@ it.skipIf(!RUN || !process.env.SIM_AB)('montador: buscas maiores fazem equipes m
   if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
 }, 7200000);
 
-// Tutor (opcional: SIM_TUTOR=1; SIM_AB_N batalhas para cada lado): no Quetzal, a equipe montada contando os golpes do
-// tutor (quetzal-teach.json) contra a montada só com os golpes por nível, no mesmo plano, frente a frente e contra os
-// times do random battle. Os conjuntos levam os golpes que o app manda ensinar (os do tutor, na equipe com tutor).
-it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: os golpes do tutor fazem equipes mais fortes?', () => {
+// Moveset (opcional: SIM_TUTOR=1; SIM_AB_N batalhas para cada lado): no Quetzal, a equipe montada com o moveset (os 4
+// golpes de cada um entre os que sabe, os por nível e os do tutor; moveset.js) contra a montada com os golpes do save,
+// no mesmo plano, frente a frente e contra os times do random battle. Cada lado joga com os golpes que o app mostra.
+it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: o moveset (sabe + nível + tutor) faz equipes mais fortes?', () => {
   if (!showdown()) throw new Error('Instale o simulador: npm i --no-save pokemon-showdown@0.11.11');
   const { Dex } = showdown();
   const K = +(process.env.SIM_AB_N || 40), NOPP = +(process.env.SIM_N || 40);
@@ -261,13 +261,13 @@ it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: os golpes do tutor fazem eq
     const fmt = formatsFor(d.game);
     const sdex = Dex.forFormat(fmt.battle);
     const comp = compIndex(d.game);
-    const A = B.buildTeams(mons, T, { dex: quetzalLearnDex(QL), comp });
-    const Bt = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), useTutor: true }, comp });
+    const A = B.buildTeams(mons, T, { dex: { ...quetzalLearnDex(QL, QT), useTutor: false }, comp });
+    const Bt = B.buildTeams(mons, T, { dex: quetzalLearnDex(QL, QT), comp });
     const opp = opponents(fmt.opp, NOPP, 5);
     const setsOf = r => { const s = leadOrder(r.team, r.plan).map(e => toSet(e, r.plan, sdex)); return s.some(x => !x) ? null : s; };
     for (const rb of Bt) {
       const ra = A.find(r => label(r.plan) === label(rb.plan));
-      if (!ra) { lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} só existe com o tutor: ${rb.team.map(e => e.m.species.name).join(', ')}`); continue; }
+      if (!ra) { lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} só existe com o moveset: ${rb.team.map(e => e.m.species.name).join(', ')}`); continue; }
       const sa = setsOf(ra), sb = setsOf(rb);
       if (!sa || !sb) continue;
       let w = 0;
@@ -282,11 +282,11 @@ it.skipIf(!RUN || !process.env.SIM_TUTOR)('montador: os golpes do tutor fazem eq
       rows.push({ save: name, plan: label(rb.plan), h2h, dRand: (wb - wa) / opp.length, same });
       const fmtSet = s => s.map(x => `${x.species} (${x.moves.join('/')})`).join('; ');
       lines.push(`${name.padEnd(16)} ${label(rb.plan).padEnd(20)} ${same ? 'mesmos membros' : 'membros mudam'}: frente a frente ${Math.round(100 * h2h)}% (±${Math.round(100 * 1.96 * Math.sqrt(h2h * (1 - h2h) / (2 * K)))}), aleatórios ${Math.round(100 * wb / opp.length)}% × ${Math.round(100 * wa / opp.length)}%`);
-      lines.push(`    sem tutor: ${fmtSet(sa)}\n    com tutor: ${fmtSet(sb)}`);
+      lines.push(`    golpes do save: ${fmtSet(sa)}\n    moveset:        ${fmtSet(sb)}`);
     }
   }
   const m = (xs, k) => (xs.length ? xs.reduce((a, x) => a + x[k], 0) / xs.length : 0);
-  lines.push(`RESUMO: ${rows.length} planos; frente a frente ${Math.round(100 * m(rows, 'h2h'))}% para a equipe com tutor (venceu mais em ${rows.filter(x => x.h2h > 0.5).length}); aleatórios ${Math.round(100 * m(rows, 'dRand'))} pontos`);
+  lines.push(`RESUMO: ${rows.length} planos; frente a frente ${Math.round(100 * m(rows, 'h2h'))}% para a equipe com o moveset (venceu mais em ${rows.filter(x => x.h2h > 0.5).length}); aleatórios ${Math.round(100 * m(rows, 'dRand'))} pontos`);
   console.log(lines.join('\n'));
   if (process.env.SIM_LOG) writeFileSync(process.env.SIM_LOG, lines.join('\n') + '\n');
 }, 7200000);

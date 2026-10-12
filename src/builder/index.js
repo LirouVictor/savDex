@@ -4,7 +4,8 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, TUTOR } from './build.js';
+import { buildTeams, altTeams, scoreParts, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, TUTOR } from './build.js';
+import { SRC } from './moveset.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
 import { buildView } from '../ai/view.js';
@@ -92,8 +93,10 @@ const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
  * Função de cada membro na equipe e até 3 motivos curtos, do mais importante para o menos (os nomes viram referências
  * E1/C3-12). O que é para fazer (ensinar, evoluir) fica nos próximos passos.
  */
-function describeMember(e, team, plan, types) {
-  const m = e.m, bf = e.bf, f = plan.field;
+function describeMember(e, team, plan, types, shownSet = null) {
+  const m = e.m, f = plan.field;
+  // Com o moveset (Quetzal), os golpes que contam são os dele, não os do save
+  const bf = shownSet ? { ...e.bf, moves: shownSet } : e.bf;
   const why = [];
   let role = '';
   if (e.given) why.push(t('dê {stone}', { stone: e.given }));
@@ -132,7 +135,7 @@ function describeMember(e, team, plan, types) {
     why.push(moveOrTeach(e.sweepMove, e.sweep === 1));
   }
   // A mega, se o plano não a citou (Dragonite: Multiscale)
-  if (bf !== m && !e.given && !why.some(x => x.includes(m.item.name))) why.push(t('mega: {ability}', { ability: bf.ability.name }));
+  if (e.bf !== m && !e.given && !why.some(x => x.includes(m.item.name))) why.push(t('mega: {ability}', { ability: bf.ability.name }));
   // O que segura pela equipe: resiste ao que acerta 2+ colegas em cheio, anula pela habilidade
   const holds = types.filter((ty, a) => e.def[a] < 0 && team.filter(o => o !== e && o.def[a] > 0).length >= 2).map(cap);
   if (holds.length) {
@@ -154,7 +157,56 @@ function describeMember(e, team, plan, types) {
   for (const [ab, mvs] of byAb) why.push(`${ab}: ${list(mvs.slice(0, 2))}`);
   if (!role) role = roles.length ? roles[0] : t('cobertura');
   if (!why.length) why.push(t('atacante {kind}, stats base {bst}', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
-  return { ref: refOf(m), papel: role, motivo: cap(why.slice(0, 3).join(' · ')) };
+  const out = { ref: refOf(m), papel: role, motivo: cap(why.slice(0, 3).join(' · ')) };
+  // O moveset: o que já sabe, o que o menu do Pokémon ensina na hora (tutor, nível já alcançado) e o que precisa de treino
+  if (shownSet) out.golpes = shownSet.map(x => ({ name: x.name, type: x.type, src: x.src, level: x.level }));
+  return out;
+}
+
+/**
+ * Golpes que o plano pede além do moveset (o mesmo que os próximos passos mandam ensinar): quem põe o campo pelo golpe,
+ * o golpe que aproveita o clima, quem abre o caminho e quem varre na Hiperofensiva, e os papéis que faltam na equipe
+ * (até 3, sem repetir golpe nem Pokémon). Map entrada → [{ name, level, why }]
+ */
+function planMoves(team, plan) {
+  const out = new Map();
+  let n = 0;
+  const taken = new Set();
+  // `own`: o golpe é dele (o que aproveita o clima e o card já cita): fora do limite de 3 e pode repetir em outro membro
+  const add = (e, mv, lv, why, own = false) => {
+    if (!e || !mv) return;
+    if (!own && (n >= 3 || taken.has(mv) || taken.has(e))) return;
+    if ((e.set || e.m.moves).some(x => x.name === mv) || (out.get(e) || []).some(x => x.name === mv)) return; // já está no moveset
+    if (!own) { taken.add(mv); taken.add(e); n++; }
+    out.set(e, [...(out.get(e) || []), { name: mv, level: lv, why }]);
+  };
+  const f = plan.field;
+  if (f && !team.some(e => e.strat.set.has(f))) {
+    const e = team.find(x => x.learnSet.has(f));
+    const [mv, lv] = (e && teachFor(e, f, 'set')) || [];
+    add(e, mv, lv, t('põe {field}', { field: t(f) }));
+  }
+  if (plan.kind === 'offense') {
+    if (!team.some(e => e.hoSup === 1)) {
+      const e = team.find(x => x.hoSup);
+      if (e) add(e, e.supMove.name, e.supMove.level, t('abre o caminho'));
+    }
+    for (const e of team) if (e.sweep && e.sweep < 1) add(e, e.sweepMove.name, e.sweepMove.level, t('setup'));
+  }
+  for (const r of ['prioridade', 'recuperação', 'controle de velocidade', 'pivô', 'setup', 'hazards', 'tira hazards']) {
+    if (team.some(e => e.roles.includes(r))) continue;
+    const e = team.find(x => x.roleMoves.has(r));
+    if (e) add(e, e.roleMoves.get(r).name, e.roleMoves.get(r).level, t(r));
+  }
+  // Com o moveset, o golpe que aproveita o clima e que o card já cita (Thunder na chuva…) também entra nele
+  if (f && plan.kind !== 'room') {
+    for (const e of team) {
+      if (!e.set || e.strong.has(f) || e.stab.has(f) || !e.learnUse.has(f)) continue;
+      const [mv, lv] = teachFor(e, f, 'use') || [];
+      add(e, mv, lv, t('aproveita {field}', { field: t(f) }), true);
+    }
+  }
+  return out;
 }
 
 /** Pontos fortes e fracos da equipe, pelas contas: só o que pesa (até 3 de cada). */
@@ -205,40 +257,34 @@ function teamPoints(team, plan, types) {
   return { good: good.slice(0, 3), bad: bad.slice(0, 3) };
 }
 
-/** Próximos passos: evoluir, ensinar golpes, escolher a megaevolução, usar o item do clima. */
-function teamTips(team, plan) {
+/**
+ * Próximos passos: ensinar golpes (os que o plano pede, com o motivo; com o moveset, os outros dele numa linha só),
+ * evoluir, escolher a megaevolução, usar o item do clima.
+ * @param {Map} extra planMoves; @param {Map} shown o moveset mostrado de cada membro (só com o moveset)
+ */
+function teamTips(team, plan, extra = new Map(), shown = new Map()) {
   const tips = [];
-  // Até 3 golpes a ensinar, sem repetir golpe nem Pokémon
-  const taught = new Set();
-  const teach = (e, mv, lv, why) => {
-    if (taught.size >= 3 || taught.has(mv) || taught.has(e)) return;
-    taught.add(mv); taught.add(e);
-    tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: mv, ref: refOf(e.m), when: learnAt(lv), why }));
-  };
   // Golpes de dano que faltam (o app contou com eles): sempre aparecem
   for (const e of team) {
     if (e.teachAtk && e.teachAtk.length) tips.push(t('Ensine {moves} a {ref}: golpes de dano.', { moves: list(e.teachAtk.map(x => `${x.name} (${learnAt(x.level)})`)), ref: refOf(e.m) }));
   }
-  // O plano depende de golpe a ensinar quando ninguém o põe com o que já sabe
-  const f = plan.field;
-  if (f && !team.some(e => e.strat.set.has(f))) {
-    const e = team.find(x => x.learnSet.has(f));
-    const [mv, lv] = (e && teachFor(e, f, 'set')) || [];
-    if (mv) teach(e, mv, lv, t('põe {field}', { field: t(f) }));
-  }
-  // Papéis que a equipe só tem ensinando um golpe (os mais importantes primeiro)
-  // Hiperofensiva: o golpe de setup (ou de hazards/telas) que falta aprender
-  if (plan.kind === 'offense') {
-    if (!team.some(e => e.hoSup === 1)) {
-      const e = team.find(x => x.hoSup);
-      if (e) teach(e, e.supMove.name, e.supMove.level, t('abre o caminho'));
+  // O que o plano pede (até 3 golpes, sem repetir golpe nem Pokémon)
+  for (const [e, mvs] of extra) for (const x of mvs) tips.push(t('Ensine {move} a {ref} ({when}): {why}.', { move: x.name, ref: refOf(e.m), when: learnAt(x.level), why: x.why }));
+  // Moveset: o resto dos golpes a ensinar, numa linha para o que o menu do Pokémon ensina na hora e outra para o treino
+  if (shown.size) {
+    const planned = e => new Set((extra.get(e) || []).map(x => x.name));
+    const now = [], train = [];
+    for (const e of team) {
+      const set = shown.get(e);
+      if (!set) continue;
+      const skip = planned(e);
+      const q = set.filter(x => (x.src === SRC.tutor || x.src === SRC.now) && !skip.has(x.name)).map(x => x.name);
+      const l = set.filter(x => x.src === SRC.level && !skip.has(x.name)).map(x => t('{move} no Nv. {n}', { move: x.name, n: x.level }));
+      if (q.length) now.push(`${refOf(e.m)}: ${list(q)}`);
+      if (l.length) train.push(`${refOf(e.m)}: ${list(l)}`);
     }
-    for (const e of team) if (e.sweep && e.sweep < 1) teach(e, e.sweepMove.name, e.sweepMove.level, t('setup'));
-  }
-  for (const r of ['prioridade', 'recuperação', 'controle de velocidade', 'pivô', 'setup', 'hazards', 'tira hazards']) {
-    if (team.some(e => e.roles.includes(r))) continue;
-    const e = team.find(x => x.roleMoves.has(r));
-    if (e) teach(e, e.roleMoves.get(r).name, e.roleMoves.get(r).level, t(r));
+    if (now.length) tips.push(t('Ensine pelo menu do Pokémon (NOVO MOV., na hora e de graça): {list}.', { list: now.join('; ') }));
+    if (train.length) tips.push(t('Treine até o nível para aprender: {list}.', { list: train.join('; ') }));
   }
   for (const e of team) if (e.given) tips.push(t('Dê {stone} a {ref} (o app contou com a mega).', { stone: e.given, ref: refOf(e.m) }));
   for (const e of team) if (e.m.evolvedFrom) tips.push(t('Evolua {ref} ({from} → {to}).', { ref: refOf(e.m), from: e.m.evolvedFrom.species.name, to: e.m.species.name }));
@@ -293,12 +339,15 @@ function describeTeam(res, types, pool, ctx) {
   // As partes com as marcas do plano desta equipe (quem atrapalha o clima ou é fraco ao tipo que ele fortalece), como
   // na busca: sem isso valiam as do último plano buscado, e as partes não somavam a nota
   setPlanFlags(pool, plan);
-  const membros = team.map(e => describeMember(e, team, plan, types));
+  // Moveset (Quetzal): o escolhido para cada membro, com os golpes que o plano pede no lugar dos que menos fazem falta
+  const extra = planMoves(team, plan);
+  const shownSets = new Map(team.filter(e => e.set).map(e => [e, finalMoveset(e, (extra.get(e) || []).map(x => x.name))]));
+  const membros = team.map(e => describeMember(e, team, plan, types, shownSets.get(e) || null));
   const { good, bad } = teamPoints(team, plan, types);
   const r = {
     // Sem resumo: a aba e o título já dizem o plano
     nome: res.alt ? t('{plan} · opção {n}', { plan: planName(plan), n: res.alt + 1 }) : planName(plan), resumo: '',
-    membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan), dropped: [],
+    membros, pontos_fortes: good, pontos_fracos: bad, dicas: teamTips(team, plan, extra, shownSets), dropped: [],
     ameacas: threats ? threatsHtml(res, threats) : null,
   };
   const ideal = ctx.comp && ctx.saveGame ? idealLines(res, pool, ctx) : null;
@@ -306,6 +355,8 @@ function describeTeam(res, types, pool, ctx) {
   const mons = team.map(e => e.m);
   return {
     name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx,
+    // Copiar (Showdown) e Comentar com IA: com o moveset do app no lugar dos golpes do save
+    showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e), plannedMoves: true } : e.m)),
     // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
     // (as alternativas do "ideal × o que você tem" também: os textos citam o Pokémon pela referência)
     byRef: new Map([...(ideal ? ideal.alts : []), ...mons].map(m => [refOf(m), m.evolvedFrom || m.stoneFrom || m])),

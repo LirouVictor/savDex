@@ -136,6 +136,15 @@ export function analysisView(r, byRef, model, opts = null) {
   </div>`;
 }
 
+/** Os 4 golpes do moveset do montador, com a cor do tipo e de onde vêm (tutor, nível já alcançado, nível a treinar). */
+function movesetHtml(golpes) {
+  const tag = x => (x.src === 'tutor' ? t('tutor') : x.src === 'now' ? t('nível') : x.src === 'level' ? `${t('Nv.')} ${x.level}` : '');
+  return `<span class="ai-moveset">${golpes.map(x => {
+    const k = tag(x);
+    return `<span class="ai-mv t-${esc(x.type || 'none')}"><span>${esc(x.name)}</span>${k ? `<small${x.src === 'level' ? ' class="train"' : ''}>${esc(k)}</small>` : ''}</span>`;
+  }).join('')}</span>`;
+}
+
 export function buildView(r, byRef, model, T, opts = null) {
   // Quem o app contou já evoluído (conserto da equipe) aparece com a forma evoluída e o aviso "evolua"
   const evolved = (opts && opts.evolved) || new Map();
@@ -152,9 +161,12 @@ export function buildView(r, byRef, model, T, opts = null) {
         ${from ? `<small class="ai-evolve">${esc(t('Evolua: hoje é {name}{lv}', { name: from.species.name, lv: from.level ? ` (${t('Nv.')} ${from.level})` : '' }))}</small>` : ''}
         ${typeChips(m.species.types)}
         <span class="ai-why">${rich(x.motivo, byRef)}</span>
+        ${x.golpes ? movesetHtml(x.golpes) : ''}
       </span>
     </button></li>`;
   }).join('');
+  const setHint = r.membros.some(x => x.golpes)
+    ? `<p class="hint ai-moveset-hint">${t('Golpes de cada um: sem marca, ele já sabe; “tutor” e “nível”, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça; “Nv. N”, aprende ao chegar no nível.')}</p>` : '';
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
   const issues = mons.length ? buildIssues(mons, T) : [];
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
@@ -180,6 +192,7 @@ export function buildView(r, byRef, model, T, opts = null) {
     <p class="hint team-msg" role="status"></p>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
     <ul class="ai-members">${cards}</ul>
+    ${setHint}
     ${fixed}
     ${short}
     <div class="ai-cols">
