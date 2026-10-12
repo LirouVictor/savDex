@@ -66,7 +66,8 @@ function candidates(sp) {
  * Índice das tabelas de um jogo.
  * @param {object[]} tables conteúdo de src/data/smogon/<formato>.json, na ordem de smogonFormats
  * @returns {{ find, pair, partners, moves, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `moves(id)`: os golpes
- *   que os sets dela levam (Map ID do golpe → fração dos sets; null sem dados); `pair(a, b)`: a
+ *   que os sets dela levam (Map ID do golpe → fração dos sets; null sem dados), e do mesmo jeito `items(id)` e
+ *   `abilities(id)`; `pair(a, b)`: a
  *   sinergia da dupla na primeira tabela que conhece as duas (Ubers só vale para quem não está na National Dex);
  *   `partners(a)`: as duplas guardadas da espécie (Map ID → sinergia); `matrix(ids)`: as duplas de uma lista de IDs numa
  *   matriz (para a nota, que roda dezenas de milhares de vezes)
@@ -95,26 +96,31 @@ export function smogonIndex(tables) {
     }
     return adj.get(a) || new Map();
   };
-  // Golpes de cada espécie (o primeiro formato que a conhece): Map ID do golpe → fração dos sets, montado na consulta
-  const moveCache = new Map();
-  const moves = id => {
-    if (!id) return null;
-    if (moveCache.has(id)) return moveCache.get(id);
-    let out = null;
-    for (const p of parts) {
-      const i = p.t.ids.indexOf(id);
-      if (i < 0) continue;
-      const flat = (p.t.moves && p.t.moves[i]) || [];
-      out = new Map();
-      for (let k = 0; k < flat.length; k += 2) out.set(flat[k], flat[k + 1]);
-      break;
-    }
-    moveCache.set(id, out);
-    return out;
+  // Golpes, itens e habilidades de cada espécie (o primeiro formato que a conhece): Map ID → fração dos sets, montado na
+  // consulta
+  const usageOf = key => {
+    const cache = new Map();
+    return id => {
+      if (!id) return null;
+      if (cache.has(id)) return cache.get(id);
+      let out = null;
+      for (const p of parts) {
+        const i = p.t.ids.indexOf(id);
+        if (i < 0) continue;
+        const flat = (p.t[key] && p.t[key][i]) || [];
+        out = new Map();
+        for (let k = 0; k < flat.length; k += 2) out.set(flat[k], flat[k + 1]);
+        break;
+      }
+      cache.set(id, out);
+      return out;
+    };
   };
   return {
     partners,
-    moves,
+    moves: usageOf('moves'),
+    items: usageOf('items'),
+    abilities: usageOf('abilities'),
     label: `Smogon, ${tables.map(t => FORMAT_NAME[t.format] || t.format).join(' + ')}`, // "Smogon, Gen 9 National Dex + National Dex Ubers"
     find: sp => candidates(sp).find(knows) || null,
     pair: (a, b) => {

@@ -11,7 +11,9 @@
 // Fica o log2 do lift suavizado: 0 = acaso, 1 = o dobro, −1 = metade (Pelipper + Torkoal, chuva com sol: −1,2).
 //
 // Golpes: de cada espécie, a fração dos sets que leva cada golpe (o peso do golpe ÷ o peso da espécie; os 12 mais usados,
-// com 4% ou mais). O montador usa como referência para o moveset de cada Pokémon (src/builder/moveset.js).
+// com 4% ou mais). O montador usa como referência para o moveset de cada Pokémon (src/builder/moveset.js). Itens e
+// habilidades do mesmo jeito (os 8 itens e as 3 habilidades mais usados, com 4% ou mais), para o item e a habilidade
+// que o montador sugere a cada um.
 //
 // Uso: npm run smogon [-- AAAA-MM]   (precisa de rede; o resultado é versionado no git)
 
@@ -32,6 +34,10 @@ const PRIOR = 50; // equipes "de acaso" somadas na suavização
 const MIN_LOG = Math.log2(1.5); // duplas guardadas: 1,5× ou mais (ou 1/1,5 ou menos)
 const TOP_POS = 15, TOP_NEG = 5; // por espécie: as duplas mais fortes e as que mais se evitam
 const MOVE_MIN = 0.04, MOVE_TOP = 12; // golpes por espécie: em 4% ou mais dos sets, os 12 mais usados
+const ITEM_TOP = 8, ABILITY_TOP = 3;
+/** [ID, fração dos sets, ...] das chaves de um bloco do chaos (Moves, Items, Abilities), as `top` mais usadas com 4%+. */
+const shares = (obj, w, top) => Object.entries(obj || {}).filter(([k]) => k && k !== 'nothing').map(([k, v]) => [k, v / w])
+  .filter(x => x[1] >= MOVE_MIN).sort((a, b) => b[1] - a[1]).slice(0, top).flatMap(([k, v]) => [k, r2(v)]);
 
 const toId = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -98,12 +104,10 @@ function build(format, month, chaos) {
     usage: names.map(n => Math.round(data[n].usage * 1e5) / 1e5),
     // [i, j, log2 do lift suavizado], i < j nos índices de ids
     pairs,
-    // Golpes de cada espécie (na ordem de ids): [ID do golpe, fração dos sets, ...]
-    moves: names.map(n => {
-      const w = W[n] || 1;
-      return Object.entries(data[n].Moves || {}).filter(([m]) => m).map(([m, v]) => [m, v / w])
-        .filter(x => x[1] >= MOVE_MIN).sort((a, b) => b[1] - a[1]).slice(0, MOVE_TOP).flatMap(([m, v]) => [m, r2(v)]);
-    }),
+    // Golpes, itens e habilidades de cada espécie (na ordem de ids): [ID, fração dos sets, ...]
+    moves: names.map(n => shares(data[n].Moves, W[n] || 1, MOVE_TOP)),
+    items: names.map(n => shares(data[n].Items, W[n] || 1, ITEM_TOP)),
+    abilities: names.map(n => shares(data[n].Abilities, W[n] || 1, ABILITY_TOP)),
   };
 }
 

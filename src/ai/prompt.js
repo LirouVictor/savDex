@@ -500,6 +500,7 @@ export function reviewPrompt(all, T, team, note = '', max = MAX_CANDIDATES, { de
     if (m.evolvedFrom) extra.push(t('hoje é {name}; o app contou a forma evoluída', { name: m.evolvedFrom.species.name }));
     if (m.stoneFrom) extra.push(t('ainda não segura {stone}; o app contou com ela', { stone: m.item.name }));
     if (m.plannedMoves) extra.push(t('golpes: o moveset que o app sugere (os que ele ainda não sabe, o jogo ensina pelo menu do Pokémon)'));
+    if (m.gear) extra.push(t('item e habilidade: os que o app sugere pelo competitivo (o jogador ainda vai conseguir)'));
     return [monLine(m, free), ...extra].join(' | ');
   };
   return [

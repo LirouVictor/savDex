@@ -107,6 +107,8 @@ function readyCost(e, ready, refLevel) {
   // Golpes do moveset a ensinar: na hora (tutor, nível já alcançado) ou treinando até o nível
   let now = 0, train = 0;
   for (const x of e.setTeach) { if (x.src === SRC.level) train++; else now++; }
+  // Habilidade a trocar (Ability Capsule/Patch): como um golpe a ensinar na hora
+  if (e.m.gear && e.m.gear.ability) now++;
   if (!ready) return TEACH_ATK * (e.teachAtk.length + train) + TEACH_NOW * now;
   const gap = Math.max(0, refLevel - (e.real.level || 0));
   return READY.evolve * (e.m.evolvedFrom ? 1 : 0) + READY.teach * (e.teachAtk.length + train) + READY.now * now + (e.given ? READY.stone : 0)
@@ -269,6 +271,83 @@ function movesetOf(m, bf, dex, T, ctx) {
   return { set, learn: learnOf(cands, set), cands, mctx };
 }
 
+/** O Pokémon do save por trás de uma cópia do montador (forma evoluída, megapedra a dar, habilidade e item sugeridos). */
+export const realOf = m => m.evolvedFrom || m.stoneFrom || m.planFrom || m;
+
+// Itens do jogo pelo ID do Showdown (Quetzal: tabela da ROM), para filtrar os do Smogon
+const itemCache = new WeakMap();
+function gameItems(T) {
+  if (itemCache.has(T)) return itemCache.get(T);
+  const out = new Map();
+  for (const it of (T.quetzal && T.quetzal.items) || []) { const n = Array.isArray(it) ? it[0] : it; if (typeof n === 'string') out.set(toId(n), n); }
+  itemCache.set(T, out);
+  return out;
+}
+const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// Troca a habilidade: só se a do competitivo for bem mais usada que a atual (25 pontos percentuais ou mais)
+const ABILITY_GAP = 0.25;
+
+/**
+ * A habilidade do competitivo: entre as da espécie (1ª, 2ª, oculta), a que os sets do Smogon mais usam. Uma cópia do
+ * Pokémon com ela (gear.ability, e por onde trocar: Ability Capsule entre a 1ª e a 2ª, Ability Patch para a oculta), ou
+ * o mesmo Pokémon. Quem segura megapedra fica como está (a mega tem a habilidade dela).
+ */
+function gearAbility(m, comp) {
+  if (isMegaStone(m.item) || !m.ability) return m;
+  const use = comp.abilities(comp.find(m.species));
+  if (!use || !use.size) return m;
+  const abs = m.species.abilities || [];
+  const share = n => (n ? use.get(toId(n)) || 0 : 0);
+  let best = -1;
+  abs.forEach((n, i) => { if (n && (best < 0 || share(n) > share(abs[best]))) best = i; });
+  const cur = m.ability.name;
+  if (best < 0 || abs[best] === cur || share(abs[best]) < share(cur) + ABILITY_GAP) return m;
+  return { ...m, ability: { ...m.ability, name: abs[best], num: best }, planFrom: realOf(m), gear: { ...(m.gear || {}), ability: abs[best], from: cur, patch: best === 2 } };
+}
+
+// Itens que não servem num moveset com golpe de efeito (só atacam) e os que não fazem sentido sugerir
+const ATTACK_ONLY = new Set(['choiceband', 'choicespecs', 'choicescarf', 'assaultvest']);
+const SKIP_ITEM = id => /iumz$|ite[xyz]?$/.test(id) && !['eviolite', 'meteorite'].includes(id);
+
+/** O item do competitivo para o moveset (ou, sem dados, pelo moveset e pelos stats). Uma cópia do Pokémon com ele. */
+function gearItem(m, bf, set, gear) {
+  if (isMegaStone(m.item)) return m;
+  const status = set.some(x => x.category === 2);
+  const ok = id => gear.items.has(id) && !SKIP_ITEM(id) && !(status && ATTACK_ONLY.has(id));
+  const use = gear.comp.items(gear.comp.find(bf.species));
+  let id = null;
+  if (use) for (const [k] of use) if (ok(k)) { id = k; break; }
+  if (!id) id = fallbackItem(bf, set, ok);
+  const name = id && gear.items.get(id);
+  if (!name || (m.item && m.item.name === name)) return m;
+  return { ...m, item: { id: null, name, confidence: 'confirmado' }, planFrom: realOf(m), gear: { ...(m.gear || {}), item: name } };
+}
+/**
+ * O item para o moveset que a tela mostra (com os golpes que o plano pede): o do competitivo, escolhido de novo se o
+ * moveset mudou e o item não serve mais (Choice ou Assault Vest com golpe de efeito). null sem a referência.
+ */
+export function itemFor(e, set) {
+  const gear = e.mctx && e.mctx.gen && e.mctx.gen.gear;
+  if (!gear || isMegaStone(e.m.item)) return e.m.item ? e.m.item.name : null;
+  const cur = e.m.item ? e.m.item.name : null;
+  if (cur && !(ATTACK_ONLY.has(toId(cur)) && set.some(x => x.category === 2))) return cur;
+  const real = realOf(e.m);
+  const x = gearItem({ ...e.m, item: real.item }, e.bf, set, gear);
+  return x.item ? x.item.name : null;
+}
+
+/** Sem dados do Smogon: pedra do clima para quem o põe pela habilidade; Choice para quem só ataca; Life Orb com setup; Leftovers. */
+function fallbackItem(bf, set, ok) {
+  const b = bf.species.baseStats;
+  const ab = bf.ability && bf.ability.name;
+  const rock = { chuva: 'damprock', sol: 'heatrock', 'tempestade de areia': 'smoothrock', 'neve/granizo': 'icyrock' }[FIELD[ab]];
+  const status = set.some(x => x.category === 2);
+  const phys = b[1] >= b[3];
+  const picks = [rock, !status ? (b[5] >= 80 && b[5] < 110 ? 'choicescarf' : phys ? 'choiceband' : 'choicespecs') : null,
+    set.some(x => SWEEP_MOVES.has(x.name)) ? 'lifeorb' : null, 'leftovers'];
+  return picks.find(x => x && ok(x)) || null;
+}
+
 /** O que sobra para o plano, fora do moveset: os golpes por nível e, do tutor, os de planTutor. */
 const learnOf = (cands, set) => {
   const inSet = new Set(set.map(x => x.name));
@@ -372,10 +451,16 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
       for (const stone of megaStonesFor(m, T)) if (stone !== (m.item && m.item.name)) chosen.push({ ...m, item: { id: null, name: stone, confidence: 'confirmado' }, stoneFrom: m });
     }
   }
+  const gear = mset && comp && dex.gear !== false ? { comp, items: gameItems(T) } : null;
+  if (gen) gen.gear = gear;
   return chosen.map((m, id) => {
+    // Habilidade do competitivo (Quetzal, com a referência): a que os sets do Smogon mais usam, se a espécie a tem
+    if (gear) m = gearAbility(m, gear.comp);
     const mf = megaForm(m, T);
     let learn, set = null, ms = null;
     if (mset) ({ set, learn } = (ms = movesetOf(m, mf || m, dex, T, mctx)));
+    // Item: o que o Smogon mais usa e existe no jogo, coerente com o moveset (o jogador dá um jeito de conseguir)
+    if (gear && set) m = gearItem(m, mf || m, set, gear);
     else { const known = new Set(m.moves.map(mv => mv.name)); learn = levelMoves(m, dex, T).filter(x => !known.has(x.name)); }
     const e = Object.assign(entry(m, mf || m, T, types, mult, learn, set), { id });
     if (ms) { e.mcands = ms.cands; e.mctx = ms.mctx; e.mctx.gen = gen; }
@@ -514,7 +599,7 @@ function entry(m, bf, T, types, mult, learn = [], set = null) {
   const typeIdx = bf.species.types.map(ty => types.indexOf(ty)).filter(i => i >= 0);
   const baseBst = m.species.baseStats.reduce((x, y) => x + y, 0);
   return {
-    m, bf, real: m.evolvedFrom || m.stoneFrom || m, key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
+    m, bf, real: realOf(m), key: speciesKey(m), types: bf.species.types, typeIdx, def, cov, roles, roleMask, atk: moves,
     moves: own, set, setTeach: set ? set.filter(x => x.src !== SRC.known) : [], mcands: null, mctx: null,
     given: m.stoneFrom ? m.item.name : null, abBase, preImmune, boosted, contrary, teachAtk,
     learnSet, learnUse, learnCore, learnRoles, learnRoleMask, roleMoves, teach,
