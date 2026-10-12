@@ -14,7 +14,7 @@ import { isMegaStone, speciesKey, MAX_MEGAS } from '../ai/prompt.js';
 import { evolvedVersions, megaForm, megaStonesFor } from '../ai/evolve.js';
 import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
-import { pickMoveset, effTable, SRC } from './moveset.js';
+import { pickMoveset, effTable, planSensitive, SRC } from './moveset.js';
 import speciesData from '../data/species.json';
 
 // Lendários e míticos (PokeAPI), pelo nome sem pontuação: o mesmo em todos os jogos (Ho-Oh → hooh)
@@ -264,10 +264,68 @@ function movesetOf(m, bf, dex, T, ctx) {
   // Referência competitiva: os golpes que os sets do Smogon da espécie levam (a forma de batalha: a mega, se tem dados)
   const usage = ctx.comp ? ctx.comp.moves(ctx.comp.find(bf.species)) : null;
   const mctx = { b: bf.species.baseStats, types: ty, abs, eff: ctx.eff, N: ctx.N, usage };
+  if (ctx.plan) mctx.plan = ctx.plan;
   const set = pickMoveset(cands, mctx);
+  return { set, learn: learnOf(cands, set), cands, mctx };
+}
+
+/** O que sobra para o plano, fora do moveset: os golpes por nível e, do tutor, os de planTutor. */
+const learnOf = (cands, set) => {
   const inSet = new Set(set.map(x => x.name));
-  const learn = cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && (x.src !== SRC.tutor || planTutor(x.name)));
-  return { set, learn, cands, mctx };
+  return cands.filter(x => x.src !== SRC.known && !inSet.has(x.name) && (x.src !== SRC.tutor || planTutor(x.name)));
+};
+
+/**
+ * Moveset do plano: a mesma entrada, com os 4 golpes escolhidos para o plano (Blizzard na neve, Thunder na chuva, Solar
+ * Beam no sol, sem Agility no Trick Room…) e as contas refeitas com eles. A mesma entrada se o moveset não muda.
+ */
+function tuned(e, plan) {
+  if (!e.mcands || !e.mctx.gen || !planSensitive(e.mcands, plan)) return e;
+  const mctx = { ...e.mctx, plan: { kind: plan.kind, field: plan.field } };
+  const set = pickMoveset(e.mcands, mctx);
+  if (set.length === e.set.length && set.every((x, i) => x === e.set[i])) return e;
+  const g = e.mctx.gen, learn = learnOf(e.mcands, set);
+  const x = Object.assign(entry(e.m, e.bf, g.T, g.types, g.mult, learn, set), { id: e.id });
+  x.mcands = e.mcands; x.mctx = mctx;
+  x.cost = readyCost(x, g.ready, g.refLevel);
+  x.statVal = statValue(x, g.statModel);
+  blankCaches(x);
+  copyCtx(x, e, set, g.T);
+  if (e.base) {
+    x.base = Object.assign(entry(e.m, e.m, g.T, g.types, g.mult, learn, set), { id: e.id, real: x.real, key: x.key, given: x.given, mega: false, megaKnown: false, megaGain: 0, isBase: true, cost: x.cost });
+    x.base.statVal = statValue(x.base, g.statModel);
+    blankCaches(x.base);
+    copyCtx(x.base, e.base, set, g.T);
+  }
+  return x;
+}
+// O que buildTeams pôs na entrada (ameaças, referência competitiva) e quem atrapalha cada clima, com os golpes novos
+function copyCtx(x, e, set, T) {
+  x.tctx = e.tctx; x.sctx = e.sctx; x.sx = e.sx;
+  x.conflictBy = {};
+  for (const f of WEATHERS) x.conflictBy[f] = weatherConflict({ ...x.bf, moves: set }, f, T);
+}
+
+/**
+ * Os Pokémon do plano: os que podem entrar na busca (os melhores sozinhos para o plano, quem põe o plano e quem o jogador
+ * pediu) com o moveset do plano (tuned); os outros, como estão. Só com o moveset (Quetzal) e num plano que não é o
+ * equilibrado. `map(e)` dá a versão do plano de uma entrada.
+ * @returns {{ pool: object[], plan: object, map: (e: object) => object }}
+ */
+// Candidatos de cada plano que ganham o moveset do plano (os melhores sozinhos para ele): refazer a escolha custa ~0,15 ms
+// por Pokémon, e nos PCs grandes eram ~2000 por montagem. Os de fora entram na busca com o moveset de sempre
+const TUNE = 80;
+export function planPool(pool, plan, forced = [], candLimit = TUNE) {
+  const same = { pool, plan, map: e => e };
+  if (plan.kind === 'balance' || !pool.some(e => e.mcands)) return same;
+  setPlanFlags(pool, plan);
+  const pick = new Set([...forced, ...plan.setters]);
+  pool.filter(e => !e.conflict || forced.includes(e)).map(e => [e, solo(e, plan)]).sort((a, b) => b[1] - a[1])
+    .slice(0, candLimit).forEach(([e]) => pick.add(e));
+  const by = new Map();
+  const out = pool.map(e => { const x = pick.has(e) ? tuned(e, plan) : e; by.set(e, x); return x; });
+  const map = e => by.get(e) || e;
+  return { pool: out, plan: { ...plan, setters: plan.setters.map(map) }, map };
 }
 
 /**
@@ -306,6 +364,8 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
   const chosen = [...best.values()];
   const mset = movesetMode(dex);
   const mctx = mset ? { eff: effTable(types, mult), N: types.length, comp } : null;
+  // O que o moveset do plano (tuned) precisa para refazer as contas; buildTeams acerta o modo de preparo
+  const gen = mset ? { T, types, mult, statModel, ready: false, refLevel: 0 } : null;
   // Sem restrição de item: quem tem mega no jogo entra também segurando a megapedra (uma entrada por pedra)
   if (anyItem) {
     for (const m of [...chosen]) {
@@ -318,7 +378,7 @@ export function prepare(all, T, dex = null, { anyItem = false, statModel = 'bst'
     if (mset) ({ set, learn } = (ms = movesetOf(m, mf || m, dex, T, mctx)));
     else { const known = new Set(m.moves.map(mv => mv.name)); learn = levelMoves(m, dex, T).filter(x => !known.has(x.name)); }
     const e = Object.assign(entry(m, mf || m, T, types, mult, learn, set), { id });
-    if (ms) { e.mcands = ms.cands; e.mctx = ms.mctx; }
+    if (ms) { e.mcands = ms.cands; e.mctx = ms.mctx; e.mctx.gen = gen; }
     e.cost = readyCost(e, false, 0);
     e.statVal = statValue(e, statModel);
     blankCaches(e);
@@ -868,6 +928,8 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
   if (ready) {
     const refLevel = all.map(m => m.level || 0).sort((a, b) => b - a)[Math.min(5, all.length - 1)] || 0;
     for (const e of pool) { e.cost = readyCost(e, true, refLevel); if (e.base) e.base.cost = e.cost; }
+    const g = pool.find(e => e.mctx && e.mctx.gen);
+    if (g) Object.assign(g.mctx.gen, { ready: true, refLevel });
   }
   // Referência competitiva (o índice de smogon.js do jogo do save): a parte "Competitivo" da nota
   const sctx = setComp(pool, comp, compWeight);
@@ -903,16 +965,21 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
     return out;
   };
   const out = [];
-  for (const plan of plans(pool)) {
-    setPlanFlags(pool, plan);
-    let r = bestTeam(pool, plan, types, forcedFor(plan));
+  for (const plan0 of plans(pool)) {
+    // Moveset do plano (Quetzal): os candidatos com os golpes escolhidos para ele
+    // (os testes de comparação desligam com dex.planMoves = false)
+    const pp = dex && dex.planMoves === false ? { pool, plan: plan0, map: e => e } : planPool(pool, plan0, forcedFor(plan0));
+    const plan = pp.plan, ppool = pp.pool, forced = forcedFor(plan0).map(pp.map);
+    setPlanFlags(ppool, plan);
+    let r = bestTeam(ppool, plan, types, forced);
     // Salvaguarda do plano: se a busca com as ameaças não guardou nenhuma equipe que sustente o plano (as que
     // respondem mais ameaças podem não ter os lentos do Trick Room), vale a busca sem elas; a nota conta as ameaças
     if (tctx && !(r && r.team.length === 6 && planHolds(r.team, plan))) {
-      const r0 = bestTeam(pool, { ...plan, noThreats: true }, types, forcedFor(plan));
+      const r0 = bestTeam(ppool, { ...plan, noThreats: true }, types, forced);
       if (r0 && r0.team.length === 6 && planHolds(r0.team, plan)) r = { plan, team: r0.team, score: score(r0.team, plan, types) };
     }
-    if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(r);
+    // A equipe guarda os Pokémon do plano (para as alternativas, a tela e o ideal do competitivo)
+    if (r && r.team.length === 6 && planHolds(r.team, plan)) out.push(Object.defineProperty(r, 'pp', { value: pp }));
   }
   // Os planos da melhor nota para a pior, sem repetir a mesma equipe
   out.sort((a, b) => b.score - a.score);
@@ -933,9 +1000,12 @@ export function buildTeams(all, T, { want = [], dex = null, noLegends = false, a
  * @returns {Array<{ plan, team: object[], score: number, alt: number }>} na ordem (alt 1, 2…), sem repetir equipes de results
  */
 export function altTeams(results, main) {
-  const { pool } = results, { types, forcedFor } = results.ctx, { plan } = main;
+  const { types, forcedFor } = results.ctx, { plan } = main;
+  // Os Pokémon do plano (com o moveset dele), os mesmos da equipe principal
+  const pp = main.pp || { pool: results.pool, map: e => e };
+  const pool = pp.pool;
   setPlanFlags(pool, plan);
-  const forced = forcedFor(plan);
+  const forced = forcedFor(plan).map(pp.map);
   const seen = new Set(results.map(r => teamKey(r.team)));
   const prev = [new Set(main.team.map(e => e.real))];
   const out = [];
@@ -943,7 +1013,7 @@ export function altTeams(results, main) {
     const a = bestTeam(pool, plan, types, forced, prev, ALT_BEAM);
     if (!a || a.team.length < 6 || !planHolds(a.team, plan) || a.score < main.score - (1 - ALT_MIN) * Math.abs(main.score)) break;
     prev.push(new Set(a.team.map(e => e.real)));
-    if (!seen.has(teamKey(a.team)) && seen.add(teamKey(a.team))) out.push({ ...a, alt: out.length + 1 });
+    if (!seen.has(teamKey(a.team)) && seen.add(teamKey(a.team))) out.push(Object.defineProperty({ ...a, alt: out.length + 1 }, 'pp', { value: pp }));
   }
   return out;
 }
@@ -983,7 +1053,7 @@ export function outsiderEntry(spec, T, dex, like, plan) {
   // Com o moveset (Quetzal), os 4 golpes que ele usaria; senão, os golpes por nível completam os de dano
   let learn, set = null;
   let ms = null;
-  if (movesetMode(dex)) ({ set, learn } = (ms = movesetOf(m, m, dex, T, { eff: effTable(types, mult), N: types.length, comp: like.sctx ? like.sctx.index : null })));
+  if (movesetMode(dex)) ({ set, learn } = (ms = movesetOf(m, m, dex, T, { eff: effTable(types, mult), N: types.length, comp: like.sctx ? like.sctx.index : null, plan: { kind: plan.kind, field: plan.field } })));
   else learn = levelMoves(m, dex, T);
   if (!learn.length && !(set && set.length)) {
     const physical = spec.stats[1] >= spec.stats[3];
