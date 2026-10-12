@@ -1,10 +1,25 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-19';
+export const UPDATED = '2026-10-21';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-21',
+    pt: [
+      'Montar equipe no SoulGold: agora também parte das equipes do competitivo (exemplos e finais de torneio do Smogon da Gen 9, a mesma geração do SoulGold) e as adapta aos seus Pokémon. Quem não existe na Pokédex de Johto do jogo aparece como “não existe”. Cada jogo só recebe equipes da geração dele: os oficiais e o Unbound continuam com a montagem livre até as equipes da geração deles entrarem.',
+      'Equipes salvas e “O que mudou”: um Pokémon só conta como “evoluiu” para uma espécie que é evolução dele de verdade. Um Golisopod que trocou de natureza aparecia como um Goodra de Hisui que “evoluiu de Golisopod” (os dois tinham IVs todos 31, a mesma natureza, bola e gênero); agora o Golisopod é achado onde está.',
+      'Detalhe do Pokémon: saíram os avisos do PC sobre nível e stats calculados.',
+      'Montar equipe: saiu o “Comentar com IA”. A equipe, as trocas e a estratégia já vêm das contas do app, conferidas; a IA continua opcional em “Com IA”, para analisar a sua equipe ou montar uma.',
+    ],
+    en: [
+      'Build team in SoulGold: it now also starts from competitive teams (Smogon Gen 9 samples and tournament finals, the same generation as SoulGold) and adapts them to your Pokémon. Species missing from the game’s Johto Pokédex show as “does not exist”. Each game only gets teams from its own generation: the official games and Unbound keep the free build until teams from their generation are added.',
+      'Saved teams and “What changed”: a Pokémon only counts as “evolved” into a species that really is its evolution. A Golisopod that changed nature showed up as a Hisuian Goodra “evolved from Golisopod” (both had all IVs at 31, the same nature, ball and gender); now the Golisopod is found where it is.',
+      'Pokémon detail: the PC notes about calculated level and stats are gone.',
+      'Build team: “Comment with AI” is gone. The team, the swaps and the strategy already come from the app’s own checked math; the AI is still optional under “With AI”, to rate your party or build one.',
+    ],
+  },
   {
     date: '2026-10-20',
     pt: [
@@ -366,7 +381,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hospedagem</b>: o site é servido pelo Cloudflare Pages. Como em qualquer site, o servidor recebe dados técnicos do acesso (como o endereço IP).</li>
   <li><b>Sprites</b>: as imagens dos Pokémon e das insígnias vêm do repositório PokeAPI/sprites, no GitHub (raw.githubusercontent.com), que recebe esses pedidos de imagem.</li>
-  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b>, <b>Montar com IA</b> ou <b>Comentar com IA</b> (na equipe montada pelo app), o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base; no comentário, também o plano, a função de cada membro e o ideal do competitivo que falta no save, com a alternativa do save), no Quetzal e no Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. <b>Montar com IA</b> faz dois envios: o primeiro escolhe os 6; o segundo, menor, leva só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato do primeiro envio; o do segundo aparece junto com o resultado. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
+  <li><b>Assistente (IA), opcional</b>: só quando você toca em <b>Analisar minha equipe</b> ou <b>Montar com IA</b>, o navegador envia direto ao serviço escolhido (Google Gemini ou Groq), com a <b>sua</b> chave, a lista dos seus Pokémon (espécie, apelido, tipos, habilidade, item, natureza, stats base, IVs e golpes), cálculos do app sobre a equipe (fraquezas, cobertura, velocidade base), no Quetzal e no Unbound a lista pública dos golpes que cada membro aprende por nível, e o seu pedido, se houver. <b>Montar com IA</b> faz dois envios: o primeiro escolhe os 6; o segundo, menor, leva só essa equipe e as contas do app sobre ela, para os pontos fracos e as dicas. Não vão: o arquivo .sav, seu nome de treinador, ID e SID, o nome do arquivo, nível, EVs nem PID. Antes de enviar, o app mostra o texto exato do primeiro envio; o do segundo aparece junto com o resultado. O uso desses dados segue a política do serviço escolhido; no plano grátis, o Google pode usar o que recebe para melhorar os produtos dele.</li>
 </ul>
 <h3>Contagem de visitas</h3>
 <p>O savDex usa o <b>Cloudflare Web Analytics</b> para saber quantas pessoas usam o site. Um script pequeno do Cloudflare (static.cloudflareinsights.com) envia, a cada página aberta, o endereço da página, o site de onde você veio, o navegador, o sistema, o tipo de aparelho e o tempo de carregamento. O país é tirado do endereço IP, que não é guardado. <b>Não usa cookies</b>, não guarda nada no aparelho, não segue você entre sites e <b>nada do seu save</b> (nem o nome do arquivo) vai junto. Bloqueadores de anúncios costumam barrar esse script; o app funciona igual.</p>`,
@@ -395,7 +410,7 @@ const PRIVACY = {
 <ul>
   <li><b>Hosting</b>: the site is served by Cloudflare Pages. As with any website, the server receives technical data about the visit (such as the IP address).</li>
   <li><b>Sprites</b>: Pokémon and badge images come from the PokeAPI/sprites repository on GitHub (raw.githubusercontent.com), which receives those image requests.</li>
-  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b>, <b>Build with AI</b> or <b>Comment with AI</b> (on the team the app built), the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the team (weaknesses, coverage, base Speed; for the comment, also the plan, each member’s role and the competitive ideal missing from the save, with the alternative from the save), in Quetzal and Unbound the public list of moves each member learns by level, and your request, if any. <b>Build with AI</b> sends two requests: the first picks the 6; the second, smaller, carries only that team and the app’s calculations about it, for the weaknesses and tips. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text of the first request; the second one is shown with the result. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
+  <li><b>Assistant (AI), optional</b>: only when you tap <b>Rate my party</b> or <b>Build with AI</b>, the browser sends directly to the chosen service (Google Gemini or Groq), with <b>your</b> key, the list of your Pokémon (species, nickname, types, ability, item, nature, base stats, IVs and moves), the app’s calculations about the team (weaknesses, coverage, base Speed), in Quetzal and Unbound the public list of moves each member learns by level, and your request, if any. <b>Build with AI</b> sends two requests: the first picks the 6; the second, smaller, carries only that team and the app’s calculations about it, for the weaknesses and tips. Not sent: the .sav file, your trainer name, ID and SID, the file name, level, EVs or PID. Before sending, the app shows the exact text of the first request; the second one is shown with the result. That data is handled under the chosen service’s policy; on the free tier, Google may use what it receives to improve its products.</li>
 </ul>
 <h3>Visit counting</h3>
 <p>savDex uses <b>Cloudflare Web Analytics</b> to know how many people use the site. A small Cloudflare script (static.cloudflareinsights.com) sends, for each page opened, the page address, the site you came from, the browser, the operating system, the device type and the load time. The country is derived from the IP address, which is not stored. It <b>uses no cookies</b>, stores nothing on your device, does not track you across sites and <b>nothing from your save</b> (not even the file name) goes with it. Ad blockers often block this script; the app works the same.</p>`,

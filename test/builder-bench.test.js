@@ -364,7 +364,7 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
   const { roleMask } = await import('../src/builder/strategies.js');
   const lines = [], rows = [];
   const fidW = process.env.BENCH_FID_W ? +process.env.BENCH_FID_W : undefined;
-  for (const name of ['quetzal-7ins.sav', 'quetzal-en.sav', 'quetzal-en2.sav', ...(process.env.BENCH_USER_SAVE ? [process.env.BENCH_USER_SAVE] : [])]) {
+  for (const name of ['quetzal-7ins.sav', 'quetzal-en.sav', 'quetzal-en2.sav', 'soulgold-b.sav', ...(process.env.BENCH_USER_SAVE ? [process.env.BENCH_USER_SAVE] : [])]) {
     const p = name.includes('/') ? name : `fixtures/${name}`;
     if (!existsSync(p)) continue;
     const { data: d, T } = loadSave(readFileSync(p), BASE, G3, U, N, Q, SG);
@@ -373,7 +373,8 @@ it.skipIf(!process.env.BENCH_REFS)('montador: equipes de referência × montagem
       .map(dir => `src/data/${dir}/${f}.json`).filter(existsSync).map(x => JSON.parse(readFileSync(x, 'utf8')))).filter(tb => tb.teams.length);
     if (!tables.length) continue;
     const all = [...d.party, ...d.pc.boxes.flatMap(b => b.slots)];
-    const dex = quetzalLearnDex(QL, QT);
+    // Golpes por nível da ROM de cada jogo (o tutor só existe no Quetzal)
+    const dex = d.game.id === 'soulgold' ? soulgoldLearnDex(SL, T.soulgold) : quetzalLearnDex(QL, QT);
     const comp = compIndex(d.game);
     let t0 = performance.now();
     const anyItem = !!process.env.BENCH_ANYITEM;

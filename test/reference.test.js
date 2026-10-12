@@ -3,8 +3,9 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import T from '../src/data/tables.js';
+import SG from '../src/data/soulgold.json';
 import { prepareBuild, scoreParts, allowed, planHolds } from '../src/builder/build.js';
-import { referenceTeams, refPlan, normId, fidelity, FID_W, MIN_KEEP } from '../src/builder/reference.js';
+import { referenceTeams, refPlan, normId, fidelity, FID_W, MIN_KEEP, refFormats, GAME_GEN } from '../src/builder/reference.js';
 import { runBuilder, resultsHtml, pickerHtml } from '../src/builder/index.js';
 import { setRoleKeys, STRATEGIES } from '../src/builder/strategies.js';
 
@@ -63,6 +64,32 @@ describe('equipes de referência', () => {
     expect(normId('Enamorus-Incarnate')).toBe('enamorus');
     expect(normId('Gastrodon-East')).toBe('gastrodon');
     expect(normId('Landorus-Therian')).not.toBe(normId('Landorus'));
+  });
+
+  it('cada jogo só recebe equipes da geração dele (Quetzal e SoulGold: Gen 9); jogo sem a geração, nenhuma', () => {
+    const gen = (g, tb) => tb.map(x => ({ ...x, gen: g }));
+    const ctx = prepareBuild(save(), T);
+    // A mesma equipe numa tabela da Gen 8 não entra no Quetzal
+    expect(referenceTeams(ctx, gen(8, table([{ id: 'g8', members: RAIN }])), T, game)).toHaveLength(0);
+    expect(referenceTeams(ctx, [...gen(8, table([{ id: 'g8', members: RAIN }])), ...table([{ id: 'g9', members: RAIN }])], T, game).map(r => r.ref.id)).toEqual(['g9']);
+    // Jogos oficiais ainda sem tabelas da geração deles: nem a Gen 9 entra
+    for (const id of ['emerald', 'firered', 'heartgold', 'black2', 'unbound']) {
+      expect(refFormats({ id })).toEqual([]);
+      expect(referenceTeams(ctx, table([{ id: 'g9', members: RAIN }]), T, { id })).toHaveLength(0);
+    }
+    expect(GAME_GEN).toMatchObject({ quetzal: 9, soulgold: 9 });
+    expect(refFormats({ id: 'soulgold' })).toEqual(refFormats({ id: 'quetzal' }));
+  });
+
+  it('SoulGold: as espécies são as da Pokédex de Johto do hack (Barraskewda não existe lá)', () => {
+    const TS = { ...T, soulgold: SG };
+    const ctx = prepareBuild(save(), TS);
+    const [r] = referenceTeams(ctx, table([{ id: 'rain', members: RAIN }]), TS, { id: 'soulgold' });
+    const missing = r.orig.members.filter(m => !m.spec).map(m => m.x.s);
+    expect(missing).toEqual(['Barraskewda']);
+    expect(r.owned).toBe(4); // Pelipper, Kingdra, Ferrothorn e Raichu do save
+    expect(r.adapted.team.map(e => e.m.species.name)).not.toContain('Barraskewda');
+    expect(r.adapted.team).toHaveLength(6);
   });
 
   it('plano da original pelo que os sets fazem: chuva com quem põe e 2+ que aproveitam', () => {

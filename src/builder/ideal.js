@@ -1,7 +1,6 @@
 // "Ideal × o que você tem": para uma equipe que o app montou, o Pokémon que o competitivo usaria com ela e o jogador não
 // tem (o ideal), em qual vaga, e o mais parecido que existe no save (a alternativa). O ideal sai das duplas fortes do
-// Smogon (smogon.js) com quem fica na equipe e só aparece se a nota do app, estimada com ele, sobe. Tudo por contas; a IA
-// só comenta (o "Comentar com IA" leva estas linhas).
+// Smogon (smogon.js) com quem fica na equipe e só aparece se a nota do app, estimada com ele, sobe. Tudo por contas.
 
 import { scoreParts, allowed, planHolds, outsiderEntry, sets, isLegendary } from './build.js';
 import { gameSpecies } from './threats.js';
