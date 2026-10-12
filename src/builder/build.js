@@ -16,7 +16,7 @@ import { threatList, typeMult, variantOf, threatBits } from './threats.js';
 import { moveInfo } from '../parser/describe.js';
 import { pickMoveset, effTable, planSensitive, SRC } from './moveset.js';
 import { itemWorks, kitItem, combosOf, comboValue, teamBits, teamComboValue } from './mechanics.js';
-import { roleBits, strategyValue, strategySeeds } from './strategies.js';
+import { roleBits, strategyValue, strategySeeds, teachMove, roleMask } from './strategies.js';
 import { speciesIds } from './species-id.js';
 export { teamCombos } from './mechanics.js';
 import speciesData from '../data/species.json';
@@ -387,6 +387,15 @@ export function strategyInput(e, set, item) {
   const teachOk = name => !usage || !usage.size || (usage.get(toId(name)) || 0) >= TEACH_SHARE;
   return { c, cands: e.mcands || [], itemOk: name => gear.items.has(toId(name)), teachOk };
 }
+/** Os papéis da biblioteca de estratégias com o moveset e o item que o card mostra (equipes de referência). */
+export function shownRoleBits(e, set, item) {
+  return roleBits(mechOf(e.m, e.bf, set || e.set || e.moves, item && !isMegaStone({ name: item }) ? item : null));
+}
+/** O golpe que o Pokémon pode aprender e que dá o papel `r`, com o moveset `set` (null se não aprende nenhum). */
+export function roleTeach(e, set, item, r) {
+  if (!e.mcands) return null;
+  return teachMove(mechOf(e.m, e.bf, set || e.set || e.moves, item && !isMegaStone({ name: item }) ? item : null), r, e.mcands);
+}
 /**
  * As combinações que a tela mostra (com o moveset, o item e o campo do plano que o card mostra) e os bits da equipe.
  * null sem o motor (fora do Quetzal, ou desligado nos testes de comparação).
@@ -445,6 +454,11 @@ function tuned(e, plan) {
   const field = plan.field || null;
   const m = g.gear && g.gear.mech ? regear(e, set, field) : e.m;
   if (m === e.m && set.length === e.set.length && set.every((x, i) => x === e.set[i])) return e;
+  return remake(e, m, set, mctx);
+}
+/** A entrada refeita com outro Pokémon (item/habilidade) e outro moveset: as contas de novo, o mesmo `id`. */
+function remake(e, m, set, mctx) {
+  const g = e.mctx.gen;
   const learn = learnOf(e.mcands, set);
   const x = Object.assign(entry(m, e.bf === e.m ? m : e.bf, g.T, g.types, g.mult, learn, set), { id: e.id });
   x.mcands = e.mcands; x.mctx = mctx;
@@ -460,6 +474,47 @@ function tuned(e, plan) {
     blankCaches(x.base);
     copyCtx(x.base, e.base, set, g.T);
   }
+  return x;
+}
+
+// Golpes de papel que a versão de um Pokémon mantido de uma equipe de referência pode forçar no moveset (o resto da
+// escolha continua a de sempre: com mais, sobrava pouco dano)
+const ROLE_MOVES_MAX = 2;
+/**
+ * Equipes de referência (reference.js): a versão do Pokémon que cumpre os papéis `keys` que ele tinha na original,
+ * se ele consegue neste jogo. Para cada papel, o golpe que ele aprende (o menu ensina na hora primeiro) e que dá o papel,
+ * preferindo o que os sets do Smogon da espécie mais usam; Regenerator pela habilidade, se a espécie tem. O moveset é
+ * escolhido de novo com esses golpes forçados (como os golpes do plano), e o item e as contas são refeitos. A mesma entrada
+ * se não há o que mudar (fora do moveset do Quetzal, ou nenhum papel que ele consiga).
+ * @returns {object} a entrada (com `roleFix`: os papéis que a versão passou a cumprir, e `keepMoves`: os golpes forçados)
+ */
+export function withRoles(e, keys, plan) {
+  if (!e.mcands || !e.mctx || !e.mctx.gen || !keys.length) return e;
+  const item = e.m.item && !isMegaStone(e.m.item) ? e.m.item.name : null;
+  let m = e.m;
+  if (keys.includes('regen') && !isMegaStone(m.item) && m.ability && m.ability.name !== 'Regenerator') {
+    const abs = m.species.abilities || [];
+    const i = abs.indexOf('Regenerator');
+    if (i >= 0) m = { ...m, ability: { ...m.ability, name: 'Regenerator', num: i }, planFrom: realOf(m), gear: { ...(m.gear || {}), ability: 'Regenerator', from: realOf(m).ability ? realOf(m).ability.name : m.ability.name, patch: i === 2 } };
+  }
+  const c = mechOf(m, e.bf === e.m ? m : e.bf, e.set, item);
+  const usage = e.mctx.usage;
+  const SRC_RANK = { [SRC.known]: 0, [SRC.now]: 1, [SRC.tutor]: 1, [SRC.level]: 2 };
+  const rank = x => -10 * (usage && usage.get(toId(x.name)) || 0) + SRC_RANK[x.src];
+  const names = [];
+  for (const r of keys) {
+    const mv = teachMove(c, r, e.mcands, () => true, rank);
+    if (mv && !names.includes(mv.name) && names.length < ROLE_MOVES_MAX) names.push(mv.name);
+  }
+  if (m === e.m && !names.length) return e;
+  const set = names.length ? pickMoveset(e.mcands, { ...e.mctx, force: new Set(names) }) : e.set;
+  const field = plan && plan.field || null;
+  const g = e.mctx.gen;
+  if (g.gear && g.gear.mech) m = regear({ ...e, m }, set, field);
+  const x = remake(e, m, set, e.mctx);
+  const before = e.sbits;
+  x.roleFix = keys.filter(r => (x.sbits & roleMask([r])) && !(before & roleMask([r])));
+  x.keepMoves = names.filter(n => set.some(y => y.name === n));
   return x;
 }
 /** O Pokémon com o item do plano: o mesmo objeto se o item não muda. */

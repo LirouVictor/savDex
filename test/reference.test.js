@@ -90,7 +90,7 @@ describe('equipes de referência', () => {
     expect(r.swaps.map(s => s.orig.x.s).sort()).toEqual(['Barraskewda', 'Tapu Fini']);
     expect(r.adapted.planKept && r.adapted.holds).toBe(true);
     // Global: nenhuma dupla de candidatos para as 2 vagas dá nota + fidelidade maior (busca exaustiva)
-    const pp = r.adapted.pp, plan = r.adapted.plan, fid = fidelity(r.orig, true);
+    const pp = r.adapted.pp, plan = r.adapted.plan, fid = fidelity(r.orig, true, plan);
     const val = team => scoreParts(team, plan, ctx.types).total + FID_W * fid(team);
     const kept = r.kept;
     let best = -Infinity;
@@ -116,7 +116,7 @@ describe('equipes de referência', () => {
     const ctx = prepareBuild(save(), T);
     const [w] = referenceTeams(ctx, table([{ id: 'rain', members: RAIN }]), T, game);
     const [z] = referenceTeams(prepareBuild(save(), T), table([{ id: 'rain', members: RAIN }]), T, game, { fidW: 0 });
-    const fid = fidelity(w.orig, true);
+    const fid = fidelity(w.orig, true, w.adapted.plan);
     expect(fid(w.adapted.team)).toBeGreaterThanOrEqual(fid(z.adapted.team));
     expect(z.adapted.score).toBeGreaterThanOrEqual(w.adapted.score - 1e-9);
   });
@@ -133,6 +133,14 @@ describe('equipes de referência', () => {
     expect(resultsHtml(res, 0, T)).toContain('Nenhuma equipe de referência compatível');
     // Jogo sem referências ainda
     expect(resultsHtml(runBuilder(save(), T, '', null, { saveGame: { id: 'emerald' }, refs: [] }), 0, T)).toContain('Ainda não há equipes de referência para este jogo');
+  });
+
+  it('tabela de outra geração ou de Doubles não entra (as regras dos papéis são as do jogo)', () => {
+    const ctx = prepareBuild(save(), T);
+    const [tb] = table([{ id: 'a', members: RAIN }]);
+    expect(referenceTeams(ctx, [{ ...tb, gen: 8 }], T, game)).toEqual([]);
+    expect(referenceTeams(ctx, [{ ...tb, mode: 'doubles' }], T, game)).toEqual([]);
+    expect(referenceTeams(ctx, [tb], T, game)).toHaveLength(1);
   });
 
   it('a tela separa a original (com a origem) da adaptada; resultado de torneio só com fonte', () => {

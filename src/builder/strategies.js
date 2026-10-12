@@ -159,13 +159,20 @@ export function rolesOfMon(c, cands = [], itemOk = () => true, teachOk = () => t
       if (it) teach.set(r, { kind: 'item', name: it });
       continue;
     }
-    if (!t.moves) continue;
-    // O golpe que ele pode aprender (o menu ensina na hora primeiro; depois o treino) e que cumpre o papel com ele
-    const best = cands.filter(x => t.moves.has(x.name) && teachOk(x.name) && hasRole({ ...c, moves: [...c.moves, x] }, r))
-      .sort((a, b) => SRC_RANK[a.src] - SRC_RANK[b.src])[0];
+    const best = teachMove(c, r, cands, teachOk);
     if (best) teach.set(r, { kind: 'move', name: best.name, src: best.src, level: best.level });
   }
   return { has, teach };
+}
+/**
+ * O golpe que ele pode aprender e que cumpre o papel com ele (o menu ensina na hora primeiro; depois o treino), ou null.
+ * `rank(x)` (menor primeiro) troca a ordem: as equipes de referência preferem o golpe que os sets da espécie mais usam.
+ */
+export function teachMove(c, r, cands, teachOk = () => true, rank = x => SRC_RANK[x.src]) {
+  const t = ROLE_TESTS[r];
+  if (!t || !t.moves) return null;
+  return cands.filter(x => t.moves.has(x.name) && teachOk(x.name) && hasRole({ ...c, moves: [...c.moves, x] }, r))
+    .sort((a, b) => rank(a) - rank(b))[0] || null;
 }
 const SRC_RANK = { known: 0, now: 1, tutor: 1, level: 2 };
 

@@ -14,17 +14,18 @@
 // A equipe adaptada não herda nada da original: a nota é a do montador, e resultado de torneio só existe com fonte
 // (`results` das tabelas, hoje vazio: as referências importadas são equipes de exemplo).
 
-import { bestTeam, plans, planPool, setPlanFlags, planHolds, scoreParts, sets, allowed, WEATHERS } from './build.js';
+import { bestTeam, plans, planPool, setPlanFlags, planHolds, scoreParts, sets, allowed, withRoles, WEATHERS } from './build.js';
 import { refRoleBits, roleKeysOf, roleMask, strategiesOf, STRATEGIES } from './strategies.js';
 import { gameSpecies } from './threats.js';
 import { normId, speciesIds } from './species-id.js';
 export { normId, speciesIds };
 import { WEATHER } from '../ai/strategy.js';
 
-/** Formatos de referência de cada jogo (só Singles; por enquanto o Quetzal). */
+/** Formatos de referência de cada jogo (só Singles; por enquanto o Quetzal) e a geração das mecânicas de cada jogo. */
 const FORMATS = {
   quetzal: ['gen9nationaldex', 'gen9nationaldexubers', 'gen9ou', 'gen9uu', 'gen9ru', 'gen9nu', 'gen9pu'],
 };
+const GAME_GEN = { quetzal: 9 };
 export const refFormats = game => (game && FORMATS[game.id]) || [];
 
 // Pacotes à parte, carregados só ao montar equipes
@@ -58,10 +59,14 @@ export async function loadReferences(game) {
 // quase toda da busca livre e não teria nenhuma dupla da original jogando junta (medido nos saves reais: ver CLAUDE.md)
 export const MIN_KEEP = 2;
 // Fidelidade (parte da busca e da ordem das referências): cada estratégia da original que a adaptada ainda executa vale
-// o `v` dela, cada papel da original que a adaptada tem vale ROLE_FID e manter o plano vale PLAN_FID (o plano é a
-// estratégia principal; vale como uma estratégia forte). O peso FID_W foi escolhido pelo teste de comparação.
+// o `v` dela, cada papel da original que a adaptada tem (e que não faz parte de uma dessas estratégias nem do plano) vale
+// ROLE_FID e manter o plano, se a equipe o sustenta, vale PLAN_FID (o plano é a estratégia principal; vale como uma
+// estratégia forte). O peso FID_W foi escolhido pelo teste de comparação (3 saves do Quetzal): sem a contagem dupla da
+// primeira versão (papel contado de novo dentro da estratégia), 1 preservava menos (estratégias 49/62 → 47/62); 1,5
+// preserva o mesmo ou mais que a primeira versão com 1 (50/63, papéis 129/143) com a nota igual (−0,4 num save); 2 ganha
+// mais estratégias (52/64), mas a nota cai nos três saves.
 const ROLE_FID = 1, PLAN_FID = 5;
-export const FID_W = 1;
+export const FID_W = 1.5;
 // Papéis que contam na fidelidade e na tela (os de tipo e os auxiliares das estratégias, não)
 export const FID_ROLES = ['pivot', 'regen', 'hazard', 'removal', 'phaze', 'screens', 'web', 'sweeper', 'priority', 'sacrifice'];
 const SLOW = 50; // Trick Room: lentos que atacam (o mesmo corte de build.js)
@@ -101,19 +106,44 @@ const samePlan = (a, b) => a.kind === b.kind && (a.field || null) === (b.field |
  * A fidelidade de uma equipe à original: estratégias da original que ela executa (valor de cada), papéis da original que
  * ela tem e o plano mantido.
  */
-export function fidelity(orig, planKept) {
+export function fidelity(orig, planKept, plan = null, mode = 'v2') {
   const strats = STRATEGIES.filter(s => orig.strategies.includes(s.id));
   const mask = roleMask([...orig.roles]);
+  if (mode === 'v1') {
+    return team => {
+      let v = planKept ? PLAN_FID : 0;
+      if (strats.length) { const have = new Set(strategiesOf(team, orig.plan)); for (const s of strats) if (have.has(s.id)) v += s.v; }
+      let union = 0;
+      for (const e of team) union |= e.sbits;
+      let m = union & mask;
+      while (m) { m &= m - 1; v += ROLE_FID; }
+      return v;
+    };
+  }
+  // Sem contar duas vezes: o papel que já faz parte de uma estratégia executada (hazards e remoção na "Hazards com
+  // remoção") ou do plano sustentado (quem abre o caminho e quem varre na Hiperofensiva) não soma de novo; o plano só
+  // conta se a equipe o sustenta de verdade (planHolds), não só por ser o mesmo plano
+  const keysOf = new Map(strats.map(s => [s.id, roleMask([...(s.need || []).map(([r]) => r), ...(s.same || [])].filter(r => FID_ROLES.includes(r)))]));
+  const offenseMask = roleMask(['hazard', 'screens', 'web', 'sweeper']);
   return team => {
-    let v = planKept ? PLAN_FID : 0;
-    if (strats.length) { const have = new Set(strategiesOf(team, orig.plan)); for (const s of strats) if (have.has(s.id)) v += s.v; }
+    let v = 0, covered = 0;
+    if (planKept && plan && team.length === 6 && planHolds(team, plan)) {
+      v += PLAN_FID;
+      if (plan.kind === 'offense') covered |= offenseMask;
+    }
+    if (strats.length) {
+      const have = new Set(strategiesOf(team, orig.plan));
+      for (const s of strats) if (have.has(s.id)) { v += s.v; covered |= keysOf.get(s.id); }
+    }
     let union = 0;
     for (const e of team) union |= e.sbits;
-    let m = union & mask;
+    let m = union & mask & ~covered;
     while (m) { m &= m - 1; v += ROLE_FID; }
     return v;
   };
 }
+// Modo da fidelidade ('v1': como no PR #82; 'v2': sem contagem dupla, plano só se sustentado); escolhido pelo teste de comparação
+export const FID_MODE = 'v2';
 
 // Adaptadas com a busca completa logo de início: as melhores pela estimativa (a busca gulosa, feixe de 1, com a mesma nota
 // e fidelidade) e as que o jogador tem inteiras. Medido nos saves reais do Quetzal: as 6 melhores da busca completa
@@ -130,7 +160,10 @@ export const ADAPT_N = 6;
  * @returns {{ list: object[], rejected: number, fidW: number }} `rejected`: quantas ficaram de fora por ter menos de
  *   `minKeep` membros no save
  */
-export function referenceCandidates(ctx, tables, T, game, { fidW = FID_W, minKeep = MIN_KEEP } = {}) {
+export function referenceCandidates(ctx, tables, T, game, opts = {}) {
+  const { fidW = FID_W, minKeep = MIN_KEEP } = opts;
+  // O que a busca de cada candidata usa (as opções existem para o teste de comparação)
+  const ro = { fidW, roleMoves: opts.roleMoves ?? 'choose', fidMode: opts.fidMode || FID_MODE, beam: opts.beam };
   const { pool, forcedFor } = ctx;
   const byId = new Map();
   for (const sp of gameSpecies(T, game)) for (const id of speciesIds(sp)) if (!byId.has(id)) byId.set(id, sp);
@@ -140,7 +173,11 @@ export function referenceCandidates(ctx, tables, T, game, { fidW = FID_W, minKee
   const savePlans = plans(pool);
   let rejected = 0;
   const list = [];
+  // Só tabelas Singles da geração do jogo: os papéis e as estratégias são lidos com as regras da Gen 9 (Defog tira os
+  // hazards dos dois lados, Sticky Web, terrenos), que não valem nas gerações antigas
+  const gen = game && GAME_GEN[game.id];
   for (const tb of tables) {
+    if (tb.mode !== 'singles' || (gen && tb.gen !== gen)) continue;
     for (const team of tb.teams) {
       const members = team.members.map(x => refMember(x, byId));
       const keep = members.map(m => pickOwned(owned.get(normId(m.x.s)) || [], m.x));
@@ -149,7 +186,7 @@ export function referenceCandidates(ctx, tables, T, game, { fidW = FID_W, minKee
       const plan0 = refPlan(members);
       const orig = { plan: plan0, members, strategies: strategiesOf(members, plan0), roles: new Set(members.flatMap(m => [...roleSet(m.sbits)])) };
       const target = savePlans.find(p => samePlan(p, plan0)) || savePlans.find(p => p.kind === 'balance');
-      list.push({ ref: team, format: tb, members, keep, orig, target, complete: n === 6, estimate: -Infinity, result: undefined });
+      list.push({ ref: team, format: tb, members, keep, orig, target, complete: n === 6, estimate: -Infinity, result: undefined, opts: ro });
     }
   }
   // Moveset do plano (Quetzal): uma vez por plano, com os membros que ficam de todas as referências
@@ -164,7 +201,7 @@ export function referenceCandidates(ctx, tables, T, game, { fidW = FID_W, minKee
   }
   for (const w of list) {
     w.pp = pps.get(planKey(w.target));
-    const r = run(ctx, w, fidW, true);
+    const r = run(ctx, w, { ...ro, quick: true });
     w.estimate = r ? r.rank : -Infinity;
   }
   list.sort((a, b) => b.estimate - a.estimate);
@@ -172,48 +209,87 @@ export function referenceCandidates(ctx, tables, T, game, { fidW = FID_W, minKee
 }
 
 /** A equipe adaptada de uma candidata (busca completa; guardada na candidata). null se não deu para montar 6. */
-export function adaptReference(ctx, w, fidW = FID_W, { beam } = {}) {
-  if (w.result === undefined) w.result = run(ctx, w, fidW, false, beam);
+export function adaptReference(ctx, w) {
+  if (w.result === undefined) w.result = run(ctx, w, w.opts);
   return w.result;
 }
 
 /**
  * As referências do jogo no save, adaptadas: as ADAPT_N melhores pela estimativa e as que o jogador tem inteiras, da
  * melhor para a pior (nota + fidelidade). `candidates` (propriedade): referenceCandidates, para adaptar mais depois.
- * @param {{ fidW?: number, minKeep?: number, adapt?: number, beam?: number }} [opts]
+ * @param {{ fidW?: number, minKeep?: number, adapt?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
  */
 export function referenceTeams(ctx, tables, T, game, opts = {}) {
   const c = referenceCandidates(ctx, tables, T, game, opts);
   const n = opts.adapt ?? ADAPT_N;
-  const out = c.list.filter((w, i) => i < n || w.complete).map(w => adaptReference(ctx, w, c.fidW, opts)).filter(Boolean);
+  const out = c.list.filter((w, i) => i < n || w.complete).map(w => adaptReference(ctx, w)).filter(Boolean);
   out.sort((a, b) => b.rank - a.rank);
   Object.defineProperty(out, 'candidates', { value: c });
   return Object.defineProperty(out, 'rejected', { value: c.rejected });
 }
 
-/** Busca da equipe adaptada: quem fica (e quem o jogador pediu) fixo, o resto pela busca do montador com a fidelidade. */
-function run(ctx, w, fidW, quick, beam) {
+// Os papéis da original que o Pokémon mantido não cumpre com o moveset que o app escolheu
+const lostOf = (m, e) => FID_ROLES.filter(r => (m.sbits & roleMask([r])) && !(e.sbits & roleMask([r])));
+// Versões com os papéis, guardadas por entrada (a estimativa e a busca completa usam as mesmas)
+const variants = new WeakMap();
+function roleVariant(e, lost, plan) {
+  let byKey = variants.get(e);
+  if (!byKey) variants.set(e, (byKey = new Map()));
+  const k = lost.join(',');
+  if (!byKey.has(k)) byKey.set(k, withRoles(e, lost, plan));
+  return byKey.get(k);
+}
+
+/**
+ * Busca da equipe adaptada: quem fica (e quem o jogador pediu) fixo, o resto pela busca do montador com a fidelidade.
+ * Quem fica e perdeu um papel da original com o moveset do app entra na versão com o golpe do papel (withRoles); na equipe
+ * final, cada versão é comparada com a de sempre pela nota + fidelidade da equipe inteira, e fica a que rende mais
+ * (`roleMoves: 'always'` fica sempre com a versão do papel e `false` desliga; os dois só para o teste de comparação).
+ */
+function run(ctx, w, { fidW = FID_W, quick = false, beam, roleMoves = 'choose', fidMode = FID_MODE } = {}) {
   const { types, forcedFor } = ctx;
   const pp = w.pp, plan = pp.plan;
   setPlanFlags(pp.pool, plan);
-  const kept = [];
-  for (const e of w.keep) if (e && allowed(kept, pp.map(e), plan)) kept.push(pp.map(e));
+  const kept = [], plain = [];
+  w.keep.forEach((e0, i) => {
+    if (!e0) return;
+    const e = pp.map(e0);
+    const lost = roleMoves ? lostOf(w.members[i], e) : [];
+    const v = lost.length ? roleVariant(e, lost, plan) : e;
+    const x = v.roleFix && v.roleFix.length ? v : e;
+    if (allowed(kept, x, plan)) { kept.push(x); plain.push(e); }
+  });
   // O que o jogador pediu entra também (se couber)
   const forced = [...kept];
-  for (const e of forcedFor(w.target).map(pp.map)) if (forced.length < 6 && allowed(forced, e, plan)) forced.push(e);
+  for (const e of forcedFor(w.target).map(pp.map)) if (forced.length < 6 && !forced.some(f => f.real === e.real) && allowed(forced, e, plan)) forced.push(e);
   const planKept = w.orig.plan.kind !== 'balance' && samePlan(plan, w.orig.plan);
-  const fid = fidelity(w.orig, planKept);
+  const fid = fidelity(w.orig, planKept, plan, fidMode);
   const bonus = fidW ? team => fidW * fid(team) : null;
   // A estimativa: feixe de 1, sem as sementes de estratégia; a completa parte também de quem executa as estratégias da original
   const r = quick ? bestTeam(pp.pool, plan, types, forced, [], 1, undefined, { bonus, only: new Set() })
     : bestTeam(pp.pool, plan, types, forced, [], beam, undefined, { bonus, only: new Set(w.orig.strategies) });
   if (!r || r.team.length < 6) return null;
-  const parts = scoreParts(r.team, plan, types);
-  const adapted = { plan, team: r.team, score: parts.total, parts, fidelity: fid(r.team), holds: planHolds(r.team, plan), planKept };
+  let team = r.team;
+  const value = t => scoreParts(t, plan, types).total + fidW * fid(t);
+  // A versão do papel só fica se a equipe inteira rende mais com ela (um golpe de efeito no lugar de um de dano pode
+  // custar mais que o papel vale)
+  const reverted = new Set();
+  if (roleMoves === 'choose') {
+    let best = value(team);
+    kept.forEach((x, i) => {
+      if (x === plain[i] || !team.includes(x)) return;
+      const alt = team.map(y => (y === x ? plain[i] : y));
+      const v = value(alt);
+      if (v > best) { best = v; team = alt; kept[i] = plain[i]; reverted.add(x.real); }
+    });
+  }
+  const parts = scoreParts(team, plan, types);
+  const adapted = { plan, team, score: parts.total, parts, fidelity: fid(team), holds: planHolds(team, plan), planKept };
   Object.defineProperty(adapted, 'pp', { value: pp });
   const rank = parts.total + fidW * adapted.fidelity;
   if (quick) return { rank };
-  return { ref: w.ref, format: w.format, orig: w.orig, keep: w.keep, kept, complete: w.complete, adapted, swaps: explain(w, kept, r.team, plan, forced), rank };
+  // `reverted`: os mantidos que voltaram à versão sem o golpe do papel porque a equipe inteira rende mais assim
+  return { ref: w.ref, format: w.format, orig: w.orig, keep: w.keep, kept, complete: w.complete, adapted, swaps: explain(w, kept, team, plan, forced), rank, reverted };
 }
 const planKey = p => `${p.kind}|${p.field || ''}`;
 

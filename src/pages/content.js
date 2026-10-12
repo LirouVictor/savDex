@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-13';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-15',
+    pt: [
+      'Montar equipe (Quetzal), equipes de referência: os Pokémon que ficam da equipe original agora mantêm o papel que tinham nela quando conseguem (Corviknight volta a tirar hazards com Defog, o pivô volta a ter U-turn), se a equipe inteira rende mais assim. Nos saves de teste, os Pokémon mantidos passaram a cumprir 86% dos papéis da original (antes, 68%). A tela diz o papel que cada um manteve e com que golpe, ou por que perdeu: a equipe rende mais sem ele ou ele não aprende o golpe no jogo.',
+    ],
+    en: [
+      'Build team (Quetzal), reference teams: the Pokémon kept from the original team now keep the role they had there when they can (Corviknight clears hazards with Defog again, the pivot gets U-turn back), if the whole team scores higher that way. In the test saves, kept Pokémon now fill 86% of their original roles (68% before). The screen says which role each one kept and with which move, or why it lost it: the team scores higher without it, or it cannot learn the move in the game.',
+    ],
+  },
+  {
     date: '2026-10-14',
     pt: [
       'Montar equipe (Quetzal): agora o ponto de partida são equipes de verdade do competitivo. O app compara 64 equipes de exemplo do Smogon (Gen 9: National Dex, Ubers, OU, UU, RU, NU e PU, reunidas pelo projeto pkmn/smogon) com o seu save, mantém os Pokémon que você tem e troca os que faltam por Pokémon seus, escolhidos juntos pela equipe inteira e tentando preservar o plano, as estratégias e os papéis da original. Cada equipe mostra a original (com o link do tópico do Smogon e o que foi conferido), a sua versão adaptada (quem ficou, quem entrou no lugar de quem e o que se perdeu) e o que falta para reproduzir a original. Equipes de exemplo não são campeãs de torneio, e a tela diz isso. Se nenhuma equipe combina com o seu save, o app avisa; a montagem do zero continua no botão “Montar do zero”.',

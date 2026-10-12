@@ -1139,4 +1139,9 @@ export default {
   "Equipe original": "Original team",
   "Sua equipe adaptada": "Your adapted team",
   "Para reproduzir a original": "To rebuild the original",
+  "{ref} mantém o papel da original ({roles}), com {moves}.": "{ref} keeps its original role ({roles}), with {moves}.",
+  "{ref} mantém o papel da original ({roles}).": "{ref} keeps its original role ({roles}).",
+  "{ref} perde {roles}: aprende o golpe, mas a equipe inteira rende mais sem ele.": "{ref} loses {roles}: it learns the move, but the whole team scores higher without it.",
+  "{ref} perde {roles}: aprende o golpe, mas não coube no moveset (ver “Para reproduzir a original”).": "{ref} loses {roles}: it learns the move, but it did not fit in the moveset (see “To rebuild the original”).",
+  "{ref} perde {roles}: não aprende o golpe neste jogo.": "{ref} loses {roles}: it cannot learn the move in this game.",
 };
