@@ -120,7 +120,7 @@ function originalSheet(x, o, byRef) {
 }
 
 /** Card de um membro da equipe montada pelo app: função, motivos, item, habilidade e os 4 golpes (com o que ensinar). */
-function memberSheet(x, m, byRef, hint) {
+function memberSheet(x, m, byRef) {
   const from = m && m.evolvedFrom;
   return `<div class="mon-hero${typeClass(m)}"><div class="sheet-mon">${sprite(m, 96)}<div><h2 id="detail-title">${monShort(m)}</h2><p class="mon-sub">${esc(where(m))}</p>${typeChips(m.species.types)}</div></div></div>
     <div class="ai-member-body sheet-body">
@@ -130,7 +130,6 @@ function memberSheet(x, m, byRef, hint) {
       <span class="ai-why">${rich(x.motivo, byRef)}</span>
       ${x.golpes ? movesetHtml(x.golpes) : ''}
     </div>
-    ${hint}
     <p><button class="btn btn-ghost btn-small" type="button" data-ref="${esc(x.ref)}">${t('Ver o Pokémon do save')}</button></p>`;
 }
 
@@ -249,11 +248,9 @@ export function buildView(r, byRef, model, T, opts = null) {
     </button></li>`;
   }).join('');
   const app = !!(opts && opts.app);
-  const setHint = r.membros.some(x => x.golpes)
-    ? `<p class="hint ai-moveset-hint">${t('Golpes de cada um: sem marca, ele já sabe; “tutor” e “nível”, o menu do Pokémon (NOVO MOV.) ensina na hora e de graça; “Nv. N”, aprende ao chegar no nível.')}${r.membros.some(x => x.item || x.habilidade) ? ' ' + t('Item e habilidade: os que o competitivo (Smogon) mais usa; “dar” e “trocar” = o que ainda falta.') : ''}</p>` : '';
   // Equipe do app: os 6 em blocos (como na seção Equipe), com a função embaixo; o toque abre o card do membro
   const tiles = app ? r.membros.map((x, i) => `<li>${monTile(mons[i], `data-sheet="a${i}"`)}${x.papel ? `<small class="ref-tile-status">${esc(x.papel)}</small>` : ''}</li>`).join('') : '';
-  const sheets = app ? r.membros.map((x, i) => `<template data-sheet-id="a${i}">${memberSheet(x, mons[i], byRef, setHint)}</template>`).join('') : '';
+  const sheets = app ? r.membros.map((x, i) => `<template data-sheet-id="a${i}">${memberSheet(x, mons[i], byRef)}</template>`).join('') : '';
   // Conferência do próprio app (as mesmas contas da análise), para não depender só do texto da IA
   const issues = !app && mons.length ? buildIssues(mons, T) : [];
   const warn = issues.length ? `<p class="ai-warn"><b>${t('Fora dos critérios pedidos:')}</b> ${issues.map(esc).join(' ')}</p>` : '';
@@ -279,8 +276,7 @@ export function buildView(r, byRef, model, T, opts = null) {
     </div>
     <p class="hint team-msg" role="status"></p>
     ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
-    ${app ? `<ul class="party-grid builder-grid">${tiles}</ul><p class="hint">${t('Toque num Pokémon para ver golpes, item e o que fazer.')}</p>${sheets}` : `<ul class="ai-members">${cards}</ul>
-    ${setHint}`}
+    ${app ? `<ul class="party-grid builder-grid">${tiles}</ul><p class="hint">${t('Toque num Pokémon para ver golpes, item e o que fazer.')}</p>${sheets}` : `<ul class="ai-members">${cards}</ul>`}
     ${fixed}
     ${short}
     ${app ? appPanels(r, byRef, dicas, r.membros.every(x => x.golpes)) : ''}

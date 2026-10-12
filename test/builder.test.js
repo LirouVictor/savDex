@@ -1,10 +1,10 @@
 import { describe as suite, it, expect } from 'vitest';
 import T from '../src/data/tables.js';
-import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes, setPlanFlags } from '../src/builder/build.js';
+import { buildTeams, altTeams, isLegendary, prepare, plans, planHolds, scoreParts, attackTypes, setPlanFlags, CLASH } from '../src/builder/build.js';
 import { idealSwaps } from '../src/builder/ideal.js';
 import { megaForm } from '../src/ai/evolve.js';
 import { weatherConflict } from '../src/ai/strategy.js';
-import { runBuilder, moreOptions, resultsHtml, shownParts, wantedMons } from '../src/builder/index.js';
+import { runBuilder, moreOptions, resultsHtml, pickerHtml, shownParts, wantedMons } from '../src/builder/index.js';
 import { builderWin } from '../src/ui/render.js';
 import { smogonIndex } from '../src/builder/smogon.js';
 import G9 from '../src/data/smogon/gen9nationaldex.json';
@@ -80,6 +80,20 @@ suite('Montador de equipes (sem IA)', () => {
     expect(planHolds(sun.team, sun.plan)).toBe(true);
   });
 
+  it('dois climas automáticos na mesma equipe se anulam: fora do plano de clima, cada um a mais tira da nota', () => {
+    const types = attackTypes(T);
+    const base = pool().filter(m => !['Torkoal', 'Charizard', 'Pelipper'].includes(m.species.name)).slice(0, 4);
+    const one = prepare([...base, pool().find(m => m.species.name === 'Torkoal')], T);
+    const two = prepare([...base, pool().find(m => m.species.name === 'Torkoal'), pool().find(m => m.species.name === 'Pelipper')], T);
+    const plan = { kind: 'balance', field: null };
+    const pelipper = two.find(e => e.m.species.name === 'Pelipper');
+    // A mesma equipe com o Pelipper: sem a regra, a parte do plano não mudaria; com ela, perde o peso de um conflito
+    const withP = scoreParts(two, plan, types).plan, withoutRule = (() => { const w = CLASH.w; CLASH.w = 0; const v = scoreParts(two, plan, types).plan; CLASH.w = w; return v; })();
+    expect(withoutRule - withP).toBe(CLASH.w);
+    expect(scoreParts(one, plan, types).plan).toBe((() => { const w = CLASH.w; CLASH.w = 0; const v = scoreParts(one, plan, types).plan; CLASH.w = w; return v; })());
+    expect(pelipper.autoW).toBeGreaterThan(0);
+  });
+
   it('chuva: Pelipper, quem aproveita e o Raichu com Lightning Rod contando como resposta ao Electric', () => {
     const rain = buildTeams(pool(), T).find(r => r.plan.field === 'chuva');
     expect(names(rain)).toEqual(expect.arrayContaining(['Pelipper', 'Kingdra']));
@@ -151,7 +165,9 @@ suite('Montador de equipes (sem IA)', () => {
     const res = runBuilder(pool(), T);
     expect(res.length).toBeGreaterThanOrEqual(3);
     const html = resultsHtml(res, 0, T);
-    expect(html).toContain('data-plan="1"');
+    // A equipe escolhida numa barra; as outras na janela "Escolher equipe"
+    expect(html).toContain('data-pick');
+    expect(pickerHtml(res, 0)).toContain('data-choose="r1"');
     expect(html.replace(/<[^>]+>/g, ' ')).toMatch(/Nota\s+-?\d+\s+Defesa\s+[+-]?\d+/);
     expect(html).toContain('Equipe montada pelo app');
     expect(html).toContain('data-ai-copy');

@@ -302,10 +302,8 @@ function setupAi(out) {
   });
 }
 
-// Pedido da IA: só a opção da janela (sem lendários); o campo de pedido saiu (decisão do autor)
-function aiNote() {
-  return document.getElementById('out').querySelector('#builder-nolegend').checked ? t('Sem lendários e míticos.') : '';
-}
+// Pedido da IA: o campo de pedido e a opção "Sem lendários e míticos" saíram da janela (decisão do autor)
+const aiNote = () => '';
 
 const AI_WAIT = { analyze: 'Analisando a equipe', build: 'Montando a equipe', review: 'Comentando a equipe' };
 
@@ -383,10 +381,8 @@ function setupBuilder(out) {
       btn.disabled = false;
     }
   };
-  // Sem lendários e míticos: a escolha fica neste aparelho
-  const legend = $('#builder-nolegend');
-  try { legend.checked = localStorage.getItem('builder-nolegend') === '1'; } catch { /* sem armazenamento */ }
-  legend.addEventListener('change', () => { try { if (legend.checked) localStorage.setItem('builder-nolegend', '1'); else localStorage.removeItem('builder-nolegend'); } catch { /* sem armazenamento */ } });
+  // A opção "Sem lendários e míticos" saiu (decisão do autor): apaga a escolha guardada por versões anteriores
+  try { localStorage.removeItem('builder-nolegend'); } catch { /* sem armazenamento */ }
   $('#builder-run').addEventListener('click', async e => {
     const btn = e.currentTarget;
     btn.disabled = true;
@@ -401,11 +397,10 @@ function setupBuilder(out) {
       // Equipes de referência do competitivo ([] se o jogo ainda não tem; null se não carregaram): o fluxo principal
       const refs = await mod.loadReferences(game);
       await new Promise(r => setTimeout(r, 30)); // deixa a tela de espera aparecer antes das contas
-      const noLegends = $('#builder-nolegend').checked;
       // Sem as antigas opções (preparo, ameaças, sem restrição de item): o item é só informado (o jogador dá um jeito de
       // conseguir), então quem tem mega conta com a megapedra nos jogos com a tabela de megas da ROM
       const anyItem = R.MEGA_GAMES.includes(game && game.id);
-      state.builder = { results: mod.runBuilder(state.all, T, '', dex, { noLegends, anyItem, comp, saveGame: game, refs }), i: 0 };
+      state.builder = { results: mod.runBuilder(state.all, T, '', dex, { anyItem, comp, saveGame: game, refs }), i: 0 };
       show(0);
     } catch (err) {
       console.error(err);
@@ -417,8 +412,31 @@ function setupBuilder(out) {
   bOut.addEventListener('click', async e => {
     const cur = state.builder && state.builder.results[state.builder.i];
     if (!cur) return;
-    const tab = e.target.closest('[data-plan]');
-    if (tab) { show(+tab.dataset.plan); return; }
+    // Escolher equipe: a janela com todas as equipes (as que ainda não foram montadas são adaptadas ao escolher)
+    const pick = e.target.closest('[data-pick]');
+    if (pick) {
+      const b = state.builder;
+      openSheet(mod.pickerHtml(b.results, b.i), pick, sheet => sheet.addEventListener('click', async ev => {
+        const f = ev.target.closest('[data-filter]');
+        if (f) {
+          for (const x of sheet.querySelectorAll('[data-filter]')) x.setAttribute('aria-pressed', String(x === f));
+          for (const li of sheet.querySelectorAll('[data-kind]')) li.hidden = f.dataset.filter !== 'all' && li.dataset.kind !== f.dataset.filter;
+          return;
+        }
+        const c = ev.target.closest('[data-choose]');
+        if (!c) return;
+        document.getElementById('detail').close();
+        if (c.dataset.choose[0] === 'c') {
+          bOut.querySelector('.builder-current').innerHTML = `<span class="hint">${t('Adaptando a equipe')}<span class="dots" aria-hidden="true"></span></span>`;
+          await new Promise(r => setTimeout(r, 30)); // deixa a espera aparecer antes das contas
+        }
+        if (state.builder !== b) return;
+        const k = mod.chooseTeam(b.results, c.dataset.choose);
+        show(k >= 0 ? k : b.i);
+        bOut.scrollIntoView({ block: 'start' });
+      }));
+      return;
+    }
     // Alternativas do plano: só calcula quando o jogador pede (no celular, a busca de cada plano leva alguns segundos)
     const more = e.target.closest('[data-more]');
     if (more) {
@@ -428,18 +446,6 @@ function setupBuilder(out) {
       await new Promise(r => setTimeout(r, 30)); // deixa a espera aparecer antes das contas
       if (state.builder !== b) return; // montou de novo enquanto isso
       const k = mod.moreOptions(b.results, i, T);
-      show(k >= 0 ? k : i);
-      return;
-    }
-    // Mais referências: só calculam quando o jogador pede
-    const extra = e.target.closest('[data-more-refs]');
-    if (extra) {
-      const b = state.builder, i = b.i;
-      extra.disabled = true;
-      extra.innerHTML = `${t('Adaptando mais referências')}<span class="dots" aria-hidden="true"></span>`;
-      await new Promise(r => setTimeout(r, 30));
-      if (state.builder !== b) return;
-      const k = mod.moreReferences(b.results);
       show(k >= 0 ? k : i);
       return;
     }
@@ -561,7 +567,8 @@ function renderBox() {
 function openSheet(html, opener, wire) {
   const dlg = document.getElementById('detail');
   const wasOpen = dlg.open;
-  dlg.innerHTML = `<div class="sheet-bar"><b class="sheet-bar-name" aria-hidden="true"></b><button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button></div><div class="mon builder-sheet">${html}</div>`;
+  // O X fica dentro do bloco colorido do card (sem a faixa vazia em cima)
+  dlg.innerHTML = `<div class="mon builder-sheet"><button class="btn btn-ghost btn-icon close sheet-x" type="button" data-close aria-label="${t('Fechar')}">✕</button>${html}</div>`;
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   if (wire) wire(dlg.querySelector('.builder-sheet'));
   if (wasOpen) { dlg.scrollTop = 0; return; }

@@ -1,10 +1,19 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-16';
+export const UPDATED = '2026-10-19';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-19',
+    pt: [
+      'Montar equipe: a equipe escolhida fica numa barra, e o botão “Trocar equipe” abre uma janela com todas as equipes compatíveis (filtro por finais de torneio ou de exemplo, e a ordem explicada); quem ainda não foi montada é adaptada na hora. O X dos cards fica dentro do bloco colorido, a legenda dos golpes saiu (cada golpe já diz “tutor” ou “nível”) e a opção “Sem lendários e míticos” também. E uma correção: duas equipes com climas automáticos diferentes (Sand Stream e Snow Warning, por exemplo) não são mais montadas juntas, porque um clima apaga o outro (a Aurora Veil da Ninetales de Alola falhava com o Tyranitar).',
+    ],
+    en: [
+      'Build team: the chosen team sits in a bar, and the “Change team” button opens a window with every compatible team (filter by tournament finals or samples, with the order explained); teams not built yet are adapted on the spot. The cards’ X sits inside the colored block, the move legend is gone (each move already says “tutor” or “level”) and so is the “No legendaries or mythicals” option. And a fix: two different automatic weathers (Sand Stream and Snow Warning, for example) are no longer put on the same team, since one erases the other (Alolan Ninetales’ Aurora Veil failed alongside Tyranitar).',
+    ],
+  },
   {
     date: '2026-10-18',
     pt: [
@@ -337,7 +346,7 @@ const PRIVACY = {
 </ul>
 <h3>O que fica guardado neste aparelho</h3>
 <ul>
-  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado) e a opção “Sem lendários e míticos” do montador de equipes.</li>
+  <li>Preferências: tema, idioma, quais janelas (Assistente, Buscar) ficam abertas e as configurações do assistente (serviço, modelo e se deve mostrar o que vai ser enviado).</li>
   <li>As chaves de IA que você colar (localStorage). O botão <b>Apagar chave deste aparelho</b> remove a chave.</li>
   <li>Os arquivos do app (o essencial na primeira visita; o resto, como as tabelas de cada jogo, quando é usado) e os sprites já vistos (cache), para funcionar offline.</li>
 </ul>
@@ -366,7 +375,7 @@ const PRIVACY = {
 </ul>
 <h3>What is stored on this device</h3>
 <ul>
-  <li>Preferences: theme, language, which panels (Assistant, Search) stay open the assistant settings (service, model and whether to show what will be sent) and the team builder’s “No legendaries or mythicals” option.</li>
+  <li>Preferences: theme, language, which panels (Assistant, Search) stay open and the assistant settings (service, model and whether to show what will be sent).</li>
   <li>The AI keys you paste (localStorage). The <b>Delete key from this device</b> button removes a key.</li>
   <li>The app files (the essentials on the first visit; the rest, such as each game’s tables, when used) and the sprites you have already seen (cache), so it works offline.</li>
 </ul>
