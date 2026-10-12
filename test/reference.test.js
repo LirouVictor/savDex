@@ -149,7 +149,7 @@ describe('equipes de referência', () => {
     expect(res[0].kind).toBe('ref');
     const html = resultsHtml(res, 0, T);
     for (const s of ['Equipe original', 'Sua equipe adaptada', 'Trocas', 'Equipe de exemplo do Smogon', 'não conferidos no tópico',
-      'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda resultado nem reputação',
+      'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda o resultado nem a reputação',
       '1 equipes do competitivo combinam com o seu save (0 de finais de torneio).']) expect(html).toContain(s);
     // A original vem antes da adaptada, e as trocas depois das duas; cada membro é um bloco que abre o card dele
     expect(html.indexOf('Equipe original')).toBeLessThan(html.indexOf('Sua equipe adaptada'));
@@ -165,11 +165,27 @@ describe('equipes de referência', () => {
     expect(html).toContain('class="builder-current"');
     expect(html).not.toContain('class="builder-list');
     const pick = pickerHtml(res, 0);
-    for (const s of ['Escolher equipe', 'Na ordem do app', 'data-choose="r0"']) expect(pick).toContain(s);
+    for (const s of ['Escolher equipe', 'Primeiro as equipes com mais Pokémon seus', 'data-choose="r0"', 'Você tem 4 dos 6', '4/6']) expect(pick).toContain(s);
+    expect(html).toContain('4 dos 6 são seus');
+    expect(pick).not.toMatch(/Nota|≈/);
     expect(html).not.toContain('data-free'); // sem o botão da montagem do zero (só quando nenhuma referência serve)
     // Equipe de exemplo nunca mostra resultado, nem com um registro na tabela
     const sample = resultsHtml(runBuilder(save(), T, '', null, { saveGame: game, refs: table([team], [{ team: 'rain', player: 'P', event: 'Torneio X', date: '2026', placement: 'champion', url: 'https://example.org/prova' }]) }), 0, T);
     expect(sample).not.toContain('Torneio X');
+  });
+
+  it('ordem: primeiro as equipes com mais Pokémon do jogador, mesmo com nota + fidelidade menor', () => {
+    // "few" tem só 2 do save (Pelipper e Kingdra); "many" tem 5, mas sem Kingdra/Barraskewda (menos fiel à chuva)
+    const few = { id: 'few', members: [RAIN[0], RAIN[2], set('Dragapult', [atk('Shadow Ball', 'ghost', 1)]), set('Gholdengo', [atk('Make It Rain', 'steel', 1)]), set('Great Tusk', [atk('Headlong Rush', 'ground')]), set('Kingambit', [atk('Kowtow Cleave', 'dark')])] };
+    const many = { id: 'many', members: ['Garchomp', 'Ferrothorn', 'Scizor', 'Clefable', 'Corviknight'].map(sp => set(sp, [atk('Tackle', 'normal')])).concat([set('Dragapult', [atk('Shadow Ball', 'ghost', 1)])]) };
+    const ctx = prepareBuild(save(), T);
+    const rs = referenceTeams(ctx, table([few, many]), T, game);
+    expect(rs.map(r => r.ref.id)).toEqual(['many', 'few']);
+    expect(rs.map(r => r.owned)).toEqual([5, 2]);
+    const res = runBuilder(save(), T, '', null, { saveGame: game, refs: table([few, many]) });
+    expect(res[0].ref.ref.id).toBe('many');
+    const pick = pickerHtml(res, 0);
+    expect(pick.indexOf('Você tem 5 dos 6')).toBeLessThan(pick.indexOf('Você tem 2 dos 6'));
   });
 
   it('equipe de final de torneio: colocação com o replay como prova; sem a prova, nada de campeã', () => {

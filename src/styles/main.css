@@ -173,6 +173,11 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 /* Abertura */
 .intro h1 { font-size: clamp(1.4rem, 6vw, 2.2rem); margin-bottom: 10px; }
 .intro p { margin: 0 0 8px; max-width: 60ch; }
+#intro { width: calc(100% - 2 * var(--px)); max-width: 760px; justify-self: center; }
+.drop .btn-big { width: calc(100% - 6px); }
+/* Sem save aberto, o rodapé acompanha a coluna da abertura */
+body:has(#out.hidden) .foot { max-width: 768px; }
+@media (min-width: 560px) { .drop .btn-big { width: auto; } }
 .drop { margin-top: 16px; padding: 18px; display: grid; justify-items: start; gap: 10px; background: var(--win-2); outline: 3px dashed var(--hi); outline-offset: -3px; }
 .drop.over { outline-color: var(--accent); }
 .hint { color: var(--muted); font-size: .9rem; margin: 0; }
@@ -244,6 +249,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .export .export-btns [data-copy] { grid-column: 1 / -1; }
 .export .export-btns .btn { padding: 6px 4px; }
 .export .export-btns .btn, .party-actions .btn, .ai-hero .export-btns .btn { margin: 3px; line-height: 1.25; text-align: center; }
+@media (max-width: 480px) {
+  .export .export-btns .btn { font-size: .74rem; padding-inline: 2px; }
+}
 .status { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
 .status:empty { display: none; }
 
@@ -252,7 +260,7 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .saved-note p { margin: 0 0 8px; font-size: .92rem; }
 #out { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .grp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-content: start; min-width: 0; scroll-margin-top: 72px; }
-#changes-slot:empty { display: none; }
+#changes-slot:empty, #teams-slot:empty { display: none; }
 /* Com um save aberto, a barra de baixo ocupa espaço: o fim da página não fica escondido atrás dela */
 body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 /* Barra de navegação fixa embaixo */
@@ -277,6 +285,11 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
     grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start;
     grid-template-areas: "sum sum" "party pc" "search builder" "teams teams" "export export";
   }
+  /* Buscar ou Montar equipe aberta: as duas em fileiras inteiras (meia largura deixava a outra metade vazia e a
+     equipe do montador espremida em 3 por linha) */
+  #out:has(#builder-win[open], #search-win[open]) {
+    grid-template-areas: "sum sum" "party pc" "search search" "builder builder" "teams teams" "export export";
+  }
   #grp-pc, #grp-tools { display: contents; }
   #grp-summary { grid-area: sum; }
   #grp-party { grid-area: party; }
@@ -284,10 +297,14 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
   #search-win { grid-area: search; }
   #builder-win { grid-area: builder; }
   #teams-slot { grid-area: teams; }
-  #teams-slot:empty { display: none; }
   #export-win { grid-area: export; }
   .nav { display: none; }
   body:has(#out:not(.hidden)) { padding-bottom: 0; }
+  .foot { max-width: 1200px; }
+  /* Equipe em 6 blocos largos: nome, nível e tipos um pouco maiores (no computador sobrava bloco e faltava letra) */
+  .ptile-name { font-size: .72rem; }
+  .ptile-lv { font-size: .78rem; }
+  .ptile-types i { font-size: .58rem; }
 }
 /* Itens de grid não crescem com conteúdo longo sem quebra (ex.: nome de arquivo comprido) */
 main > *, #out > * { min-width: 0; }
@@ -532,10 +549,14 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   scrollbar-color: var(--edge) transparent;
 }
 .results:empty { display: none; }
+/* Busca aberta em largura inteira (computador): os resultados em colunas, sem linhas de 1100 px com o nível lá no fim */
+@media (min-width: 1000px) { .results { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
+/* Anterior · página · próxima; o botão que não serve some (escondido, ele ainda ocupava lugar e empurrava o outro para
+   fora da janela no celular) */
 .pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .pager .btn { white-space: nowrap; flex: none; }
-.pager #page-info { flex: 1; font-size: .85rem; color: var(--muted); text-align: center; }
-.pager .btn:disabled { visibility: hidden; }
+.pager #page-info { flex: 1; min-width: 0; font-size: .85rem; color: var(--muted); text-align: center; }
+.pager .btn:disabled { display: none; }
 .result { background: var(--win); }
 .result {
   width: 100%; min-height: 52px; display: grid; grid-template-columns: 48px 1fr auto; gap: 8px; align-items: center;
@@ -629,6 +650,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-kicker { margin: 0; font: .68rem var(--pixel); text-transform: uppercase; opacity: .75; }
 .ai-verdict { margin: 2px 0 6px; font: 1.25rem/1.1 var(--pixel); text-transform: uppercase; }
 .ai-team-name { margin: 2px 0 0; font: 1.15rem/1.25 var(--pixel); text-transform: uppercase; overflow-wrap: anywhere; }
+/* No montador, o nome da equipe de referência já está na barra de cima: aqui, menor (eram 4 linhas no celular) */
+#builder-out .ai-team-name { font-size: .8rem; line-height: 1.45; }
 .ai-pips { display: flex; gap: 3px; }
 .ai-pips i { width: 12px; height: 12px; background: color-mix(in srgb, var(--top-ink) 22%, transparent); }
 .ai-pips i.on { background: var(--accent); }
@@ -703,6 +726,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ai-member-body .ai-evolve { color: var(--accent-2); font-weight: 600; }
 .ai-why { font-size: .88rem; line-height: 1.4; }
 .ai-moveset { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 3px; margin-top: 4px; }
+/* No card (janela do detalhe), 4 golpes em 2 × 2: com 3 colunas sobrava um golpe sozinho embaixo */
+.sheet .ai-moveset { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ai-mv { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; min-width: 0; padding: 2px 5px 2px 8px; font-size: .78rem; line-height: 1.25; background: var(--win-2); box-shadow: inset 3px 0 0 var(--t, var(--bar)); }
 .ai-mv > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-mv small { flex: none; color: var(--accent); font-size: .66rem; font-weight: 700; }
@@ -851,18 +876,26 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .builder-pick:hover, .builder-pick:focus-visible { background: color-mix(in srgb, var(--accent) 14%, var(--win-2)); }
 .builder-pick[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; }
 .builder-pick-name { flex: 1; min-width: 0; display: grid; }
-.builder-pick-name > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.builder-pick-name b { font-weight: 700; }
-.builder-pick-name small { color: var(--muted); font-size: .76rem; }
-.builder-pick-score { flex: none; font: .78rem var(--pixel); color: var(--accent); }
+.builder-pick-name { gap: 2px; }
+.builder-pick-name b { font-weight: 700; line-height: 1.25; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.builder-pick-name small { color: var(--muted); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-pick-name small .builder-tag { margin-right: 4px; vertical-align: 1px; }
+.builder-pick-owned { flex: none; font: .72rem var(--pixel); color: var(--muted); }
+.builder-pick[aria-pressed="true"] .builder-pick-owned { color: var(--accent); }
+/* "Você tem N dos 6": cabeçalho de cada grupo, preso no topo enquanto a lista rola */
+.picker-group { position: sticky; top: -16px; z-index: 1; margin-top: 6px; padding: 6px 2px 4px; font: .66rem var(--pixel); text-transform: uppercase; color: var(--accent); background: var(--win); }
 /* A equipe escolhida (a janela "Escolher equipe" tem as outras) */
 .builder-current { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 8px; padding: 8px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
 .builder-current-name { flex: 1 1 14rem; min-width: 0; display: grid; gap: 2px; justify-items: start; }
-.builder-current-name > b, .builder-current-name > small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-current-name > b { max-width: 100%; line-height: 1.25; overflow-wrap: anywhere; }
+.builder-current-name > small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .builder-current-name > small { color: var(--muted); font-size: .78rem; }
 .builder-current .btn { flex: 1 1 auto; }
 .picker-title { min-height: 44px; margin: -6px 56px 8px 0; display: flex; align-items: center; font: .9rem var(--pixel); text-transform: uppercase; }
-.picker-filters { margin: 8px 0; flex-wrap: wrap; }
+/* Filtro por origem: três botões iguais numa fileira */
+.picker-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0; padding: 3px; }
+.picker-filters .btn { margin: 0; padding: 4px; font-size: .68rem; white-space: nowrap; }
+.picker-filters .btn small { margin-left: 2px; opacity: .8; }
 .picker-list li[hidden] { display: none; }
 .builder-tag { flex: none; padding: 1px 6px; font: .58rem/1.5 var(--pixel); text-transform: uppercase; background: var(--gold); color: var(--ink); }
 /* Original e adaptada em blocos, como na seção Equipe (3 por linha; 6 em tela larga) */
@@ -891,13 +924,6 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .sheet-facts dd { margin: 0; }
 .sheet-h { margin: 4px 0 0; font: .72rem var(--pixel); text-transform: uppercase; }
 /* Nota e partes em selos: verde soma, vermelho tira */
-.builder-score { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0 0; }
-.score-badge { padding: 4px 10px; font: .78rem var(--pixel); text-transform: uppercase; background: var(--top-bg); color: var(--top-ink); }
-.score-badge b { font-size: 1rem; }
-.part { padding: 3px 7px; font-size: .78rem; color: var(--muted); background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); white-space: nowrap; }
-.part b { font: .72rem var(--pixel); color: var(--ink); }
-.part.up b { color: var(--accent); }
-.part.down b { color: var(--accent-2); }
 .builder-more { margin: 8px 0 0; }
 .builder-more .btn { line-height: 1.5; }
 /* Montar equipe: o mesmo pedido para o app e para a IA; a parte com IA no fim; o comentário da IA embaixo da equipe do app */

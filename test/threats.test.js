@@ -106,7 +106,7 @@ suite('Ameaças concretas', () => {
     expect(html).toMatch(/Resposta: alguém entra no golpe e vence \d+ de \d+; mais \d+ só vindo de graça/);
     expect(html).toMatch(/Estimativa contra \d+ Pokémon fortes do jogo \(sem lendários\): nível 50, sem itens nem EVs/);
     expect(html).toContain('O app não sabe os times dos treinadores nem os golpes de TM.');
-    // A parte "Ameaças" aparece na linha da nota
-    expect(html.replace(/<[^>]+>/g, '')).toMatch(/Ameaças [-+]?\d+/);
+    // A parte "Ameaças" fica na nota (ordem), sem a linha da nota na tela
+    expect(rs.find(r => r.parts.threats !== 0)).toBeTruthy();
   });
 });

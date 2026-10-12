@@ -6,6 +6,17 @@ export const UPDATED = '2026-10-19';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-20',
+    pt: [
+      'Montar equipe: as equipes com mais Pokémon seus vêm primeiro (uma com 5 dos 6 aparece antes de uma com 2), e a janela “Trocar equipe” separa a lista em grupos (“Você tem 5 dos 6”). A nota saiu da tela: ela vem das contas do próprio app, então só serve para ordenar.',
+      'Visual: no computador, Buscar e Montar equipe abertas usam a largura toda (a equipe aparece em 6 blocos numa fileira e os resultados da busca em colunas); a tela inicial fica centralizada; no celular, os botões do Exportar e a paginação da busca não saem mais da janela, e sumiu um espaço vazio antes do Exportar.',
+    ],
+    en: [
+      'Build team: teams with more of your Pokémon come first (one with 5 of the 6 shows up before one with 2), and the “Change team” window splits the list into groups (“You have 5 of the 6”). The score left the screen: it comes from the app’s own math, so it only orders the list.',
+      'Look: on computers, open Search and Build team use the full width (the team shows as 6 blocks in a row and search results in columns); the start screen is centered; on phones, the Export buttons and the search pages no longer spill out of the window, and an empty gap before Export is gone.',
+    ],
+  },
+  {
     date: '2026-10-19',
     pt: [
       'Montar equipe: a equipe escolhida fica numa barra, e o botão “Trocar equipe” abre uma janela com todas as equipes compatíveis (filtro por finais de torneio ou de exemplo, e a ordem explicada); quem ainda não foi montada é adaptada na hora. O X dos cards fica dentro do bloco colorido, a legenda dos golpes saiu (cada golpe já diz “tutor” ou “nível”) e a opção “Sem lendários e míticos” também. E uma correção: duas equipes com climas automáticos diferentes (Sand Stream e Snow Warning, por exemplo) não são mais montadas juntas, porque um clima apaga o outro (a Aurora Veil da Ninetales de Alola falhava com o Tyranitar).',

@@ -6,7 +6,7 @@ import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { prepareBuild, freeTeams, altTeams, scoreParts, shownRoleBits, roleTeach, setPlanFlags, attackTypes, sets, compPairs, finalMoveset, realOf, itemFor, TUTOR, shownCombos, teamCombos, strategyInput } from './build.js';
 import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
-import { referenceTeams, adaptReference, missingMembers, FID_ROLES, MIN_KEEP } from './reference.js';
+import { referenceTeams, adaptReference, missingMembers, byOwned, FID_ROLES, MIN_KEEP } from './reference.js';
 import { SRC } from './moveset.js';
 import { makeResolver } from '../parser/describe.js';
 import { teamThreats, variantOf } from './threats.js';
@@ -328,8 +328,6 @@ function teamTips(team, plan, extra = new Map(), shown = new Map(), items = new 
   return tips;
 }
 
-const PARTS = [['defense', 'Defesa'], ['offense', 'Ataque'], ['roles', 'Papéis'], ['members', 'Pokémon'], ['balance', 'Equilíbrio'], ['plan', 'Plano'], ['ready', 'Preparo'], ['threats', 'Ameaças'], ['comp', 'Competitivo'], ['combo', 'Interações'], ['strat', 'Estratégias']];
-
 /**
  * Monta as equipes e prepara o que a tela precisa de cada uma. Com as equipes de referência do jogo (`refs`,
  * loadReferences), o fluxo principal são elas, adaptadas ao save (reference.js); a montagem livre (a melhor de cada
@@ -384,22 +382,23 @@ const kindOf = tb => (tb.kind === 'tournament' ? 'tour' : 'sample');
 
 /**
  * Todas as equipes que dá para escolher: as já montadas (referências adaptadas e montagem livre) e as referências
- * compatíveis ainda não adaptadas (com a nota estimada). As referências na ordem do app: nota + fidelidade.
+ * compatíveis ainda não adaptadas. As referências primeiro pelas que têm mais Pokémon do jogador, depois na ordem do
+ * app (nota + fidelidade; a estimativa nas ainda não adaptadas).
  */
 export function teamChoices(results) {
   const out = [];
   results.forEach((x, k) => {
-    if (x.kind === 'ref') out.push({ key: `r${k}`, rank: x.ref.rank, kind: kindOf(x.ref.format), tag: x.tag, title: refTitle(x.ref.ref, x.ref.format), sub: x.name, score: x.score, approx: false });
+    if (x.kind === 'ref') out.push({ key: `r${k}`, rank: x.ref.rank, owned: x.ref.owned, kind: kindOf(x.ref.format), tag: x.tag, title: refTitle(x.ref.ref, x.ref.format), sub: x.name });
   });
   const c = results.refs && results.refs.candidates;
   if (c) c.list.forEach((w, j) => {
     if (w.result !== undefined) return;
     const r0 = w.format.kind === 'tournament' ? (w.format.results || []).find(r => r.team === w.ref.id && r.url) : null;
-    out.push({ key: `c${j}`, rank: w.estimate, kind: kindOf(w.format), tag: r0 ? (r0.placement === 'champion' ? t('Campeã') : t('Finalista')) : null,
-      title: refTitle(w.ref, w.format), sub: `${planName(w.target)} · ${formatShort(w.format)} (${w.keep.filter(Boolean).length}/6)`, score: w.quick, approx: true });
+    out.push({ key: `c${j}`, rank: w.estimate, owned: w.owned, kind: kindOf(w.format), tag: r0 ? (r0.placement === 'champion' ? t('Campeã') : t('Finalista')) : null,
+      title: refTitle(w.ref, w.format), sub: `${planName(w.target)} · ${formatShort(w.format)}` });
   });
-  out.sort((a, b) => b.rank - a.rank);
-  results.forEach((x, k) => { if (x.kind === 'free') out.push({ key: `r${k}`, kind: 'free', tag: null, title: x.name, sub: '', score: x.score, approx: false }); });
+  out.sort(byOwned((a, b) => b.rank - a.rank));
+  results.forEach((x, k) => { if (x.kind === 'free') out.push({ key: `r${k}`, kind: 'free', owned: null, tag: null, title: x.name, sub: '' }); });
   return out;
 }
 
@@ -418,7 +417,10 @@ export function chooseTeam(results, key) {
   return at;
 }
 
-/** Janela "Escolher equipe": a ordem explicada, filtro por origem e uma linha por equipe. */
+/**
+ * Janela "Escolher equipe": filtro por origem e uma linha por equipe, agrupadas por quantos Pokémon do jogador cada uma
+ * tem (6 de 6 primeiro). Sem nota: ela é do app, não do competitivo.
+ */
 export function pickerHtml(results, i) {
   const list = teamChoices(results);
   const cur = `r${i}`;
@@ -426,13 +428,22 @@ export function pickerHtml(results, i) {
   const refs = list.some(x => x.kind !== 'free');
   const chip = (k, label, count) => `<button class="btn btn-ghost btn-small" type="button" data-filter="${k}" aria-pressed="${k === 'all'}">${esc(label)} <small>${count}</small></button>`;
   const filters = refs && n('tour') && n('sample')
-    ? `<div class="dex-filters picker-filters" role="group" aria-label="${esc(t('Filtrar'))}">${chip('all', t('Todas'), list.length)}${chip('tour', t('Finais de torneio'), n('tour'))}${chip('sample', t('Exemplo'), n('sample'))}</div>` : '';
-  const rows = list.map(x => `<li data-kind="${x.kind}"><button class="builder-pick" type="button" data-choose="${x.key}" aria-pressed="${x.key === cur}">
-      ${x.tag ? `<span class="builder-tag">${esc(x.tag)}</span>` : ''}
-      <span class="builder-pick-name"><b>${esc(x.title)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</span>
-      <b class="builder-pick-score">${x.score == null ? '—' : `${x.approx ? '≈' : ''}${Math.round(x.score)}`}</b></button></li>`).join('');
+    ? `<div class="picker-filters" role="group" aria-label="${esc(t('Filtrar'))}">${chip('all', t('Todas'), list.length)}${chip('tour', t('Torneios'), n('tour'))}${chip('sample', t('Exemplo'), n('sample'))}</div>` : '';
+  let last;
+  const rows = list.map(x => {
+    // Cabeçalho de cada grupo ("Você tem 5 dos 6"); a montagem livre, no fim, sem grupo
+    const head = x.owned != null && x.owned !== last
+      ? `<li class="picker-group" data-owned="${x.owned}">${esc(x.owned === 6 ? t('Você tem os 6') : t('Você tem {n} dos 6', { n: x.owned }))}</li>` : '';
+    last = x.owned;
+    // O nome inteiro (em até duas linhas: vários torneios começam igual, "Smogon Tour Season 35 (…") e o selo na linha
+    // de baixo, para os nomes ficarem alinhados
+    const sub = [x.tag ? `<span class="builder-tag">${esc(x.tag)}</span>` : '', x.sub ? esc(x.sub) : ''].filter(Boolean).join(' ');
+    return `${head}<li data-kind="${x.kind}" data-owned="${x.owned ?? ''}"><button class="builder-pick" type="button" data-choose="${x.key}" aria-pressed="${x.key === cur}">
+      <span class="builder-pick-name"><b>${esc(x.title)}</b>${sub ? `<small>${sub}</small>` : ''}</span>
+      ${x.owned != null ? `<b class="builder-pick-owned" title="${esc(t('Pokémon seus na equipe'))}">${x.owned}/6</b>` : ''}</button></li>`;
+  }).join('');
   return `<h2 id="detail-title" class="picker-title">${t('Escolher equipe')}</h2>
-    <p class="hint">${refs ? t('Na ordem do app: a nota da sua versão adaptada mais o quanto ela mantém da original (estratégias, papéis e plano). Campeãs não ganham bônus. “≈” é a nota estimada de quem ainda não foi montada.') : t('Uma equipe por plano que o seu save comporta, da melhor nota para a pior.')}</p>
+    <p class="hint">${refs ? t('Primeiro as equipes com mais Pokémon seus; com o mesmo número, as que a sua versão adaptada mais aproveita e mais mantém da original. Campeãs não passam na frente.') : t('Uma equipe por plano que o seu save comporta.')}</p>
     ${filters}<ul class="builder-list picker-list">${rows}</ul>`;
 }
 
@@ -588,8 +599,8 @@ function idealLines(res, pool, ctx) {
   const name = sp => (sp.form ? `${sp.name} (${sp.form})` : sp.name);
   const lines = swaps.map(s => {
     const out = refOf(s.out.m);
-    const head = t('{out} → {ideal} ({types}), que você não tem: joga com {list} no competitivo; nota {a} → {b}.', {
-      out, ideal: name(s.spec), types: s.spec.types.map(cap).join('/'), a: Math.round(s.base), b: Math.round(s.score),
+    const head = t('{out} → {ideal} ({types}), que você não tem: joga com {list} no competitivo.', {
+      out, ideal: name(s.spec), types: s.spec.types.map(cap).join('/'),
       list: list(s.pairs.slice(0, 2).map(p => `${refOf(p.m.m)} (${times(p.v)})`)),
     });
     if (!s.alt) return `${head} ${t('Ninguém do seu save faz esse papel.')}`;
@@ -598,7 +609,7 @@ function idealLines(res, pool, ctx) {
     if (s.alt.sim.role) why.push(plan.kind === 'room' ? t('lento no Trick Room') : t('aproveita {field}', { field: t(plan.field) }));
     if (y.m.evolvedFrom) why.push(t('evolua para {name}', { name: y.m.species.name }));
     if (y.given) why.push(t('com {stone}', { stone: y.given }));
-    return `${head} ${t('No seu save: {alt} ({why}), nota {c}.', { alt: refOf(y.m), why: why.join('; '), c: Math.round(s.alt.score) })}`;
+    return `${head} ${t('No seu save: {alt} ({why}).', { alt: refOf(y.m), why: why.join('; ') })}`;
   });
   if (!lines.length) lines.push(t('Nenhum Pokémon que falta no seu save melhora esta equipe pela referência do competitivo.'));
   const note = t('Estimativa pelas duplas do competitivo (Smogon), sem lendários; o app não sabe onde capturar o ideal.');
@@ -627,11 +638,10 @@ function describeRef(x, types, ctx) {
   // Os papéis de cada membro com o moveset e o item que o card mostra (os painéis não podem dizer que um papel ficou se o
   // card não o cumpre)
   const bits = new Map(x.adapted.team.map(e => [e, shownRoleBits(e, d.shownSets.get(e) || null, d.shownItems.has(e) ? d.shownItems.get(e) : (e.m.item && e.m.item.name) || null)]));
-  const kept = x.kept.length;
   // Equipe de torneio: a colocação na aba e no título (do resultado com a prova)
   const res0 = tourResult(x);
   const place = res0 ? (res0.placement === 'champion' ? t('Campeã') : t('Finalista')) : '';
-  d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)} (${kept}/6)`;
+  d.name = `${planName(x.orig.plan)} · ${formatShort(x.format)}`;
   d.tag = place || null;
   d.r.nome = res0 ? (res0.placement === 'champion' ? t('Adaptada da campeã de {event} ({player})', res0) : t('Adaptada da finalista de {event} ({player})', res0))
     : x.ref.name ? t('Adaptada de “{name}”', { name: x.ref.name }) : t('Adaptada de uma equipe de {format}', { format: x.format.name });
@@ -761,14 +771,14 @@ function refPanels(x, ctx, bits, shownSets) {
     const f = adapted.plan.field;
     if (f && adapted.plan.kind !== 'room' && sets(s.sub, f)) why.push(t('põe {field}', { field: t(f) }));
     else if (f && adapted.plan.kind !== 'room' && (s.sub.value[f] || 0) >= 11) why.push(t('aproveita {field}', { field: t(f) }));
-    if (!why.length) why.push(t('o que mais rende na equipe inteira pela nota'));
+    if (!why.length) why.push(t('o que mais rende na equipe inteira'));
     const parts = [t('{orig} → {sub}: {why}.', { orig: refName(s.orig), sub: refOf(s.sub.m), why: why.join('; ') })];
     if (covered.length) parts.push(t('Outro membro cobre: {roles}.', { roles: roleNames(covered) }));
     if (lostR.length) parts.push(t('Perde: {roles}.', { roles: roleNames(lostR) }));
     if (added.length) parts.push(t('Acrescenta: {roles}.', { roles: roleNames(added) }));
     lines.push(parts.join(' '));
   }
-  const adaptedPanel = { lines, note: t('A nota ({n}) é a do app para esta equipe: ela não herda resultado nem reputação da original. As trocas foram escolhidas juntas, pela equipe inteira; o par “sai → entra” é o mais parecido, só para explicar.', { n: Math.round(adapted.score) }) };
+  const adaptedPanel = { lines, note: t('A adaptada não herda o resultado nem a reputação da original. As trocas foram escolhidas juntas, pela equipe inteira; o par “sai → entra” é o mais parecido, só para explicar.') };
 
   // Quem ficou, mas com o moveset do app não faz um papel que fazia na original: o que ensinar ou dar (quem falta está no
   // card de cada membro da original)
@@ -846,24 +856,6 @@ function threatsHtml(res, c) {
 }
 
 /**
- * As partes arredondadas para a tela, somando a nota mostrada (arredondar cada uma sozinha dava 1 a mais ou a menos:
- * 42,5 + 4,5 viravam 43 + 5): cada parte fica com o valor inteiro de baixo, e o que falta vai para as de maior fração.
- */
-export function shownParts(parts, score) {
-  const keys = PARTS.map(([k]) => k);
-  const v = k => parts[k] || 0;
-  const out = Object.fromEntries(keys.map(k => [k, Math.floor(v(k))]));
-  let left = Math.round(score) - keys.reduce((a, k) => a + out[k], 0);
-  const order = [...keys].sort((a, b) => (v(b) - out[b]) - (v(a) - out[a]));
-  for (let i = 0; left !== 0 && i < 2 * keys.length; i++) {
-    const k = left > 0 ? order[i % keys.length] : order[keys.length - 1 - (i % keys.length)];
-    out[k] += left > 0 ? 1 : -1;
-    left += left > 0 ? -1 : 1;
-  }
-  return out;
-}
-
-/**
  * O que a tela diz das equipes de referência: quantas são compatíveis, por que nenhuma é (o app não finge uma
  * correspondência) e os botões para ver mais referências ou a montagem livre.
  */
@@ -887,25 +879,20 @@ export function resultsHtml(results, i, T) {
   // empurrava a equipe para baixo)
   const total = teamChoices(results).length;
   const pick = `<div class="builder-current">
-      <span class="builder-current-name">${cur.tag ? `<span class="builder-tag">${esc(cur.tag)}</span>` : ''}<b>${esc(cur.kind === 'ref' ? refTitle(cur.ref.ref, cur.ref.format) : cur.name)}</b>${cur.kind === 'ref' ? `<small>${esc(cur.name)}</small>` : ''}</span>
+      <span class="builder-current-name">${cur.tag ? `<span class="builder-tag">${esc(cur.tag)}</span>` : ''}<b>${esc(cur.kind === 'ref' ? refTitle(cur.ref.ref, cur.ref.format) : cur.name)}</b>${cur.kind === 'ref' ? `<small>${esc(cur.name)} · ${esc(t('{n} dos 6 são seus', { n: cur.ref.owned }))}</small>` : ''}</span>
       ${total > 1 ? `<button class="btn btn-small" type="button" data-pick>${t('Trocar equipe ({n})', { n: total })}</button>` : ''}
     </div>`;
-  const shown = shownParts(cur.parts, cur.score);
-  // A parte "Ameaças" só aparece com a caixa marcada; a "Competitivo", com a referência do jogo carregada
-  const parts = PARTS.filter(([k]) => shown[k] !== 0)
-    .map(([k, label]) => `<span class="part${shown[k] > 0 ? ' up' : shown[k] < 0 ? ' down' : ''}">${esc(t(label))} <b>${shown[k] > 0 ? '+' : ''}${shown[k]}</b></span>`).join('');
   // Alternativas sob demanda (montagem livre): o botão fica na melhor equipe do plano até o jogador pedir
   const more = cur.alt || cur.kind === 'ref' ? '' : !cur.alts
     ? `<p class="builder-more"><button class="btn btn-ghost btn-small" type="button" data-more>${t('Ver outras opções deste plano')}</button></p>`
-    : !cur.alts.count ? `<p class="hint builder-more">${t('Nenhuma outra opção deste plano com nota perto desta (90% ou mais).')}</p>` : '';
+    : !cur.alts.count ? `<p class="hint builder-more">${t('Nenhuma outra opção deste plano chega perto desta.')}</p>` : '';
   // Os dois métodos juntos: a IA (com a chave do jogador) comenta a equipe que o app montou; o comentário entra aqui
   const ai = `<div class="builder-ai">
       <button class="btn" type="button" data-ai-review>${t('Comentar com IA')}</button>
-      <p class="hint">${t('A IA comenta esta equipe: riscos, golpes e itens. A equipe e a nota continuam as do app.')}</p>
+      <p class="hint">${t('A IA comenta esta equipe: riscos, golpes e itens. A equipe continua a do app.')}</p>
       <div class="builder-ai-out" aria-live="polite"></div>
     </div>`;
-  return `${refsHeader(results)}${pick}
-    <div class="builder-score"><span class="score-badge">${t('Nota {n}', { n: `<b>${Math.round(cur.score)}</b>` })}</span>${parts}</div>${more}
+  return `${refsHeader(results)}${pick}${more}
     ${buildView(cur.r, cur.shown, '', T, { app: true, evolved: cur.evolved })}
     ${ai}`;
 }

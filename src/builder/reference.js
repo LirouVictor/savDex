@@ -202,7 +202,7 @@ export function referenceCandidates(ctx, tables, T, game, opts = {}) {
       const plan0 = refPlan(members);
       const orig = { plan: plan0, members, strategies: strategiesOf(members, plan0), roles: new Set(members.flatMap(m => [...roleSet(m.sbits)])) };
       const target = savePlans.find(p => samePlan(p, plan0)) || savePlans.find(p => p.kind === 'balance');
-      list.push({ ref: team, format: tb, members, keep, orig, target, complete: n === 6, estimate: -Infinity, result: undefined, opts: ro });
+      list.push({ ref: team, format: tb, members, keep, orig, target, owned: n, complete: n === 6, estimate: -Infinity, result: undefined, opts: ro });
     }
   }
   // Moveset do plano (Quetzal): uma vez por plano, com os membros que ficam de todas as referências
@@ -222,9 +222,15 @@ export function referenceCandidates(ctx, tables, T, game, opts = {}) {
     // A nota estimada (a janela de escolha mostra "≈" até a equipe ser adaptada de verdade)
     w.quick = r ? r.score : null;
   }
-  list.sort((a, b) => b.estimate - a.estimate);
+  list.sort(byOwned((a, b) => b.estimate - a.estimate));
   return { list, rejected, fidW };
 }
+
+/**
+ * A ordem das referências: primeiro as que têm mais Pokémon do jogador (pedido do autor: a nota é do app, e uma equipe
+ * com 5 dos 6 do save fica perto da original); com o mesmo número, `then` (nota + fidelidade, ou a estimativa).
+ */
+export const byOwned = then => (a, b) => b.owned - a.owned || then(a, b);
 
 /** A equipe adaptada de uma candidata (busca completa; guardada na candidata). null se não deu para montar 6. */
 export function adaptReference(ctx, w) {
@@ -234,8 +240,8 @@ export function adaptReference(ctx, w) {
 
 /**
  * As referências do jogo no save, adaptadas: as ADAPT_N melhores pela estimativa, as TOUR_N melhores de torneio e as
- * COMPLETE_N melhores que o jogador tem inteiras, da
- * melhor para a pior (nota + fidelidade). `candidates` (propriedade): referenceCandidates, para adaptar mais depois.
+ * COMPLETE_N melhores que o jogador tem inteiras, primeiro as com mais Pokémon do jogador e, entre elas, da melhor
+ * para a pior (nota + fidelidade). `candidates` (propriedade): referenceCandidates, para adaptar mais depois.
  * @param {{ fidW?: number, minKeep?: number, adapt?: number, tour?: number, complete?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
  */
 export function referenceTeams(ctx, tables, T, game, opts = {}) {
@@ -244,7 +250,7 @@ export function referenceTeams(ctx, tables, T, game, opts = {}) {
   const tours = new Set(c.list.filter(w => w.format.kind === 'tournament').slice(0, nt));
   const whole = new Set(c.list.filter(w => w.complete).slice(0, opts.complete ?? COMPLETE_N));
   const out = c.list.filter((w, i) => i < n || whole.has(w) || tours.has(w)).map(w => adaptReference(ctx, w)).filter(Boolean);
-  out.sort((a, b) => b.rank - a.rank);
+  out.sort(byOwned((a, b) => b.rank - a.rank));
   Object.defineProperty(out, 'candidates', { value: c });
   return Object.defineProperty(out, 'rejected', { value: c.rejected });
 }
@@ -310,7 +316,7 @@ function run(ctx, w, { fidW = FID_W, quick = false, beam, roleMoves = 'choose', 
   const rank = parts.total + fidW * adapted.fidelity;
   if (quick) return { rank, score: parts.total };
   // `reverted`: os mantidos que voltaram à versão sem o golpe do papel porque a equipe inteira rende mais assim
-  return { ref: w.ref, format: w.format, orig: w.orig, keep: w.keep, kept, complete: w.complete, adapted, swaps: explain(w, kept, team, plan, forced), rank, reverted };
+  return { ref: w.ref, format: w.format, orig: w.orig, keep: w.keep, kept, owned: w.owned, complete: w.complete, adapted, swaps: explain(w, kept, team, plan, forced), rank, reverted };
 }
 const planKey = p => `${p.kind}|${p.field || ''}`;
 
