@@ -403,8 +403,10 @@ const FIELD_ITEMS = new Set(['Electric Seed', 'Grassy Seed', 'Psychic Seed', 'Mi
 // 0,5 → 54% com resultados de 24% a 100%, 1 → 52% em 12 de 28 planos; o peso trocava Pokémon fortes por quem tem
 // combinação, sem ganho medido). As combinações aparecem na tela e na IA; os testes de comparação trocam com `dex.mechW`
 const COMBO_W = 0;
-// Peso da parte "Estratégias" (biblioteca de strategies.js; os testes de comparação trocam com `dex.stratW`)
-const STRAT_W = 0; // provisório: em medição no simulador
+// Peso da parte "Estratégias" (biblioteca de strategies.js; os testes de comparação trocam com `dex.stratW`): 0. Medido
+// no simulador, no mesmo plano, contra a montagem sem a parte: 0,5 → 49% frente a frente (14 de 28) e −1 ponto contra
+// os aleatórios, 1 → 54% (16 de 29) e −2, 2 → 44% (11 de 27) e −5, com planos de 0% a 100%; sem ganho, fica na tela
+const STRAT_W = 0;
 function setCombos(e, w, sw = 0) {
   const item = e.m.item && !isMegaStone(e.m.item) ? e.m.item.name : null;
   const c = mechOf(e.m, e.bf, e.set || e.moves, item);
