@@ -452,7 +452,7 @@ function comboLines(team, plan, combos) {
   for (const x of teamCombos(bits, plan)) lines.push(t('Equipe: {how}.', { how: t(x.how) }));
   if (weak.length) lines.push(t('Funcionam, mas rendem pouco aqui: {list}.', { list: list(weak) }));
   if (!lines.length) return null;
-  return { lines, note: t('Combinações de habilidade, item e golpes que o app reconhece; o item é o sugerido (o jogador dá um jeito de conseguir). Não mudam a nota: nas batalhas simuladas, contar com elas não melhorou as equipes.') };
+  return { lines, note: t('Combinações de habilidade, item e golpes que o app reconhece; o item é o sugerido (o jogador dá um jeito de conseguir). Cada combinação que rende soma na parte “Interações” da nota.') };
 }
 
 /** "9×" para quem joga junto; "1/3" para quem se evita (log2 do lift). */

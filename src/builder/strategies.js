@@ -224,40 +224,48 @@ export function roleBits(c) {
   for (const s of STRATEGIES) if (s.same && s.same.every(r => x & roleBit(r))) x |= SAME_BIT.get(s.id);
   return x;
 }
+// Cada papel (e cada `same`) com o número do bit; as estratégias guardam os números dos bits que pedem
 const COMPILED = STRATEGIES.map(s => ({ id: s.id, v: s.v, offense: s.offense,
-  need: [...(s.same ? [[SAME_BIT.get(s.id), 1]] : []), ...(s.need || []).map(([r, n]) => [roleBit(r), n])] }));
+  need: [...(s.same ? [[SAME_BIT.get(s.id), 1]] : []), ...(s.need || []).map(([r, n]) => [roleBit(r), n])].map(([bit, n]) => [31 - Math.clz32(bit), n]) }));
+const NBITS = ROLE_KEYS.length + SAME_BIT.size;
 const popc = x => { let n = 0; while (x) { x &= x - 1; n++; } return n; };
+// Quem cumpre cada papel na equipe (um bit por membro), montado uma vez por equipe
+const MASKS = new Int32Array(NBITS);
+function teamMasks(team) {
+  MASKS.fill(0);
+  for (let i = 0; i < team.length; i++) {
+    let x = team[i].sbits;
+    while (x) { const b = 31 - Math.clz32(x & -x); MASKS[b] |= 1 << i; x &= x - 1; }
+  }
+  return MASKS;
+}
 
 /**
  * A equipe executa a estratégia: cada papel em Pokémon diferentes. Teorema de Hall com as quantidades: para cada
  * conjunto de papéis, os membros que cumprem algum deles são pelo menos a soma do que eles pedem (até 3 papéis: 7
  * conjuntos, sem montar listas). Um Water/Grass não faz dois papéis do núcleo Fire/Water/Grass.
  */
-function executes(s, team) {
+function executesMasks(s, masks) {
   const k = s.need.length;
-  const masks = [];
-  for (const [bit] of s.need) {
-    let m = 0;
-    for (let i = 0; i < team.length; i++) if (team[i].sbits & bit) m |= 1 << i;
-    masks.push(m);
-  }
   for (let sub = 1; sub < 1 << k; sub++) {
     let union = 0, want = 0;
-    for (let j = 0; j < k; j++) if (sub & (1 << j)) { union |= masks[j]; want += s.need[j][1]; }
+    for (let j = 0; j < k; j++) if (sub & (1 << j)) { union |= masks[s.need[j][0]]; want += s.need[j][1]; }
     if (popc(union) < want) return false;
   }
   return true;
 }
+const executes = (s, team) => executesMasks(s, teamMasks(team));
 
 /** As estratégias que a equipe executa (os ids; para o teste de comparação). */
 export const strategiesOf = (team, plan) => COMPILED.filter(s => !(s.offense === false && plan.kind === 'offense') && executes(s, team)).map(s => s.id);
 
 /** A soma do valor das estratégias que a equipe executa (completas: meia estratégia não vale). */
 export function strategyValue(team, plan) {
+  const masks = teamMasks(team);
   let v = 0;
   for (const s of COMPILED) {
     if (s.offense === false && plan.kind === 'offense') continue;
-    if (executes(s, team)) v += s.v;
+    if (executesMasks(s, masks)) v += s.v;
   }
   return v;
 }
@@ -274,7 +282,8 @@ export function strategySeeds(pool, plan, base, rank, ok, max = 2) {
     if (executes(s, base)) continue; // as sementes de sempre já a têm
     const seed = [...base];
     let fail = false;
-    for (const [bit, n] of s.need) {
+    for (const [b, n] of s.need) {
+      const bit = 1 << b;
       let have = 0;
       for (const e of seed) if (e.sbits & bit) have++;
       for (let i = have; i < n && !fail; i++) {

@@ -1,10 +1,19 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-12';
+export const UPDATED = '2026-10-13';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-13',
+    pt: [
+      'Montar equipe (Quetzal): as estratégias conhecidas do competitivo (pivôs, hazards com quem os tira, telas para quem sobe os stats, Belly Drum com prioridade, núcleos Fire/Water/Grass e Dragon/Steel/Fairy…) e as combinações de habilidade, item e golpes (Toxic Orb + Poison Heal, Flame Orb + Guts…) agora contam na nota. Só a estratégia completa conta, e a montagem também parte de quem executa cada uma e procura no seu PC quem falta. No save do autor, a chuva passou a Pelipper, Basculegion e Rillaboom com pivôs.',
+    ],
+    en: [
+      'Build team (Quetzal): known competitive strategies (pivots, hazards with removal, screens for setup sweepers, Belly Drum with priority, Fire/Water/Grass and Dragon/Steel/Fairy cores…) and ability, item and move combinations (Toxic Orb + Poison Heal, Flame Orb + Guts…) now count in the score. Only complete strategies count, and the builder also starts from whoever runs each one and looks in your PC for whoever is missing. On the author’s save, the rain team became Pelipper, Basculegion and Rillaboom with pivots.',
+    ],
+  },
   {
     date: '2026-10-12',
     pt: [
