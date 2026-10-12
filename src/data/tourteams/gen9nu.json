@@ -1,0 +1,525 @@
+{
+ "format": "gen9nu",
+ "name": "Gen 9 NU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9nu-t1hbl6mu",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "arce9",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Ambipom", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Tauros-Paldea-Aqua", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowbro-Galar", "r": [], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Gligar", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Rotom-Heat", "r": [], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Duraludon", "r": [ "hazard", "phaze" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nu-t1vu2e4",
+   "name": "Smogon Grand Slam XV - Playoffs",
+   "author": "zugubu royale",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Copperajah", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Ambipom", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "ice", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Scrafty", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Brambleghast", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "ghost", "normal" ], "dmg": 2, "cat": "M" },
+    { "s": "Vaporeon", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Gligar", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t17wfhbb",
+   "name": "The NU Open XV",
+   "author": "crying",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Vaporeon", "r": [ "phaze" ], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Froslass", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Flygon", "r": [ "hazard", "passable" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Munkidori", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "poison" ], "dmg": 2, "cat": "M" },
+    { "s": "Sandslash-Alola", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Flamigo", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t15nw8m3",
+   "name": "The NU Open XV",
+   "author": "Fc ❤",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Grimmsnarl", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "fairy" ], "dmg": 2, "cat": "P" },
+    { "s": "Tauros-Paldea-Aqua", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fighting", "ground", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Amoonguss", "r": [ "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 2, "cat": "M" },
+    { "s": "Rhyperior", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Flamigo", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Bellibolt", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9nu-tye61qy",
+   "name": "The NU Open XV",
+   "author": "Fc ❤",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gligar", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Incineroar", "r": [ "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Duraludon", "r": [ "hazard" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Sylveon", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Vaporeon", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Munkidori", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "psychic" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nu-t1998yr7",
+   "name": "The NU Open XV",
+   "author": "crying",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Tsareena", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "fighting", "normal" ], "dmg": 3, "cat": "P" },
+    { "s": "Staraptor", "r": [ "midAttacker" ], "at": [ "fighting", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Duraludon", "r": [ "hazard", "midAttacker" ], "at": [ "dragon", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Tauros-Paldea-Aqua", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Articuno-Galar", "r": [ "pivot", "midAttacker" ], "use": [ "chuva" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "M" },
+    { "s": "Swampert", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-tjzsizj",
+   "name": "The NU Open XIV",
+   "author": "Fc ❤",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Toxicroak", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Diancie", "r": [ "midAttacker" ], "at": [ "fairy", "ground", "rock" ], "dmg": 3, "cat": "S" },
+    { "s": "Froslass", "r": [ "hazard", "smashItem" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Flygon", "r": [ "passable" ], "at": [ "fire" ], "dmg": 1, "cat": "P" },
+    { "s": "Incineroar", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Drednaw", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9nu-t83hh89",
+   "name": "The NU Open XIV",
+   "author": "JustFranco‽",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Dudunsparce", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Wo-Chien", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Flamigo", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Tentacruel", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Bronzong", "r": [ "hazard", "midAttacker" ], "at": [ "psychic", "steel" ], "dmg": 2, "cat": "M" },
+    { "s": "Flygon", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t145fbqd",
+   "name": "The NU Open XIV",
+   "author": "Fc ❤",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Wo-Chien", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Gastrodon-East", "r": [ "hazard", "midAttacker" ], "at": [ "ground", "poison" ], "dmg": 2, "cat": "S" },
+    { "s": "Muk-Alola", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Houndstone", "r": [ "midAttacker" ], "at": [ "fighting", "ghost" ], "dmg": 2, "cat": "P" },
+    { "s": "Coalossal", "r": [ "hazard", "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Amoonguss", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "poison" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nu-t1mlcne",
+   "name": "The NU Open XIV",
+   "author": "JustFranco‽",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Copperajah", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Meloetta", "r": [ "midAttacker" ], "at": [ "ghost", "normal", "psychic" ], "dmg": 3, "cat": "S" },
+    { "s": "Ditto", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "dark", "ground", "poison" ], "dmg": 4, "cat": "M" },
+    { "s": "Sylveon", "r": [ "phaze" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Gastrodon", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "S" },
+    { "s": "Scyther", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-tfxxu9x",
+   "name": "The NU Open XIII",
+   "author": "starmaster",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Mienshao", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Rhyperior", "r": [ "hazard" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Muk-Alola", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Porygon-Z", "r": [ "midAttacker" ], "at": [ "electric", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Slowbro", "r": [ "passable" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Talonflame", "r": [ "pivot", "removal", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t18pt4du",
+   "name": "The NU Open XIII",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Copperajah", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cacturne", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Uxie", "r": [ "passable" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gligar", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Talonflame", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Basculegion", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-t1rwovyu",
+   "name": "The NU Open XIII",
+   "author": "starmaster",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Gallade", "r": [], "at": [ "psychic" ], "dmg": 1, "cat": "P" },
+    { "s": "Swampert", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Incineroar", "r": [ "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "P" },
+    { "s": "Magnezone", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "psychic", "steel" ], "dmg": 4, "cat": "S" },
+    { "s": "Ditto", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Noivern", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dragon" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9nu-t17aacdw",
+   "name": "The NU Open XIII",
+   "author": "xavgb",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Bronzong", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gligar", "r": [ "pivot", "hazard", "midAttacker" ], "at": [ "bug", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Flygon", "r": [ "midAttacker" ], "at": [ "dragon", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Basculegion", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Mienshao", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "fighting" ], "dmg": 3, "cat": "P" },
+    { "s": "Sylveon", "r": [ "passable" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nu-toxqp4e",
+   "name": "NeverUsed Ladder Tour XI",
+   "author": "django",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Inteleon", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Raikou", "r": [ "pivot", "sweeper", "midAttacker", "passable" ], "at": [ "electric", "ghost" ], "dmg": 2, "cat": "S" },
+    { "s": "Copperajah", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Toxicroak", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Incineroar", "r": [ "midAttacker" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Gligar", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nu-tsh4i4i",
+   "name": "NeverUsed Ladder Tour XI",
+   "author": "eternally",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Skuntank", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Raikou", "r": [ "midAttacker" ], "at": [ "electric", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Swampert", "r": [ "pivot", "hazard", "midAttacker" ], "use": [ "chuva" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Flamigo", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "flying" ], "dmg": 2, "cat": "P" },
+    { "s": "Goodra", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Houndstone", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nu-t81d98o",
+   "name": "NeverUsed Ladder Tour XI",
+   "author": "django",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Dudunsparce", "r": [ "hazard" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Incineroar", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fire", "ground" ], "dmg": 3, "cat": "P" },
+    { "s": "Flygon", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "ground" ], "dmg": 2, "cat": "P" },
+    { "s": "Uxie", "r": [ "midAttacker" ], "at": [ "fairy", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Toxicroak", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Tornadus", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nu-t1bmt5mc",
+   "name": "NeverUsed Ladder Tour XI",
+   "author": "eternally",
+   "verification": "partially_verified",
+   "partial": true,
+   "members": [
+    { "s": "Bellibolt", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Brambleghast", "r": [ "hazard", "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Bronzong", "r": [ "hazard" ], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Flygon", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dragon", "fire" ], "dmg": 3, "cat": "P" },
+    { "s": "Scrafty", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Inteleon", "r": [ "midAttacker" ], "at": [ "dark", "ice" ], "dmg": 2, "cat": "S" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9nu-t1bmt5mc",
+   "player": "eternally",
+   "event": "NeverUsed Ladder Tour XI",
+   "date": "2026-08-19",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-964858",
+   "thread": "https://www.smogon.com/forums/threads/neverused-ladder-tour-xi-finals-won-by-etern.3787040/",
+   "verification": "partially_verified",
+   "titleWinner": "etern"
+  },
+  {
+   "team": "gen9nu-t81d98o",
+   "player": "django",
+   "event": "NeverUsed Ladder Tour XI",
+   "date": "2026-08-19",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-964858",
+   "thread": "https://www.smogon.com/forums/threads/neverused-ladder-tour-xi-finals-won-by-etern.3787040/",
+   "verification": "partially_verified",
+   "titleWinner": "etern"
+  },
+  {
+   "team": "gen9nu-tsh4i4i",
+   "player": "eternally",
+   "event": "NeverUsed Ladder Tour XI",
+   "date": "2026-08-19",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-964855",
+   "thread": "https://www.smogon.com/forums/threads/neverused-ladder-tour-xi-finals-won-by-etern.3787040/",
+   "verification": "partially_verified",
+   "titleWinner": "etern"
+  },
+  {
+   "team": "gen9nu-toxqp4e",
+   "player": "django",
+   "event": "NeverUsed Ladder Tour XI",
+   "date": "2026-08-19",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-964855",
+   "thread": "https://www.smogon.com/forums/threads/neverused-ladder-tour-xi-finals-won-by-etern.3787040/",
+   "verification": "partially_verified",
+   "titleWinner": "etern"
+  },
+  {
+   "team": "gen9nu-t1vu2e4",
+   "player": "zugubu royale",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-959310",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t1hbl6mu",
+   "player": "arce9",
+   "event": "Smogon Grand Slam XV - Playoffs",
+   "date": "2026-07-26",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-959310",
+   "thread": "https://www.smogon.com/forums/threads/smogon-grand-slam-xv-playoffs-won-by-zugubu-royale.3784354/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t1998yr7",
+   "player": "crying",
+   "event": "The NU Open XV",
+   "date": "2026-06-11",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-945314",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xv-finals-won-by-crying.3783722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-tye61qy",
+   "player": "Fc ❤",
+   "event": "The NU Open XV",
+   "date": "2026-06-11",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-945314",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xv-finals-won-by-crying.3783722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t15nw8m3",
+   "player": "Fc ❤",
+   "event": "The NU Open XV",
+   "date": "2026-06-11",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-945311",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xv-finals-won-by-crying.3783722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t17wfhbb",
+   "player": "crying",
+   "event": "The NU Open XV",
+   "date": "2026-06-11",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-945311",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xv-finals-won-by-crying.3783722/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t1mlcne",
+   "player": "JustFranco‽",
+   "event": "The NU Open XIV",
+   "date": "2025-07-04",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-853966",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiv-finals-won-by-justfranco.3767020/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t145fbqd",
+   "player": "Fc ❤",
+   "event": "The NU Open XIV",
+   "date": "2025-07-04",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-853966",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiv-finals-won-by-justfranco.3767020/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t83hh89",
+   "player": "JustFranco‽",
+   "event": "The NU Open XIV",
+   "date": "2025-07-04",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-853962",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiv-finals-won-by-justfranco.3767020/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-tjzsizj",
+   "player": "Fc ❤",
+   "event": "The NU Open XIV",
+   "date": "2025-07-04",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nu-853962",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiv-finals-won-by-justfranco.3767020/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t17aacdw",
+   "player": "xavgb",
+   "event": "The NU Open XIII",
+   "date": "2024-07-09",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-779359",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiii-finals-won-by-xavgb.3746248/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t1rwovyu",
+   "player": "starmaster",
+   "event": "The NU Open XIII",
+   "date": "2024-07-09",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-779359",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiii-finals-won-by-xavgb.3746248/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-t18pt4du",
+   "player": "xavgb",
+   "event": "The NU Open XIII",
+   "date": "2024-07-09",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-779358",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiii-finals-won-by-xavgb.3746248/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nu-tfxxu9x",
+   "player": "starmaster",
+   "event": "The NU Open XIII",
+   "date": "2024-07-09",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9uu-779358",
+   "thread": "https://www.smogon.com/forums/threads/the-nu-open-xiii-finals-won-by-xavgb.3746248/",
+   "verification": "verified"
+  }
+ ]
+}

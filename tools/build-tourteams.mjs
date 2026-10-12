@@ -6,7 +6,8 @@
 // Showdown (replay.pokemonshowdown.com/<id>.json, o registro público da partida). O replay é a prova: a pré-visualização
 // das equipes mostra os 6 Pokémon de cada jogador e o fim da partida diz quem venceu. Para cada tópico:
 //   1. os replays postados no tópico, só dos formatos Singles da Gen 9 que o app usa;
-//   2. o campeão é o do título; a final é a série entre ele e o adversário do replay mais recente dele no tópico (os
+//   2. o campeão é o do título (ou, se o nome não aparece, um único jogador com nome parecido: outra conta, e o resultado
+//      fica "partially_verified"); a final é a série entre ele e o adversário do replay mais recente dele no tópico (os
 //      replays da mesma dupla até 4 dias antes); o tópico só conta se o campeão venceu a maioria dos jogos dessa série
 //      (senão os replays postados não são a final, ou o nome não bate);
 //   3. a equipe de cada jogador em cada jogo da final (6 espécies da pré-visualização; mesma equipe em vários jogos conta
@@ -60,6 +61,12 @@ async function download(url) {
   const r = await fetch(url, { headers: { 'user-agent': UA } });
   return { status: r.status, body: await r.text() };
 }
+const score0 = (w, n) => `${w}-${n - w}`;
+// O tier do título vale sobre o da sala do replay (a final do NU Open XIII foi jogada numa sala de UU, com equipes de NU);
+// sem tier no título (Grand Slam, Masters…), vale o do replay
+const TITLE_TIER = [[/\b(national dex|natdex|nd) ubers\b/i, 'gen9nationaldexubers'], [/\b(national dex|natdex)\b/i, 'gen9nationaldex'],
+  [/\bUU\b/, 'gen9uu'], [/\bRU\b/, 'gen9ru'], [/\bNU\b/, 'gen9nu'], [/\bPU\b/, 'gen9pu'], [/\bOU\b/, 'gen9ou']];
+const titleTier = title => (TITLE_TIER.find(([re]) => re.test(title)) || [])[1] || null;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function get(url, { cache = null, tries = 4 } = {}) {
   if (cache) { try { return await readFile(cache, 'utf8'); } catch { /* baixa */ } }
@@ -144,19 +151,38 @@ async function main() {
       if (!r || !FORMATS[r.formatid] || !r.log || !r.log.includes('|poke|')) continue;
       games.push({ id, r, ...parseLog(r.log) });
     }
-    const w = toId(th.winner);
+    // O campeão nos replays: o nome do título; senão, um único jogador com nome parecido (outra conta: "VertXXX" para
+    // "Vert", "memphisdepayy"), e o resultado fica "partially_verified" com os dois nomes
+    let w = toId(th.winner), exact = true;
+    if (!games.some(g => g.r.players.some(p => toId(p) === w))) {
+      const near = [...new Set(games.flatMap(g => g.r.players.map(toId)))].filter(p => Math.min(p.length, w.length) >= 4 && (p.includes(w) || w.includes(p)));
+      if (near.length === 1) { w = near[0]; exact = false; }
+    }
     const mine = games.filter(g => g.r.players.some(p => toId(p) === w));
-    if (!mine.length) { report.noWinner++; continue; }
+    if (!mine.length) {
+      report.noWinner++;
+      if (process.env.TOUR_DEBUG) console.log('sem o campeão nos replays:', th.title, '|', [...new Set(games.flatMap(g => g.r.players))].join(', '));
+      continue;
+    }
     const lastGame = mine.reduce((a, b) => (b.r.uploadtime > a.r.uploadtime ? b : a));
     const opp = lastGame.r.players.find(p => toId(p) !== w);
     const series = mine.filter(g => g.r.players.some(p => toId(p) === toId(opp)) && lastGame.r.uploadtime - g.r.uploadtime <= SERIES_DAYS * 86400);
     const wins = series.filter(g => toId(g.winner) === w).length;
-    if (wins * 2 <= series.length) { report.notFinal++; continue; }
+    if (wins * 2 <= series.length) {
+      report.notFinal++;
+      if (process.env.TOUR_DEBUG) console.log('campeão não venceu a série:', th.title, score0(wins, series.length));
+      continue;
+    }
     report.used++;
-    const event = th.title.replace(/\s*[[(]?\s*won by.*$/i, '').replace(/\s*[-:–]\s*$/, '').trim();
+    // O nome do torneio, sem o "Won by" e sem a fase ("- Finals", "Round 7 Finals"; "Playoffs" fica, é o nome da etapa): a tela já diz "na final de"
+    const event = th.title.replace(/\s*[[(]?\s*won by.*$/i, '').replace(/\s*[-:–]\s*$/, '')
+      .replace(/\s*[-:–]?\s*(round \d+\s*)?[[(]?(grand |top cut (grand )?)?(finals?)[\])]?\s*$/i, '').replace(/\s*[-:–]\s*$/, '').trim()
+      // Os torneios semanais do Smogon Tour têm só "Season N (Week …)" no título (o subfórum diz o resto); parêntese
+      // esquecido no título é fechado
+      .replace(/^Season \d+ \(Week/, m => `Smogon Tour ${m}`).replace(/^(.*\(Week [^)]*)$/, '$1)');
     const score = `${wins}-${series.length - wins}`;
     for (const g of series.sort((a, b) => a.r.uploadtime - b.r.uploadtime)) {
-      const fmt = g.r.formatid;
+      const fmt = titleTier(th.title) || g.r.formatid;
       const date = new Date(g.r.uploadtime * 1000).toISOString().slice(0, 10);
       for (const p of ['p1', 'p2']) {
         const s = g.side[p];
@@ -168,15 +194,17 @@ async function main() {
         const store = byFormat[fmt];
         let team = store.teams.get(id);
         if (!team) {
-          team = { id, name: event, author: player, verification: 'verified', partial: true, recs: [] };
+          team = { id, name: event, author: player, verification: exact ? 'verified' : 'partially_verified', partial: true, recs: [] };
           store.teams.set(id, team);
         }
         team.recs.push([...s.mons.values()]);
         const won = toId(g.winner) === toId(player);
         const prev = store.results.find(x => x.team === id);
         if (prev) { prev.games++; if (won) prev.won++; continue; }
-        store.results.push({ team: id, player, event, date, placement, series: placement === 'champion' ? score : score.split('-').reverse().join('-'),
-          games: 1, won: won ? 1 : 0, url: `https://replay.pokemonshowdown.com/${g.id}`, thread: th.url, verification: 'verified' });
+        const rec = { team: id, player, event, date, placement, series: placement === 'champion' ? score : score.split('-').reverse().join('-'),
+          games: 1, won: won ? 1 : 0, url: `https://replay.pokemonshowdown.com/${g.id}`, thread: th.url, verification: exact ? 'verified' : 'partially_verified' };
+        if (!exact) rec.titleWinner = th.winner;
+        store.results.push(rec);
       }
     }
   }

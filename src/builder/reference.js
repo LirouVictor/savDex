@@ -163,6 +163,9 @@ export const FID_MODE = 'v2';
 export const ADAPT_N = 6;
 // E as melhores de finais de torneio pela estimativa, mesmo fora das ADAPT_N (o jogador vê logo as campeãs compatíveis)
 export const TOUR_N = 2;
+// As que o jogador tem inteiras: só as COMPLETE_N melhores pela estimativa de início (com as de torneio, os PCs grandes têm
+// 20–30 delas, e adaptar todas levava o tempo de 1,4 s a 2,0–2,4 s no desktop); as outras ficam no "ver mais"
+export const COMPLETE_N = 3;
 
 /**
  * As referências compatíveis com o save (MIN_KEEP membros ou mais que o jogador tem), com a original no jogo (plano,
@@ -228,15 +231,17 @@ export function adaptReference(ctx, w) {
 }
 
 /**
- * As referências do jogo no save, adaptadas: as ADAPT_N melhores pela estimativa e as que o jogador tem inteiras, da
+ * As referências do jogo no save, adaptadas: as ADAPT_N melhores pela estimativa, as TOUR_N melhores de torneio e as
+ * COMPLETE_N melhores que o jogador tem inteiras, da
  * melhor para a pior (nota + fidelidade). `candidates` (propriedade): referenceCandidates, para adaptar mais depois.
- * @param {{ fidW?: number, minKeep?: number, adapt?: number, tour?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
+ * @param {{ fidW?: number, minKeep?: number, adapt?: number, tour?: number, complete?: number, beam?: number, roleMoves?: 'choose'|'always'|false, fidMode?: 'v1'|'v2' }} [opts]
  */
 export function referenceTeams(ctx, tables, T, game, opts = {}) {
   const c = referenceCandidates(ctx, tables, T, game, opts);
   const n = opts.adapt ?? ADAPT_N, nt = opts.tour ?? TOUR_N;
   const tours = new Set(c.list.filter(w => w.format.kind === 'tournament').slice(0, nt));
-  const out = c.list.filter((w, i) => i < n || w.complete || tours.has(w)).map(w => adaptReference(ctx, w)).filter(Boolean);
+  const whole = new Set(c.list.filter(w => w.complete).slice(0, opts.complete ?? COMPLETE_N));
+  const out = c.list.filter((w, i) => i < n || whole.has(w) || tours.has(w)).map(w => adaptReference(ctx, w)).filter(Boolean);
   out.sort((a, b) => b.rank - a.rank);
   Object.defineProperty(out, 'candidates', { value: c });
   return Object.defineProperty(out, 'rejected', { value: c.rejected });

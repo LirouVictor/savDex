@@ -612,7 +612,9 @@ function refPanels(x, ctx, bits, shownSets) {
     head = t('Equipe de {player} na final de {event}.', r0);
     origin = [
       t('Final de torneio do Smogon ({format}, Singles): a equipe e o resultado vêm do replay da partida no Pokémon Showdown.', { format: tb.name }),
-      t('Conferido em {date}: quem venceu a série nos replays é o campeão do título do tópico; as 6 espécies são as da pré-visualização do replay.', { date: tb.source.retrieved }),
+      r0.titleWinner
+        ? t('Conferido em {date}: no título do tópico o campeão é “{winner}”, e nos replays quem venceu a série é {player}, com nome parecido (outra conta, provavelmente); as 6 espécies são as da pré-visualização do replay.', { date: tb.source.retrieved, winner: r0.titleWinner, player: r0.player })
+        : t('Conferido em {date}: quem venceu a série nos replays é o campeão do título do tópico; as 6 espécies são as da pré-visualização do replay.', { date: tb.source.retrieved }),
       t('Os papéis são os que apareceram nos jogos da final (golpes usados, item e habilidade revelados): quem não entrou ou não usou um golpe fica sem esse papel.'),
     ];
     resLines = results.map(r => (r.placement === 'champion'
@@ -827,7 +829,7 @@ function refsHeader(results) {
     out.push(`<p class="hint">${t('{n} de {total} equipes do competitivo têm {min} ou mais Pokémon que você tem. Abaixo, as que melhor se adaptam ao seu save, com os que faltam trocados por Pokémon seus.', { n: info.total - info.rejected, total: info.total, min: MIN_KEEP })}</p>`);
     // Campeãs e finalistas: só com o replay da final como prova; nenhuma compatível é dito, não escondido
     out.push(`<p class="hint">${info.tourOk
-      ? t('Das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova), {n} são compatíveis; as outras são equipes de exemplo.', { tour: info.tour, n: info.tourOk })
+      ? t('Das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova), {n} são compatíveis. As abas sem “Campeã” ou “Finalista” são equipes de exemplo.', { tour: info.tour, n: info.tourOk })
       : t('Nenhuma das {tour} equipes de finais de torneio (campeãs e finalistas, com o replay como prova) tem {min} ou mais Pokémon que você tem; as abaixo são equipes de exemplo.', { tour: info.tour, min: MIN_KEEP })}</p>`);
   }
   const btns = [];

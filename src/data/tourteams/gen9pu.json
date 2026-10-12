@@ -1,0 +1,465 @@
+{
+ "format": "gen9pu",
+ "name": "Gen 9 PU",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9pu-t9ityjs",
+   "name": "The PU Open IX",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Sandslash-Alola", "r": [ "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Heracross", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Milotic", "r": [], "at": [], "dmg": 0, "cat": "-", "hidden": true },
+    { "s": "Ambipom", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Rotom-Heat", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Golurk", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9pu-tik048b",
+   "name": "The PU Open IX",
+   "author": "Fogbound Lake",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Vikavolt", "r": [ "pivot", "web", "midAttacker" ], "at": [ "bug", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Rhydon", "r": [], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Delphox", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "fire", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Qwilfish-Hisui", "r": [ "priority" ], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Tatsugiri", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Heracross", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-tqlvnof",
+   "name": "The PU Open IX",
+   "author": "Fogbound Lake",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Snorlax", "r": [ "midAttacker" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Rhydon", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Pawmot", "r": [], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Tatsugiri", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowbro-Galar", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "poison", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Bombirdier", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-t7mtwdm",
+   "name": "The PU Open IX",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Slowbro-Galar", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Milotic", "r": [ "midAttacker" ], "at": [ "fairy", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Avalugg-Hisui", "r": [ "removal", "midAttacker" ], "at": [ "ice", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Cramorant", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Klawf", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Pawmot", "r": [], "at": [ "electric" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-teo9jv",
+   "name": "The PU Open VIII",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Zoroark", "r": [ "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Bombirdier", "r": [ "midAttacker" ], "at": [ "grass", "rock" ], "dmg": 2, "cat": "M" },
+    { "s": "Frosmoth", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fire", "poison" ], "dmg": 3, "cat": "M" },
+    { "s": "Milotic", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Amoonguss", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Rhydon", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-t1c1dcyr",
+   "name": "The PU Open VIII",
+   "author": "DugZaッ",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Rhydon", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Milotic", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Ambipom", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark", "ice", "normal" ], "dmg": 4, "cat": "P" },
+    { "s": "Venusaur", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Zoroark", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Sandslash-Alola", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-t11gxj1j",
+   "name": "The PU Open VIII",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Braviary-Hisui", "r": [], "use": [ "chuva" ], "at": [ "flying" ], "dmg": 1, "cat": "S" },
+    { "s": "Dudunsparce", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowbro-Galar", "r": [], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Wo-Chien", "r": [ "midAttacker" ], "at": [ "dark", "grass" ], "dmg": 3, "cat": "S" },
+    { "s": "Pawmot", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Cramorant", "r": [ "removal" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9pu-t9tbz87",
+   "name": "The PU Open VIII",
+   "author": "DugZaッ",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Mudsdale", "r": [], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Articuno-Galar", "r": [], "use": [ "chuva" ], "at": [ "flying" ], "dmg": 1, "cat": "S" },
+    { "s": "Pawmot", "r": [ "midAttacker" ], "at": [ "electric", "fighting", "ice" ], "dmg": 3, "cat": "P" },
+    { "s": "Tatsugiri", "r": [], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Rotom-Heat", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Qwilfish-Hisui", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-tcqyn1k",
+   "name": "The PU Open VIII",
+   "author": "mind gaming",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Espeon", "r": [ "midAttacker" ], "at": [ "ghost", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Sandslash-Alola", "r": [ "hazard", "removal", "midAttacker" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Palossand", "r": [ "hazard", "midAttacker" ], "at": [ "dark", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Milotic", "r": [ "pivot", "midAttacker" ], "at": [ "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Zoroark", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "S" },
+    { "s": "Decidueye-Hisui", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "dark" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-tbhtwm3",
+   "name": "The PU Open VIII",
+   "author": "DugZaッ",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Mudsdale", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Slowbro-Galar", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "psychic", "water" ], "dmg": 2, "cat": "S" },
+    { "s": "Goodra", "r": [ "midAttacker" ], "at": [ "dragon", "fire" ], "dmg": 2, "cat": "S" },
+    { "s": "Electrode-Hisui", "r": [ "pivot", "midAttacker" ], "at": [ "dark", "electric" ], "dmg": 2, "cat": "M" },
+    { "s": "Sandslash-Alola", "r": [ "hazard" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Zoroark", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-t8wuxuj",
+   "name": "The PU Open VII",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Arcanine", "r": [ "midAttacker", "priority" ], "at": [ "fire", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Skuntank", "r": [ "priority" ], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Decidueye", "r": [ "sweeper", "midAttacker", "priority", "passable" ], "at": [ "ghost", "grass" ], "dmg": 3, "cat": "P" },
+    { "s": "Avalugg-Hisui", "r": [ "hazard" ], "at": [ "ice" ], "dmg": 1, "cat": "P" },
+    { "s": "Minior", "r": [ "sweeper", "midAttacker", "smash", "passable" ], "at": [ "ground", "rock" ], "dmg": 2, "cat": "P" },
+    { "s": "Inteleon", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ice" ], "dmg": 2, "cat": "M" }
+   ]
+  },
+  {
+   "id": "gen9pu-tahgm0w",
+   "name": "The PU Open VII",
+   "author": "eifo",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Meloetta", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Copperajah", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Rotom-Mow", "r": [ "pivot", "midAttacker" ], "at": [ "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Gligar", "r": [ "pivot", "hazard" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Poliwrath", "r": [ "midAttacker" ], "at": [ "dark", "fighting" ], "dmg": 2, "cat": "P" },
+    { "s": "Skuntank", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-tz8ao6u",
+   "name": "The PU Open VII",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Bombirdier", "r": [ "midAttacker", "priority" ], "at": [ "dark" ], "dmg": 2, "cat": "P" },
+    { "s": "Coalossal", "r": [ "hazard", "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Ambipom", "r": [ "midAttacker" ], "at": [ "dark", "normal" ], "dmg": 2, "cat": "P" },
+    { "s": "Florges", "r": [ "passable" ], "use": [ "sol" ], "at": [ "fairy" ], "dmg": 1, "cat": "S" },
+    { "s": "Gastrodon", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Toxicroak", "r": [ "passable" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-tnmjd4b",
+   "name": "The PU Open VII",
+   "author": "eifo",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Tauros-Paldea-Aqua", "r": [ "passable" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Dudunsparce", "r": [ "passable" ], "at": [ "normal" ], "dmg": 1, "cat": "S" },
+    { "s": "Duraludon", "r": [], "at": [ "steel" ], "dmg": 1, "cat": "S" },
+    { "s": "Rotom-Mow", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "grass" ], "dmg": 2, "cat": "S" },
+    { "s": "Golurk", "r": [ "hazard" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Copperajah", "r": [ "midAttacker" ], "at": [ "dark", "fairy", "ground" ], "dmg": 3, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9pu-ts7fjvp",
+   "name": "The PU Open VII",
+   "author": "eifo",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Hariyama", "r": [ "passable" ], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Sandslash-Alola", "r": [ "removal" ], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Milotic", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Palossand", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Skuntank", "r": [ "midAttacker", "priority" ], "at": [ "dark", "poison" ], "dmg": 2, "cat": "P" },
+    { "s": "Rotom-Mow", "r": [ "pivot" ], "at": [ "electric" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9pu-tram7ke",
+   "name": "The PU Open VII",
+   "author": "SOULWIND",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Golurk", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "P" },
+    { "s": "Bellibolt", "r": [ "pivot" ], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Milotic", "r": [], "at": [ "water" ], "dmg": 1, "cat": "S" },
+    { "s": "Duraludon", "r": [ "hazard" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Slowbro-Galar", "r": [ "midAttacker" ], "at": [ "fire", "psychic" ], "dmg": 2, "cat": "S" },
+    { "s": "Scyther", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9pu-t7mtwdm",
+   "player": "mind gaming",
+   "event": "The PU Open IX",
+   "date": "2026-06-21",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-949431",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-ix-finals-won-by-mind-gaming.3783870/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tqlvnof",
+   "player": "Fogbound Lake",
+   "event": "The PU Open IX",
+   "date": "2026-06-21",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-949431",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-ix-finals-won-by-mind-gaming.3783870/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tik048b",
+   "player": "Fogbound Lake",
+   "event": "The PU Open IX",
+   "date": "2026-06-21",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-949417",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-ix-finals-won-by-mind-gaming.3783870/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-t9ityjs",
+   "player": "mind gaming",
+   "event": "The PU Open IX",
+   "date": "2026-06-21",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-949417",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-ix-finals-won-by-mind-gaming.3783870/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tbhtwm3",
+   "player": "DugZaッ",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855899",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tcqyn1k",
+   "player": "mind gaming",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855899",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-t9tbz87",
+   "player": "DugZaッ",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855893",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-t11gxj1j",
+   "player": "mind gaming",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855893",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-t1c1dcyr",
+   "player": "DugZaッ",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855889",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-teo9jv",
+   "player": "mind gaming",
+   "event": "The PU Open VIII",
+   "date": "2025-07-13",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-855889",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-viii-finals-won-by-dugza.3767423/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tram7ke",
+   "player": "SOULWIND",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780911",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-ts7fjvp",
+   "player": "eifo",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780911",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tnmjd4b",
+   "player": "eifo",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780909",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tz8ao6u",
+   "player": "SOULWIND",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780909",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-tahgm0w",
+   "player": "eifo",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "finalist",
+   "series": "1-2",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780904",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9pu-t8wuxuj",
+   "player": "SOULWIND",
+   "event": "The PU Open VII",
+   "date": "2024-07-18",
+   "placement": "champion",
+   "series": "2-1",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9pu-780904",
+   "thread": "https://www.smogon.com/forums/threads/the-pu-open-vii-finals-won-by-soulwind.3746682/",
+   "verification": "verified"
+  }
+ ]
+}

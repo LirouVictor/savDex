@@ -92,7 +92,9 @@ describe('tabelas de torneio (src/data/tourteams)', () => {
         expect(r.thread).toMatch(/^https:\/\/www\.smogon\.com\/forums\/threads\//);
         expect(['champion', 'finalist']).toContain(r.placement);
         expect(r.series).toMatch(/^\d+-\d+$/);
-        expect(r.verification).toBe('verified');
+        expect(['verified', 'partially_verified']).toContain(r.verification);
+        // Conferido em parte só quando o nome do título não é o do replay (outra conta), com os dois nomes
+        expect(!!r.titleWinner).toBe(r.verification === 'partially_verified');
       }
       for (const t of tb.teams) {
         expect(tb.results.some(r => r.team === t.id)).toBe(true);

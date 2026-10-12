@@ -1,0 +1,241 @@
+{
+ "format": "gen9nationaldex",
+ "name": "Gen 9 National Dex",
+ "gen": 9,
+ "mode": "singles",
+ "kind": "tournament",
+ "source": {
+  "name": "Smogon tournaments (finals replays on Pokémon Showdown)",
+  "list": "https://www.smogon.com/forums/forums/tournaments.34/",
+  "retrieved": "2026-10-12",
+  "license": "replays públicos do Pokémon Showdown; aqui só espécies e dados derivados pelo app"
+ },
+ "teams": [
+  {
+   "id": "gen9nationaldex-t1pw7uun",
+   "name": "National Dex Spring Showdown I",
+   "author": "shirone arian",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Melmetal", "r": [ "midAttacker" ], "at": [ "ground", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Tyranitar", "mega": "Mega", "r": [], "set": [ "tempestade de areia" ], "auto": [ "tempestade de areia" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "removal" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Tapu Lele", "r": [], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Excadrill", "r": [ "midAttacker" ], "at": [ "ground", "steel" ], "dmg": 2, "cat": "P" },
+    { "s": "Tangrowth", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-tacrlt9",
+   "name": "National Dex Spring Showdown I",
+   "author": "Calmmind75",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Kingambit", "r": [], "at": [ "fighting" ], "dmg": 1, "cat": "P" },
+    { "s": "Charizard", "mega": "Mega-Y", "r": [ "midAttacker" ], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "ground", "normal" ], "dmg": 2, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Raging Bolt", "r": [], "use": [ "sol" ], "at": [ "dragon" ], "dmg": 1, "cat": "S" },
+    { "s": "Toxapex", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Rillaboom", "r": [ "pivot" ], "set": [ "Grassy Terrain" ], "auto": [ "Grassy Terrain" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-t16exfvb",
+   "name": "National Dex Spring Showdown I",
+   "author": "Calmmind75",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Raging Bolt", "r": [ "pivot", "midAttacker" ], "at": [ "electric" ], "dmg": 3, "cat": "S" },
+    { "s": "Urshifu-Rapid-Strike", "r": [], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Iron Crown", "r": [ "pivot", "midAttacker" ], "at": [ "electric", "psychic", "steel" ], "dmg": 3, "cat": "S" },
+    { "s": "Alomomola", "r": [ "pivot" ], "at": [ "water" ], "dmg": 1, "cat": "P" },
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "fire" ], "dmg": 3, "cat": "P" },
+    { "s": "Ting-Lu", "r": [ "hazard", "phaze" ], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-t1ngfp3",
+   "name": "National Dex Spring Showdown I",
+   "author": "shirone arian",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Alomomola", "r": [ "pivot", "midAttacker" ], "at": [ "fairy", "water" ], "dmg": 2, "cat": "P" },
+    { "s": "Kyurem", "r": [ "midAttacker", "passable" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "S" },
+    { "s": "Scizor", "mega": "Mega", "r": [], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Cinderace", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "fighting", "fire" ], "dmg": 3, "cat": "P" },
+    { "s": "Zapdos", "r": [ "pivot" ], "at": [ "electric" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "midAttacker" ], "at": [ "fighting", "ground" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-t9h4814",
+   "name": "National Dex Ladder Tournament VII",
+   "author": "1yr",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Cinderace", "r": [ "removal" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Slowking-Galar", "r": [ "pivot" ], "at": [ "poison" ], "dmg": 1, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "removal" ], "at": [ "rock" ], "dmg": 1, "cat": "P" },
+    { "s": "Kyurem", "r": [ "midAttacker" ], "at": [ "ground", "ice", "rock" ], "dmg": 4, "cat": "M" },
+    { "s": "Kingambit", "r": [ "passable" ], "at": [ "steel" ], "dmg": 1, "cat": "P" },
+    { "s": "Ogerpon-Wellspring", "r": [ "sweeper", "midAttacker", "passable" ], "at": [ "grass" ], "dmg": 2, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-tos9n52",
+   "name": "National Dex Ladder Tournament VII",
+   "author": "Mollymiltoast",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Meowscarada", "r": [ "pivot", "midAttacker" ], "at": [ "bug", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Alomomola", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Charizard", "mega": "Mega-Y", "r": [], "set": [ "sol" ], "auto": [ "sol" ], "at": [ "fire" ], "dmg": 1, "cat": "S" },
+    { "s": "Great Tusk", "r": [ "hazard", "midAttacker" ], "use": [ "sol" ], "at": [ "ground", "ice" ], "dmg": 2, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Tapu Lele", "r": [], "set": [ "Psychic Terrain" ], "auto": [ "Psychic Terrain" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-t1xm0g6w",
+   "name": "National Dex Ladder Tournament VII",
+   "author": "Mollymiltoast",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Zamazenta", "r": [], "at": [ "dark" ], "dmg": 1, "cat": "P" },
+    { "s": "Slowking-Galar", "r": [ "pivot" ], "at": [ "psychic" ], "dmg": 1, "cat": "S" },
+    { "s": "Raging Bolt", "r": [ "midAttacker" ], "at": [ "dragon", "electric" ], "dmg": 2, "cat": "S" },
+    { "s": "Landorus-Therian", "r": [ "pivot", "hazard" ], "at": [ "bug" ], "dmg": 1, "cat": "P" },
+    { "s": "Gholdengo", "r": [ "midAttacker" ], "at": [ "ghost", "steel" ], "dmg": 2, "cat": "S" },
+    { "s": "Urshifu-Rapid-Strike", "r": [ "pivot" ], "at": [ "bug" ], "dmg": 1, "cat": "P" }
+   ]
+  },
+  {
+   "id": "gen9nationaldex-t1t5w7mj",
+   "name": "National Dex Ladder Tournament VII",
+   "author": "1yr",
+   "verification": "verified",
+   "partial": true,
+   "members": [
+    { "s": "Lopunny", "mega": "Mega", "r": [], "at": [ "normal" ], "dmg": 1, "cat": "P" },
+    { "s": "Toxapex", "r": [ "midAttacker" ], "at": [ "dark", "water" ], "dmg": 2, "cat": "M" },
+    { "s": "Ting-Lu", "r": [ "hazard" ], "at": [ "ground" ], "dmg": 1, "cat": "P" },
+    { "s": "Skarmory", "r": [ "hazard" ], "at": [], "dmg": 0, "cat": "-" },
+    { "s": "Gholdengo", "r": [], "at": [ "ghost" ], "dmg": 1, "cat": "S" },
+    { "s": "Kyurem", "r": [], "at": [], "dmg": 0, "cat": "-" }
+   ]
+  }
+ ],
+ "results": [
+  {
+   "team": "gen9nationaldex-t1t5w7mj",
+   "player": "1yr",
+   "event": "National Dex Ladder Tournament VII",
+   "date": "2026-08-05",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-961711",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-ladder-tournament-vii-finals-won-by-1yr.3785890/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-t1xm0g6w",
+   "player": "Mollymiltoast",
+   "event": "National Dex Ladder Tournament VII",
+   "date": "2026-08-05",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-961711",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-ladder-tournament-vii-finals-won-by-1yr.3785890/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-tos9n52",
+   "player": "Mollymiltoast",
+   "event": "National Dex Ladder Tournament VII",
+   "date": "2026-08-05",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-961706",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-ladder-tournament-vii-finals-won-by-1yr.3785890/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-t9h4814",
+   "player": "1yr",
+   "event": "National Dex Ladder Tournament VII",
+   "date": "2026-08-05",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-961706",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-ladder-tournament-vii-finals-won-by-1yr.3785890/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-t1ngfp3",
+   "player": "shirone arian",
+   "event": "National Dex Spring Showdown I",
+   "date": "2026-06-07",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-944282",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-spring-showdown-i-round-7-finals-won-by-shirone-arian.3783343/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-t16exfvb",
+   "player": "Calmmind75",
+   "event": "National Dex Spring Showdown I",
+   "date": "2026-06-07",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-944282",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-spring-showdown-i-round-7-finals-won-by-shirone-arian.3783343/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-tacrlt9",
+   "player": "Calmmind75",
+   "event": "National Dex Spring Showdown I",
+   "date": "2026-06-07",
+   "placement": "finalist",
+   "series": "0-2",
+   "games": 1,
+   "won": 0,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-944269",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-spring-showdown-i-round-7-finals-won-by-shirone-arian.3783343/",
+   "verification": "verified"
+  },
+  {
+   "team": "gen9nationaldex-t1pw7uun",
+   "player": "shirone arian",
+   "event": "National Dex Spring Showdown I",
+   "date": "2026-06-07",
+   "placement": "champion",
+   "series": "2-0",
+   "games": 1,
+   "won": 1,
+   "url": "https://replay.pokemonshowdown.com/smogtours-gen9nationaldex-944269",
+   "thread": "https://www.smogon.com/forums/threads/national-dex-spring-showdown-i-round-7-finals-won-by-shirone-arian.3783343/",
+   "verification": "verified"
+  }
+ ]
+}
