@@ -9,7 +9,7 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#e8e2cf",
+  "background_color": "#222a44",
   "theme_color": "#2b3350",
   "categories": ["games", "utilities"],
   "share_target": {
