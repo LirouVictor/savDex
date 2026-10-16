@@ -248,27 +248,31 @@ export function ndsTables(T, G, N, gen) {
   return { ...T, moves, moveDetails, typechart: G.typechart, nds: N };
 }
 
+/** Espécie (Dex Nacional + nº da forma) com tipos e stats da geração do save (nds.json), no formato do app. */
+export function ndsSpecies(n, form, T, gen, isEgg = false) {
+  const N = T.nds;
+  const typeName = i => T.types[i] || null;
+  const row = N.species[gen][n];
+  if (!row || !T.species[n]) return { name: t('Espécie {id}', { id: n }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0 };
+  const formRow = form ? N.forms[gen][`${n}:${form}`] : null;
+  const [spriteForm, label, ...formData] = formRow || [0, null];
+  const [t1, t2, ...base] = formData.length ? formData : [row[0], row[1], ...row.slice(3)];
+  const name = T.species[n][0];
+  const spriteId = spriteForm || n;
+  return {
+    name, form: isEgg ? 'ovo' : label, showdown: label && spriteForm ? `${name}-${label.replace(/ /g, '-')}` : name,
+    confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, hasIcon: !spriteForm && n <= 898,
+    types: [t1, t2].filter(Boolean).map(typeName), abilities: [null, null, null], baseStats: base, growth: row[2],
+  };
+}
+
 /** Converte a leitura crua no mesmo formato de describe() do Quetzal. */
 export function describeNds(raw, T) {
   const N = T.nds, gen = raw.game.gen;
   const typeName = i => T.types[i] || null;
   const shiny = (pid, otId) => (((otId & 0xFFFF) ^ (otId >>> 16) ^ (pid & 0xFFFF) ^ (pid >>> 16)) >>> 0) < 8;
 
-  function species(p) {
-    const n = p.speciesId;
-    const row = N.species[gen][n];
-    if (!row || !T.species[n]) return { name: t('Espécie {id}', { id: n }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0 };
-    const formRow = p.form ? N.forms[gen][`${n}:${p.form}`] : null;
-    const [spriteForm, label, ...formData] = formRow || [0, null];
-    const [t1, t2, ...base] = formData.length ? formData : [row[0], row[1], ...row.slice(3)];
-    const name = T.species[n][0];
-    const spriteId = spriteForm || n;
-    return {
-      name, form: p.isEgg ? 'ovo' : label, showdown: label && spriteForm ? `${name}-${label.replace(/ /g, '-')}` : name,
-      confidence: 'confirmado', evidence: null, spriteId, dexId: spriteId, hasIcon: !spriteForm && n <= 898,
-      types: [t1, t2].filter(Boolean).map(typeName), abilities: [null, null, null], baseStats: base, growth: row[2],
-    };
-  }
+  const species = p => ndsSpecies(p.speciesId, p.form, T, gen, p.isEgg);
   const move = m => {
     const row = T.moves[m.id], det = T.moveDetails[m.id];
     return { id: m.id, name: row ? row[0] : t('Golpe {n}', { n: m.id }), type: row ? typeName(row[1]) : null, pp: m.pp, power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null };

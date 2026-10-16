@@ -28,8 +28,9 @@ function serviceWorker() {
         if (c.type === 'chunk') (c.imports || []).forEach(add);
       };
       for (const c of Object.values(bundle)) if (c.type === 'chunk' && (c.isEntry || c.name === 'app')) add(c.fileName);
-      // O que não é JS (CSS, fontes woff2, ícones, manifest) é pequeno e entra sempre
-      for (const f of assets) if (!f.endsWith('.js')) core.add(f);
+      // O que não é JS (CSS, fontes woff2, ícones, manifest) é pequeno e entra sempre; as imagens do pacote (mapas das
+      // regiões do Quetzal) só quando forem usadas
+      for (const f of assets) if (!f.endsWith('.js') && !(bundle[f] && f.endsWith('.png'))) core.add(f);
       const files = ['./', ...assets.filter(f => f !== 'index.html' && core.has(f)).map(f => './' + f)];
       const lazy = assets.filter(f => !core.has(f)).map(f => './' + f);
       const version = createHash('sha256').update(files.join('\n') + Object.values(bundle).map(c => c.code || c.source || '').join('')).digest('hex').slice(0, 12);

@@ -90,6 +90,7 @@ function render() {
       ${R.searchWin(data, T)}
     </div>
     <div class="grp" id="grp-tools">
+      ${R.pokedexWin(data, T)}
       ${R.builderWin(data, Object.values(PROVIDERS))}
       <div id="teams-slot"></div>
       ${R.exportWin()}
@@ -178,13 +179,131 @@ function render() {
 
   // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
   // quando a Busca abre
-  for (const id of ['builder-win', 'ai-win', 'search-win']) {
+  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win']) {
     const det = out.querySelector('#' + id);
     det.addEventListener('toggle', () => {
       setFoldOpen(id, det.open);
       if (id === 'search-win' && det.open && !state.searched) runSearch();
+      if (id === 'pokedex-win' && det.open) setupPokedex(out);
     });
     if (foldOpen(id)) det.open = true;
+  }
+}
+
+// Pokédex do jogo: o pacote (lista de espécies, filtros e detalhe) só carrega quando a janela abre
+let pokedexMod = null;
+const loadPokedex = () => (pokedexMod ||= import('./pokedex/view.js').catch(e => { pokedexMod = null; throw e; }));
+
+/** A Pokédex do save aberto: as espécies do jogo, montadas uma vez por save. */
+async function pokedexState() {
+  const cur = state;
+  if (!cur.pokedex) {
+    const P = await loadPokedex();
+    const caught = cur.data.summary && cur.data.summary.dex && cur.data.summary.dex.caught;
+    cur.pokedex = { P, entries: P.pokedexEntries(T, cur.data.game), caught: caught ? new Set(caught) : null, list: [], page: 0, dex: null };
+  }
+  return cur.pokedex;
+}
+
+async function setupPokedex(out) {
+  const cur = state;
+  const $ = s => out.querySelector(s);
+  if (cur.pokedexWired) return;
+  cur.pokedexWired = true;
+  $('#pdx-count').textContent = t('Carregando…');
+  let pd;
+  try { pd = await pokedexState(); } catch (e) { console.error(e); cur.pokedexWired = false; $('#pdx-count').textContent = t('Não consegui abrir a Pokédex.'); return; }
+  if (state !== cur) return;
+  $('#pdx-note').textContent = pd.P.listNote(cur.data.game);
+  const show = () => {
+    const total = pd.list.length;
+    const pages = Math.max(1, Math.ceil(total / pd.P.PAGE));
+    pd.page = Math.min(Math.max(0, pd.page), pages - 1);
+    const start = pd.page * pd.P.PAGE;
+    $('#pdx-results').innerHTML = pd.list.slice(start, start + pd.P.PAGE).map((e, j) => pd.P.entryRow(e, start + j, pd.caught)).join('');
+    $('#pdx-count').textContent = t(total === 1 ? '1 espécie.' : '{n} espécies.', { n: total });
+    const pager = $('#pdx-pager');
+    pager.classList.toggle('hidden', pages <= 1);
+    pager.querySelector('[data-page="-1"]').disabled = pd.page === 0;
+    pager.querySelector('[data-page="1"]').disabled = pd.page >= pages - 1;
+    $('#pdx-page').textContent = t('Página {p} de {n}', { p: pd.page + 1, n: pages });
+  };
+  const run = async () => {
+    const v = id => ($('#' + id) ? $('#' + id).value : '');
+    const moveQ = v('pdx-move').trim();
+    // Filtro por golpe: carrega os golpes do jogo (os mesmos do detalhe) na primeira vez
+    if (moveQ && !pd.dex) {
+      $('#pdx-count').textContent = t('Carregando os golpes…');
+      try { pd.dex = (await loadDex()).dex; } catch (e) { console.error(e); $('#pdx-count').textContent = t('Não consegui carregar os golpes.'); return; }
+      if (state !== cur) return;
+    }
+    const moves = moveQ ? pd.P.movesMatching(moveQ, pd.entries, pd.dex, T) : null;
+    pd.list = pd.P.filterEntries(pd.entries, { q: v('pdx-q'), type: v('pdx-type'), caught: v('pdx-caught'), sort: v('pdx-sort'), moves }, { caught: pd.caught, dex: pd.dex });
+    pd.page = 0;
+    show();
+  };
+  let timer = 0;
+  const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
+  for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-sort', 'pdx-caught']) {
+    const el = $('#' + id);
+    if (el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
+  }
+  $('#pdx-pager').addEventListener('click', e => {
+    const b = e.target.closest('[data-page]');
+    if (!b) return;
+    pd.page += Number(b.dataset.page);
+    show();
+    const count = $('#pdx-count');
+    if (count.getBoundingClientRect().top < 0) count.scrollIntoView({ block: 'start' });
+  });
+  $('#pdx-results').addEventListener('click', e => {
+    const b = e.target.closest('[data-pdx]');
+    if (b) openSpecies(pd.list[+b.dataset.pdx], b);
+  });
+  run();
+}
+
+/** Detalhe de uma espécie da Pokédex (na janela do detalhe). */
+async function openSpecies(entry, opener) {
+  if (!entry) return;
+  const pd = await pokedexState();
+  const dlg = document.getElementById('detail');
+  const wasOpen = dlg.open;
+  const owned = pd.P.ownedOf(entry, state.all);
+  dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned });
+  fillWild(dlg, entry, pd);
+  fillDex(dlg, pd.P.speciesMon(entry));
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  dlg.querySelector('.mon').addEventListener('click', e => {
+    const b = e.target.closest('[data-own]');
+    if (b) openDetail(owned[+b.dataset.own], opener);
+  });
+  stickyName(dlg);
+  if (wasOpen) { dlg.scrollTop = 0; return; }
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+}
+
+// Onde encontrar (Quetzal): locais da natureza e o mapa da região, num pacote à parte
+let wildMod = null;
+async function fillWild(dlg, entry, pd) {
+  const slot = dlg.querySelector('[data-wild]');
+  if (!slot) return;
+  try {
+    const Wm = await (wildMod ||= import('./pokedex/wild.js').catch(e => { wildMod = null; throw e; }));
+    if (!slot.isConnected) return;
+    const icons = state.data.summary && state.data.summary.badges && state.data.summary.badges.icons;
+    const region = icons ? ({ 1: 'kanto', 9: 'johto', 17: 'hoenn' })[icons[0]] : null;
+    const nameOf = id => (pd.entries.find(x => x.id === id) || {}).species || null;
+    slot.innerHTML = Wm.wildHtml(entry.id, T.quetzal, { region, nameOf });
+    Wm.wireWild(slot);
+  } catch (e) {
+    console.error(e);
+    slot.innerHTML = '';
   }
 }
 
@@ -552,6 +671,15 @@ function openSheet(html, opener, wire) {
   dlg.showModal();
 }
 
+/** O nome aparece na barra de cima do detalhe quando o cabeçalho sai da tela. */
+function stickyName(dlg) {
+  const hero = dlg.querySelector('.mon-hero'), bar = dlg.querySelector('.sheet-bar');
+  if (!hero || !bar || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: dlg, rootMargin: '-56px 0px 0px 0px' });
+  io.observe(hero);
+  dlg.addEventListener('close', () => io.disconnect(), { once: true });
+}
+
 function openDetail(m, opener) {
   const dlg = document.getElementById('detail');
   // Aberto a partir de um card do montador: troca o conteúdo da mesma janela (que já volta para o bloco ao fechar)
@@ -567,13 +695,7 @@ function openDetail(m, opener) {
     copy.title = msg;
     copy.setAttribute('aria-label', msg);
   });
-  // O nome aparece na barra de cima quando o cabeçalho sai da tela
-  const hero = dlg.querySelector('.mon-hero'), bar = dlg.querySelector('.sheet-bar');
-  if (hero && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: dlg, rootMargin: '-56px 0px 0px 0px' });
-    io.observe(hero);
-    dlg.addEventListener('close', () => io.disconnect(), { once: true });
-  }
+  stickyName(dlg);
   if (wasOpen) { dlg.scrollTop = 0; return; }
   // Ao fechar, volta exatamente para onde a página estava.
   const scroll = window.scrollY;
@@ -702,7 +824,17 @@ async function openDex(opener) {
     dlg.innerHTML = mod.dexWinHtml(info, name, state.data.game && state.data.game.id, view);
     dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   };
-  dlg.onclick = e => {
+  dlg.onclick = async e => {
+    // Uma espécie que falta: os dados dela na Pokédex do jogo (por cima desta janela)
+    const sp = e.target.closest('[data-dex-nat]');
+    if (sp) {
+      try {
+        const pd = await pokedexState();
+        const n = +sp.dataset.dexNat;
+        openSpecies(pd.entries.find(x => x.nat === n && !x.species.form) || pd.entries.find(x => x.nat === n), sp);
+      } catch (err) { console.error(err); }
+      return;
+    }
     const f = e.target.closest('[data-dex-filter]'), g = e.target.closest('[data-dex-gen]');
     if (f) { view.filter = f.dataset.dexFilter; view.gen = 0; }
     else if (g) view.gen = +g.dataset.dexGen;
