@@ -1,6 +1,6 @@
 // Gera src/data/quetzal-legends.json (requisitos dos encontros únicos do Quetzal) a partir de tools/quetzal-legends-src.mjs.
-// Liga cada Pokémon do guia ao número da espécie no save (o mesmo de quetzal-wild.json) e confere que o lugar existe
-// no mapa da região. Só Hoenn e Kanto: Johto vem da ROM (tools/quetzal-legend-rules.py). Não precisa de rede nem da ROM.
+// Liga cada Pokémon do guia ao número da espécie no save (o mesmo de quetzal-wild.json). O lugar e o nível no mapa vêm
+// da ROM (tools/build-quetzal-wild.mjs); o lugar do guia só gera um aviso se a ROM não tiver encontro nele. Só Hoenn e Kanto: Johto vem da ROM (tools/quetzal-legend-rules.py). Não precisa de rede nem da ROM.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -26,7 +26,8 @@ for (const [guide, list] of [['hoenn', HOENN], ['kanto', KANTO]]) {
     const cands = ids.get(norm(name)) || [];
     const id = cands.find(c => c <= 898) ?? cands[0];
     if (id == null) fail(`${name}: espécie não encontrada.`);
-    if (place && !W.places.some(p => p[2] === region && norm(p[0]) === norm(place))) fail(`${name}: lugar "${place}" não existe em ${region}.`);
+    // O lugar e o nível do mapa vêm da ROM (build-quetzal-wild.mjs); o do guia só é avisado se a ROM não o tiver
+    if (place && !W.places.some(p => p[2] === region && norm(p[0]) === norm(place))) console.warn(`${name}: lugar do guia "${place}" não tem encontro em ${region} na ROM.`);
     if (pt.length !== en.length || !pt.length) fail(`${name}: textos em português e inglês não batem.`);
     (out[id] ||= []).push({ region, url: URL[guide] + slug + '.html', ver, pt, en, ...(place ? { place } : {}) });
     n++;

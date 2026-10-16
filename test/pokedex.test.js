@@ -174,7 +174,7 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     expect(wildHtml(150, Q, { caught: true })).toContain('já marca esta espécie como capturada');
   });
 
-  it('requisitos: Johto pela ROM (insígnias, Liga, item e regras de equipe), Hoenn e Kanto pelo guia', () => {
+  it('requisitos: Johto pela ROM (insígnias, Liga, item e regras de equipe), Hoenn e Kanto: lugar e nível pela ROM, requisitos pelo guia', () => {
     const lugia = wildHtml(249, Q);
     expect(lugia).toContain('Como fazer aparecer');
     expect(lugia).toContain('<li>8 insígnias de Johto</li>');
@@ -187,12 +187,16 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     const hoopa = wildHtml(1141, Q);
     expect(hoopa).toContain('Prison Bottle na mochila');
     expect(hoopa).toContain('Teleport');
-    // Hoenn e Kanto: o lugar vem do guia (a tabela da ROM só tem Johto)
+    // Hoenn e Kanto: lugar e nível dos roteiros dos mapas na ROM; os requisitos ainda vêm do guia
     const mewtwo = wildPlaces(150).map(p => p.region);
     expect(mewtwo).toEqual(expect.arrayContaining(['johto', 'hoenn', 'kanto']));
+    const at = (id, en) => wildPlaces(id).find(p => WILD.places[p.place][0] === en);
+    expect(at(144, 'Shoal Cave').rows).toContainEqual([7, 30, 30, 0]);
+    expect(at(384, 'Sky Pillar').rows).toContainEqual([7, 50, 50, 0]);
+    expect(at(243, 'Route 10').rows).toContainEqual([7, 40, 40, 0]);
     const deoxys = wildHtml(386, Q, { region: 'hoenn' });
     expect(deoxys).toContain('Aurora Ticket');
-    expect(deoxys).toContain('A tabela de encontros únicos da ROM só tem Johto.');
+    expect(deoxys).toContain('Lugar e nível lidos da ROM.');
     // Quem só evolui de um lendário não mostra os requisitos do ancestral
     expect(wildHtml(26, Q)).not.toContain('Como fazer aparecer');
   });

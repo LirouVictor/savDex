@@ -1137,7 +1137,7 @@ export default {
   'Em parte: o app ainda não leu tudo o que este encontro pede.': 'Partly: the app has not read everything this encounter asks for yet.',
   'Com a opção LENDÁRIOS = VISÍVEIS (provável), as regras de equipe e o item não valem; valem as insígnias, a Liga e: {x}': 'With the LEGENDARIES = VISIBLE option (probable), the party rules and the item don\'t apply; the badges, the League and this do: {x}',
   'Com a opção LENDÁRIOS = VISÍVEIS (provável), só valem as insígnias e a Liga.': 'With the LEGENDARIES = VISIBLE option (probable), only the badges and the League apply.',
-  'Pelo {guia}{v}, não conferido no jogo. A tabela de encontros únicos da ROM só tem Johto.': 'From the {guia}{v}, not checked in the game. The ROM table of one-time encounters only covers Johto.',
+  'Lugar e nível lidos da ROM. Requisitos pelo {guia}{v}, não conferidos no jogo: o app ainda não leu as funções da ROM que conferem estes encontros, e o guia pode estar desatualizado.': 'Place and level read from the ROM. Requirements from the {guia}{v}, not checked in the game: the app has not read the ROM functions that check these encounters yet, and the guide may be out of date.',
   'guia da comunidade': 'community guide',
 
   'Como fazer aparecer': 'How to make it appear',

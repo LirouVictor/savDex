@@ -282,10 +282,6 @@ async function main() {
   if (!has(129, 'Route 104', 'old')) fail('Magikarp não está na Old Rod da Rota 104.');
   if (!has(74, 'Route 111', 'rock')) fail('Geodude não está no Rock Smash da Rota 111.');
 
-  // Todos os lugares que têm um mapa (cidades, cavernas sem encontros…): os encontros únicos de Hoenn e Kanto, que não
-  // estão na tabela da ROM, usam o lugar pelo nome (src/data/quetzal-legends.json)
-  for (let g = 0; g < 40; g++) for (let m = 0; m < 256; m++) if (X.header(g, m) >= 0) placeOf(g, m);
-
   // Encontros únicos (lendários e afins): tabela própria do Quetzal, 32 bytes por espécie = grupo do mapa, mapa, nº do
   // objeto no mapa, 0, espécie u16, nível u16, 0 u16 e 3 flags seguidas (as das espécies seguintes continuam a conta); o
   // resto (requisitos, natureza?) não foi decodificado. Conferido pelo mapa: o objeto com esse número usa a 1ª flag
@@ -331,6 +327,95 @@ async function main() {
   const hasStatic = (sp, en) => (wild[sp] || []).some(r => places[r[0]][0] === en && METHODS[r[1]] === 'static');
   if (!hasStatic(150, 'Rocket Hideout') && !hasStatic(150, 'Team Rocket Hideout')) fail(`Mewtwo não está no esconderijo da Equipe Rocket (${(wild[150] || []).map(r => places[r[0]][0])}).`);
   if (!hasStatic(382, 'Embedded Tower')) fail('Kyogre não está na Embedded Tower.');
+  // Encontros únicos de Hoenn e Kanto, que a tabela acima não tem: lidos dos roteiros (scripts) dos mapas. Cada mapa
+  // fora de Johto tem objetos, gatilhos de chão, sinais e scripts do mapa; o roteiro é seguido (goto/call) e cada
+  // batalha única vira um encontro: `setvar 0x8004 espécie; setvar 0x8005 nível; special 0x1EE` (a do Quetzal) ou
+  // `setwildbattle espécie nível` (a do Emerald: Regis, Rayquaza, Kyogre, Groudon, Snorlax, Kecleon, Electrode…).
+  // Em Kanto, a maioria usa um roteiro comum com a tabela própria do Quetzal (16 bytes = espécie u16, 3 flags de
+  // capturado/derrotado, flag do objeto, grupo, mapa, nº do objeto, nível, tipo); os registros com nível 0 são os de
+  // roteiro (achados acima). O que faz cada um aparecer (as funções que conferem) não foi decodificado.
+  const scriptEncounters = () => {
+    // tamanho de cada comando do roteiro (0 = desconhecido: o caminho para), como no pokeemerald-expansion do Quetzal
+    const LEN = '11115566223311263666395555533666955553513333511313143132288838888851555535533337935353575514011133373415111111356615551250353424444446555341111366641432332534331591312354935515581333b10000000033328142511163313843131811152445846'.split('').map(c => (c === 'b' ? 11 : +c));
+    const TRAINER = { 0: 14, 5: 14, 1: 18, 2: 18, 3: 10, 4: 18, 7: 18, 6: 22, 8: 22, 9: 14 };
+    const found = [];
+    const walk = (start, g, m) => {
+      const seen = new Set(), todo = [start];
+      while (todo.length) {
+        let a = todo.pop();
+        if (a < 0 || seen.has(a)) continue;
+        const vars = {};
+        for (;;) {
+          if (a < 0 || a >= R.length || seen.has(a)) break;
+          seen.add(a);
+          const op = R[a];
+          const n = op === 0x5c ? TRAINER[R[a + 1]] : LEN[op];
+          if (!n) break;
+          if (op === 4 || op === 5) todo.push(P(u32(a + 1)));
+          if (op === 6 || op === 7) todo.push(P(u32(a + 2)));
+          if (op === 0x16) vars[u16(a + 1)] = u16(a + 3);
+          if (op === 0x25 && u16(a + 1) === 0x1ee && vars[0x8004] && vars[0x8005]) found.push([vars[0x8004], vars[0x8005], g, m]);
+          if (op === 0xb6) found.push([u16(a + 1), R[a + 3], g, m]);
+          if (op === 2 || op === 3 || op === 5 || op === 0xd) break;
+          a += n;
+        }
+      }
+    };
+    for (let g = 0; g < 40; g++) {
+      if (JOHTO_GROUPS.includes(g)) continue;
+      for (let m = 0; m < 256; m++) {
+        const h = X.header(g, m);
+        if (h < 0) continue;
+        const ev = P(u32(h + 4)), starts = [];
+        if (ev >= 0) {
+          const objs = P(u32(ev + 4)), coords = P(u32(ev + 12)), bgs = P(u32(ev + 16));
+          for (let i = 0; i < R[ev]; i++) starts.push(P(u32(objs + i * 24 + 0x10)));
+          for (let i = 0; i < R[ev + 2]; i++) starts.push(P(u32(coords + i * 16 + 12)));
+          for (let i = 0; i < R[ev + 3]; i++) if (R[bgs + i * 12 + 5] < 5) starts.push(P(u32(bgs + i * 12 + 8)));
+        }
+        let ms = P(u32(h + 8));
+        for (; ms >= 0 && R[ms]; ms += 5) {
+          const t = R[ms], p = P(u32(ms + 1));
+          if (t === 2 || t === 4) { for (let q = p; q >= 0 && u16(q); q += 8) starts.push(P(u32(q + 4))); } else starts.push(p);
+        }
+        for (const s of starts) if (s >= 0) walk(s, g, m);
+      }
+    }
+    // Tabela de Kanto: a sequência mais longa de registros de 16 bytes em mapas de Kanto, começando pelo Articuno
+    const kOk = o => KANTO_GROUPS.includes(R[o + 0xa]) && X.header(R[o + 0xa], R[o + 0xb]) >= 0 && u16(o) > 0 && u16(o) < 1600 && u16(o + 6) > 0 && R[o + 0xd] <= 100 && R[o + 0xf] === 0;
+    let kBase = -1, kCount = 0;
+    for (let o = 0; o < R.length - 16; o += 4) {
+      if (u16(o) !== 144 || !kOk(o)) continue;
+      let n = 1;
+      while (kOk(o + n * 16)) n++;
+      if (n > kCount) { kBase = o; kCount = n; }
+    }
+    if (kCount < 50) fail(`Tabela dos encontros únicos de Kanto não encontrada (${kCount} registros).`);
+    for (let i = 0; i < kCount; i++) {
+      const o = kBase + i * 16;
+      if (R[o + 0xd]) found.push([u16(o), R[o + 0xd], R[o + 0xa], R[o + 0xb]]);
+    }
+    return { found, kCount };
+  };
+  const SE = scriptEncounters();
+  let scripted = 0;
+  for (const [sp, lv, g, m] of SE.found) {
+    if (!sp || sp >= 1600 || !lv || lv > 100) fail(`Encontro de roteiro estranho: espécie ${sp}, nível ${lv} em ${g}.${m}.`);
+    const place = placeOf(g, m);
+    if (place < 0) continue;
+    const rows = (wild[sp] ||= []);
+    if (!rows.some(r => r[0] === place && r[1] === METHODS.indexOf('static') && r[2] === lv)) { rows.push([place, METHODS.indexOf('static'), lv, lv, 0]); scripted++; }
+  }
+  // Conferências: lugares conhecidos de Hoenn (Emerald e o próprio Quetzal) e de Kanto
+  const staticAt = (sp, en, lv) => (wild[sp] || []).some(r => places[r[0]][0] === en && METHODS[r[1]] === 'static' && (lv == null || r[2] === lv));
+  if (!staticAt(144, 'Shoal Cave')) fail('Articuno não está na Shoal Cave.');
+  if (!staticAt(384, 'Sky Pillar', 50)) fail('Rayquaza não está no Sky Pillar (Nv. 50).');
+  if (!staticAt(377, 'Desert Ruins', 40)) fail('Regirock não está nas Desert Ruins (Nv. 40).');
+  if (!staticAt(382, 'Marine Cave') && !staticAt(382, 'Seafloor Cavern')) fail('Kyogre não está na Marine Cave nem na Seafloor Cavern.');
+  if (!staticAt(150, 'Cerulean Cave')) fail('Mewtwo não está na Cerulean Cave.');
+  if (!staticAt(243, 'Route 10') && !(wild[243] || []).some(r => places[r[0]][2] === 'kanto' && METHODS[r[1]] === 'static')) fail('Raikou não está em Kanto.');
+  console.log(`encontros de roteiro (Hoenn e Kanto): ${SE.found.length} achados, ${scripted} novos; tabela de Kanto com ${SE.kCount} registros`);
+
   for (const rows of Object.values(wild)) rows.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
 
   // Mapas das regiões: qual imagem é de qual região, pelo quanto os retângulos das cidades caem fora do mar

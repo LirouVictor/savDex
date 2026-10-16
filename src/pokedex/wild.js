@@ -23,7 +23,7 @@ const STATIC = 7;
 
 /** Onde a espécie (número do Quetzal) aparece: [{ place, region, name, rows: [[jeito, mín., máx., chance]] }]. */
 export function wildPlaces(id) {
-  const rows = [...(W.wild[id] || []), ...guideRows(id)];
+  const rows = W.wild[id] || [];
   if (!rows.length) return [];
   const en = getLang() === 'en';
   const by = new Map();
@@ -33,18 +33,6 @@ export function wildPlaces(id) {
     by.get(p).rows.push([how, min, max, pct]);
   }
   return [...by.values()];
-}
-
-// Encontros únicos que a tabela da ROM não tem (Hoenn e Kanto): o lugar vem do guia, achado pelo nome em W.places
-const placeIndex = (name, region) => W.places.findIndex(p => p[2] === region && p[0].toLowerCase() === name.toLowerCase());
-function guideRows(id) {
-  const out = [];
-  for (const g of LG.legends[id] || []) {
-    if (!g.place) continue;
-    const p = placeIndex(g.place, g.region);
-    if (p >= 0 && !(W.wild[id] || []).some(r => r[0] === p && r[1] === STATIC)) out.push([p, STATIC, g.lv || 0, g.lv || 0, 0]);
-  }
-  return out;
 }
 
 /**
@@ -88,7 +76,8 @@ function regionHtml(region, places, on, req = '') {
 /**
  * Como fazer o encontro único aparecer numa região. Johto: tudo da ROM (insígnias, Liga e item da tabela de encontros
  * únicos em quetzal-wild.json → legend; regras de equipe das funções que conferem o encontro, quetzal-legend-rules.json,
- * tools/quetzal-legend-rules.py). Hoenn e Kanto não estão na tabela da ROM: o guia da comunidade
+ * tools/quetzal-legend-rules.py). Hoenn e Kanto: lugar e nível vêm da ROM (roteiros dos mapas, tools/build-quetzal-wild.mjs),
+ * mas as funções que conferem esses encontros não foram lidas: os requisitos são os do guia da comunidade
  * (quetzal-legends.json, tools/quetzal-legends-src.mjs).
  */
 function reqHtml(id, region, Q) {
@@ -115,7 +104,7 @@ function reqHtml(id, region, Q) {
   const guia = `<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(t('guia da comunidade'))}</a>`;
   const v = g.ver ? ' ' + t('(versão {v})', { v: esc(g.ver) }) : '';
   return `<div class="wild-req"><h4>${t('Como fazer aparecer')}</h4><ul>${guide.flatMap(x => en ? x.en : x.pt).map(li).join('')}</ul>
-    <p class="hint">${t('Pelo {guia}{v}, não conferido no jogo. A tabela de encontros únicos da ROM só tem Johto.', { guia, v })}</p></div>`;
+    <p class="hint">${t('Lugar e nível lidos da ROM. Requisitos pelo {guia}{v}, não conferidos no jogo: o app ainda não leu as funções da ROM que conferem estes encontros, e o guia pode estar desatualizado.', { guia, v })}</p></div>`;
 }
 
 /**
