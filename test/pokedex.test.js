@@ -174,16 +174,19 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     expect(wildHtml(150, Q, { caught: true })).toContain('já marca esta espécie como capturada');
   });
 
-  it('requisitos: insígnias, Liga e item da ROM e o resto do guia', () => {
+  it('requisitos: Johto pela ROM (insígnias, Liga, item e regras de equipe), Hoenn e Kanto pelo guia', () => {
     const lugia = wildHtml(249, Q);
     expect(lugia).toContain('Como fazer aparecer');
-    expect(lugia).toContain('<li class="rom">8 insígnias de Johto</li>');
-    expect(lugia).toContain('Insígnias, Liga e item: lidos da ROM.');
+    expect(lugia).toContain('<li>8 insígnias de Johto</li>');
+    expect(lugia).toContain('Em parte');
     const suicune = wildHtml(245, Q);
-    expect(suicune).toContain('Vaporeon');
-    expect(suicune).toContain('A ROM não pede insígnias, Liga nem item.');
-    expect(suicune).toContain('pkmnquetzal.top/en/johto/legendary-pokemon/suicune.html');
-    expect(wildHtml(1141, Q)).toContain('Prison Bottle na mochila');
+    expect(suicune).toContain('<li>Vaporeon no 1º lugar.</li>');
+    expect(suicune).toContain('Lido da ROM do jogo');
+    // O guia dizia Ghost; a ROM pede Dragon
+    expect(wildHtml(384, Q)).toContain('Do 3º ao 6º lugar, Pokémon do tipo Dragon.');
+    const hoopa = wildHtml(1141, Q);
+    expect(hoopa).toContain('Prison Bottle na mochila');
+    expect(hoopa).toContain('Teleport');
     // Hoenn e Kanto: o lugar vem do guia (a tabela da ROM só tem Johto)
     const mewtwo = wildPlaces(150).map(p => p.region);
     expect(mewtwo).toEqual(expect.arrayContaining(['johto', 'hoenn', 'kanto']));
