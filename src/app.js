@@ -271,6 +271,7 @@ async function openSpecies(entry, opener) {
   const wasOpen = dlg.open;
   const owned = pd.P.ownedOf(entry, state.all);
   dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned });
+  fillWild(dlg, entry, pd);
   fillDex(dlg, pd.P.speciesMon(entry));
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   dlg.querySelector('.mon').addEventListener('click', e => {
@@ -285,6 +286,25 @@ async function openSpecies(entry, opener) {
     if (window.scrollY !== scroll) window.scrollTo(0, scroll);
   }, { once: true });
   dlg.showModal();
+}
+
+// Onde encontrar (Quetzal): locais da natureza e o mapa da região, num pacote à parte
+let wildMod = null;
+async function fillWild(dlg, entry, pd) {
+  const slot = dlg.querySelector('[data-wild]');
+  if (!slot) return;
+  try {
+    const Wm = await (wildMod ||= import('./pokedex/wild.js').catch(e => { wildMod = null; throw e; }));
+    if (!slot.isConnected) return;
+    const icons = state.data.summary && state.data.summary.badges && state.data.summary.badges.icons;
+    const region = icons ? ({ 1: 'kanto', 9: 'johto', 17: 'hoenn' })[icons[0]] : null;
+    const nameOf = id => (pd.entries.find(x => x.id === id) || {}).species || null;
+    slot.innerHTML = Wm.wildHtml(entry.id, T.quetzal, { region, nameOf });
+    Wm.wireWild(slot);
+  } catch (e) {
+    console.error(e);
+    slot.innerHTML = '';
+  }
 }
 
 // Barra de navegação: rola até o bloco e marca o que está no meio da tela

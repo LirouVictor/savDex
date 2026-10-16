@@ -128,7 +128,7 @@ function ownedHtml(owned) {
     ${owned.length > 12 ? `<p class="hint">${t('Mostrando 12 de {n}. Use a Buscar para ver todos.', { n: owned.length })}</p>` : ''}</section>`;
 }
 
-/** Detalhe de uma espécie (na janela do detalhe; a evolução e os golpes entram no `[data-dex]` depois). */
+/** Detalhe de uma espécie (na janela do detalhe; onde encontrar entra no `[data-wild]` e a evolução e os golpes no `[data-dex]` depois). */
 export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
   const m = speciesMon(e);
   const sp = e.species;
@@ -147,6 +147,7 @@ export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
     ${baseStatsHtml(sp)}
     ${matchupTable(m, T)}
     ${ownedHtml(owned)}
+    ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}
     <div class="dex-slot" data-dex></div>
   </div>`;
 }

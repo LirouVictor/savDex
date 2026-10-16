@@ -573,6 +573,23 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .pdx-got { color: var(--accent); font-size: .7rem; vertical-align: 1px; }
 .pdx-stats .pdx-total th, .pdx-stats .pdx-total td { border-top: 2px solid var(--hi); padding-top: 5px; color: var(--accent); }
 .pdx-owned { margin-top: 0; }
+/* Pokédex: onde encontrar (mapa da região do jogo, com os lugares marcados) */
+.wild-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.wild-tabs .btn { min-height: 36px; padding: 4px 10px; font-size: .78rem; }
+.wild-tabs .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.wild-n { font: .65rem var(--pixel); opacity: .8; }
+.wild-map { position: relative; width: 100%; max-width: 480px; margin: 0 auto 8px; box-shadow: 0 0 0 2px var(--hi); }
+.wild-map img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.wild-pin { position: absolute; box-shadow: inset 0 0 0 2px #ff2d75, 0 0 0 1px #fff; background: rgb(255 45 117 / .25); pointer-events: none; }
+.wild-region.focus .wild-pin:not(.on) { opacity: .25; }
+.wild-pin.on { background: rgb(255 45 117 / .55); box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #ff2d75; }
+.wild-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.wild-place { display: grid; gap: 1px; width: 100%; min-height: 44px; padding: 5px 10px; text-align: left; font: inherit; color: var(--ink); background: var(--win-2); border: 0; box-shadow: inset 4px 0 0 #ff2d75; cursor: pointer; }
+.wild-place b { font-size: .9rem; }
+.wild-how { color: var(--muted); font-size: .78rem; }
+.wild-place[aria-pressed="true"] { background: color-mix(in srgb, #ff2d75 16%, var(--win-2)); }
+.wild-anc { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.wild-anc img { width: 40px; height: 32px; object-fit: contain; }
 
 /* Detalhe: dano recebido, evolução e golpes por nível */
 .dsec { margin: 4px 0 0; }

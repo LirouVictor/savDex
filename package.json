@@ -15,6 +15,7 @@
     "unbound": "node tools/build-unbound.mjs",
     "nds": "node tools/build-nds.mjs",
     "quetzal": "node tools/build-quetzal.mjs",
+    "quetzal-wild": "node tools/build-quetzal-wild.mjs",
     "soulgold": "node tools/build-soulgold.mjs",
     "smogon": "node tools/build-smogon.mjs",
     "refteams": "node tools/build-refteams.mjs",

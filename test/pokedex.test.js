@@ -15,6 +15,8 @@ import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
 import { pokedexWin } from '../src/ui/render.js';
 import { pokedexEntries, filterEntries, movesMatching, speciesDetail, speciesMon, ownedOf, entryRow, listNote } from '../src/pokedex/view.js';
+import { wildPlaces, wildAncestor, wildHtml } from '../src/pokedex/wild.js';
+import WILD from '../src/data/quetzal-wild.json';
 
 const TQ = { ...BASE, quetzal: Q };
 const names = list => list.map(e => e.species.name + (e.species.form ? '-' + e.species.form : ''));
@@ -86,6 +88,33 @@ suite('Pokédex: filtros e detalhe', () => {
   });
 });
 
+suite('Pokédex: onde encontrar (Quetzal)', () => {
+  it('lugares e jeitos lidos da ROM', () => {
+    const zig = wildPlaces(263);
+    const r101 = zig.find(p => p.name === 'Rota 101');
+    expect(r101.region).toBe('hoenn');
+    expect(r101.rows[0][0]).toBe(0); // grama
+    expect(wildPlaces(201).some(p => p.region === 'johto' && p.name === 'Ruínas de Alph')).toBe(true);
+    // Todo lugar cabe no mapa da região e toda espécie existe no jogo
+    for (const [, , region, x, y, w, h] of WILD.places) {
+      const [mw, mh] = WILD.meta.maps[region];
+      expect((x + 1 + w) * 8).toBeLessThanOrEqual(mw);
+      expect((y + 2 + h) * 8).toBeLessThanOrEqual(mh);
+    }
+    for (const id of Object.keys(WILD.wild)) expect(+id <= 898 || Q.species[id]).toBeTruthy();
+  });
+
+  it('quem não aparece na natureza mostra a pré-evolução', () => {
+    expect(wildPlaces(6)).toEqual([]);
+    expect(wildAncestor(6, Q)).toBe(4);
+    const html = wildHtml(6, Q, { nameOf: id => ({ name: id === 4 ? 'Charmander' : '?' }) });
+    expect(html).toContain('Capture <b>Charmander</b> e evolua');
+    expect(html).toContain('wild-pin');
+    // Abre na região onde o jogador está, se a espécie aparece nela
+    expect(wildHtml(147, Q, { region: 'kanto' })).toMatch(/data-region="kanto" aria-pressed="true"/);
+  });
+});
+
 suite('Pokédex em inglês', () => {
   afterAll(() => setLang('pt'));
   it('nenhum texto sem tradução', () => {
@@ -95,6 +124,9 @@ suite('Pokédex em inglês', () => {
     const data = { summary: { dex: { caught: [1] } }, party: [], pc: { boxes: [] } };
     let html = pokedexWin(data, TQ) + listNote({ id: 'quetzal' }) + listNote({ id: 'hgss', gen: 4 });
     entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]) }); });
+    html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q);
+    expect(html).toContain('Where to find');
+    expect(html).toContain('Safari Zone');
     expect(html).toContain('Learns the move');
     expect([...missing]).toEqual([]);
   });
