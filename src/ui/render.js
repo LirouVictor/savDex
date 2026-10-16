@@ -157,9 +157,9 @@ export function exportWin() {
   return `<section class="win export" id="export-win" aria-labelledby="export-h">
     <div class="win-title"><h2 id="export-h">${t('Exportar')}</h2><small>${t('equipe + PC')}</small></div>
     <div class="export-btns">
-      <button class="btn btn-small" type="button" data-exp="csv">${t('Planilha (CSV)')}</button>
-      <button class="btn btn-ghost btn-small" type="button" data-exp="txt">Showdown (TXT)</button>
-      <button class="btn btn-ghost btn-small" type="button" data-exp="json">JSON</button>
+      <button class="btn btn-small" type="button" data-exp="csv">${t('Planilha')}<small>CSV</small></button>
+      <button class="btn btn-ghost btn-small" type="button" data-exp="txt">Showdown<small>TXT</small></button>
+      <button class="btn btn-ghost btn-small" type="button" data-exp="json">${t('Dados')}<small>JSON</small></button>
       <button class="btn btn-ghost btn-small" type="button" data-copy="party">${t('Copiar equipe (Showdown)')}</button>
     </div>
     <p class="status" id="status" role="status"></p>

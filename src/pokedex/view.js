@@ -90,9 +90,9 @@ export function entryRow(e, i, caught) {
   const got = caught && e.nat != null && caught.has(e.nat);
   return `<li><button class="result pdx-row" type="button" data-pdx="${i}">
     <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
-    <span class="r-main"><b>${esc(sp.name)}</b>${formLabel(sp)}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">●<span class="sr"> ${t('capturado')}</span></span>` : ''}
-      <span class="r-sub">${numLabel(e)}${numLabel(e) ? ' · ' : ''}${sp.types.map(esc).join(' / ')}</span></span>
-    <span class="r-lv" title="${esc(t('Total dos stats base'))}">${bst(sp)}</span>
+    <span class="r-main"><b>${esc(sp.name)}</b>${formLabel(sp)}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">✓<span class="sr"> ${t('capturado')}</span></span>` : ''}
+      <span class="r-sub pdx-sub">${numLabel(e) ? `<span>${numLabel(e)}</span>` : ''}${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span></span>
+    <span class="r-lv pdx-bst" title="${esc(t('Total dos stats base'))}">${bst(sp)}<small>BST</small></span>
   </button></li>`;
 }
 

@@ -704,7 +704,8 @@ function refPanels(x, ctx, bits, shownSets) {
   if (orig.strategies.length) {
     const have = new Set(strategiesOf(shownTeam, adapted.plan));
     const ok = orig.strategies.filter(id => have.has(id)), miss = orig.strategies.filter(id => !have.has(id));
-    lines.push(miss.length ? t('Estratégias da original: {k} de {n} ({ok}); falta: {miss}.', { k: ok.length, n: orig.strategies.length, ok: ok.length ? list(ok.map(stratName)) : '—', miss: list(miss.map(stratName)) })
+    lines.push(!ok.length ? t('Estratégias da original: nenhuma mantida; falta: {miss}.', { miss: list(miss.map(stratName)) })
+      : miss.length ? t('Estratégias da original: {k} de {n} ({ok}); falta: {miss}.', { k: ok.length, n: orig.strategies.length, ok: list(ok.map(stratName)), miss: list(miss.map(stratName)) })
       : t('Estratégias da original: todas ({list}).', { list: list(ok.map(stratName)) }));
   }
   // Quem ficou: os papéis da original que ele mantém (e com que golpe, quando o app ensinou um para isso) e os que perde
