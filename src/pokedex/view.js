@@ -2,13 +2,15 @@
 // do save e o detalhe de cada uma (stats base, habilidades, dano recebido e, carregados à parte como no detalhe de um
 // Pokémon, a evolução e os golpes). Filtro por golpe: os golpes por nível, tutor/TM e ovo do mesmo `dex` do detalhe.
 
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 import { esc, monHeader, matchupTable } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { BASE_ORDER } from '../parser/stats.js';
 import { moveInfo } from '../parser/describe.js';
 import { dexIds } from '../ui/dex.js';
+import { defenseMatchups } from '../analysis.js';
+import speciesData from '../data/species.json';
 import { pokedexEntries, bst } from './entries.js';
 
 export { pokedexEntries };
@@ -55,26 +57,103 @@ export function movesMatching(q, entries, dex, T) {
   return new Set(exact.length ? exact : [...names].filter(([, n]) => n.includes(k)).map(([id]) => id));
 }
 
+/** Vários golpes separados por vírgula ("Surf, Ice Beam"): um conjunto por golpe; a espécie precisa aprender todos. */
+export function movesMatchingAll(q, entries, dex, T) {
+  const sets = String(q ?? '').split(',').map(x => movesMatching(x, entries, dex, T)).filter(Boolean);
+  return sets.length ? sets : null;
+}
+
+// Última espécie de cada geração na Dex Nacional
+const GEN_END = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
+/** Geração da espécie pela Dex Nacional (formas regionais contam pela espécie); null = espécie própria do jogo. */
+export const genOf = nat => (nat == null ? null : GEN_END.findIndex(n => nat <= n) + 1 || null);
+
+// Lendários e míticos (PokeAPI), pelo nome sem pontuação: o mesmo em todos os jogos (Ho-Oh → hooh)
+const LEGENDARY = new Set(speciesData.legendary);
+export const isLegendary = sp => LEGENDARY.has(String(sp.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
+const isMega = sp => /^(Mega|Primal)\b/.test(sp.form || '');
+const isRegional = sp => /^(Alola|Galar|Hisui|Paldea)\b/.test(sp.form || '');
+
+/**
+ * Fêmeas em %, pela taxa da espécie: `genderRate` em oitavos (−1 sem gênero) ou `genderByte` dos hacks (255 sem
+ * gênero, 0 só machos, 254 só fêmeas). @returns {number|null} null = sem gênero; undefined = não se sabe
+ */
+export function femalePct(sp) {
+  if (sp.genderRate != null) return sp.genderRate < 0 ? null : sp.genderRate * 12.5;
+  if (sp.genderByte != null) {
+    const b = sp.genderByte;
+    if (b === 255) return null;
+    if (b === 0) return 0;
+    if (b >= 254) return 100;
+    return Math.round((b + 1) / 256 * 1000) / 10;
+  }
+  return undefined;
+}
+
+/**
+ * Quem ainda evolui: evoluções da ROM (Quetzal, Unbound, SoulGold) ou as linhas do dex.json (jogos oficiais; só
+ * evoluções que existem no jogo, até a última espécie da lista). @returns {((e) => boolean)|null} null = sem os dados
+ */
+export function evolvesFn(T, dex, entries) {
+  const R = T.quetzal || T.unbound || T.soulgold;
+  if (R && R.evolutions) return e => (R.evolutions[e.id] || []).some(x => x[2]);
+  if (!dex || !dex.chains) return null;
+  const last = Math.max(...entries.map(e => e.nat || 0));
+  return e => {
+    const c = dex.chains[dex.speciesChain[e.nat]];
+    return !!c && c.some(n => n[1] === e.nat && n[0] <= last);
+  };
+}
+
+/** O filtro de evolução precisa do dex.json (jogos oficiais, carregado à parte). */
+export const evoNeedsDex = T => !(T.quetzal || T.unbound || T.soulgold);
+
+const statSort = i => (a, b) => b.species.baseStats[i] - a.species.baseStats[i];
 const SORTS = {
   dex: null, // a ordem da lista
   name: (a, b) => a.species.name.localeCompare(b.species.name),
   bst: (a, b) => bst(b.species) - bst(a.species),
-  spe: (a, b) => b.species.baseStats[5] - a.species.baseStats[5],
+  ...Object.fromEntries(BASE_ORDER.map((k, i) => [k, statSort(i)])),
 };
 
 /**
  * @param {Array} entries pokedexEntries
- * @param {{ q?: string, type?: string, caught?: ''|'yes'|'no', sort?: string, moves?: Set<number>|null }} f
- * @param {{ caught?: Set<number>|null, dex?: object|null }} ctx
+ * @param {{ q?: string, type?: string, type2?: string, caught?: ''|'yes'|'no', sort?: string,
+ *   moves?: Set<number>|Array<Set<number>>|null, gen?: string, evo?: ''|'yes'|'no', cat?: string, resist?: string,
+ *   stat?: string, min?: number|string }} f `type2`: '' qualquer, 'none' só um tipo, ou o tipo; `gen`: '1'–'9' ou
+ *   'hack' (espécies próprias do jogo); `evo`: 'yes' ainda evolui, 'no' não evolui mais; `cat`: 'legend', 'nolegend',
+ *   'mega', 'regional', 'base'; `resist`: tipo de ataque que ela resiste ou é imune (só pelos tipos); `stat` + `min`:
+ *   stat base (hp…spe ou bst) no mínimo `min`
+ * @param {{ caught?: Set<number>|null, dex?: object|null, T?: object }} ctx
  */
 export function filterEntries(entries, f, ctx = {}) {
   const terms = norm(f.q).split(/\s+/).filter(Boolean);
+  const moveSets = !f.moves ? null : f.moves instanceof Set ? [f.moves] : f.moves;
+  const evolves = f.evo && ctx.T ? evolvesFn(ctx.T, ctx.dex, entries) : null;
+  const chart = f.resist && ctx.T ? { types: ctx.T.types, chart: ctx.T.typechart } : null;
+  const min = Number(f.min);
+  const si = !f.min || !Number.isFinite(min) ? -1 : f.stat === 'bst' || !f.stat ? 6 : BASE_ORDER.indexOf(f.stat);
   const out = entries.filter(e => {
-    if (f.type && !e.species.types.includes(f.type)) return false;
+    const sp = e.species;
+    if (f.type && !sp.types.includes(f.type)) return false;
+    if (f.type2 === 'none' && sp.types.length > 1) return false;
+    if (f.type2 && f.type2 !== 'none' && (!sp.types.includes(f.type2) || (f.type2 === f.type && sp.types.length > 1))) return false;
     if (f.caught && ctx.caught && e.nat != null && ctx.caught.has(e.nat) !== (f.caught === 'yes')) return false;
     if (f.caught && ctx.caught && e.nat == null) return false;
+    if (f.gen && String(genOf(e.nat) ?? 'hack') !== f.gen) return false;
+    if (f.cat === 'legend' && !isLegendary(sp)) return false;
+    if (f.cat === 'nolegend' && isLegendary(sp)) return false;
+    if (f.cat === 'mega' && !isMega(sp)) return false;
+    if (f.cat === 'regional' && !isRegional(sp)) return false;
+    if (f.cat === 'base' && sp.form) return false;
+    if (si >= 0 && (si === 6 ? bst(sp) : sp.baseStats[si]) < min) return false;
+    if (evolves && evolves(e) !== (f.evo === 'yes')) return false;
+    if (chart) {
+      const g = defenseMatchups(sp.types, chart);
+      if (![...g[0.5], ...g[0.25], ...g[0]].includes(f.resist)) return false;
+    }
     if (terms.length) { const h = hay(e); if (!terms.every(x => h.includes(x))) return false; }
-    if (f.moves && !learnable(e, ctx.dex).some(id => f.moves.has(id))) return false;
+    if (moveSets) { const ls = new Set(learnable(e, ctx.dex)); if (!moveSets.every(ms => [...ms].some(id => ls.has(id)))) return false; }
     return true;
   });
   const sort = SORTS[f.sort];
@@ -114,6 +193,23 @@ function abilitiesHtml(sp) {
     ${sp.abilitiesProbable ? `<p class="hint">${t('Habilidades dos jogos mais recentes (PokeAPI); podem ser diferentes neste jogo.')}</p>` : ''}</section>`;
 }
 
+/** Geração, gênero e se é lendário/mítico ou mega. */
+function infoHtml(e) {
+  const sp = e.species;
+  const g = genOf(e.nat);
+  const f = femalePct(sp);
+  const fmt = n => (getLang() === 'en' ? String(n) : String(n).replace('.', ','));
+  const gender = f === undefined ? null : f === null ? t('Sem gênero') : f === 0 ? t('Só machos') : f === 100 ? t('Só fêmeas')
+    : `♂ ${fmt(Math.round((100 - f) * 10) / 10)}% · ♀ ${fmt(f)}%`;
+  const kind = isLegendary(sp) ? t('Lendário ou mítico') : isMega(sp) ? t('Megaevolução') : isRegional(sp) ? t('Forma regional') : null;
+  const row = (k, v) => `<div><dt>${k}</dt><dd><b>${v}</b></dd></div>`;
+  return `<section class="dsec"><h3>${t('Dados')}</h3><dl class="facts-grid">
+    ${row(t('Geração'), g ? t('Geração {n}', { n: g }) : t('Própria do jogo'))}
+    ${gender ? row(t('Gênero'), esc(gender)) : ''}
+    ${kind ? row(t('Categoria'), kind) : ''}
+  </dl></section>`;
+}
+
 /** Os Pokémon do save desta espécie (tocar abre o detalhe deles). */
 function ownedHtml(owned) {
   if (!owned.length) return '';
@@ -144,7 +240,7 @@ export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
       ${got ? `<p class="mon-sub">${got}</p>` : ''}
     </div>
     <div class="mon-cols">
-      <div>${abilitiesHtml(sp)}${baseStatsHtml(sp)}</div>
+      <div>${abilitiesHtml(sp)}${infoHtml(e)}${baseStatsHtml(sp)}</div>
       <div>${matchupTable(m, T)}${ownedHtml(owned)}</div>
     </div>
     ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}

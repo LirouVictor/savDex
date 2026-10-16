@@ -455,13 +455,17 @@ export function pokedexWin(d, T) {
   const gen3 = !!(T.gen3 || T.nds);
   const typeOpts = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy')).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   const caught = d.summary && d.summary.dex && d.summary.dex.caught;
+  // Gerações que existem no jogo do save (as próprias do hack por último) e se há megas/formas regionais
+  const gens = T.gen3 ? [1, 2, 3] : T.nds ? (T.nds && d.game && d.game.gen >= 5 ? [1, 2, 3, 4, 5] : [1, 2, 3, 4]) : T.unbound ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  if (T.quetzal) gens.push('hack');
+  const mega = !!(T.quetzal || T.unbound || T.soulgold), regional = mega;
   return `<details class="win win-fold tool-win" id="pokedex-win">
     <summary class="win-title"><h2 id="pokedex-h">${t('Pokédex')}</h2><small>${t('todas as espécies do jogo')}</small></summary>
     <div class="search-form">
       <label class="sr" for="pdx-q">${t('Pokémon ou habilidade')}</label>
       <input id="pdx-q" type="search" placeholder="${t('Pokémon ou habilidade')}" autocomplete="off" enterkeyhint="search">
-      <label class="sr" for="pdx-move">${t('Aprende o golpe')}</label>
-      <input id="pdx-move" type="search" placeholder="${t('Aprende o golpe (ex.: Surf)')}" autocomplete="off" enterkeyhint="search">
+      <label class="sr" for="pdx-move">${t('Aprende os golpes')}</label>
+      <input id="pdx-move" type="search" placeholder="${t('Aprende os golpes (ex.: Surf, Ice Beam)')}" autocomplete="off" enterkeyhint="search">
       <div class="search-row">
         <label class="sr" for="pdx-type">${t('Tipo')}</label>
         <select id="pdx-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
@@ -470,11 +474,33 @@ export function pokedexWin(d, T) {
           <option value="dex">${t('Nº da Pokédex')}</option>
           <option value="name">${t('Nome')}</option>
           <option value="bst">${t('Total dos stats base')}</option>
-          <option value="spe">${t('Velocidade base')}</option>
+          ${SHOWDOWN_ORDER.map(k => `<option value="${k}">${t('{s} base', { s: STAT_LABEL[k] })}</option>`).join('')}
         </select>
         ${caught ? `<label class="sr" for="pdx-caught">${t('Capturados')}</label>
         <select id="pdx-caught"><option value="">${t('Capturados e não capturados')}</option><option value="yes">${t('Só capturados')}</option><option value="no">${t('Só não capturados')}</option></select>` : ''}
       </div>
+      <details class="pdx-more" id="pdx-more">
+        <summary>${t('Mais filtros')} <span class="pdx-on" id="pdx-on"></span></summary>
+        <div class="search-row">
+          <label class="sr" for="pdx-type2">${t('Segundo tipo')}</label>
+          <select id="pdx-type2"><option value="">${t('Qualquer segundo tipo')}</option><option value="none">${t('Só um tipo')}</option>${typeOpts}</select>
+          <label class="sr" for="pdx-resist">${t('Resiste a')}</label>
+          <select id="pdx-resist"><option value="">${t('Resiste a qualquer tipo')}</option>${typeOpts.replace(/>([a-z]+)</g, (_, x) => `>${t('Resiste a {t}', { t: x })}<`)}</select>
+          <label class="sr" for="pdx-gen">${t('Geração')}</label>
+          <select id="pdx-gen"><option value="">${t('Todas as gerações')}</option>${gens.map(g => `<option value="${g}">${g === 'hack' ? t('Próprias do jogo') : t('Geração {n}', { n: g })}</option>`).join('')}</select>
+          <label class="sr" for="pdx-evo">${t('Evolução')}</label>
+          <select id="pdx-evo"><option value="">${t('Evoluídos e não evoluídos')}</option><option value="yes">${t('Ainda evolui')}</option><option value="no">${t('Não evolui mais')}</option></select>
+          <label class="sr" for="pdx-cat">${t('Categoria')}</label>
+          <select id="pdx-cat"><option value="">${t('Todas as categorias')}</option><option value="nolegend">${t('Sem lendários e míticos')}</option><option value="legend">${t('Só lendários e míticos')}</option><option value="base">${t('Só formas padrão')}</option>${mega ? `<option value="mega">${t('Só megaevoluções')}</option>` : ''}${regional ? `<option value="regional">${t('Só formas regionais')}</option>` : ''}</select>
+        </div>
+        <div class="pdx-min">
+          <label for="pdx-stat">${t('Stat base mínimo')}</label>
+          <select id="pdx-stat"><option value="bst">${t('Total')}</option>${SHOWDOWN_ORDER.map(k => `<option value="${k}">${STAT_LABEL[k]}</option>`).join('')}</select>
+          <label class="sr" for="pdx-min">${t('Valor mínimo')}</label>
+          <input id="pdx-min" type="number" inputmode="numeric" min="0" max="999" step="10" placeholder="${t('ex.: 100')}">
+        </div>
+        <button class="btn btn-ghost btn-small" type="button" id="pdx-clear">${t('Limpar filtros')}</button>
+      </details>
     </div>
     <p class="hint" id="pdx-note"></p>
     <p class="hint" id="pdx-count" role="status"></p>
