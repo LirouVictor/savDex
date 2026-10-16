@@ -211,6 +211,7 @@ function read(R) {
 }
 
 async function main() {
+  const Q = JSON.parse(await readFile(path.join(ROOT, 'src/data/quetzal.json'), 'utf8'));
   const romPath = await findRom();
   const debugIdx = process.argv.indexOf('--debug');
   const debug = debugIdx > 0 ? process.argv[debugIdx + 1] : null;
@@ -304,6 +305,11 @@ async function main() {
     return out;
   };
   let statics = 0; const noObj = [];
+  // Requisitos lidos da ROM (a função que confere o encontro, em 0x82AA894 na Alpha 9, usa estes campos): +0x10 nº
+  // mínimo de insígnias da região, +0x11 ter vencido a Liga da região, +0x12 tipo (0xFF = nenhum; a regra de cada
+  // encontro é uma função própria, nº = byte +0x1F >> 2, não decodificada), +0x16 item na mochila, +0x18 flag da
+  // história, +0x1A/+0x1C variável ≥ valor. Os textos dos requisitos vêm do guia (src/data/quetzal-legends.json)
+  const legend = {};
   for (let i = 0; i < stCount; i++) {
     const o = stBase + i * STATIC, g = R[o], m = R[o + 1], sp = u16(o + 4), lv = u16(o + 6);
     if (!objectFlags(g, m).has(u16(o + 10))) noObj.push(`${sp}@${g}.${m}`);
@@ -312,7 +318,12 @@ async function main() {
     const rows = (wild[sp] ||= []);
     if (!rows.some(r => r[0] === place && r[1] === METHODS.indexOf('static') && r[2] === lv)) rows.push([place, METHODS.indexOf('static'), lv, lv, 0]);
     statics++;
+    const item = u16(o + 0x16);
+    if (item && !Q.items[item]) fail(`Encontro único ${i} (espécie ${sp}): item ${item} desconhecido.`);
+    legend[sp] = { badges: R[o + 0x10], league: R[o + 0x11] ? 1 : 0, type: R[o + 0x12] === 0xFF ? null : R[o + 0x12], item: item || null, rule: R[o + 0x1F] >> 2 };
   }
+  if (!Object.values(legend).some(l => Q.items[l.item] === 'Prison Bottle')) fail('Nenhum encontro pede a Prison Bottle (Hoopa).');
+  if (legend[249]?.badges !== 8) fail('Lugia não pede 8 insígnias.');
   const hasStatic = (sp, en) => (wild[sp] || []).some(r => places[r[0]][0] === en && METHODS[r[1]] === 'static');
   if (!hasStatic(150, 'Rocket Hideout') && !hasStatic(150, 'Team Rocket Hideout')) fail(`Mewtwo não está no esconderijo da Equipe Rocket (${(wild[150] || []).map(r => places[r[0]][0])}).`);
   if (!hasStatic(382, 'Embedded Tower')) fail('Kyogre não está na Embedded Tower.');
@@ -363,9 +374,9 @@ async function main() {
 
   const out = {
     meta: { source: 'ROM do Pokémon Quetzal (lida por tools/build-quetzal-wild.mjs; a ROM não é versionada)', rom: path.basename(romPath), sha1, generatedAt: new Date().toISOString().slice(0, 10),
-      fields: { places: ['inglês', 'português', 'região', 'x', 'y', 'largura', 'altura'], wild: ['lugar', 'jeito', 'nível mín.', 'nível máx.', 'chance %'] }, methods: METHODS,
+      fields: { places: ['inglês', 'português', 'região', 'x', 'y', 'largura', 'altura'], wild: ['lugar', 'jeito', 'nível mín.', 'nível máx.', 'chance %'], legend: 'requisitos dos encontros únicos lidos da ROM: insígnias mínimas da região, Liga vencida, tipo, item na mochila, nº da regra própria' }, methods: METHODS,
       grid: { x: 1, y: 2, cell: 8 }, maps: { hoenn: [240, 160], johto: [240, 160], kanto: [192, 144], sevii123: [192, 144], sevii45: [192, 144], sevii67: [192, 144] } },
-    places, wild,
+    places, wild, legend,
   };
   await writeFile(OUT, JSON.stringify(out) + '\n');
   if (noObj.length) console.log(`encontros únicos sem objeto com a flag no mapa: ${noObj.join(" ")}`);

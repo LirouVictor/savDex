@@ -5,6 +5,7 @@ import { t, getLang } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import W from '../data/quetzal-wild.json';
+import LG from '../data/quetzal-legends.json';
 
 const MAP_URL = {
   hoenn: new URL('../data/maps/quetzal-hoenn.png', import.meta.url).href,
@@ -21,8 +22,8 @@ const STATIC = 7;
 
 /** Onde a espécie (número do Quetzal) aparece: [{ place, region, name, rows: [[jeito, mín., máx., chance]] }]. */
 export function wildPlaces(id) {
-  const rows = W.wild[id];
-  if (!rows) return [];
+  const rows = [...(W.wild[id] || []), ...guideRows(id)];
+  if (!rows.length) return [];
   const en = getLang() === 'en';
   const by = new Map();
   for (const [p, how, min, max, pct] of rows) {
@@ -31,6 +32,18 @@ export function wildPlaces(id) {
     by.get(p).rows.push([how, min, max, pct]);
   }
   return [...by.values()];
+}
+
+// Encontros únicos que a tabela da ROM não tem (Hoenn e Kanto): o lugar vem do guia, achado pelo nome em W.places
+const placeIndex = (name, region) => W.places.findIndex(p => p[2] === region && p[0].toLowerCase() === name.toLowerCase());
+function guideRows(id) {
+  const out = [];
+  for (const g of LG.legends[id] || []) {
+    if (!g.place) continue;
+    const p = placeIndex(g.place, g.region);
+    if (p >= 0 && !(W.wild[id] || []).some(r => r[0] === p && r[1] === STATIC)) out.push([p, STATIC, g.lv || 0, g.lv || 0, 0]);
+  }
+  return out;
 }
 
 /**
@@ -48,7 +61,7 @@ export function wildAncestor(id, Q) {
   return null;
 }
 
-const lv = (a, b) => (a === b ? `${t('Nv.')} ${a}` : `${t('Nv.')} ${a}–${b}`);
+const lv = (a, b) => (!a ? '' : a === b ? `${t('Nv.')} ${a}` : `${t('Nv.')} ${a}–${b}`);
 
 function regionHtml(region, places, on) {
   const [w, h] = W.meta.maps[region];
@@ -61,7 +74,7 @@ function regionHtml(region, places, on) {
   const M = METHOD();
   const list = places.map((p, i) => `<li><button type="button" class="wild-place" data-pin="${i}" aria-pressed="false">
       <b>${esc(p.name)}</b>
-      ${p.rows.map(([how, a, b, pct]) => `<span class="wild-how">${esc(M[how])} · ${lv(a, b)}${pct ? ` · ${pct}%` : ''}</span>`).join('')}
+      ${p.rows.map(([how, a, b, pct]) => `<span class="wild-how">${[esc(M[how]), lv(a, b), pct ? `${pct}%` : ''].filter(Boolean).join(' · ')}</span>`).join('')}
     </button></li>`).join('');
   return `<div class="wild-region" data-region="${region}"${on ? '' : ' hidden'}>
     <div class="wild-map" style="aspect-ratio:${w}/${h}">
