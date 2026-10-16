@@ -87,11 +87,12 @@ function render() {
     </div>
     <div class="grp" id="grp-pc">
       ${R.pcWin(data)}
-      ${R.searchWin(data, T)}
     </div>
     <div class="grp" id="grp-tools">
-      ${R.pokedexWin(data, T)}
+      ${R.toolsWin(data.game)}
       ${R.builderWin(data, Object.values(PROVIDERS))}
+      ${R.pokedexWin(data, T)}
+      ${R.searchWin(data, T)}
       <div id="teams-slot"></div>
       ${R.exportWin()}
     </div>
@@ -188,6 +189,18 @@ function render() {
     });
     if (foldOpen(id)) det.open = true;
   }
+  // Cartões das ferramentas: abrem a janela (fechada, ela some; o título dela fecha) e acompanham o estado
+  const cards = [...out.querySelectorAll('[data-tool]')];
+  const syncCards = () => cards.forEach(c => c.setAttribute('aria-pressed', String(out.querySelector('#' + c.dataset.tool).open)));
+  for (const c of cards) {
+    const det = out.querySelector('#' + c.dataset.tool);
+    det.addEventListener('toggle', syncCards);
+    c.addEventListener('click', () => {
+      det.open = !det.open;
+      if (det.open) det.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+  syncCards();
 }
 
 // Pokédex do jogo: o pacote (lista de espécies, filtros e detalhe) só carrega quando a janela abre

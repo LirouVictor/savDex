@@ -373,11 +373,28 @@ export function check(id, label, desc = '', on = false) {
  * a equipe atual ou montar do jeito da IA. Fechada até o usuário abrir; os textos
  * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
  */
+/**
+ * Ferramentas em grade: um cartão por janela (Montar equipe em destaque), em vez de três janelas fechadas empilhadas.
+ * Tocar abre a janela logo abaixo (a fechada não aparece); o cartão fica marcado enquanto ela está aberta.
+ */
+export function toolsWin(game) {
+  const card = (id, ico, title, desc, cls = '') => `<button class="tool-card${cls}" type="button" data-tool="${id}" aria-controls="${id}" aria-pressed="false">
+      <b><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg>${title}</b><span>${desc}</span></button>`;
+  return `<section class="win tools-win" id="tools-win" aria-labelledby="tools-h">
+    <div class="win-title"><h2 id="tools-h">${t('Ferramentas')}</h2></div>
+    <div class="tools-grid">
+      ${card('builder-win', 'party', t('Montar equipe'), t('Adapta equipes do competitivo (Smogon) aos Pokémon do seu save'), ' hot')}
+      ${card('pokedex-win', 'dex-ico', t('Pokédex'), game && game.id === 'quetzal' ? t('Todas as espécies do jogo e onde encontrar cada uma') : t('Todas as espécies do jogo e o que aprendem'))}
+      ${card('search-win', 'box', t('Buscar'), t('Equipe e PC por nome, golpe, tipo e IVs'))}
+    </div>
+  </section>`;
+}
+
 export function builderWin(d, providers = []) {
   const noParty = !(d && d.party && d.party.length);
   const free = freeAbilityMode(d && d.game);
   const opts = providers.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
-  return `<details class="win win-fold" id="builder-win">
+  return `<details class="win win-fold tool-win" id="builder-win">
     <summary class="win-title"><h2 id="builder-h">${t('Montar equipe')}</h2><small>${t('app + IA')}</small></summary>
     <p class="ai-intro">${t('Parte de equipes do competitivo (Smogon) e troca os Pokémon que faltam pelos seus (equipe e PC). Sem chave e sem cota.')}</p>
     <div class="export-btns ai-actions ai-actions-one"><button class="btn" type="button" id="builder-run">${t('Montar equipes')}</button></div>
@@ -438,7 +455,7 @@ export function pokedexWin(d, T) {
   const gen3 = !!(T.gen3 || T.nds);
   const typeOpts = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy')).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   const caught = d.summary && d.summary.dex && d.summary.dex.caught;
-  return `<details class="win win-fold" id="pokedex-win">
+  return `<details class="win win-fold tool-win" id="pokedex-win">
     <summary class="win-title"><h2 id="pokedex-h">${t('Pokédex')}</h2><small>${t('todas as espécies do jogo')}</small></summary>
     <div class="search-form">
       <label class="sr" for="pdx-q">${t('Pokémon ou habilidade')}</label>
@@ -473,7 +490,7 @@ export function pokedexWin(d, T) {
 /** Busca na equipe e em todas as caixas do PC (fechada até o usuário abrir; resultados em páginas). */
 export function searchWin(d, T) {
   const typeOpts = T.types.filter(t => t && t !== 'stellar').map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  return `<details class="win win-fold" id="search-win">
+  return `<details class="win win-fold tool-win" id="search-win">
     <summary class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></summary>
     <div class="search-form">
       <label class="sr" for="q">${t('Buscar')}</label>
