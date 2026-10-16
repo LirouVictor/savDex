@@ -241,26 +241,39 @@ async function setupPokedex(out) {
     pager.querySelector('[data-page="1"]').disabled = pd.page >= pages - 1;
     $('#pdx-page').textContent = t('Página {p} de {n}', { p: pd.page + 1, n: pages });
   };
+  const MORE = ['pdx-type2', 'pdx-resist', 'pdx-gen', 'pdx-evo', 'pdx-cat', 'pdx-min'];
   const run = async () => {
     const v = id => ($('#' + id) ? $('#' + id).value : '');
     const moveQ = v('pdx-move').trim();
-    // Filtro por golpe: carrega os golpes do jogo (os mesmos do detalhe) na primeira vez
-    if (moveQ && !pd.dex) {
+    // Filtro por golpe (e o de evolução nos jogos oficiais): carrega os golpes do jogo (os mesmos do detalhe) na primeira vez
+    if ((moveQ || (v('pdx-evo') && pd.P.evoNeedsDex(T))) && !pd.dex) {
       $('#pdx-count').textContent = t('Carregando os golpes…');
       try { pd.dex = (await loadDex()).dex; } catch (e) { console.error(e); $('#pdx-count').textContent = t('Não consegui carregar os golpes.'); return; }
       if (state !== cur) return;
     }
-    const moves = moveQ ? pd.P.movesMatching(moveQ, pd.entries, pd.dex, T) : null;
-    pd.list = pd.P.filterEntries(pd.entries, { q: v('pdx-q'), type: v('pdx-type'), caught: v('pdx-caught'), sort: v('pdx-sort'), moves }, { caught: pd.caught, dex: pd.dex });
+    const moves = moveQ ? pd.P.movesMatchingAll(moveQ, pd.entries, pd.dex, T) : null;
+    pd.list = pd.P.filterEntries(pd.entries, {
+      q: v('pdx-q'), type: v('pdx-type'), caught: v('pdx-caught'), sort: v('pdx-sort'), moves,
+      type2: v('pdx-type2'), resist: v('pdx-resist'), gen: v('pdx-gen'), evo: v('pdx-evo'), cat: v('pdx-cat'), stat: v('pdx-stat'), min: v('pdx-min').trim(),
+    }, { caught: pd.caught, dex: pd.dex, T });
+    // Quantos dos filtros escondidos em "Mais filtros" estão ligados (aparece no título fechado)
+    const on = MORE.filter(id => v(id).trim()).length;
+    $('#pdx-on').textContent = on ? `(${on})` : '';
     pd.page = 0;
     show();
   };
   let timer = 0;
   const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
-  for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-sort', 'pdx-caught']) {
+  for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-sort', 'pdx-caught', 'pdx-stat', ...MORE]) {
     const el = $('#' + id);
     if (el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
   }
+  $('#pdx-clear').addEventListener('click', () => {
+    for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-caught', ...MORE]) if ($('#' + id)) $('#' + id).value = '';
+    $('#pdx-sort').value = 'dex';
+    $('#pdx-stat').value = 'bst';
+    run();
+  });
   $('#pdx-pager').addEventListener('click', e => {
     const b = e.target.closest('[data-page]');
     if (!b) return;

@@ -14,7 +14,7 @@ import { gen3Tables } from '../src/parser/gen3.js';
 import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
 import { pokedexWin } from '../src/ui/render.js';
-import { pokedexEntries, filterEntries, movesMatching, speciesDetail, speciesMon, ownedOf, entryRow, listNote } from '../src/pokedex/view.js';
+import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote } from '../src/pokedex/view.js';
 import { wildPlaces, wildAncestor, wildHtml } from '../src/pokedex/wild.js';
 import WILD from '../src/data/quetzal-wild.json';
 
@@ -73,6 +73,52 @@ suite('Pokédex: filtros e detalhe', () => {
     expect(movesMatching('', entries, dex, TQ)).toBeNull();
   });
 
+  it('mais filtros: segundo tipo, resiste a, geração, evolução, categoria e stat mínimo', () => {
+    const f = (x, ctx = {}) => names(filterEntries(entries, x, { T: TQ, ...ctx }));
+    expect(f({ type: 'water', type2: 'ground' })).toContain('Swampert');
+    expect(f({ type: 'water', type2: 'ground' })).not.toContain('Pelipper');
+    expect(f({ type: 'water', type2: 'none' })).toContain('Vaporeon');
+    expect(f({ type: 'water', type2: 'none' })).not.toContain('Swampert');
+    const rf = f({ resist: 'fire' });
+    expect(rf).toContain('Swampert');
+    expect(rf).not.toContain('Venusaur');
+    expect(f({ resist: 'ground' })).toContain('Pelipper'); // imune conta
+    expect(f({ gen: '4', q: 'chomp' }).slice(0, 2)).toEqual(['Garchomp', 'Garchomp-Mega']);
+    expect(f({ gen: '1', q: 'chomp' })).toEqual([]);
+    expect(f({ gen: 'hack' })).toContain('Browt');
+    expect(f({ evo: 'yes', q: 'saur' })).toEqual(['Bulbasaur', 'Ivysaur']);
+    expect(f({ evo: 'no', q: 'saur', cat: 'base' })).toEqual(['Venusaur']);
+    expect(f({ cat: 'legend', q: 'mewtwo' })).toContain('Mewtwo');
+    expect(f({ cat: 'nolegend', q: 'mewtwo' })).toEqual([]);
+    expect(f({ cat: 'mega', q: 'venusaur' })).toEqual(['Venusaur-Mega']);
+    expect(f({ cat: 'regional', q: 'raichu' })).toEqual(['Raichu-Alola']);
+    const fast = filterEntries(entries, { stat: 'spe', min: 150 }, { T: TQ });
+    expect(fast.length).toBeGreaterThan(0);
+    expect(fast.every(e => e.species.baseStats[5] >= 150)).toBe(true);
+    expect(filterEntries(entries, { sort: 'atk' })[0].species.baseStats[1]).toBe(Math.max(...entries.map(e => e.species.baseStats[1])));
+    // Vários golpes: precisa aprender todos
+    const both = names(filterEntries(entries, { moves: movesMatchingAll('surf, hurricane', entries, dex, TQ) }, { dex }));
+    expect(both).toContain('Pelipper');
+    expect(both).not.toContain('Swampert');
+    expect(genOf(445)).toBe(4);
+    expect(genOf(null)).toBeNull();
+    expect(femalePct({ genderRate: 1 })).toBe(12.5);
+    expect(femalePct({ genderRate: -1 })).toBeNull();
+    expect(femalePct({ genderByte: 127 })).toBe(50);
+  });
+
+  it('jogos oficiais: evolução pelo dex.json, só com espécies do jogo', async () => {
+    const DEX = (await import('../src/data/dex.json')).default;
+    const T3 = gen3Tables(BASE, G3);
+    const e3 = pokedexEntries(T3, { id: 'emerald' });
+    const evo = names(filterEntries(e3, { evo: 'yes', q: 'scyther' }, { T: T3, dex: DEX }));
+    expect(evo).toEqual(['Scyther']); // Scizor (troca) existe na Gen 3
+    expect(names(filterEntries(e3, { evo: 'yes', q: 'gligar' }, { T: T3, dex: DEX }))).toEqual([]); // Gliscor é da Gen 4
+    expect(names(filterEntries(e3, { evo: 'yes', q: 'onix' }, { T: T3, dex: DEX }))).toEqual(['Onix']);
+    expect(names(filterEntries(e3, { evo: 'yes', q: 'eevee' }, { T: T3, dex: DEX }))).toEqual(['Eevee']);
+    expect(names(filterEntries(e3, { evo: 'yes', q: 'sneasel' }, { T: T3, dex: DEX }))).toEqual([]);
+  });
+
   it('detalhe: stats base, habilidades, quem o jogador tem; evolução e golpes da ROM', () => {
     const e = entries.find(x => x.species.name === 'Pelipper');
     const mine = { speciesId: e.id, species: e.species, location: 'pc', where: 'BOX1', slot: 3, level: 30, moves: [] };
@@ -82,6 +128,8 @@ suite('Pokédex: filtros e detalhe', () => {
     expect(html).toContain('Drizzle');
     expect(html).toContain('data-own="0"');
     expect(html).toContain('Capturado na Pokédex do save');
+    expect(html).toContain('Geração 3');
+    expect(html).toContain('♂ 50% · ♀ 50%');
     const m = speciesMon(e);
     expect(evolutionHtml(m, dex, TQ)).toContain('Wingull');
     expect(learnsetHtml(m, dex, TQ)).toContain('Hurricane');

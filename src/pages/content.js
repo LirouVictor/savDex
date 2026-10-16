@@ -13,6 +13,7 @@ export const NEWS = [
       'Quetzal: cada espécie da Pokédex mostra onde encontrar, no mapa da região como o jogo desenha (Hoenn, Johto, Kanto e Ilhas Sete), com o jeito (grama, surf, vara, Rock Smash, DexNav), os níveis e a chance. Quem não aparece na natureza mostra a pré-evolução para capturar.',
       'Ajustes visuais: nomes longos na linha evolutiva não ficam mais cortados no celular (a linha começa no Pokémon aberto), o nome aparece na barra de cima do detalhe da espécie ao rolar, e listas e botões da abertura e da Pokédex ficaram alinhados.',
       'Novo layout: Montar equipe, Pokédex e Buscar viram cartões em Ferramentas (tocar abre e fecha a janela); o resultado do montador fica em abas (Equipe, Trocas, Estratégia, Original); no computador, o detalhe do Pokémon e da espécie abre em duas colunas; a lista da Pokédex mostra os tipos, o total de stats base e quem você já capturou; a abertura ficou mais curta, com o save de exemplo ao lado do botão de abrir.',
+      'Pokédex com mais filtros (em “Mais filtros”): segundo tipo (ou só um tipo), tipo que resiste, geração, se ainda evolui, lendários/megas/formas regionais e stat base mínimo (ex.: Spe 100 ou mais); ordem por qualquer stat; vários golpes de uma vez (“Surf, Ice Beam”). O detalhe da espécie mostra a geração, a proporção de gênero e se é lendário, mega ou forma regional.',
     ],
     en: [
       'New Pokédex window (in Tools): every species in the save’s game, searchable by name or ability, by move (“who learns Surf”), by type and by caught status. Each species shows base stats, abilities, damage taken, evolution line, level-up, tutor/TM and egg moves, and the ones you own.',
@@ -20,6 +21,7 @@ export const NEWS = [
       'Quetzal: each Pokédex species shows where to find it, on the region map as the game draws it (Hoenn, Johto, Kanto and the Sevii Islands), with the method (grass, surfing, rods, Rock Smash, DexNav), levels and chance. Species that don’t appear in the wild show the pre-evolution to catch.',
       'Visual fixes: long names in the evolution line are no longer cut off on phones (the line starts at the open Pokémon), the name shows in the species detail’s top bar when scrolling, and the start screen and Pokédex lists and buttons are aligned.',
       'New layout: Build team, Pokédex and Search are now cards under Tools (tap to open or close each window); the team builder result is split into tabs (Team, Swaps, Strategy, Original); on computers, the Pokémon and species detail opens in two columns; the Pokédex list shows types, base stat total and which ones you caught; the start screen is shorter, with the sample save next to the open button.',
+      'Pokédex with more filters (under “More filters”): second type (or single type), a type it resists, generation, whether it can still evolve, legendaries/Megas/regional forms and minimum base stat (e.g. Spe 100 or more); sort by any stat; several moves at once (“Surf, Ice Beam”). The species detail shows its generation, gender ratio and whether it is legendary, a Mega or a regional form.',
     ],
   },
   {
