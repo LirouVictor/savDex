@@ -259,24 +259,29 @@ export function gen3Tables(T, G) {
   return { ...T, moves, moveDetails, typechart: G.typechart, gen3: G };
 }
 
+/** Espécie pela numeração interna da Gen 3 (gen3.json), no formato do app. */
+export function gen3Species(id, T, isEgg = false) {
+  const G = T.gen3;
+  const typeName = i => T.types[i] || null;
+  const row = G.species[id];
+  if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0, genderByte: 255 };
+  const [national, t1, t2, a1, a2, genderByte, growth, ...base] = row;
+  const name = T.species[national] ? T.species[national][0] : `#${national}`;
+  return {
+    name, form: isEgg ? 'ovo' : null, showdown: SHOWDOWN_NAMES[name] || name, confidence: 'confirmado', evidence: null,
+    spriteId: national, dexId: national, hasIcon: national <= 898,
+    types: [t1, t2].filter(Boolean).map(typeName),
+    abilities: [G.abilities[a1] || null, G.abilities[a2] || null, null],
+    baseStats: base, growth, genderByte,
+  };
+}
+
 /** Converte a leitura crua no mesmo formato de describe() do Quetzal. */
 export function describeGen3(raw, T, game) {
   const G = T.gen3;
   const typeName = i => T.types[i] || null;
 
-  function species(id, isEgg) {
-    const row = G.species[id];
-    if (!row) return { name: t('Espécie {id}', { id }), form: null, showdown: null, confidence: 'desconhecido', evidence: null, spriteId: null, dexId: null, hasIcon: false, types: [], abilities: [null, null, null], baseStats: null, growth: 0, genderByte: 255 };
-    const [national, t1, t2, a1, a2, genderByte, growth, ...base] = row;
-    const name = T.species[national] ? T.species[national][0] : `#${national}`;
-    return {
-      name, form: isEgg ? 'ovo' : null, showdown: SHOWDOWN_NAMES[name] || name, confidence: 'confirmado', evidence: null,
-      spriteId: national, dexId: national, hasIcon: national <= 898,
-      types: [t1, t2].filter(Boolean).map(typeName),
-      abilities: [G.abilities[a1] || null, G.abilities[a2] || null, null],
-      baseStats: base, growth, genderByte,
-    };
-  }
+  const species = (id, isEgg) => gen3Species(id, T, isEgg);
   const move = m => {
     const row = T.moves[m.id], det = T.moveDetails[m.id];
     return { id: m.id, name: row ? row[0] : `Golpe ${m.id}`, type: row ? typeName(row[1]) : null, pp: m.pp, power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null };

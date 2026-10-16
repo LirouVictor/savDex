@@ -127,13 +127,13 @@ export function dexWinHtml(info, name, game, view) {
     const ic = iconFor(n);
     const evo = info.evolve.get(n);
     const seen = info.seen && info.seen.has(n);
-    return `<li class="dex-mon${seen ? ' seen' : ''}">
+    return `<li><button class="dex-mon${seen ? ' seen' : ''}" type="button" data-dex-nat="${n}">
       <img class="${ic.cls}" data-sprite="1" src="${esc(ic.src)}" width="68" height="56" alt="" loading="lazy" decoding="async" crossorigin="anonymous">
       <span class="dex-no">#${String(n).padStart(4, '0')}</span>
       <span class="dex-name">${esc(name(n))}</span>
       ${seen ? `<span class="dex-tag dex-seen">${t('visto')}</span>` : ''}
       ${evo ? `<span class="dex-tag dex-evo" title="${esc(t('Dá para conseguir evoluindo: {list}', { list: evo.join(', ') }))}">↑ ${esc(evo.join(', '))}</span>` : ''}
-    </li>`;
+    </button></li>`;
   }).join('');
 
   return `${head}${stats}
@@ -141,5 +141,5 @@ export function dexWinHtml(info, name, game, view) {
     <div class="dex-filters" role="group" aria-label="${t('Filtro')}">${filters}</div>
     ${filtered.length ? `<div class="dex-gens" role="group" aria-label="${t('Geração')}">${genChips}</div>
     <ul class="dex-grid">${items}</ul>` : `<p class="hint">${t('Nenhuma espécie com esse filtro.')}</p>`}
-    <p class="hint">${t('“↑” = dá para conseguir evoluindo um Pokémon que você já tem (equipe ou PC). Onde encontrar cada espécie não está no save.')}</p>`;
+    <p class="hint">${t('“↑” = dá para conseguir evoluindo um Pokémon que você já tem (equipe ou PC). Toque numa espécie para ver os dados dela na Pokédex.')}</p>`;
 }

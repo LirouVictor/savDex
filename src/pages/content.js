@@ -6,6 +6,17 @@ export const UPDATED = '2026-10-21';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-24',
+    pt: [
+      'Nova janela Pokédex (em Ferramentas): todas as espécies do jogo do save, com busca por nome ou habilidade, por golpe (“quem aprende Surf”), por tipo e por capturados. Cada espécie mostra stats base, habilidades, dano recebido, linha evolutiva, golpes por nível, tutor/TM e ovo, e os Pokémon dela que você tem.',
+      'Pokédex: o que falta: tocar numa espécie abre os dados dela.',
+    ],
+    en: [
+      'New Pokédex window (in Tools): every species in the save’s game, searchable by name or ability, by move (“who learns Surf”), by type and by caught status. Each species shows base stats, abilities, damage taken, evolution line, level-up, tutor/TM and egg moves, and the ones you own.',
+      'Pokédex: what’s missing: tapping a species opens its data.',
+    ],
+  },
+  {
     date: '2026-10-23',
     pt: [
       'App instalado no Android: a tela de abertura agora é toda azul-escura, com o logo no meio. Antes aparecia o ícone como um quadrado escuro sobre o fundo claro.',

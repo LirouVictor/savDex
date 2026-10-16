@@ -89,7 +89,7 @@ function statRows(m, { withStats }) {
 const ivEvTable = m => statRows(m, { withStats: false });
 const statsTable = m => statRows(m, { withStats: true });
 
-function monHeader(m, headingTag = 'h3', idAttr = '') {
+export function monHeader(m, headingTag = 'h3', idAttr = '') {
   const sp = m.species;
   const title = m.hasNickname ? esc(m.nickname) : speciesLabel(sp);
   const sub = [
@@ -258,7 +258,7 @@ export function boxGrid(box) {
 }
 
 /** Fraquezas e resistências deste Pokémon (só pelos tipos). */
-function matchupTable(m, T) {
+export function matchupTable(m, T) {
   const g = defenseMatchups(m.species.types, { types: T.types, chart: T.typechart });
   const rows = [['4×', 4, 'weak'], ['2×', 2, 'weak'], ['½', 0.5, 'resist'], ['¼', 0.25, 'resist'], ['0', 0, 'immune']]
     .filter(([, k]) => g[k].length)
@@ -427,6 +427,46 @@ export function builderWin(d, providers = []) {
       </div>
       <div id="ai-out" class="ai-out" aria-live="polite"></div>
     </details>
+  </details>`;
+}
+
+/**
+ * Pokédex do jogo do save (Ferramentas): busca entre todas as espécies do jogo, com os dados de cada uma. Fechada até o
+ * usuário abrir; a lista e os dados ficam num pacote à parte (src/pokedex/), carregado só ao abrir.
+ */
+export function pokedexWin(d, T) {
+  const gen3 = !!(T.gen3 || T.nds);
+  const typeOpts = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy')).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  const caught = d.summary && d.summary.dex && d.summary.dex.caught;
+  return `<details class="win win-fold" id="pokedex-win">
+    <summary class="win-title"><h2 id="pokedex-h">${t('Pokédex')}</h2><small>${t('todas as espécies do jogo')}</small></summary>
+    <div class="search-form">
+      <label class="sr" for="pdx-q">${t('Pokémon ou habilidade')}</label>
+      <input id="pdx-q" type="search" placeholder="${t('Pokémon ou habilidade')}" autocomplete="off" enterkeyhint="search">
+      <label class="sr" for="pdx-move">${t('Aprende o golpe')}</label>
+      <input id="pdx-move" type="search" placeholder="${t('Aprende o golpe (ex.: Surf)')}" autocomplete="off" enterkeyhint="search">
+      <div class="search-row">
+        <label class="sr" for="pdx-type">${t('Tipo')}</label>
+        <select id="pdx-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+        <label class="sr" for="pdx-sort">${t('Ordem')}</label>
+        <select id="pdx-sort">
+          <option value="dex">${t('Nº da Pokédex')}</option>
+          <option value="name">${t('Nome')}</option>
+          <option value="bst">${t('Total dos stats base')}</option>
+          <option value="spe">${t('Velocidade base')}</option>
+        </select>
+        ${caught ? `<label class="sr" for="pdx-caught">${t('Capturados')}</label>
+        <select id="pdx-caught"><option value="">${t('Capturados e não capturados')}</option><option value="yes">${t('Só capturados')}</option><option value="no">${t('Só não capturados')}</option></select>` : ''}
+      </div>
+    </div>
+    <p class="hint" id="pdx-note"></p>
+    <p class="hint" id="pdx-count" role="status"></p>
+    <ul class="results" id="pdx-results"></ul>
+    <nav class="pager hidden" id="pdx-pager" aria-label="${t('Páginas da Pokédex')}">
+      <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
+      <span class="page-info" id="pdx-page"></span>
+      <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
+    </nav>
   </details>`;
 }
 
