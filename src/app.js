@@ -12,9 +12,9 @@ import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.j
 import { saveKey, signature, diffSaves, orderSaves, evolutionCheck } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
 import { listHistory, addHistory, clearHistory, listTeams, addTeam, putTeam, deleteTeam } from './ui/store.js';
+import { installTips, moveText } from './ui/tips.js';
 
 const PAGE = 15; // resultados da busca por página
-let moveText = null; // descrições dos golpes, carregadas na primeira vez que um golpe é aberto
 
 let state = null;
 
@@ -667,16 +667,22 @@ function showResults() {
   document.getElementById('page-info').textContent = t('Página {p} de {n}', { p: state.page + 1, n: pages });
 }
 
-// Descrição do golpe: carrega o arquivo de textos na primeira vez que um golpe é aberto
+// Descrição do golpe: carrega o arquivo de textos na primeira vez que um golpe é aberto (o da época nos oficiais)
 document.addEventListener('toggle', async e => {
   const det = e.target;
   if (!(det instanceof HTMLDetailsElement) || !det.open || !det.classList.contains('move')) return;
   const p = det.querySelector('.move-desc');
   if (!p || p.dataset.loaded) return;
-  if (!moveText) moveText = (await import('./data/move-text.json')).default;
-  p.textContent = moveText[+p.dataset.move] || '';
   p.dataset.loaded = '1';
+  let r;
+  try { r = await moveText(+p.dataset.move, tipCtx()); } catch { delete p.dataset.loaded; return; }
+  p.textContent = r.text || t('Sem descrição para este golpe.');
+  if (r.note) p.insertAdjacentHTML('beforeend', `<small class="tip-note">${R.esc(r.note)}</small>`);
 }, true);
+
+// Nomes de golpes e habilidades com a descrição ao tocar (ui/tips.js), no jogo do save aberto
+const tipCtx = () => ({ game: state && state.data.game ? state.data.game.id : null, T });
+installTips(tipCtx);
 
 function renderBox() {
   const { data } = state;

@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "tables": "node tools/build-tables.mjs",
+    "texts": "node tools/build-texts.mjs",
     "dex": "node tools/build-dex.mjs",
     "gen3": "node tools/build-gen3.mjs",
     "unbound": "node tools/build-unbound.mjs",

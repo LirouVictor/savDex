@@ -3,7 +3,7 @@
 // Pokémon, a evolução e os golpes). Filtro por golpe: os golpes por nível, tutor/TM e ovo do mesmo `dex` do detalhe.
 
 import { t, getLang } from '../i18n.js';
-import { esc, monHeader, matchupTable } from '../ui/render.js';
+import { esc, monHeader, matchupTable, tipBtn } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { BASE_ORDER } from '../parser/stats.js';
@@ -186,7 +186,7 @@ function baseStatsHtml(sp) {
 
 function abilitiesHtml(sp) {
   const [a1, a2, ha] = sp.abilities;
-  const row = (k, v) => `<div><dt>${k}</dt><dd><b>${esc(v)}</b></dd></div>`;
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${tipBtn('a', v, `<b>${esc(v)}</b>`)}</dd></div>`;
   const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && ha !== a1 && ha !== a2 && row(t('Oculta'), ha)].filter(Boolean).join('');
   if (!list) return '';
   return `<section class="dsec"><h3>${t('Habilidades')}</h3><dl class="facts-grid">${list}</dl>

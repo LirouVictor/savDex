@@ -70,7 +70,7 @@ suite('Unbound: golpes por nível da ROM', () => {
     expect(names.slice(0, 3)).toEqual(['Tackle', 'Growl', 'Vine Whip']);
     const html = learnsetHtml(mon(1, [{ id: appMove('Tackle') }]), dex, T);
     expect(html).toContain('Lista de Pokémon Unbound');
-    expect(html).toContain('<b>Tackle <span class="known"');
+    expect(html).toContain('data-tip="m:33" aria-expanded="false">Tackle</button> <span class="known"');
     expect(html).not.toContain('provável');
   });
   it('golpes próprios do Unbound entram com o ID negativo', () => {

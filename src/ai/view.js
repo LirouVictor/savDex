@@ -1,6 +1,6 @@
 // Telas dos resultados da IA. Os Pokémon citados são desenhados com os dados do save (não com o texto da IA).
 
-import { esc, typeChips, monShort, monTile } from '../ui/render.js';
+import { esc, typeChips, monShort, monTile, tipBtn } from '../ui/render.js';
 import { spriteSrc } from '../ui/sprites.js';
 import { REF_RE, teamFacts, buildIssues, moveChecks, levelGap } from './prompt.js';
 import { t, num } from '../i18n.js';
@@ -126,8 +126,8 @@ function originalSheet(x, o, byRef) {
   ];
   const u = x.usage;
   const usage = u ? `<h3 class="sheet-h">${t('O que o formato costuma usar')}</h3>
-    <span class="ai-moveset">${u.moves.map(mv => `<span class="ai-mv"><span>${esc(mv.name)}</span><small>${mv.pct}%</small></span>`).join('')}</span>
-    ${u.item || u.ability ? `<p class="ai-gear">${[u.item && `@ ${esc(u.item.name)} <i>${u.item.pct}%</i>`, u.ability && `${esc(u.ability.name)} <i>${u.ability.pct}%</i>`].filter(Boolean).join(' · ')}</p>` : ''}
+    <span class="ai-moveset">${u.moves.map(mv => `<span class="ai-mv">${tipBtn('m', mv.name, esc(mv.name))}<small>${mv.pct}%</small></span>`).join('')}</span>
+    ${u.item || u.ability ? `<p class="ai-gear">${[u.item && `@ ${esc(u.item.name)} <i>${u.item.pct}%</i>`, u.ability && `${tipBtn('a', u.ability.name, esc(u.ability.name))} <i>${u.ability.pct}%</i>`].filter(Boolean).join(' · ')}</p>` : ''}
     <p class="hint">${t('Estatísticas de uso do formato (Smogon): a fração dos sets da espécie que leva cada um. O app não guarda o set da original.')}</p>` : '';
   return `<div class="mon-hero${typeClass(m)}"><div class="sheet-mon">${sprite(m, 96)}<div><h2 id="detail-title">${esc(x.name)}</h2><p class="mon-sub">${esc(t('{tag} · equipe original', { tag: o.tag }))}</p>${typeChips(x.types)}</div></div></div>
     <dl class="sheet-facts">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${usage}`;
@@ -140,9 +140,9 @@ function memberSheet(x, m, byRef) {
     <div class="ai-member-body sheet-body">
       ${x.papel ? `<span class="ai-role">${esc(x.papel)}</span>` : ''}
       ${from ? `<small class="ai-evolve">${esc(t('Evolua: hoje é {name}{lv}', { name: from.species.name, lv: from.level ? ` (${t('Nv.')} ${from.level})` : '' }))}</small>` : ''}
-      ${gearHtml(x)}
+      ${gearHtml(x, true)}
       <span class="ai-why">${rich(x.motivo, byRef)}</span>
-      ${x.golpes ? movesetHtml(x.golpes) : ''}
+      ${x.golpes ? movesetHtml(x.golpes, true) : ''}
     </div>
     <p><button class="btn btn-ghost btn-small" type="button" data-ref="${esc(x.ref)}">${t('Ver o Pokémon do save')}</button></p>`;
 }
@@ -205,19 +205,20 @@ export function analysisView(r, byRef, model, opts = null) {
 }
 
 /** Item e habilidade que o montador sugere (Quetzal): "@ Leftovers dar · Drizzle trocar". */
-function gearHtml(x) {
+function gearHtml(x, tips = false) {
   if (!x.item && !x.habilidade) return '';
   const item = x.item ? `@ ${esc(x.item.name)}${x.item.give ? ` <i>${t('dar')}</i>` : ''}` : '';
-  const ab = x.habilidade ? `${esc(x.habilidade.name)} <i>${t('trocar')}</i>` : '';
+  const ab = x.habilidade ? `${tips ? tipBtn('a', x.habilidade.name, esc(x.habilidade.name)) : esc(x.habilidade.name)} <i>${t('trocar')}</i>` : '';
   return `<small class="ai-gear">${[item, ab].filter(Boolean).join(' · ')}</small>`;
 }
 
 /** Os 4 golpes do moveset do montador, com a cor do tipo e de onde vêm (tutor, TM, nível já alcançado, nível a treinar). */
-function movesetHtml(golpes) {
+// tips = os nomes mostram a descrição ao tocar (no card do membro; o card da IA é um botão inteiro)
+function movesetHtml(golpes, tips = false) {
   const tag = x => (x.src === 'tutor' ? t('tutor') : x.src === 'tm' ? x.tm || t('tutor') : x.src === 'now' ? t('nível') : x.src === 'level' ? `${t('Nv.')} ${x.level}` : '');
   return `<span class="ai-moveset">${golpes.map(x => {
     const k = tag(x);
-    return `<span class="ai-mv t-${esc(x.type || 'none')}"><span>${esc(x.name)}</span>${k ? `<small${x.src === 'level' || x.src === 'tm' ? ' class="train"' : ''}>${esc(k)}</small>` : ''}</span>`;
+    return `<span class="ai-mv t-${esc(x.type || 'none')}">${tips ? tipBtn('m', x.id || x.name, esc(x.name)) : `<span>${esc(x.name)}</span>`}${k ? `<small${x.src === 'level' || x.src === 'tm' ? ' class="train"' : ''}>${esc(k)}</small>` : ''}</span>`;
   }).join('')}</span>`;
 }
 

@@ -30,7 +30,8 @@
 // Formas: a da PokeAPI (sprite, nome no Showdown) pela Dex Nacional + tipos + stats.
 //
 // Gera também src/data/soulgold-learn.json (golpes por nível, carregado só ao abrir o detalhe) e
-// src/data/soulgold-teach.json (TM/HM, tutor e ovo; carregado junto com ele).
+// src/data/soulgold-teach.json (TM/HM, tutor e ovo; carregado junto com ele) e src/data/soulgold-ability-text.json
+// (descrições das habilidades, do resumo do jogo; carregado ao tocar numa habilidade).
 //
 // Uso: npm run soulgold [-- rom.gba]   (precisa de rede para a PokeAPI)
 
@@ -44,6 +45,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'src/data/soulgold.json');
 const LEARN_OUT = path.join(ROOT, 'src/data/soulgold-learn.json');
 const TEACH_OUT = path.join(ROOT, 'src/data/soulgold-teach.json');
+const ABILITY_OUT = path.join(ROOT, 'src/data/soulgold-ability-text.json');
 const PAPI = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv';
 const SPRITES = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 const ROM_BASE = 0x08000000;
@@ -142,6 +144,18 @@ function tables(rom) {
   const ability = id => text(abil + id * ABILITY_SIZE, 17);
   let abilities = 0;
   for (let id = 1; id < 1000; id++) { if (!ability(id) || /[^A-Za-z0-9 '.-]/.test(ability(id))) break; abilities = id; }
+  // Descrição (struct Ability do expansion: nome, depois o ponteiro do texto do resumo): a posição do ponteiro é a que
+  // dá o texto certo no Stench e no Drizzle; sem ela, as descrições ficam de fora (o app usa as do expansion)
+  const longText = o => {
+    const b = [];
+    for (let i = o; i < o + 160 && rom[i] !== 0xFF; i++) b.push(rom[i] === 0xFE || rom[i] === 0xFA || rom[i] === 0xFB ? 0x00 : rom[i]);
+    return decodeText(Uint8Array.from([...b, 0xFF]), 0, b.length + 1).replace(/’/g, "'").replace(/\s+/g, ' ').trim();
+  };
+  const descAt = [20, 24, 28].find(k => {
+    const a = ptr(abil + ABILITY_SIZE + k), b = ptr(abil + 2 * ABILITY_SIZE + k);
+    return a >= 0 && b >= 0 && /flinch/i.test(longText(a)) && /rain/i.test(longText(b));
+  });
+  const abilityDesc = id => { if (descAt === undefined) return null; const p = ptr(abil + id * ABILITY_SIZE + descAt); return p >= 0 ? longText(p) || null : null; };
 
   // Pokédex de Johto: espécies em ordem, acaba em 0. Achada pelos números vistos no jogo (Pidgey 16,
   // Hoothoot 142, Marill 160, Hoppip 164, Zigzagoon 225, Froakie 473).
@@ -224,7 +238,7 @@ function tables(rom) {
   const placeList = [];
   for (let k = 0; ptr(places + 8 * k) >= 0; k++) placeList.push(text(ptr(places + 8 * k), 30));
 
-  return { H, info, count, move, moves, item, items, ability, abilities, abil, johto, johtoList, learnset, teachable, eggMoves, evolutions, places, placeList };
+  return { H, info, count, move, moves, item, items, ability, abilityDesc, abilities, abil, johto, johtoList, learnset, teachable, eggMoves, evolutions, places, placeList };
 }
 
 // Nome no Showdown e rótulo da forma a partir do identificador da PokeAPI (raichu-alola → Raichu-Alola)
@@ -306,6 +320,10 @@ async function main() {
     if (/ Ball$/.test(it.name) && it.secondary && !balls[it.secondary]) balls[it.secondary] = items[id];
   }
   const abilities = [null]; for (let id = 1; id <= T.abilities; id++) abilities[id] = T.ability(id);
+  // Descrições das habilidades (muitas são próprias do SoulGold), pelo nome normalizado, num arquivo à parte
+  const abilityText = {};
+  for (let id = 1; id <= T.abilities; id++) { const d = T.abilityDesc(id); if (d) abilityText[norm(abilities[id])] = d; }
+  if (!Object.keys(abilityText).length) console.warn('aviso: descrições das habilidades não encontradas na ROM (o app usa as do expansion)');
   const johto = T.johtoList.map(id => T.info(id).national);
 
   // Golpes por nível (listas iguais guardadas uma vez) e evoluções, na numeração do SoulGold
@@ -396,6 +414,7 @@ async function main() {
   };
   await writeFile(OUT, JSON.stringify(data) + '\n');
   await writeFile(LEARN_OUT, JSON.stringify({ meta: { rom: data.meta.rom, generatedAt: data.meta.generatedAt }, sets: learnSets, species: learnOf }) + '\n');
+  await writeFile(ABILITY_OUT, JSON.stringify(abilityText) + '\n');
   await writeFile(TEACH_OUT, JSON.stringify({ meta: { rom: data.meta.rom, generatedAt: data.meta.generatedAt }, teach: { sets: teachSets, species: teachOf }, tm, egg, eggOf }) + '\n');
   console.log(`TM/HM e tutor: ${teachOf.filter(Boolean).length} espécies, ${teachSets.length - 1} listas, ${Object.keys(tm).length} TMs/HMs; ovo: ${Object.keys(egg).length} espécies`);
   console.log(`golpes por nível: ${learnOf.filter(Boolean).length} espécies, ${learnSets.length - 1} listas; evoluções: ${Object.keys(evolutions).length} espécies; lugares ${T.placeList.length}`);

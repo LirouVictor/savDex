@@ -41,6 +41,10 @@ function portrait(m, size = 96) {
 }
 
 const CATEGORY = ['Físico', 'Especial', 'Status'];
+
+/** Nome de golpe ou habilidade que mostra a descrição ao tocar (ui/tips.js). kind 'm' (id ou nome) ou 'a' (nome). */
+export const tipBtn = (kind, key, label) =>
+  `<button type="button" class="tip-btn" data-tip="${kind}:${esc(key)}" aria-expanded="false">${label}</button>`;
 export const categoryName = c => (c !== null && c !== undefined ? t(CATEGORY[c]) : '');
 
 function movesList(moves) {
@@ -279,7 +283,7 @@ function factsGrid(m) {
   return `<dl class="facts-grid">
     <div${natTitle}><dt>${t('Natureza')}</dt><dd>${nat}</dd></div>
     ${row('Item', m.item ? `<b>${esc(m.item.name)}</b>${badge(m.item.confidence)}` : t('nenhum'))}
-    ${row(t('Habilidade'), ab ? `<b>${esc(ab.name)}</b>${ab.hidden ? ` <span class="k">${t('oculta')}</span>` : ''}${badge(ab.confidence)}` : unread, ab ? '' : 'unread')}
+    ${row(t('Habilidade'), ab ? `${tipBtn('a', ab.name, `<b>${esc(ab.name)}</b>`)}${ab.hidden ? ` <span class="k">${t('oculta')}</span>` : ''}${badge(ab.confidence)}` : unread, ab ? '' : 'unread')}
     ${row(t('Bola'), m.ball ? `<b>${esc(m.ball.name)}</b>${badge(m.ball.confidence)}` : unread, m.ball ? '' : 'unread')}
     ${m.hiddenPower ? row('Hidden Power', typeChip(m.hiddenPower)) : ''}
   </dl>`;

@@ -2,7 +2,7 @@
 // (evo-rom.js, quetzal-learn.json / unbound-learn.json / soulgold-learn.json). Demais jogos: dados dos jogos oficiais
 // (src/data/dex.json, carregado sob demanda), marcados como "provável".
 
-import { esc, typeChip, categoryName } from './render.js';
+import { esc, typeChip, categoryName, tipBtn } from './render.js';
 import { t, getLang } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
 import { quetzalEvolutionHtml, unboundEvolutionHtml, soulgoldEvolutionHtml } from './evo-rom.js';
@@ -148,7 +148,7 @@ export function learnsetHtml(m, dex, T) {
     const meta = [cat, info && info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
     items.push(`<li class="lm${type ? ` t-${esc(type)}` : ''}${has ? ' has' : ''}${future ? ' future' : ''}">
       <span class="lm-lv">${lv === 0 ? t('Evo.') : `<small>${t('Nv.')}</small>${lv}`}</span>
-      <span class="lm-main"><b>${esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
+      <span class="lm-main"><b>${typeof mv === 'number' ? tipBtn('m', mv, esc(name)) : esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
       ${type ? typeChip(type) : ''}
     </li>`);
   }
@@ -184,7 +184,7 @@ function moveListHtml(m, ids, T, title, hint, label = null) {
     const has = known.has(id);
     const meta = [label && label(id), categoryName(info.category), info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
     return `<li class="lm lm-nolv${info.type ? ` t-${esc(info.type)}` : ''}${has ? ' has' : ''}">
-      <span class="lm-main"><b>${esc(info.name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
+      <span class="lm-main"><b>${tipBtn('m', id, esc(info.name))}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
       ${info.type ? typeChip(info.type) : ''}
     </li>`;
   });
