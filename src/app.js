@@ -325,7 +325,8 @@ async function fillWild(dlg, entry, pd) {
     const icons = state.data.summary && state.data.summary.badges && state.data.summary.badges.icons;
     const region = icons ? ({ 1: 'kanto', 9: 'johto', 17: 'hoenn' })[icons[0]] : null;
     const nameOf = id => (pd.entries.find(x => x.id === id) || {}).species || null;
-    slot.innerHTML = Wm.wildHtml(entry.id, T.quetzal, { region, nameOf });
+    const caught = pd.caught && entry.nat != null ? pd.caught.has(entry.nat) : null;
+    slot.innerHTML = Wm.wildHtml(entry.id, T.quetzal, { region, nameOf, caught });
     Wm.wireWild(slot);
   } catch (e) {
     console.error(e);

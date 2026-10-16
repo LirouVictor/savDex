@@ -42,8 +42,10 @@ const FIELDS = [
   { n: 10, rates: [70, 30, 60, 20, 20, 40, 40, 15, 4, 1], kind: ['old', 'old', 'good', 'good', 'good', 'super', 'super', 'super', 'super', 'super'] },
   { n: 0 },
 ];
-const METHODS = ['grass', 'surf', 'hidden', 'rock', 'old', 'good', 'super'];
+// 'static': encontro único de um Pokémon parado no mapa (lendários e afins), da tabela própria do Quetzal
+const METHODS = ['grass', 'surf', 'hidden', 'rock', 'old', 'good', 'super', 'static'];
 const RECORD = 28;
+const STATIC = 32;
 const JOHTO_GROUPS = [34, 35];
 const KANTO_GROUPS = [36, 37, 38, 39];
 // Ilhas Sete: cada mapa do jogo mostra um grupo de ilhas (lista do pokefirered, sSeviiMapsecs), pelos nomes em inglês
@@ -279,6 +281,43 @@ async function main() {
   if (!has(129, 'Route 104', 'old')) fail('Magikarp não está na Old Rod da Rota 104.');
   if (!has(74, 'Route 111', 'rock')) fail('Geodude não está no Rock Smash da Rota 111.');
 
+  // Encontros únicos (lendários e afins): tabela própria do Quetzal, 32 bytes por espécie = grupo do mapa, mapa, nº do
+  // objeto no mapa, 0, espécie u16, nível u16, 0 u16 e 3 flags seguidas (as das espécies seguintes continuam a conta); o
+  // resto (requisitos, natureza?) não foi decodificado. Conferido pelo mapa: o objeto com esse número usa a 1ª flag
+  // (a que esconde o Pokémon do mapa depois do encontro)
+  const staticOk = o => {
+    const f = u16(o + 10), lv = u16(o + 6), sp = u16(o + 4);
+    return R[o] < 40 && R[o + 3] === 0 && sp > 0 && sp < 1600 && lv > 0 && lv <= 100 && f > 0 && u16(o + 12) === f + 1 && u16(o + 14) === f + 2 && X.header(R[o], R[o + 1]) >= 0;
+  };
+  let stBase = -1, stCount = 0;
+  for (let o = 0; o < R.length - STATIC; o += 4) {
+    if (!staticOk(o)) continue;
+    let n = 1;
+    while (staticOk(o + n * STATIC) && u16(o + n * STATIC + 10) === u16(o + (n - 1) * STATIC + 10) + 3) n++;
+    if (n > stCount) { stBase = o; stCount = n; }
+  }
+  if (stCount < 50) fail(`Tabela dos encontros únicos não encontrada (${stCount} registros).`);
+  // flags dos objetos do mapa (alguns registros têm o nº do objeto 0: Lugia, Ho-Oh; vale qualquer objeto com a flag)
+  const objectFlags = (g, m) => {
+    const ev = P(u32(X.header(g, m) + 4)), objs = P(u32(ev + 4)), out = new Set();
+    for (let i = 0; i < R[ev]; i++) out.add(u16(objs + i * 24 + 0x14));
+    return out;
+  };
+  let statics = 0; const noObj = [];
+  for (let i = 0; i < stCount; i++) {
+    const o = stBase + i * STATIC, g = R[o], m = R[o + 1], sp = u16(o + 4), lv = u16(o + 6);
+    if (!objectFlags(g, m).has(u16(o + 10))) noObj.push(`${sp}@${g}.${m}`);
+    const place = placeOf(g, m);
+    if (place < 0) fail(`Encontro único ${i} (espécie ${sp}) sem lugar.`);
+    const rows = (wild[sp] ||= []);
+    if (!rows.some(r => r[0] === place && r[1] === METHODS.indexOf('static') && r[2] === lv)) rows.push([place, METHODS.indexOf('static'), lv, lv, 0]);
+    statics++;
+  }
+  const hasStatic = (sp, en) => (wild[sp] || []).some(r => places[r[0]][0] === en && METHODS[r[1]] === 'static');
+  if (!hasStatic(150, 'Rocket Hideout') && !hasStatic(150, 'Team Rocket Hideout')) fail(`Mewtwo não está no esconderijo da Equipe Rocket (${(wild[150] || []).map(r => places[r[0]][0])}).`);
+  if (!hasStatic(382, 'Embedded Tower')) fail('Kyogre não está na Embedded Tower.');
+  for (const rows of Object.values(wild)) rows.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
   // Mapas das regiões: qual imagem é de qual região, pelo quanto os retângulos das cidades caem fora do mar
   const imgs = [...X.images.triples, ...X.images.quads[0]].map(t => X.render(t));
   const sea = img => { const n = new Map(); for (let i = 0; i < img.length; i += 4) { const k = img[i] << 16 | img[i + 1] << 8 | img[i + 2]; n.set(k, (n.get(k) || 0) + 1); } return [...n].sort((a, b) => b[1] - a[1])[0][0]; };
@@ -329,7 +368,8 @@ async function main() {
     places, wild,
   };
   await writeFile(OUT, JSON.stringify(out) + '\n');
-  console.log(`encontros: ${X.wildCount} mapas (${skipped} sem lugar), ${slots} posições, ${Object.keys(wild).length} espécies, ${places.length} lugares`);
+  if (noObj.length) console.log(`encontros únicos sem objeto com a flag no mapa: ${noObj.join(" ")}`);
+  console.log(`encontros: ${X.wildCount} mapas (${skipped} sem lugar), ${slots} posições, ${statics} únicos, ${Object.keys(wild).length} espécies, ${places.length} lugares`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });

@@ -161,6 +161,18 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     // Abre na região onde o jogador está, se a espécie aparece nela
     expect(wildHtml(147, Q, { region: 'kanto' })).toMatch(/data-region="kanto" aria-pressed="true"/);
   });
+
+  it('encontros únicos (lendários) lidos da ROM', () => {
+    const at = (id, name) => wildPlaces(id).find(p => p.name === name);
+    expect(at(150, 'Escond. Rocket').rows).toContainEqual([7, 70, 70, 0]);
+    expect(at(382, 'Torre Oculta').rows[0][0]).toBe(7);
+    expect(at(249, 'Ilhas Redemoinho')).toBeTruthy();
+    expect(at(250, 'Torre do Sino')).toBeTruthy();
+    const html = wildHtml(150, Q, { caught: false });
+    expect(html).toContain('Encontro único · Nv. 70');
+    expect(html).toContain('ainda não marca esta espécie como capturada');
+    expect(wildHtml(150, Q, { caught: true })).toContain('já marca esta espécie como capturada');
+  });
 });
 
 suite('Pokédex em inglês', () => {

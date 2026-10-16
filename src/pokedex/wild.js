@@ -16,7 +16,8 @@ const MAP_URL = {
 };
 export const REGIONS = ['hoenn', 'johto', 'kanto', 'sevii123', 'sevii45', 'sevii67'];
 const regionName = r => ({ hoenn: 'Hoenn', johto: 'Johto', kanto: 'Kanto', sevii123: t('Ilhas 1–3'), sevii45: t('Ilhas 4–5'), sevii67: t('Ilhas 6–7') })[r];
-const METHOD = () => [t('Grama ou caverna'), t('Surfando'), t('Escondido (DexNav)'), 'Rock Smash', 'Old Rod', 'Good Rod', 'Super Rod'];
+const METHOD = () => [t('Grama ou caverna'), t('Surfando'), t('Escondido (DexNav)'), 'Rock Smash', 'Old Rod', 'Good Rod', 'Super Rod', t('Encontro único')];
+const STATIC = 7;
 
 /** Onde a espécie (número do Quetzal) aparece: [{ place, region, name, rows: [[jeito, mín., máx., chance]] }]. */
 export function wildPlaces(id) {
@@ -74,25 +75,29 @@ function regionHtml(region, places, on) {
  * A seção "Onde encontrar" do detalhe da espécie.
  * @param {number} id número da espécie no Quetzal
  * @param {object} Q quetzal.json
- * @param {{ region?: string|null, nameOf?: (id: number) => object }} opts região onde o jogador está (abre nela) e a
- *   espécie de um número (para a pré-evolução)
+ * @param {{ region?: string|null, nameOf?: (id: number) => object, caught?: boolean|null }} opts região onde o jogador
+ *   está (abre nela), a espécie de um número (para a pré-evolução) e se a Pokédex do save marca a espécie como capturada
  */
-export function wildHtml(id, Q, { region = null, nameOf = null } = {}) {
+export function wildHtml(id, Q, { region = null, nameOf = null, caught = null } = {}) {
   let places = wildPlaces(id);
   let note = '';
   if (!places.length) {
     const anc = wildAncestor(id, Q);
-    if (anc == null) return `<section class="dsec wild"><h3>${t('Onde encontrar')}</h3><p class="hint">${t('Não aparece na natureza do jogo (grama, cavernas, água e Rock Smash). Pode vir de evento, presente, ovo ou troca.')}</p></section>`;
+    if (anc == null) return `<section class="dsec wild"><h3>${t('Onde encontrar')}</h3><p class="hint">${t('Não aparece na natureza do jogo (grama, cavernas, água, Rock Smash e encontros únicos). Pode vir de evento, presente, ovo ou troca.')}</p></section>`;
     places = wildPlaces(anc);
     const sp = nameOf ? nameOf(anc) : null;
     note = `<p class="wild-anc">${sp ? `<img src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">` : ''}
       <span>${t('Não aparece na natureza. Capture {name} e evolua:', { name: `<b>${esc(sp ? sp.name : '#' + anc)}</b>` })}</span></p>`;
   }
+  let once = '';
+  if (!note && places.some(p => p.rows.some(r => r[0] === STATIC))) {
+    once = `<p class="hint">${t('Encontro único: aparece uma vez nesse lugar, depois de requisitos do jogo (história, insígnias, itens) que o app ainda não lê da ROM.')}${caught == null ? '' : ' ' + (caught ? t('A Pokédex do save já marca esta espécie como capturada.') : t('A Pokédex do save ainda não marca esta espécie como capturada.'))}</p>`;
+  }
   const regions = REGIONS.filter(r => places.some(p => p.region === r));
   const first = regions.includes(region) ? region : regions[0];
   const tabs = regions.length > 1 ? `<div class="wild-tabs" role="group" aria-label="${esc(t('Região'))}">${regions.map(r => `<button type="button" class="btn btn-ghost" data-region="${r}" aria-pressed="${r === first}">${esc(regionName(r))} <span class="wild-n">${places.filter(p => p.region === r).length}</span></button>`).join('')}</div>` : '';
   const body = regions.map(r => regionHtml(r, places.filter(p => p.region === r), r === first)).join('');
-  return `<section class="dsec wild"><h3>${t('Onde encontrar')} <span class="learn-count">${places.length}</span></h3>${note}${tabs}${body}
+  return `<section class="dsec wild"><h3>${t('Onde encontrar')} <span class="learn-count">${places.length}</span></h3>${note}${once}${tabs}${body}
     <p class="hint">${t('Lido da ROM do Quetzal. Chances pelas regras do motor (pokeemerald); a mesma espécie em vários andares de um lugar mostra a maior chance. Toque num lugar para ver no mapa.')}</p></section>`;
 }
 
