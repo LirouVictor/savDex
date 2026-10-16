@@ -143,10 +143,10 @@ export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
       ${monHeader(m, 'h2', ' id="detail-title"')}
       ${got ? `<p class="mon-sub">${got}</p>` : ''}
     </div>
-    ${abilitiesHtml(sp)}
-    ${baseStatsHtml(sp)}
-    ${matchupTable(m, T)}
-    ${ownedHtml(owned)}
+    <div class="mon-cols">
+      <div>${abilitiesHtml(sp)}${baseStatsHtml(sp)}</div>
+      <div>${matchupTable(m, T)}${ownedHtml(owned)}</div>
+    </div>
     ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}
     <div class="dex-slot" data-dex></div>
   </div>`;

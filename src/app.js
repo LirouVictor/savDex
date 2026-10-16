@@ -505,6 +505,15 @@ function setupBuilder(out) {
   bOut.addEventListener('click', async e => {
     const cur = state.builder && state.builder.results[state.builder.i];
     if (!cur) return;
+    // Abas do resultado (Equipe, Trocas, Estratégia, Original)
+    const tab = e.target.closest('[data-bt]');
+    if (tab) {
+      for (const x of bOut.querySelectorAll('[data-bt]')) x.setAttribute('aria-selected', String(x === tab));
+      for (const p of bOut.querySelectorAll('.bt-pane')) p.hidden = p.id !== `bt-pane-${tab.dataset.bt}`;
+      const bar = tab.parentElement;
+      if (bar.getBoundingClientRect().top < 0) bar.scrollIntoView({ block: 'start' });
+      return;
+    }
     // Escolher equipe: a janela com todas as equipes (as que ainda não foram montadas são adaptadas ao escolher)
     const pick = e.target.closest('[data-pick]');
     if (pick) {

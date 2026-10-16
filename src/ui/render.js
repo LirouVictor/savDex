@@ -300,10 +300,10 @@ export function monDetail(m, T) {
       ${monHeader(m, 'h2', ' id="detail-title"')}
       <p class="mon-sub">${esc(where)}</p>
     </div>
-    ${factsGrid(m)}
-    ${movesList(m.moves)}
-    ${m.stats ? statsTable(m) : ivEvTable(m)}
-    ${T ? matchupTable(m, T) : ''}
+    <div class="mon-cols">
+      <div>${factsGrid(m)}${movesList(m.moves)}</div>
+      <div>${m.stats ? statsTable(m) : ivEvTable(m)}${T ? matchupTable(m, T) : ''}</div>
+    </div>
     <div class="dex-slot" data-dex></div>
     <details class="fold adv"><summary>${t('Avançado')}</summary>
       ${sp.evidence ? `<p class="evidence"><span class="k">${t('Como a espécie foi identificada')}</span> ${esc(t(sp.evidence))}</p>` : ''}

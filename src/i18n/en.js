@@ -16,6 +16,8 @@ export default {
   'O exemplo é um save do Quetzal com Pokémon fictícios. Uma cópia do último save aberto fica neste navegador para abrir sozinha na próxima visita.':
     'The example is a Quetzal save with made-up Pokémon. A copy of the last save you open is kept in this browser so it opens by itself on your next visit.',
   'Onde fica o save': 'Where to find the save',
+  'Partes do resultado': 'Result sections',
+  'Original': 'Original',
   'Jogos suportados': 'Supported games',
   'Pokémon Quetzal <small>(testado na Alpha 9 PT-BR e inglês)</small>': 'Pokémon Quetzal <small>(tested on Alpha 9 PT-BR and English)</small>',
   'Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.':
