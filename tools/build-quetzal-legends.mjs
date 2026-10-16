@@ -21,8 +21,9 @@ for (const [id, s] of Object.entries(Q.species)) { if (s[10]) add(s[10], +id); a
 const URL = { johto: SOURCE + 'johto/legendary-pokemon/', hoenn: SOURCE + 'legendary-pokemon/', kanto: SOURCE + 'kanto/legendary-pokemon/' };
 const out = {};
 let n = 0;
-for (const [region, list] of [['johto', JOHTO], ['hoenn', HOENN || []], ['kanto', KANTO || []]]) {
-  for (const [name, slug, ver, pt, en, place] of list) {
+for (const [guide, list] of [['johto', JOHTO], ['hoenn', HOENN || []], ['kanto', KANTO || []]]) {
+  for (const [name, slug, ver, pt, en, place, where] of list) {
+    const region = where || guide; // as Ilhas Sete ficam no guia de Kanto
     const cands = ids.get(norm(name)) || [];
     let id;
     if (region === 'johto') {
@@ -36,7 +37,7 @@ for (const [region, list] of [['johto', JOHTO], ['hoenn', HOENN || []], ['kanto'
       if (place && !W.places.some(p => p[2] === region && norm(p[0]) === norm(place))) fail(`${name}: lugar "${place}" não existe em ${region}.`);
     }
     if (pt.length !== en.length || !pt.length) fail(`${name}: textos em português e inglês não batem.`);
-    (out[id] ||= []).push({ region, url: URL[region] + slug + '.html', ver, pt, en, ...(place ? { place } : {}) });
+    (out[id] ||= []).push({ region, url: URL[guide] + slug + '.html', ver, pt, en, ...(place ? { place } : {}) });
     n++;
   }
 }

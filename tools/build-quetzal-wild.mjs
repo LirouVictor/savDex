@@ -282,6 +282,10 @@ async function main() {
   if (!has(129, 'Route 104', 'old')) fail('Magikarp não está na Old Rod da Rota 104.');
   if (!has(74, 'Route 111', 'rock')) fail('Geodude não está no Rock Smash da Rota 111.');
 
+  // Todos os lugares que têm um mapa (cidades, cavernas sem encontros…): os encontros únicos de Hoenn e Kanto, que não
+  // estão na tabela da ROM, usam o lugar pelo nome (src/data/quetzal-legends.json)
+  for (let g = 0; g < 40; g++) for (let m = 0; m < 256; m++) if (X.header(g, m) >= 0) placeOf(g, m);
+
   // Encontros únicos (lendários e afins): tabela própria do Quetzal, 32 bytes por espécie = grupo do mapa, mapa, nº do
   // objeto no mapa, 0, espécie u16, nível u16, 0 u16 e 3 flags seguidas (as das espécies seguintes continuam a conta); o
   // resto (requisitos, natureza?) não foi decodificado. Conferido pelo mapa: o objeto com esse número usa a 1ª flag

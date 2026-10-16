@@ -173,6 +173,26 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     expect(html).toContain('ainda não marca esta espécie como capturada');
     expect(wildHtml(150, Q, { caught: true })).toContain('já marca esta espécie como capturada');
   });
+
+  it('requisitos: insígnias, Liga e item da ROM e o resto do guia', () => {
+    const lugia = wildHtml(249, Q);
+    expect(lugia).toContain('Como fazer aparecer');
+    expect(lugia).toContain('<li class="rom">8 insígnias de Johto</li>');
+    expect(lugia).toContain('Insígnias, Liga e item: lidos da ROM.');
+    const suicune = wildHtml(245, Q);
+    expect(suicune).toContain('Vaporeon');
+    expect(suicune).toContain('A ROM não pede insígnias, Liga nem item.');
+    expect(suicune).toContain('pkmnquetzal.top/en/johto/legendary-pokemon/suicune.html');
+    expect(wildHtml(1141, Q)).toContain('Prison Bottle na mochila');
+    // Hoenn e Kanto: o lugar vem do guia (a tabela da ROM só tem Johto)
+    const mewtwo = wildPlaces(150).map(p => p.region);
+    expect(mewtwo).toEqual(expect.arrayContaining(['johto', 'hoenn', 'kanto']));
+    const deoxys = wildHtml(386, Q, { region: 'hoenn' });
+    expect(deoxys).toContain('Aurora Ticket');
+    expect(deoxys).toContain('A tabela de encontros únicos da ROM só tem Johto.');
+    // Quem só evolui de um lendário não mostra os requisitos do ancestral
+    expect(wildHtml(26, Q)).not.toContain('Como fazer aparecer');
+  });
 });
 
 suite('Pokédex em inglês', () => {
@@ -184,7 +204,7 @@ suite('Pokédex em inglês', () => {
     const data = { summary: { dex: { caught: [1] } }, party: [], pc: { boxes: [] } };
     let html = pokedexWin(data, TQ) + listNote({ id: 'quetzal' }) + listNote({ id: 'hgss', gen: 4 });
     entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]) }); });
-    html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q);
+    html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q) + wildHtml(249, Q) + wildHtml(245, Q) + wildHtml(1141, Q) + wildHtml(382, Q);
     expect(html).toContain('Where to find');
     expect(html).toContain('Safari Zone');
     expect(html).toContain('Learns the move');

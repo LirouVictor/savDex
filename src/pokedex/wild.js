@@ -103,7 +103,9 @@ function reqHtml(id, region, Q) {
   else if (rom) src.push(t('A ROM não pede insígnias, Liga nem item.'));
   if (guide.length) {
     const g = guide[0];
-    src.push(t('O resto: {guia} (versão {v}), não conferido no jogo.', { guia: `<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(t('guia da comunidade'))}</a>`, v: esc(g.ver) }));
+    const guia = `<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(t('guia da comunidade'))}</a>`;
+    const v = g.ver ? ' ' + t('(versão {v})', { v: esc(g.ver) }) : '';
+    src.push(rom ? t('O resto: {guia}{v}, não conferido no jogo.', { guia, v }) : t('Pelo {guia}{v}, não conferido no jogo. A tabela de encontros únicos da ROM só tem Johto.', { guia, v }));
   } else src.push(t('O guia da comunidade não tem os outros requisitos deste encontro.'));
   return `<div class="wild-req"><h4>${t('Como fazer aparecer')}</h4>${lines.length ? `<ul>${lines.join('')}</ul>` : ''}<p class="hint">${src.join(' ')}</p></div>`;
 }
