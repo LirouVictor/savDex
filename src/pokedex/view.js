@@ -108,7 +108,7 @@ function baseStatsHtml(sp) {
 function abilitiesHtml(sp) {
   const [a1, a2, ha] = sp.abilities;
   const row = (k, v) => `<div><dt>${k}</dt><dd><b>${esc(v)}</b></dd></div>`;
-  const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && row(t('Oculta'), ha)].filter(Boolean).join('');
+  const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && ha !== a1 && ha !== a2 && row(t('Oculta'), ha)].filter(Boolean).join('');
   if (!list) return '';
   return `<section class="dsec"><h3>${t('Habilidades')}</h3><dl class="facts-grid">${list}</dl>
     ${sp.abilitiesProbable ? `<p class="hint">${t('Habilidades dos jogos mais recentes (PokeAPI); podem ser diferentes neste jogo.')}</p>` : ''}</section>`;

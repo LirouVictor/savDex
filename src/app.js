@@ -676,7 +676,8 @@ function stickyName(dlg) {
   const hero = dlg.querySelector('.mon-hero'), bar = dlg.querySelector('.sheet-bar');
   if (!hero || !bar || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: dlg, rootMargin: '-56px 0px 0px 0px' });
-  io.observe(hero);
+  // O título, não o cabeçalho inteiro: em detalhe curto a rolagem acaba com uma fresta do cabeçalho na tela e o nome não aparecia
+  io.observe(hero.querySelector('h2') || hero);
   dlg.addEventListener('close', () => io.disconnect(), { once: true });
 }
 
@@ -738,6 +739,9 @@ async function fillDex(dlg, m) {
     dexLoaded.add(key);
     if (!slot.isConnected) return; // o detalhe já foi trocado
     slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
+    // Linha mais larga que a tela (rola para o lado): começa mostrando o Pokémon aberto, não sempre o primeiro estágio
+    const evo = slot.querySelector('.evo'), here = evo && evo.querySelector('.here');
+    if (here && evo.scrollWidth > evo.clientWidth) evo.scrollLeft = here.getBoundingClientRect().left - evo.getBoundingClientRect().left - (evo.clientWidth - here.offsetWidth) / 2;
   } catch (e) {
     console.error(e);
     slot.innerHTML = '';
