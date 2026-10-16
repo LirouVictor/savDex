@@ -7,14 +7,21 @@ export default {
   'Pular para o conteúdo': 'Skip to content',
   'Trocar save': 'Change save',
   'Abra seu save': 'Open your save',
-  'Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.':
-    'See your trainer, party and PC, and export to a spreadsheet, Showdown or JSON. Everything is read on your device: the file is never uploaded anywhere. A copy of the last save is kept in this browser so it opens by itself on your next visit.',
   'Abrir arquivo .sav': 'Open .sav file',
   'No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav, o .dsv do DeSmuME e exports do GameShark (.sps) e do Action Replay DS (.duc).':
     'On Android, look in your emulator’s save folder (My Boy!, Pizza Boy, RetroArch…). On a computer, you can drag the file here. Accepts .sav files, DeSmuME .dsv files and GameShark (.sps) and Action Replay DS (.duc) exports.',
   'Ver um save de exemplo': 'See an example save',
-  'Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.':
-    'No game, no file: a Quetzal save with made-up Pokémon to try savDex.',
+  'Veja equipe, PC e Pokédex do seu jogo e exporte para planilha, Showdown ou JSON. O arquivo é lido no seu aparelho e não é enviado para lugar nenhum.':
+    'See your party, PC and Pokédex and export to a spreadsheet, Showdown or JSON. The file is read on your device and never uploaded anywhere.',
+  'O exemplo é um save do Quetzal com Pokémon fictícios. Uma cópia do último save aberto fica neste navegador para abrir sozinha na próxima visita.':
+    'The example is a Quetzal save with made-up Pokémon. A copy of the last save you open is kept in this browser so it opens by itself on your next visit.',
+  'Onde fica o save': 'Where to find the save',
+  'Partes do resultado': 'Result sections',
+  'Adapta equipes do competitivo (Smogon) aos Pokémon do seu save': 'Adapts competitive (Smogon) teams to the Pokémon in your save',
+  'Todas as espécies do jogo e onde encontrar cada uma': 'Every species in the game and where to find each one',
+  'Todas as espécies do jogo e o que aprendem': 'Every species in the game and what they learn',
+  'Equipe e PC por nome, golpe, tipo e IVs': 'Party and PC by name, move, type and IVs',
+  'Original': 'Original',
   'Jogos suportados': 'Supported games',
   'Pokémon Quetzal <small>(testado na Alpha 9 PT-BR e inglês)</small>': 'Pokémon Quetzal <small>(tested on Alpha 9 PT-BR and English)</small>',
   'Hacks que mantêm o formato desses jogos também abrem, mas nomes de espécies, golpes e itens podem não bater se o hack os mudou. Save de outro jogo mostra um aviso em vez de dados errados.':
@@ -118,7 +125,8 @@ export default {
   'Save nº': 'Save #',
   'Exportar': 'Export',
   'equipe + PC': 'party + PC',
-  'Planilha (CSV)': 'Spreadsheet (CSV)',
+  'Planilha': 'Spreadsheet',
+  'Dados': 'Data',
   'Copiar equipe (Showdown)': 'Copy party (Showdown)',
   'nível {n}': 'level {n}',
   'Avisos': 'Warnings',
@@ -1075,6 +1083,7 @@ export default {
   "Plano da original ({plan}) perdido: ninguém no seu save põe ou aproveita o campo o bastante.": "Original plan ({plan}) lost: nobody in your save sets or uses the field enough.",
   "Estratégias da original: {k} de {n} ({ok}); falta: {miss}.": "Original strategies: {k} of {n} ({ok}); missing: {miss}.",
   "Estratégias da original: todas ({list}).": "Original strategies: all of them ({list}).",
+  "Estratégias da original: nenhuma mantida; falta: {miss}.": "Original strategies: none kept; missing: {miss}.",
   "{orig}: sem substituto.": "{orig}: no replacement.",
   "pedido por você": "requested by you",
   "faz o mesmo papel ({roles})": "plays the same role ({roles})",

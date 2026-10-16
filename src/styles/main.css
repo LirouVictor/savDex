@@ -26,6 +26,7 @@
   --pixel: "Silkscreen", ui-monospace, monospace;
   /* Texto corrido na fonte do sistema (legível e sem download); a pixel fica para títulos, botões, números e nomes */
   --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --off: grayscale(1); /* insígnia que falta; no escuro, clareada para não sumir no fundo */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,7 +35,7 @@
     --bg: #10131f; --bg-band: #161b2c; --win: #1b2135; --win-2: #232b44; --edge: #8fa0cf; --hi: #2e3858;
     --ink: #eceff8; --muted: #a3abc6; --accent: #4fc3a1; --accent-ink: #0d1a16; --accent-2: #ff7a6b; --gold: #e8c060;
     --bar: #2e3858; --hp: #5fd07f; --plus: #ff7a6b; --minus: #7fb0ff;
-    --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f;
+    --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f; --off: grayscale(1) brightness(2.2);
   }
 }
 :root[data-theme="dark"] {
@@ -42,7 +43,7 @@
   --bg: #10131f; --bg-band: #161b2c; --win: #1b2135; --win-2: #232b44; --edge: #8fa0cf; --hi: #2e3858;
   --ink: #eceff8; --muted: #a3abc6; --accent: #4fc3a1; --accent-ink: #0d1a16; --accent-2: #ff7a6b; --gold: #e8c060;
   --bar: #2e3858; --hp: #5fd07f; --plus: #ff7a6b; --minus: #7fb0ff;
-  --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f;
+  --top-bg: #222a44; --top-ink: #eceff8; --top-ink-on-gold: #10131f; --off: grayscale(1) brightness(2.2);
 }
 
 /* Cores de tipo (paleta própria) */
@@ -164,7 +165,7 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 .btn:active { transform: translateY(2px); box-shadow: inset 0 -1px 0 rgba(0,0,0,.22), -3px 0 0 var(--edge), 3px 0 0 var(--edge), 0 -3px 0 var(--edge), 0 3px 0 var(--edge); }
 .btn-ghost { background: var(--win); color: var(--ink); }
 .topbar .btn-ghost { background: var(--win-2); color: var(--ink); }
-.btn-big { font-size: 1.05rem; padding: 12px 22px; }
+.btn-big { font-size: 1.05rem; padding: 12px 22px; text-wrap: balance; } /* sem o ".SAV" sozinho na segunda linha no celular */
 .btn-small { min-height: 44px; padding: 6px 12px; font-size: .85rem; }
 .btn-icon { width: 44px; padding: 0; }
 .btn[disabled] { opacity: .5; cursor: default; }
@@ -177,14 +178,15 @@ main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 32px; display: grid
 .drop .btn-big { width: calc(100% - 6px); }
 /* Sem save aberto, o rodapé acompanha a coluna da abertura */
 body:has(#out.hidden) .foot { max-width: 768px; }
-@media (min-width: 560px) { .drop .btn-big { width: auto; } }
+/* Abertura: os dois botões juntos, com a mesma largura no celular */
+.drop .btn { width: calc(100% - 6px); }
+@media (min-width: 560px) { .drop .btn { width: auto; } }
 .drop { margin-top: 16px; padding: 18px; display: grid; justify-items: start; gap: 10px; background: var(--win-2); outline: 3px dashed var(--hi); outline-offset: -3px; }
 .drop.over { outline-color: var(--accent); }
 .hint { color: var(--muted); font-size: .9rem; margin: 0; }
 .error { margin: 14px 0 0; padding: 10px 14px; color: var(--ink); background: var(--win-2); border-left: 6px solid var(--accent-2); }
 input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-.demo-row { margin-top: 12px; display: grid; gap: 4px; justify-items: start; }
 .supported { margin-top: 14px; padding: 10px 12px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
 .supported h2 { font-size: .8rem; text-transform: uppercase; margin: 0 0 6px; }
 .supported ul { margin: 0 0 6px; padding-left: 18px; line-height: 1.6; }
@@ -225,7 +227,7 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .sum .badge { font-size: .62rem; }
 .bdgs { flex-basis: 100%; display: grid; grid-template-columns: repeat(4, 24px); gap: 4px; }
 .bdg { width: 24px; height: 24px; object-fit: contain; }
-.bdg.off { opacity: .2; filter: grayscale(1); }
+.bdg.off { opacity: .25; filter: var(--off); }
 /* Sem a imagem (offline): losango na cor do bloco, cheio se tem a insígnia */
 .bdg-pin { display: block; box-shadow: inset 0 0 0 3px var(--c); transform: rotate(45deg) scale(.62); }
 .bdg-pin.got { background: var(--c); }
@@ -247,7 +249,9 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 /* Exportar: os três arquivos numa fileira e "Copiar" embaixo, inteiro */
 .export .export-btns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .export .export-btns [data-copy] { grid-column: 1 / -1; }
-.export .export-btns .btn { padding: 6px 4px; }
+.export .export-btns .btn { padding: 6px 4px; flex-direction: column; gap: 1px; }
+/* Nome em cima e o formato embaixo, nos três (antes, "PLANILHA (CSV)" quebrava e o "JSON" não) */
+.export .export-btns .btn small { font: .62rem var(--body); font-weight: 700; opacity: .75; letter-spacing: .04em; }
 .export .export-btns .btn, .party-actions .btn, .ai-hero .export-btns .btn { margin: 3px; line-height: 1.25; text-align: center; }
 @media (max-width: 480px) {
   .export .export-btns .btn { font-size: .74rem; padding-inline: 2px; }
@@ -279,26 +283,21 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
 /* No computador: Resumo em cima, Equipe e PC lado a lado, Ferramentas embaixo; cabe quase tudo na tela, sem a barra */
 @media (min-width: 1000px) {
   main { max-width: 1200px; }
-  /* Cada janela no seu lugar da grade: Equipe + Análise ao lado do PC, Buscar e Montar equipe (as duas janelas
-     que abrem e fecham) lado a lado, Equipes salvas e Exportar embaixo */
+  /* Cada janela no seu lugar da grade: Equipe + Análise ao lado do PC, as ferramentas embaixo (a aberta em fileira
+     inteira), Equipes salvas e Exportar no fim */
   #out {
     grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start;
-    grid-template-areas: "sum sum" "party pc" "search pokedex" "builder builder" "teams teams" "export export";
+    grid-template-areas: "sum sum" "party pc" "tools tools";
   }
   /* Buscar ou Montar equipe aberta: as duas em fileiras inteiras (meia largura deixava a outra metade vazia e a
      equipe do montador espremida em 3 por linha) */
-  #out:has(#builder-win[open], #search-win[open], #pokedex-win[open]) {
-    grid-template-areas: "sum sum" "party pc" "search search" "pokedex pokedex" "builder builder" "teams teams" "export export";
-  }
   #grp-pc, #grp-tools { display: contents; }
   #grp-summary { grid-area: sum; }
   #grp-party { grid-area: party; }
   #pc-win { grid-area: pc; }
-  #search-win { grid-area: search; }
-  #builder-win { grid-area: builder; }
-  #pokedex-win { grid-area: pokedex; }
-  #teams-slot { grid-area: teams; }
-  #export-win { grid-area: export; }
+  #tools-win { grid-area: tools; }
+  /* O resto em fileiras inteiras, na ordem da página; a ferramenta fechada não deixa fileira vazia */
+  #builder-win, #pokedex-win, #search-win, #teams-slot, #export-win { grid-column: 1 / -1; }
   .nav { display: none; }
   body:has(#out:not(.hidden)) { padding-bottom: 0; }
   .foot { max-width: 1200px; }
@@ -346,7 +345,7 @@ main > *, #out > * { min-width: 0; }
 .ptile-hp.low i { background: var(--accent-2); }
 .ptile-empty { min-height: 120px; display: grid; place-items: center; }
 .ptile-empty::after { content: ""; width: 8px; height: 8px; background: var(--hi); }
-.mon { padding: 14px; display: grid; gap: 12px; align-content: start; }
+.mon { padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; } /* minmax: conteúdo largo (evolução, mapa) rola dentro dele em vez de alargar a janela */
 .mon-head { display: grid; grid-template-columns: 104px 1fr; gap: 12px; align-items: start; }
 .portrait {
   width: 104px; height: 104px; display: grid; place-items: center;
@@ -479,6 +478,14 @@ main > *, #out > * { min-width: 0; }
 .facts-grid dd .k { color: var(--muted); font-size: .78rem; }
 .facts-grid .unread dd { color: var(--muted); }
 .sheet .mon { padding: 0; }
+/* Detalhe: duas colunas no computador (dados e golpes | stats e dano); no celular, uma embaixo da outra como antes */
+.mon-cols { display: grid; gap: 12px; }
+.mon-cols > div { display: grid; gap: 12px; align-content: start; min-width: 0; }
+@media (min-width: 960px) {
+  .sheet:has(.mon-cols) { width: min(960px, calc(100vw - 48px)); }
+  .mon-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; }
+  .mon-cols .moves { grid-template-columns: 1fr; } /* meia janela: em duas colunas os nomes quebravam (Flamethro-wer) */
+}
 .unread-list { margin: 0; padding: 10px 12px; background: var(--win-2); color: var(--muted); font-size: .88rem; }
 .evidence { color: var(--muted); font-size: .85rem; margin: 0; }
 .raw { font: .7rem/1.4 ui-monospace, monospace; color: var(--muted); overflow-wrap: anywhere; margin: 0; }
@@ -539,11 +546,14 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 }
 .search-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 /* Filtros da busca como os filtros da Pokédex e as abas do montador (antes, botões grandes em três fileiras tortas) */
+/* Cada fileira preenchida até a borda (antes, 3 + 2 de larguras diferentes com sobra à direita) */
 .flags { display: flex; flex-wrap: wrap; gap: 6px; padding: 3px; }
-.flags .btn { flex: none; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
+.flags .btn { flex: 1 1 auto; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
 .flag svg { vertical-align: -1px; }
 .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .search-row select { font-size: .85rem; padding: 6px; }
+/* Número ímpar de listas: a última ocupa a fileira (a 3ª da Pokédex ficava sozinha em meia largura, em duas linhas) */
+.search-row select:last-of-type:nth-of-type(odd) { grid-column: 1 / -1; }
 .results {
   list-style: none; margin: 8px 0 0; padding: 4px; display: grid; gap: 4px; align-content: start;
   background: var(--win-2); box-shadow: inset 0 0 0 3px var(--hi);
@@ -570,7 +580,12 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .r-sub { display: block; color: var(--muted); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-lv { font: .75rem var(--pixel); color: var(--accent); }
 /* Pokédex: bolinha de capturado, total dos stats em destaque */
-.pdx-got { color: var(--accent); font-size: .7rem; vertical-align: 1px; }
+.pdx-got { color: var(--accent); font-weight: 700; }
+/* Tipos em chips, como no resto do app, e o total dos stats com rótulo */
+.pdx-sub { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.pdx-sub .type { font-size: .58rem; padding: 2px 4px 1px; }
+.pdx-bst { display: grid; justify-items: end; line-height: 1.1; }
+.pdx-bst small { font-size: .55rem; color: var(--muted); }
 .pdx-stats .pdx-total th, .pdx-stats .pdx-total td { border-top: 2px solid var(--hi); padding-top: 5px; color: var(--accent); }
 .pdx-owned { margin-top: 0; }
 /* Pokédex: onde encontrar (mapa da região do jogo, com os lugares marcados) */
@@ -602,11 +617,11 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .mu-types { display: flex; flex-wrap: wrap; gap: 4px; }
 /* Árvore: cada ramo numa fileira (colunas e fileiras vêm de evoGridHtml); rola para o lado em vez de quebrar */
 .evo { display: grid; justify-content: start; align-items: center; gap: 6px 4px; padding: 8px; overflow-x: auto; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
-.evo-node { display: grid; justify-items: center; align-content: center; align-self: center; gap: 2px; min-height: 86px; max-width: 150px; padding: 4px 6px; text-align: center; background: var(--win); box-shadow: inset 0 -3px 0 var(--hi); }
+.evo-node { display: grid; justify-items: center; align-content: center; align-self: center; gap: 2px; min-height: 86px; padding: 4px 6px; text-align: center; background: var(--win); box-shadow: inset 0 -3px 0 var(--hi); }
 .evo-node.here { box-shadow: inset 0 0 0 2px var(--accent), inset 0 -3px 0 var(--accent); }
 .evo-node img { width: 48px; height: 40px; object-fit: contain; }
-.evo-node b { min-width: 72px; font-size: .85rem; } /* largura mínima aqui e não na caixa: assim a coluna nunca fica mais estreita que o nome */
-.evo-node small { color: var(--muted); font-size: .72rem; line-height: 1.25; }
+.evo-node b { width: max-content; min-width: 72px; font-size: .8rem; } /* max-content: só com min-width a coluna encolhia abaixo do nome e cortava CHARMANDER no celular */
+.evo-node small { max-width: 140px; color: var(--muted); font-size: .72rem; line-height: 1.25; } /* o limite fica no método: na caixa, cortava nomes longos (CHARMANDER) */
 .evo-arrow { width: 0; height: 0; align-self: center; justify-self: center; border: 7px solid transparent; border-left: 9px solid var(--accent-2); border-right: 0; }
 /* Golpes por nível: botão que abre a lista (estilo .fold) e cartões no estilo dos golpes do Pokémon */
 .dsec.fold > summary { margin: 10px 3px 3px; font: .78rem var(--pixel); text-transform: uppercase; }
@@ -815,7 +830,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   background-size: 6px 6px; background-position: calc(100% - 16px) 50%, calc(100% - 10px) 50%; background-repeat: no-repeat;
 }
 @supports (appearance: base-select) {
-  .search-form select, .box-nav select, select.ai-input { appearance: base-select; padding-right: 10px; background-image: none; }
+  .search-form select, .box-nav select, select.ai-input { appearance: base-select; padding-right: 10px; background-image: none; align-items: center; }
   .search-form select::picker-icon, .box-nav select::picker-icon, select.ai-input::picker-icon { color: var(--ink); }
   .search-form select::picker(select), .box-nav select::picker(select), select.ai-input::picker(select) {
     appearance: base-select; border: 0; padding: 4px; background: var(--win); color: var(--ink);
@@ -924,7 +939,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 @container (min-width: 600px) { .builder-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .builder-grid { margin: 6px 0; }
 .builder-grid > li { display: grid; gap: 2px; align-content: start; min-width: 0; }
-.ref-tile-status { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: .66rem; font-weight: 700; color: var(--accent); }
+.ref-tile-status { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-align: center; font-size: .66rem; line-height: 1.25; font-weight: 700; color: var(--accent); } /* até 2 linhas: numa só, "segura Flying, Fa…" */
 .ref-tile.miss .ref-tile-status, .ref-tile.none .ref-tile-status { color: var(--muted); }
 .ref-tile.miss .ptile img, .ref-tile.none .ptile img { opacity: .55; }
 .ref-block { margin: 6px 0 14px; padding-bottom: 12px; border-bottom: 3px dashed var(--hi); }
@@ -966,3 +981,41 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 /* Equipes de referência (montador): o grupo das abas, os membros da original e os links da fonte */
 .builder-group { margin: .6rem 0 .2rem; font-size: .8rem; font-weight: 700; color: var(--muted); }
 .ref-links a { color: var(--accent); }
+
+/* Abas do resultado do montador: presas no topo ao rolar, como um seletor de 4 partes */
+.bt-tabs {
+  position: sticky; top: var(--bar-h, 68px); z-index: 3; scroll-margin-top: calc(var(--bar-h, 68px) + 4px); display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  margin: 4px 0 10px; background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), 0 4px 0 var(--win);
+}
+.bt-tabs button {
+  min-height: 44px; padding: 6px 2px; border: 0; background: transparent; color: var(--ink); cursor: pointer;
+  font: .68rem var(--pixel); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bt-tabs button[aria-selected="true"] { background: var(--edge); color: var(--win); }
+.bt-tabs button:focus-visible { outline: 3px solid var(--accent); outline-offset: -6px; }
+.bt-pane { display: grid; gap: 12px; }
+.bt-pane[hidden] { display: none; }
+
+/* Ferramentas em grade: Montar equipe em destaque em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+#out .tool-win:not([open]) { display: none; }
+.tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tool-card {
+  display: grid; gap: 4px; align-content: start; min-height: 88px; padding: 12px 12px 14px; text-align: left; cursor: pointer;
+  border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
+  font: inherit; -webkit-tap-highlight-color: transparent;
+}
+.tool-card.hot { grid-column: 1 / -1; min-height: 0; background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 rgba(0,0,0,.22); }
+.tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
+.tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
+.tool-card.hot span { color: inherit; opacity: .85; }
+.tool-card:active { transform: translateY(2px); }
+.tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+/* Aberta: o cartão fica "afundado", como um botão ligado */
+.tool-card[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent), inset 0 6px 0 var(--hi); padding-top: 16px; padding-bottom: 10px; }
+.tool-card:not(.hot)[aria-pressed="true"] b { color: var(--accent); }
+.tool-card.hot[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); }
+@media (min-width: 1000px) {
+  .tools-grid { grid-template-columns: 2fr 1fr 1fr; }
+  .tool-card.hot { grid-column: auto; min-height: 88px; }
+}
+

@@ -47,7 +47,7 @@
   <main id="main">
     <section class="win intro" id="intro">
       <h1 class="pixel" data-i18n>Abra seu save</h1>
-      <p data-i18n>Veja treinador, equipe e PC, e exporte para planilha, Showdown ou JSON. A leitura acontece no seu aparelho: o arquivo não é enviado para lugar nenhum. Uma cópia do último save fica guardada neste navegador para abrir sozinha na próxima visita.</p>
+      <p data-i18n>Veja equipe, PC e Pokédex do seu jogo e exporte para planilha, Showdown ou JSON. O arquivo é lido no seu aparelho e não é enviado para lugar nenhum.</p>
       <div class="drop" id="drop">
         <label class="btn btn-big" for="file">
           <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges"><use href="#folder"/></svg>
@@ -55,16 +55,17 @@
         </label>
         <!-- Sem "accept": no Android, filtrar por .sav costuma deixar o arquivo acinzentado no seletor. O conteúdo é validado ao abrir. -->
         <input type="file" id="file">
-        <p class="hint" data-i18n>No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav, o .dsv do DeSmuME e exports do GameShark (.sps) e do Action Replay DS (.duc).</p>
-      </div>
-      <div class="demo-row">
         <button class="btn btn-ghost" type="button" id="demo" data-i18n>Ver um save de exemplo</button>
-        <p class="hint" data-i18n>Sem jogo, sem arquivo: um save do Quetzal com Pokémon fictícios para experimentar o savDex.</p>
+        <p class="hint" data-i18n>O exemplo é um save do Quetzal com Pokémon fictícios. Uma cópia do último save aberto fica neste navegador para abrir sozinha na próxima visita.</p>
       </div>
       <div class="supported">
         <h2 class="pixel" data-i18n>Jogos suportados</h2>
         <p class="games"><span class="games-k">GBA</span><span>Quetzal</span><span>Unbound</span><span>SoulGold</span><span>Emerald</span><span>FireRed / LeafGreen</span><span>Ruby / Sapphire</span></p>
         <p class="games"><span class="games-k">DS</span><span>Diamond / Pearl</span><span>Platinum</span><span>HeartGold / SoulSilver</span><span>Black / White</span><span>Black 2 / White 2</span></p>
+        <details class="games-more">
+          <summary data-i18n>Onde fica o save</summary>
+          <p class="hint" data-i18n>No Android, procure na pasta de saves do emulador (My Boy!, Pizza Boy, RetroArch…). No computador, dá para arrastar o arquivo até aqui. Aceita .sav, o .dsv do DeSmuME e exports do GameShark (.sps) e do Action Replay DS (.duc).</p>
+        </details>
         <details class="games-more">
           <summary data-i18n>Versões testadas e observações</summary>
         <ul>

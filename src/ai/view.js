@@ -75,11 +75,25 @@ function panel(title, kind, inner) {
 function appPanels(r, byRef, dicas, cardsHaveMoves) {
   const note = x => `<p class="hint ai-threat-note">${esc(x.note)}</p>`;
   const ref = r.referencia;
-  return `${ref ? panel('Trocas', 'swap', bullets(ref.adapted.lines, byRef) + `<p class="hint ai-threat-note">${esc(ref.adapted.note)}</p>`) : ''}
-    ${r.estrategias ? panel('Estratégia', 'info', `<ul class="ai-list ai-strats">${r.estrategias.cards.map(x => `<li><b>${esc(x.title)}</b> <small class="ai-strat-tag">${esc(x.tag)}</small><br>${rich(x.text, byRef)}</li>`).join('')}</ul><p class="hint ai-threat-note">${esc(r.estrategias.note)}</p>`) : ''}
-    ${cardsHaveMoves ? '' : panel('Próximos passos', 'swap', dicas)}
-    ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}
-    ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}`;
+  return {
+    swaps: `${ref ? panel('Trocas', 'swap', bullets(ref.adapted.lines, byRef) + `<p class="hint ai-threat-note">${esc(ref.adapted.note)}</p>`) : ''}
+      ${r.ideal ? panel('Ideal do competitivo × o que você tem', 'swap', bullets(r.ideal.lines, byRef) + note(r.ideal)) : ''}`.trim(),
+    plan: `${r.estrategias ? panel('Estratégia', 'info', `<ul class="ai-list ai-strats">${r.estrategias.cards.map(x => `<li><b>${esc(x.title)}</b> <small class="ai-strat-tag">${esc(x.tag)}</small><br>${rich(x.text, byRef)}</li>`).join('')}</ul><p class="hint ai-threat-note">${esc(r.estrategias.note)}</p>`) : ''}
+      ${r.ameacas ? panel('Ameaças do jogo (estimativa)', 'info', bullets(r.ameacas.lines, byRef) + note(r.ameacas)) : ''}`.trim(),
+    steps: cardsHaveMoves ? '' : panel('Próximos passos', 'swap', dicas),
+  };
+}
+
+/**
+ * Abas do resultado do montador (no celular ele passava de 7 telas): a equipe primeiro; trocas, estratégia e a
+ * original a um toque. Abas vazias não aparecem; com uma só, sem barra.
+ */
+function builderTabs(panes) {
+  const list = panes.filter(p => p.html);
+  if (list.length < 2) return list.map(p => p.html).join('');
+  const bar = `<div class="bt-tabs" role="tablist" aria-label="${t('Partes do resultado')}">${list.map((p, i) =>
+    `<button type="button" role="tab" id="bt-tab-${p.id}" aria-controls="bt-pane-${p.id}" aria-selected="${i === 0}" data-bt="${p.id}">${t(p.label)}</button>`).join('')}</div>`;
+  return bar + list.map((p, i) => `<div class="bt-pane" role="tabpanel" id="bt-pane-${p.id}" aria-labelledby="bt-tab-${p.id}"${i ? ' hidden' : ''}>${p.html}</div>`).join('');
 }
 
 /**
@@ -243,9 +257,7 @@ export function buildView(r, byRef, model, T, opts = null) {
     ${t('Membros fracos a cada tipo: {list}.', { list: r.fix.counts.map(c => `${esc(c.type[0].toUpperCase() + c.type.slice(1))} ${c.before} → ${c.after}`).join(', ') })}</p>` : '';
   const short = r.membros.length < 6 ? `<p class="hint">${t('A IA sugeriu só {n} Pokémon válidos.', { n: r.membros.length })}</p>` : '';
   const dicas = r.dicas.length ? `<ol class="ai-steps-list">${r.dicas.map(x => `<li>${rich(x, byRef)}${checksHtml(x, byRef, opts && { ...opts, T })}</li>`).join('')}</ol>` : '';
-  return `<div class="ai-result">
-    ${app && r.referencia ? originalHtml(r.referencia.original, byRef) : ''}
-    <div class="ai-hero build">
+  const hero = `<div class="ai-hero build">
       <div class="ai-hero-text">
         <p class="ai-kicker">${app ? (r.referencia ? t('Sua equipe adaptada') : t('Equipe montada pelo app')) : t('Equipe sugerida')}</p>
         <p class="ai-team-name">${esc(r.nome)}</p>
@@ -256,17 +268,32 @@ export function buildView(r, byRef, model, T, opts = null) {
       </div>
     </div>
     <p class="hint team-msg" role="status"></p>
-    ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}
-    ${app ? `<ul class="party-grid builder-grid">${tiles}</ul><p class="hint">${t('Toque num Pokémon para ver golpes, item e o que fazer.')}</p>${sheets}` : `<ul class="ai-members">${cards}</ul>`}
-    ${fixed}
-    ${short}
-    ${app ? appPanels(r, byRef, dicas, r.membros.every(x => x.golpes)) : ''}
-    <div class="ai-cols">
+    ${r.resumo ? `<p class="ai-summary">${rich(r.resumo, byRef)}</p>` : ''}`;
+  const cols = `<div class="ai-cols">
       ${panel('Pontos fortes', 'good', bullets(r.pontos_fortes, byRef))}
       ${panel('Pontos fracos', 'bad', bullets(r.pontos_fracos, byRef))}
-    </div>
-    ${app ? '' : `${panel('Conferência do app', 'info', check)}
-    ${panel('Próximos passos', 'swap', dicas)}`}
+    </div>`;
+  if (app) {
+    const P = appPanels(r, byRef, dicas, r.membros.every(x => x.golpes));
+    return `<div class="ai-result">
+    ${hero}
+    ${builderTabs([
+      { id: 'team', label: 'Equipe', html: `<ul class="party-grid builder-grid">${tiles}</ul><p class="hint">${t('Toque num Pokémon para ver golpes, item e o que fazer.')}</p>${sheets}${fixed}${short}${P.steps}${cols}` },
+      { id: 'swaps', label: 'Trocas', html: P.swaps },
+      { id: 'plan', label: 'Estratégia', html: P.plan },
+      { id: 'orig', label: 'Original', html: r.referencia ? originalHtml(r.referencia.original, byRef) : '' },
+    ])}
+    ${footer(model, r.dropped, opts)}
+  </div>`;
+  }
+  return `<div class="ai-result">
+    ${hero}
+    <ul class="ai-members">${cards}</ul>
+    ${fixed}
+    ${short}
+    ${cols}
+    ${panel('Conferência do app', 'info', check)}
+    ${panel('Próximos passos', 'swap', dicas)}
     ${footer(model, r.dropped, opts)}
   </div>`;
 }

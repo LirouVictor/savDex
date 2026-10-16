@@ -87,11 +87,12 @@ function render() {
     </div>
     <div class="grp" id="grp-pc">
       ${R.pcWin(data)}
-      ${R.searchWin(data, T)}
     </div>
     <div class="grp" id="grp-tools">
-      ${R.pokedexWin(data, T)}
+      ${R.toolsWin(data.game)}
       ${R.builderWin(data, Object.values(PROVIDERS))}
+      ${R.pokedexWin(data, T)}
+      ${R.searchWin(data, T)}
       <div id="teams-slot"></div>
       ${R.exportWin()}
     </div>
@@ -188,6 +189,18 @@ function render() {
     });
     if (foldOpen(id)) det.open = true;
   }
+  // Cartões das ferramentas: abrem a janela (fechada, ela some; o título dela fecha) e acompanham o estado
+  const cards = [...out.querySelectorAll('[data-tool]')];
+  const syncCards = () => cards.forEach(c => c.setAttribute('aria-pressed', String(out.querySelector('#' + c.dataset.tool).open)));
+  for (const c of cards) {
+    const det = out.querySelector('#' + c.dataset.tool);
+    det.addEventListener('toggle', syncCards);
+    c.addEventListener('click', () => {
+      det.open = !det.open;
+      if (det.open) det.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+  syncCards();
 }
 
 // Pokédex do jogo: o pacote (lista de espécies, filtros e detalhe) só carrega quando a janela abre
@@ -505,6 +518,15 @@ function setupBuilder(out) {
   bOut.addEventListener('click', async e => {
     const cur = state.builder && state.builder.results[state.builder.i];
     if (!cur) return;
+    // Abas do resultado (Equipe, Trocas, Estratégia, Original)
+    const tab = e.target.closest('[data-bt]');
+    if (tab) {
+      for (const x of bOut.querySelectorAll('[data-bt]')) x.setAttribute('aria-selected', String(x === tab));
+      for (const p of bOut.querySelectorAll('.bt-pane')) p.hidden = p.id !== `bt-pane-${tab.dataset.bt}`;
+      const bar = tab.parentElement;
+      if (bar.getBoundingClientRect().top < 0) bar.scrollIntoView({ block: 'start' });
+      return;
+    }
     // Escolher equipe: a janela com todas as equipes (as que ainda não foram montadas são adaptadas ao escolher)
     const pick = e.target.closest('[data-pick]');
     if (pick) {
@@ -676,7 +698,8 @@ function stickyName(dlg) {
   const hero = dlg.querySelector('.mon-hero'), bar = dlg.querySelector('.sheet-bar');
   if (!hero || !bar || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver(([e]) => bar.classList.toggle('stuck', !e.isIntersecting), { root: dlg, rootMargin: '-56px 0px 0px 0px' });
-  io.observe(hero);
+  // O título, não o cabeçalho inteiro: em detalhe curto a rolagem acaba com uma fresta do cabeçalho na tela e o nome não aparecia
+  io.observe(hero.querySelector('h2') || hero);
   dlg.addEventListener('close', () => io.disconnect(), { once: true });
 }
 
@@ -738,6 +761,9 @@ async function fillDex(dlg, m) {
     dexLoaded.add(key);
     if (!slot.isConnected) return; // o detalhe já foi trocado
     slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
+    // Linha mais larga que a tela (rola para o lado): começa mostrando o Pokémon aberto, não sempre o primeiro estágio
+    const evo = slot.querySelector('.evo'), here = evo && evo.querySelector('.here');
+    if (here && evo.scrollWidth > evo.clientWidth) evo.scrollLeft = here.getBoundingClientRect().left - evo.getBoundingClientRect().left - (evo.clientWidth - here.offsetWidth) / 2;
   } catch (e) {
     console.error(e);
     slot.innerHTML = '';

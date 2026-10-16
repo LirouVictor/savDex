@@ -90,9 +90,9 @@ export function entryRow(e, i, caught) {
   const got = caught && e.nat != null && caught.has(e.nat);
   return `<li><button class="result pdx-row" type="button" data-pdx="${i}">
     <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
-    <span class="r-main"><b>${esc(sp.name)}</b>${formLabel(sp)}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">●<span class="sr"> ${t('capturado')}</span></span>` : ''}
-      <span class="r-sub">${numLabel(e)}${numLabel(e) ? ' · ' : ''}${sp.types.map(esc).join(' / ')}</span></span>
-    <span class="r-lv" title="${esc(t('Total dos stats base'))}">${bst(sp)}</span>
+    <span class="r-main"><b>${esc(sp.name)}</b>${formLabel(sp)}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">✓<span class="sr"> ${t('capturado')}</span></span>` : ''}
+      <span class="r-sub pdx-sub">${numLabel(e) ? `<span>${numLabel(e)}</span>` : ''}${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span></span>
+    <span class="r-lv pdx-bst" title="${esc(t('Total dos stats base'))}">${bst(sp)}<small>BST</small></span>
   </button></li>`;
 }
 
@@ -108,7 +108,7 @@ function baseStatsHtml(sp) {
 function abilitiesHtml(sp) {
   const [a1, a2, ha] = sp.abilities;
   const row = (k, v) => `<div><dt>${k}</dt><dd><b>${esc(v)}</b></dd></div>`;
-  const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && row(t('Oculta'), ha)].filter(Boolean).join('');
+  const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && ha !== a1 && ha !== a2 && row(t('Oculta'), ha)].filter(Boolean).join('');
   if (!list) return '';
   return `<section class="dsec"><h3>${t('Habilidades')}</h3><dl class="facts-grid">${list}</dl>
     ${sp.abilitiesProbable ? `<p class="hint">${t('Habilidades dos jogos mais recentes (PokeAPI); podem ser diferentes neste jogo.')}</p>` : ''}</section>`;
@@ -143,10 +143,10 @@ export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
       ${monHeader(m, 'h2', ' id="detail-title"')}
       ${got ? `<p class="mon-sub">${got}</p>` : ''}
     </div>
-    ${abilitiesHtml(sp)}
-    ${baseStatsHtml(sp)}
-    ${matchupTable(m, T)}
-    ${ownedHtml(owned)}
+    <div class="mon-cols">
+      <div>${abilitiesHtml(sp)}${baseStatsHtml(sp)}</div>
+      <div>${matchupTable(m, T)}${ownedHtml(owned)}</div>
+    </div>
     ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}
     <div class="dex-slot" data-dex></div>
   </div>`;

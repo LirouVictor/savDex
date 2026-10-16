@@ -178,9 +178,12 @@ describe('equipes de referência', () => {
     for (const s of ['Equipe original', 'Sua equipe adaptada', 'Trocas', 'Equipe de exemplo do Smogon', 'não conferidos no tópico',
       'Resultado em torneio: nenhum registrado', 'href="https://www.smogon.com/forums/threads/x/"', 'não herda o resultado nem a reputação',
       '1 equipes do competitivo combinam com o seu save (0 de finais de torneio).']) expect(html).toContain(s);
-    // A original vem antes da adaptada, e as trocas depois das duas; cada membro é um bloco que abre o card dele
-    expect(html.indexOf('Equipe original')).toBeLessThan(html.indexOf('Sua equipe adaptada'));
-    expect(html.indexOf('Sua equipe adaptada')).toBeLessThan(html.indexOf('>Trocas<'));
+    // Abas: a adaptada aberta primeiro; trocas, estratégia e a original nas outras abas (escondidas até o toque);
+    // cada membro é um bloco que abre o card dele
+    expect(html.indexOf('Sua equipe adaptada')).toBeLessThan(html.indexOf('data-bt="team"'));
+    for (const id of ['team', 'swaps', 'orig']) expect(html).toContain(`data-bt="${id}"`);
+    expect(html).toMatch(/id="bt-pane-orig"[^>]*hidden>[\s\S]*Equipe original/);
+    expect(html.indexOf('id="bt-pane-team"')).toBeLessThan(html.indexOf('id="bt-pane-swaps"'));
     expect(html.match(/data-sheet="o\d"/g)).toHaveLength(6);
     expect(html.match(/data-sheet="a\d"/g)).toHaveLength(6);
     const card = html.slice(html.indexOf('<template data-sheet-id="o1">'), html.indexOf('</template>', html.indexOf('<template data-sheet-id="o1">')));
