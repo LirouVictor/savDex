@@ -1025,3 +1025,16 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   .tool-card.hot { grid-column: auto; min-height: 88px; }
 }
 
+
+/* Golpes e habilidades com a descrição ao tocar (ui/tips.js) */
+.tip-btn { all: unset; cursor: pointer; text-decoration: underline dotted color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1px; overflow-wrap: anywhere; }
+.tip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tip-btn[aria-expanded="true"] { text-decoration-style: solid; color: var(--accent); }
+.ai-mv > .tip-btn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tip { position: fixed; inset: auto; margin: 0; padding: 10px 12px; max-height: 50vh; overflow: auto; color: var(--ink); background: var(--win); border: 0; box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 rgba(0, 0, 0, .25); font: .86rem/1.4 var(--body); }
+.tip p { margin: 0; }
+.tip-h { display: grid; gap: 1px; margin-bottom: 4px !important; }
+.tip-h b { font-size: .92rem; }
+.tip-h small, .tip-note { color: var(--muted); font-size: .74rem; }
+.tip-note { display: block; margin-top: 6px !important; }
+.move-desc .tip-note { margin-top: 2px !important; }

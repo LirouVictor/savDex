@@ -54,7 +54,7 @@ suite('Detalhe: evolução e golpes (dados dos jogos oficiais)', () => {
   it('golpes por nível marcam os que já conhece e os acima do nível', () => {
     const tackle = T.moves.findIndex(r => r && r[0] === 'Tackle');
     const html = learnsetHtml(mon({ name: 'Bulbasaur', dexId: 1, lv: 5, moves: [tackle] }), dex, T);
-    expect(html).toContain('<b>Tackle <span class="known"');
+    expect(html).toContain('data-tip="m:33" aria-expanded="false">Tackle</button> <span class="known"');
     expect(html).toMatch(/class="lm t-\w+ future"/);
     expect(html).toContain('Nível atual: 5'); // divisória antes dos golpes acima do nível
     expect(html).toMatch(/<span class="learn-count">\d+<\/span>/);

@@ -1195,4 +1195,10 @@ export default {
   'Só capturados': 'Caught only',
   'Só não capturados': 'Not caught only',
   'Páginas da Pokédex': 'Pokédex pages',
+  'Texto do {game}.': 'Text from {game}.',
+  'Texto do pokeemerald-expansion; o Unbound pode ter mudado o golpe.': 'Text from pokeemerald-expansion; Unbound may have changed this move.',
+  'Texto do pokeemerald-expansion; este jogo pode ter mudado a habilidade.': 'Text from pokeemerald-expansion; this game may have changed this ability.',
+  'Não deu para carregar a descrição (sem conexão?).': 'Could not load the description (offline?).',
+  'Sem descrição para este golpe.': 'No description for this move.',
+  'Sem descrição para esta habilidade.': 'No description for this ability.',
 };

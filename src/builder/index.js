@@ -177,7 +177,7 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined,
   if (!why.length) why.push(t('atacante {kind}, stats base {bst}', { kind: e.lean === 'phys' ? t('físico') : t('especial'), bst: e.bst }));
   const out = { ref: refOf(m), papel: role, motivo: cap(why.slice(0, 3).join(' · ')) };
   // O moveset: o que já sabe, o que o menu do Pokémon ensina na hora (tutor, nível já alcançado) e o que precisa de treino
-  if (shownSet) out.golpes = shownSet.map(x => ({ name: x.name, type: x.type, src: x.src, level: x.level, tm: x.tm }));
+  if (shownSet) out.golpes = shownSet.map(x => ({ id: x.id, name: x.name, type: x.type, src: x.src, level: x.level, tm: x.tm }));
   // Item e habilidade do competitivo (Quetzal): o que dar e o que trocar
   const real = realOf(m), g = m.gear || {};
   if (item !== undefined && item) out.item = { name: item, give: !(real.item && real.item.name === item) };
