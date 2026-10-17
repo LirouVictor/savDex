@@ -11,7 +11,12 @@ export const SILHOUETTE = 'data:image/svg+xml,' + encodeURIComponent(
 export const spriteUrl = id => `${SPRITE_BASE}/${id}.png`;
 /** Imagem de uma insígnia (sprites/badges/N.png do mesmo repositório; números em parser/summary.js). */
 export const badgeUrl = id => `${SPRITE_BASE.replace(/\/pokemon$/, '')}/badges/${id}.png`;
-export const iconUrl = id => `${SPRITE_BASE}/versions/generation-viii/icons/${id}.png`;
+// Ícones de menu da Gen 8. O PokeAPI/sprites apagou a pasta generation-viii/icons em 2026-10-16 (commit 6e7928d,
+// "remove stale sprites"; a nova sword-shield/icons não tem as espécies fora do Sword/Shield nem as megas): os ícones
+// vêm do último commit que ainda tinha a pasta. Ícone que falhar cai no sprite grande (installImageFallback).
+export const ICON_COMMIT = 'ba403973fdf9d0ac59175813861e6a1f8ed5020c';
+export const iconUrl = id => `${SPRITE_BASE.replace('/master/', `/${ICON_COMMIT}/`)}/versions/generation-viii/icons/${id}.png`;
+const ICON_RE = /\/versions\/generation-viii\/icons\/(\d+)\.png$/;
 
 /** Sprite grande (96×96) para a espécie; silhueta se não houver correspondência. */
 export function spriteSrc(sp, shiny = false) {
@@ -36,8 +41,10 @@ export function installImageFallback(root = document) {
       return;
     }
     if (!(img instanceof HTMLImageElement) || !img.dataset.sprite) return;
-    const next = img.dataset.next;
-    if (next) { img.dataset.next = ''; img.classList.remove('ico'); img.src = next; }
+    // Ícone que falta: tenta o sprite grande da mesma forma antes da silhueta (vale para todas as telas).
+    const icon = !img.dataset.next && ICON_RE.exec(img.src);
+    const next = img.dataset.next || (icon ? spriteUrl(icon[1]) : '');
+    if (next && next !== img.src) { img.dataset.next = icon ? SILHOUETTE : ''; img.classList.remove('ico'); img.src = next; }
     else if (img.src !== SILHOUETTE) img.src = SILHOUETTE;
   }, true);
 }

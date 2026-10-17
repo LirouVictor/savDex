@@ -222,7 +222,7 @@ async function main() {
       abilities: (pokemonAbilities.get(pid) || [0, 0, 0]).map(i => abilityNames[i]),
       genderRate: genderRate.get(+row.species_id) ?? null,
       baseStats: baseStats.get(pid) || null,
-      icon: pid <= 898 || await exists(`${SPRITES}/versions/generation-viii/icons/${pid}.png`),
+      icon: pid <= 898 || await exists(`${SPRITES.replace('/master/', '/ba403973fdf9d0ac59175813861e6a1f8ed5020c/')}/versions/generation-viii/icons/${pid}.png`),
     };
   }
 

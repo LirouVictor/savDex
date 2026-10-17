@@ -9,9 +9,11 @@ export const NEWS = [
     date: '2026-10-26',
     pt: [
       'Abrir o save atualizado com um toque: no Chrome (Android ou computador), o .sav escolhido fica lembrado e, depois de jogar, o botão “Atualizar” lê o arquivo de novo, sem procurar a pasta do emulador. No computador, com o app instalado, a versão nova abre sozinha.',
+      'Os ícones dos Pokémon voltaram: o repositório de imagens que o app usa apagou os ícones pequenos, e várias formas (megas, Rotom, Darmanitan de Galar…) apareciam com a silhueta. Arceus e Silvally também ganharam a imagem de cada tipo.',
     ],
     en: [
       'Open the updated save with one tap: in Chrome (Android or computer), the .sav you pick is remembered and, after playing, the “Refresh” button reads the file again without browsing to the emulator folder. On a computer, with the app installed, the new version opens by itself.',
+      'Pokémon icons are back: the image repository the app uses deleted its small icons, and several forms (Megas, Rotom, Galarian Darmanitan…) showed the silhouette. Arceus and Silvally also get the picture of each type.',
     ],
   },
   {
