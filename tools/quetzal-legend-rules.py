@@ -1,6 +1,6 @@
 # Requisitos dos encontros únicos (lendários) do Quetzal, lidos da ROM: a tabela de 106 registros em 0x1992D6C e as
 # funções que conferem o encontro (0x82AA894 e as 56 regras da tabela em 0x82AA270; ver as notas em RS e lines()).
-# Grava src/data/quetzal-legend-rules.json. Uso: python3 -I tools/quetzal-legend-rules.py [rom.gba]
+# Grava src/data/quetzal-legend-rules.json (por região: johto, hoenn, kanto). Uso: python3 -I tools/quetzal-legend-rules.py [rom.gba]
 # (padrão: fixtures/rom/PokemonQuetzalPtBrAlpha9v1.gba; a ROM nunca é versionada). Não conferido no jogo.
 import json, os, struct, sys
 ROOT=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..')+'/'
@@ -459,6 +459,24 @@ doc=dict(meta=dict(rom='PokemonQuetzalPtBrAlpha9v1.gba',table='0x09992D6C (file 
 # Para o app: só as linhas por espécie (o resto, como flags e notas, fica neste script)
 app={str(r['species']):dict(pt=r['requirements_pt'],en=r['requirements_en'],vpt=[x for x in r['requirements_visible_pt'] if not x.startswith('Nenhuma exigência')],ven=[x for x in r['requirements_visible_en'] if not x.startswith('Nothing beyond')],**({'partial':1} if r['confidence']!='decoded' else {})) for r in records}
 assert len(app)==len(records), 'espécie repetida na tabela'
-json.dump(dict(meta=dict(source='ROM do Quetzal (tools/quetzal-legend-rules.py), tabela de encontros únicos e as funções que a conferem; não conferido no jogo'),legend=app),open(ROOT+'src/data/quetzal-legend-rules.json','w'),ensure_ascii=False,separators=(',',':'))
+# Hoenn e Kanto (com as Ilhas Sete): as linhas decodificadas ficam em tools/quetzal-legend-rules-hk.json (ver o meta de
+# lá). Aqui só se confere que a ROM é a mesma em que elas foram lidas (CRC dos primeiros 64 bytes de cada função de
+# Hoenn, da tabela de Kanto e da função que a confere; espécie de cada registro de Kanto); se não bater, nada é gravado.
+import zlib
+HK=json.load(open(ROOT+'tools/quetzal-legend-rules-hk.json'))
+def crc(a,n=0x40): a&=0x1fffffe; return '%08x'%zlib.crc32(R[a:a+n])
+ck=HK['meta']['checks']; KT=int(ck['kantoTable']['at'],16)
+assert crc(KT,123*16)==ck['kantoTable']['crc'], 'tabela de Kanto diferente nesta ROM'
+assert crc(int(ck['kantoRule']['fn'],16))==ck['kantoRule']['crc'], 'função de Kanto diferente nesta ROM'
+legend={'johto':app}
+for reg in ('hoenn','kanto'):
+    legend[reg]={}
+    for sp,e in HK[reg].items():
+        if 'fn' in e: assert crc(int(e['fn'],16))==e['crc'], f'função {e["fn"]} ({spname(int(sp))}) diferente nesta ROM'
+        if 'rec' in e: assert u16(KT+16*e['rec'])==int(sp), f'registro {e["rec"]} de Kanto não é {spname(int(sp))}'
+        legend[reg][sp]={k:e[k] for k in ('pt','en','vpt','ven','partial') if k in e}
+        legend[reg][sp].setdefault('vpt',[]); legend[reg][sp].setdefault('ven',[])
+        if e.get('partial'): legend[reg][sp]['partial']=1
+json.dump(dict(meta=dict(source='ROM do Quetzal (tools/quetzal-legend-rules.py e tools/quetzal-legend-rules-hk.json): Johto pela tabela de encontros únicos, Hoenn e Kanto pelas funções que conferem cada encontro; não conferido no jogo'),legend=legend),open(ROOT+'src/data/quetzal-legend-rules.json','w'),ensure_ascii=False,separators=(',',':'))
 open(ROOT+'src/data/quetzal-legend-rules.json','a').write('\n')
-print(sum(r['confidence']=='decoded' for r in records),'decoded;',[ (r['index'],r['speciesName']) for r in records if r['confidence']!='decoded'])
+print({r:(len(v),sum('partial' in x for x in v.values())) for r,v in legend.items()},'(total, em parte)');print(sum(r['confidence']=='decoded' for r in records),'decoded;',[ (r['index'],r['speciesName']) for r in records if r['confidence']!='decoded'])

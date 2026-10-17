@@ -307,8 +307,8 @@ async function main() {
   let statics = 0; const noObj = [];
   // Requisitos lidos da ROM (a função que confere o encontro, em 0x82AA894 na Alpha 9, usa estes campos): +0x10 nº
   // mínimo de insígnias da região, +0x11 ter vencido a Liga da região, +0x12 tipo (0xFF = nenhum; a regra de cada
-  // encontro é uma função própria, nº = byte +0x1F >> 2, não decodificada), +0x16 item na mochila, +0x18 flag da
-  // história, +0x1A/+0x1C variável ≥ valor. Os textos dos requisitos vêm do guia (src/data/quetzal-legends.json)
+  // encontro é uma função própria, nº = byte +0x1F >> 2, decodificada em tools/quetzal-legend-rules.py), +0x16 item na mochila, +0x18 flag da
+  // história, +0x1A/+0x1C variável ≥ valor. Os textos dos requisitos ficam em src/data/quetzal-legend-rules.json.
   const legend = {};
   for (let i = 0; i < stCount; i++) {
     const o = stBase + i * STATIC, g = R[o], m = R[o + 1], sp = u16(o + 4), lv = u16(o + 6);
