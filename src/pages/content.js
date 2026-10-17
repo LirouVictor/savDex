@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-21';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-25',
+    pt: [
+      'Quetzal: “Pokédex: o que falta” ganhou a aba “Onde capturar”: o que ainda falta na sua Pokédex, lugar por lugar, no mapa da região (os lugares com mais espécies primeiro). Cada espécie mostra o jeito (grama, surf, vara, Rock Smash, DexNav, encontro único), o nível e a chance; quem não aparece na natureza entra pela pré-evolução (“capture Pikachu e evolua”). Tudo lido da ROM.',
+    ],
+    en: [
+      'Quetzal: “Pokédex: what’s missing” has a new “Where to catch” tab: what your Pokédex still lacks, place by place, on the region map (places with the most species first). Each species shows the method (grass, surfing, rods, Rock Smash, DexNav, one-time encounter), level and chance; species that don’t appear in the wild come through their pre-evolution (“catch Pikachu and evolve it”). All read from the ROM.',
+    ],
+  },
+  {
     date: '2026-10-24',
     pt: [
       'Nova janela Pokédex (em Ferramentas): todas as espécies do jogo do save, com busca por nome ou habilidade, por golpe (“quem aprende Surf”), por tipo e por capturados. Cada espécie mostra stats base, habilidades, dano recebido, linha evolutiva, golpes por nível, tutor/TM e ovo, e os Pokémon dela que você tem.',

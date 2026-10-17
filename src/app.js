@@ -873,28 +873,59 @@ async function openDex(opener) {
   if (official && !chains) chains = (await import('./data/dex.json')).default;
   const info = mod.missingDex(state.data, T, official ? chains : null);
   const name = mod.dexNamer(T, official ? chains : null);
-  const view = { gen: 0, filter: 'all' };
+  const view = { gen: 0, filter: 'all', mode: 'list', region: null };
+  // Por lugar (Quetzal): pacote e contas só na primeira vez que a aba é aberta
+  let hunt = null;
+  const huntView = () => {
+    if (!hunt || !hunt.data) return null;
+    const icons = state.data.summary && state.data.summary.badges && state.data.summary.badges.icons;
+    const home = icons ? ({ 1: 'kanto', 9: 'johto', 17: 'hoenn' })[icons[0]] : null;
+    return hunt.mod.huntHtml(hunt.data, info, T.quetzal, name, view, home);
+  };
   const draw = () => {
-    dlg.innerHTML = mod.dexWinHtml(info, name, state.data.game && state.data.game.id, view);
+    dlg.innerHTML = mod.dexWinHtml(info, name, state.data.game && state.data.game.id, view, view.mode === 'place' ? huntView() : null);
     dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   };
+  const openHunt = async () => {
+    if (hunt) return;
+    hunt = {};
+    try {
+      hunt.mod = await import('./dex/hunt.js');
+      hunt.data = hunt.mod.huntPlaces(info, T.quetzal);
+    } catch (err) { console.error(err); hunt = null; return; }
+    if (dlg.open && view.mode === 'place') { draw(); dlg.querySelector('[data-dex-mode="place"]')?.focus(); }
+  };
   dlg.onclick = async e => {
-    // Uma espécie que falta: os dados dela na Pokédex do jogo (por cima desta janela)
+    // Uma espécie que falta: os dados dela na Pokédex do jogo (por cima desta janela); por lugar, a forma exata
     const sp = e.target.closest('[data-dex-nat]');
     if (sp) {
       try {
         const pd = await pokedexState();
-        const n = +sp.dataset.dexNat;
-        openSpecies(pd.entries.find(x => x.nat === n && !x.species.form) || pd.entries.find(x => x.nat === n), sp);
+        const n = +sp.dataset.dexNat, id = sp.dataset.dexId ? +sp.dataset.dexId : null;
+        openSpecies((id != null && pd.entries.find(x => x.id === id)) || pd.entries.find(x => x.nat === n && !x.species.form) || pd.entries.find(x => x.nat === n), sp);
       } catch (err) { console.error(err); }
       return;
     }
+    // Um lugar: abre o que falta nele e destaca no mapa (o último aberto)
+    const pl = e.target.closest('.hunt-place > summary');
+    if (pl) {
+      const det = pl.parentElement, reg = det.closest('.wild-region');
+      const on = !det.open;
+      reg.querySelectorAll('.hunt-place > summary').forEach(x => x.setAttribute('aria-pressed', String(on && x === pl)));
+      reg.querySelectorAll('.wild-pin').forEach(p => p.classList.toggle('on', on && p.dataset.pin === det.dataset.pin));
+      reg.classList.toggle('focus', on);
+      return;
+    }
     const f = e.target.closest('[data-dex-filter]'), g = e.target.closest('[data-dex-gen]');
-    if (f) { view.filter = f.dataset.dexFilter; view.gen = 0; }
-    else if (g) view.gen = +g.dataset.dexGen;
+    const md = e.target.closest('[data-dex-mode]'), rg = e.target.closest('[data-hunt-region]');
+    let focus;
+    if (f) { view.filter = f.dataset.dexFilter; view.gen = 0; focus = `[data-dex-filter="${view.filter}"]`; }
+    else if (g) { view.gen = +g.dataset.dexGen; focus = `[data-dex-gen="${view.gen}"]`; }
+    else if (md) { view.mode = md.dataset.dexMode; focus = `[data-dex-mode="${view.mode}"]`; if (view.mode === 'place') openHunt(); }
+    else if (rg) { view.region = rg.dataset.huntRegion; focus = `[data-hunt-region="${view.region}"]`; }
     else return;
     draw();
-    dlg.querySelector(f ? `[data-dex-filter="${view.filter}"]` : `[data-dex-gen="${view.gen}"]`)?.focus();
+    dlg.querySelector(focus)?.focus();
   };
   draw();
   const scroll = window.scrollY;

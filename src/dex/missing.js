@@ -101,15 +101,21 @@ function listNote(game) {
 }
 
 /**
- * Conteúdo da janela. `view` = { gen, filter } (filter: 'all' | 'evolve' | 'seen').
- * Só a geração escolhida é desenhada (ícones com loading="lazy").
+ * Conteúdo da janela. `view` = { gen, filter, mode } (filter: 'all' | 'evolve' | 'seen'; mode: 'list' | 'place').
+ * Só a geração escolhida é desenhada (ícones com loading="lazy"). No Quetzal há também a aba "Por lugar"
+ * (`placeHtml`, de dex/hunt.js; null enquanto carrega).
  */
-export function dexWinHtml(info, name, game, view) {
+export function dexWinHtml(info, name, game, view, placeHtml = null) {
   const head = `<div class="sheet-bar"><h2 class="pixel" id="dex-title">${t('Pokédex: o que falta')}</h2>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button></div>`;
   const stats = `<p class="dex-count"><b>${num(info.owned)}</b>/${num(info.total)} ${t('capturados')} · ${t('faltam {n}', { n: num(info.missing.length) })}</p>`;
   const note = listNote(game);
   if (!info.missing.length) return `${head}${stats}<p class="dex-done">${t('Pokédex completa!')}</p>`;
+  const modes = game === 'quetzal' ? `<div class="dex-modes" role="group" aria-label="${t('Ver')}">
+      <button class="btn btn-ghost" type="button" data-dex-mode="list" aria-pressed="${view.mode !== 'place'}">${t('Por geração')}</button>
+      <button class="btn btn-ghost" type="button" data-dex-mode="place" aria-pressed="${view.mode === 'place'}">${t('Onde capturar')}</button>
+    </div>` : '';
+  if (modes && view.mode === 'place') return `${head}${stats}${modes}${placeHtml ?? `<p class="hint">${t('Carregando os lugares…')}</p>`}`;
 
   const pass = n => view.filter === 'evolve' ? info.evolve.has(n) : view.filter === 'seen' ? info.seen && info.seen.has(n) : true;
   const filtered = info.missing.filter(pass);
@@ -136,7 +142,7 @@ export function dexWinHtml(info, name, game, view) {
     </button></li>`;
   }).join('');
 
-  return `${head}${stats}
+  return `${head}${stats}${modes}
     ${note ? `<p class="hint">${note}</p>` : ''}
     <div class="dex-filters" role="group" aria-label="${t('Filtro')}">${filters}</div>
     ${filtered.length ? `<div class="dex-gens" role="group" aria-label="${t('Geração')}">${genChips}</div>

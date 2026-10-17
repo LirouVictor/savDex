@@ -16,8 +16,8 @@ const MAP_URL = {
   sevii67: new URL('../data/maps/quetzal-sevii67.png', import.meta.url).href,
 };
 export const REGIONS = ['hoenn', 'johto', 'kanto', 'sevii123', 'sevii45', 'sevii67'];
-const regionName = r => ({ hoenn: 'Hoenn', johto: 'Johto', kanto: 'Kanto', sevii123: t('Ilhas 1–3'), sevii45: t('Ilhas 4–5'), sevii67: t('Ilhas 6–7') })[r];
-const METHOD = () => [t('Grama ou caverna'), t('Surfando'), t('Escondido (DexNav)'), 'Rock Smash', 'Old Rod', 'Good Rod', 'Super Rod', t('Encontro único')];
+export const regionName = r => ({ hoenn: 'Hoenn', johto: 'Johto', kanto: 'Kanto', sevii123: t('Ilhas 1–3'), sevii45: t('Ilhas 4–5'), sevii67: t('Ilhas 6–7') })[r];
+export const METHOD = () => [t('Grama ou caverna'), t('Surfando'), t('Escondido (DexNav)'), 'Rock Smash', 'Old Rod', 'Good Rod', 'Super Rod', t('Encontro único')];
 const STATIC = 7;
 
 /** Onde a espécie (número do Quetzal) aparece: [{ place, region, name, rows: [[jeito, mín., máx., chance]] }]. */
@@ -49,25 +49,30 @@ export function wildAncestor(id, Q) {
   return null;
 }
 
-const lv = (a, b) => (!a ? '' : a === b ? `${t('Nv.')} ${a}` : `${t('Nv.')} ${a}–${b}`);
+export const lv = (a, b) => (!a ? '' : a === b ? `${t('Nv.')} ${a}` : `${t('Nv.')} ${a}–${b}`);
 
-function regionHtml(region, places, on, req = '') {
+/** O mapa da região com um retângulo (`data-pin` = posição na lista) em cada lugar (índices de W.places). */
+export function mapHtml(region, placeIds) {
   const [w, h] = W.meta.maps[region];
   const { x: ox, y: oy, cell } = W.meta.grid;
-  const pins = places.map((p, i) => {
-    const [, , , x, y, pw, ph] = W.places[p.place];
+  const pins = placeIds.map((p, i) => {
+    const [, , , x, y, pw, ph] = W.places[p];
     const st = `left:${((x + ox) * cell / w * 100).toFixed(2)}%;top:${((y + oy) * cell / h * 100).toFixed(2)}%;width:${(pw * cell / w * 100).toFixed(2)}%;height:${(ph * cell / h * 100).toFixed(2)}%`;
     return `<span class="wild-pin" style="${st}" data-pin="${i}"></span>`;
   }).join('');
+  return `<div class="wild-map" style="aspect-ratio:${w}/${h}">
+      <img src="${MAP_URL[region]}" width="${w}" height="${h}" alt="${esc(t('Mapa de {r}', { r: regionName(region) }))}" decoding="async" loading="lazy">${pins}
+    </div>`;
+}
+
+function regionHtml(region, places, on, req = '') {
   const M = METHOD();
   const list = places.map((p, i) => `<li><button type="button" class="wild-place" data-pin="${i}" aria-pressed="false">
       <b>${esc(p.name)}</b>
       ${p.rows.map(([how, a, b, pct]) => `<span class="wild-how">${[esc(M[how]), lv(a, b), pct ? `${pct}%` : ''].filter(Boolean).join(' · ')}</span>`).join('')}
     </button></li>`).join('');
   return `<div class="wild-region" data-region="${region}"${on ? '' : ' hidden'}>
-    <div class="wild-map" style="aspect-ratio:${w}/${h}">
-      <img src="${MAP_URL[region]}" width="${w}" height="${h}" alt="${esc(t('Mapa de {r}', { r: regionName(region) }))}" decoding="async" loading="lazy">${pins}
-    </div>
+    ${mapHtml(region, places.map(p => p.place))}
     <ul class="wild-list">${list}</ul>${req}
   </div>`;
 }
