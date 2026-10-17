@@ -1038,7 +1038,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .bt-pane { display: grid; gap: 12px; }
 .bt-pane[hidden] { display: none; }
 
-/* Ferramentas em grade: Montar equipe em destaque em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+/* Ferramentas em grade: Montar equipe mais largo em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
 #out .tool-win:not([open]) { display: none; }
 .tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .tool-card {
@@ -1046,16 +1046,14 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
   font: inherit; -webkit-tap-highlight-color: transparent;
 }
-.tool-card.hot { grid-column: 1 / -1; min-height: 0; background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 rgba(0,0,0,.22); }
+.tool-card.hot { grid-column: 1 / -1; min-height: 0; }
 .tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
 .tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
-.tool-card.hot span { color: inherit; opacity: .85; }
 .tool-card:active { transform: translateY(2px); }
 .tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
-/* Aberta: o cartão fica "afundado", como um botão ligado */
-.tool-card[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent), inset 0 6px 0 var(--hi); padding-top: 16px; padding-bottom: 10px; }
-.tool-card:not(.hot)[aria-pressed="true"] b { color: var(--accent); }
-.tool-card.hot[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); }
+/* Aberta: o cartão fica verde e "afundado", como as abas escolhidas; fechadas, todas iguais */
+.tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
+.tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
 @media (min-width: 1000px) {
   .tools-grid { grid-template-columns: 2fr 1fr 1fr; }
   .tool-card.hot { grid-column: auto; min-height: 88px; }

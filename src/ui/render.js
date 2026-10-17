@@ -352,7 +352,8 @@ export function analysisWin(d, T) {
     </details>
     <details class="analysis fold">
       <summary>${t('Cobertura dos golpes')}</summary>
-      <p class="k-line">${t('Golpes de dano da equipe:')} ${a.moveTypes.map(typeChip).join(' ') || '—'}</p>
+      <p class="cov-head">${t('Golpes de dano da equipe')}</p>
+      <div class="cov-grid">${a.moveTypes.length ? a.moveTypes.map(x => `<span class="cov">${typeChip(x)}</span>`).join('') : '—'}</div>
       <p class="cov-head">${t('Super efetivo contra {n} de {total} tipos', { n: a.coverage.length, total: a.coverage.length + a.gaps.length })}</p>
       <div class="cov-grid">${a.defense.map(r => r.type).map(x => `<span class="cov${covered.has(x) ? '' : ' off'}">${typeChip(x)}</span>`).join('')}</div>
       ${a.gaps.length ? `<p class="hint">${t('Apagados: nenhum golpe da equipe acerta em cheio.')}</p>` : ''}

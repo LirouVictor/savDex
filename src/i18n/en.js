@@ -162,7 +162,7 @@ export default {
   'Fraquezas e resistências': 'Weaknesses and resistances',
   'Ataque': 'Attack',
   'Cobertura dos golpes': 'Move coverage',
-  'Golpes de dano da equipe:': 'Party damaging moves:',
+  'Golpes de dano da equipe': 'Party damaging moves',
   'Nenhum golpe super efetivo contra:': 'No super effective move against:',
   'IA': 'AI',
   'Serviço de IA': 'AI service',
