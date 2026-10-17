@@ -88,3 +88,35 @@ suite.skipIf(!existsSync(fx('quetzal-en.sav')))('Pokédex do Quetzal em inglês 
     expect(info.evolve.get(964)).toEqual(['Finizen']);
   });
 });
+
+suite('Pokédex: o que falta, por lugar (Quetzal)', async () => {
+  const { huntPlaces, huntHtml } = await import('../src/dex/hunt.js');
+  const W = (await import('../src/data/quetzal-wild.json')).default;
+  const info = { missing: [2, 26, 979, 1000], evolve: new Map([[2, ['Bulbasaur']]]) };
+  const hunt = huntPlaces(info, Q);
+  const all = [...hunt.regions.values()].flat();
+  const mons = all.flatMap(p => p.mons);
+
+  it('quem aparece na natureza entra direto (Annihilape, nº 1308 do Quetzal)', () => {
+    const a = mons.filter(m => m.nat === 979);
+    expect(a.length).toBe(W.wild[1308].length > 0 ? new Set(W.wild[1308].map(r => r[0])).size : 0);
+    expect(a.every(m => m.id === 1308 && m.via === null)).toBe(true);
+  });
+
+  it('quem não aparece entra pela pré-evolução mais próxima (Ivysaur pelo Bulbasaur, Raichu pelo Pikachu)', () => {
+    expect(mons.filter(m => m.nat === 2).every(m => m.via === 1)).toBe(true);
+    expect(new Set(mons.filter(m => m.nat === 2).map(m => m.id))).toEqual(new Set([2]));
+    const raichu = mons.filter(m => m.nat === 26);
+    expect(raichu.length).toBeGreaterThan(0);
+    expect(raichu.every(m => m.via === 25)).toBe(true);
+    expect(hunt.found.has(26)).toBe(true);
+  });
+
+  it('o que não aparece nem pela pré-evolução fica à parte; os lugares vêm do que tem mais espécies', () => {
+    expect(hunt.none).toEqual(info.missing.filter(n => !hunt.found.has(n)));
+    for (const list of hunt.regions.values()) for (let i = 1; i < list.length; i++) expect(list[i - 1].count).toBeGreaterThanOrEqual(list[i].count);
+    const html = huntHtml(hunt, info, Q, n => `#${n}`, { region: null }, 'kanto');
+    expect(html).toContain('data-dex-id="2"');
+    expect(html).toContain('Capture');
+  });
+});
