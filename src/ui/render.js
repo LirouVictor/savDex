@@ -228,6 +228,8 @@ export function partyWin(d, { canSave = false } = {}) {
 }
 
 export function pcWin(d) {
+  // A legenda do quadradinho só aparece se algum Pokémon do PC tem a marca (nos saves com a ROM, nenhum)
+  const probable = d.pc.boxes.some(b => b.slots.some(s => s.species.confidence !== 'confirmado'));
   const options = d.pc.boxes.map(b => `<option value="${b.index}">${esc(b.name)} · ${b.slots.length ? b.slots.length + '/30' : t('vazia')}${b.partial ? ` (${t('parcial')})` : ''}</option>`).join('');
   return `<section class="win" id="pc-win" aria-labelledby="pc-h">
     <div class="win-title"><h2 id="pc-h">PC</h2><small id="pc-count"></small></div>
@@ -238,7 +240,7 @@ export function pcWin(d) {
       <button class="btn btn-ghost btn-icon" type="button" data-box-step="1" aria-label="${t('Próxima caixa')}">▶</button>
     </div>
     <div class="box-grid" id="box-grid" role="grid" aria-label="${t('Pokémon na caixa')}"></div>
-    <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')} <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}</p>
+    <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')}${probable ? ` <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}` : ''}</p>
   </section>`;
 }
 
@@ -329,35 +331,32 @@ export function analysisWin(d, T) {
     const sp = m.species;
     return `<li><img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" width="40" height="30" loading="lazy" decoding="async" crossorigin="anonymous"><span>${monShort(m)}</span><i>${X[r.mult.get(m)] ?? ''}</i></li>`;
   }).join('')}</ul></div>` : '');
-  const rows = a.defense.map((r, i) => {
-    const cell = (list, cls, label) => list.length
-      ? `<button type="button" class="cnt ${cls}" data-tt="${i}" aria-expanded="false" aria-controls="tt-${i}" aria-label="${list.length} ${esc(label.toLowerCase())}">${list.length}</button>`
-      : '<span class="cnt zero">·</span>';
+  // Grade de 18 blocos (um por tipo de ataque) com as três contagens; tocar num bloco mostra quem, embaixo da grade
+  const n = (list, cls) => `<i class="${cls}${list.length ? '' : ' zero'}">${list.length || '·'}</i>`;
+  const cells = a.defense.map((r, i) => {
     const any = r.weak.length + r.resist.length + r.immune.length;
-    return `<tr class="${r.alert ? 'alert' : ''}">
-      <th scope="row">${any ? `<button type="button" class="tt-type" data-tt="${i}" aria-expanded="false" aria-controls="tt-${i}">${typeChip(r.type)}</button>` : typeChip(r.type)}</th>
-      <td>${cell(r.weak, 'weak', t('Fracos'))}</td>
-      <td>${cell(r.resist, 'resist', t('Resistem'))}</td>
-      <td>${cell(r.immune, 'immune', t('Imunes'))}</td>
-    </tr>${any ? `<tr class="tt-more" id="tt-${i}" hidden><td colspan="4">
-      ${who(r, r.weak, 'weak', t('Fracos'))}${who(r, r.resist, 'resist', t('Resistem'))}${who(r, r.immune, 'immune', t('Imunes'))}
-    </td></tr>` : ''}`;
+    const label = `${r.type}: ${r.weak.length} ${t('Fracos').toLowerCase()}, ${r.resist.length} ${t('Resistem').toLowerCase()}, ${r.immune.length} ${t('Imunes').toLowerCase()}`;
+    return `<button type="button" class="tcell${r.alert ? ' alert' : ''}" ${any ? `data-tt="${i}" aria-expanded="false" aria-controls="tt-panel"` : 'disabled'} aria-label="${esc(label)}">
+      ${typeChip(r.type)}<span class="tc-n">${n(r.weak, 'weak')}${n(r.resist, 'resist')}${n(r.immune, 'immune')}</span>
+    </button>${any ? `<template data-tt-who="${i}">${who(r, r.weak, 'weak', t('Fracos'))}${who(r, r.resist, 'resist', t('Resistem'))}${who(r, r.immune, 'immune', t('Imunes'))}</template>` : ''}`;
   }).join('');
+  const covered = new Set(a.coverage);
   return `<section class="win" id="analysis-win" aria-labelledby="analysis-h">
     <div class="win-title"><h2 id="analysis-h">${t('Análise da equipe')}</h2><small>${t('tipos')}</small></div>
     <details class="analysis fold">
       <summary>${t('Fraquezas e resistências')}</summary>
-      <p class="hint">${t('Toque num tipo ou num número para ver quem. Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.')}</p>
-      <table class="typetab">
-        <thead><tr><th scope="col">${t('Ataque')}</th><th scope="col">${t('Fracos')}</th><th scope="col">${t('Resistem')}</th><th scope="col">${t('Imunes')}</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <p class="tt-legend"><span><i class="weak"></i>${t('Fracos')}</span><span><i class="resist"></i>${t('Resistem')}</span><span><i class="immune"></i>${t('Imunes')}</span></p>
+      <div class="tgrid">${cells}</div>
+      <div class="tt-panel" id="tt-panel" hidden></div>
+      <p class="hint">${t('Toque num tipo para ver quem. Em vermelho: tipos que acertam muitos membros em cheio. Só pelos tipos (sem habilidades nem itens).')}</p>
     </details>
     <details class="analysis fold">
       <summary>${t('Cobertura dos golpes')}</summary>
-      <p class="k-line">${t('Golpes de dano da equipe:')} ${a.moveTypes.map(typeChip).join(' ') || '—'}</p>
-      <p class="k-line">${t('Super efetivo contra:')} ${a.coverage.map(typeChip).join(' ') || '—'}</p>
-      <p class="k-line">${t('Nenhum golpe super efetivo contra:')} ${a.gaps.map(typeChip).join(' ') || '—'}</p>
+      <p class="cov-head">${t('Golpes de dano da equipe')}</p>
+      <div class="cov-grid">${a.moveTypes.length ? a.moveTypes.map(x => `<span class="cov">${typeChip(x)}</span>`).join('') : '—'}</div>
+      <p class="cov-head">${t('Super efetivo contra {n} de {total} tipos', { n: a.coverage.length, total: a.coverage.length + a.gaps.length })}</p>
+      <div class="cov-grid">${a.defense.map(r => r.type).map(x => `<span class="cov${covered.has(x) ? '' : ' off'}">${typeChip(x)}</span>`).join('')}</div>
+      ${a.gaps.length ? `<p class="hint">${t('Apagados: nenhum golpe da equipe acerta em cheio.')}</p>` : ''}
     </details>
   </section>`;
 }

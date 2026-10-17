@@ -255,6 +255,13 @@ input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; poin
 .export .export-btns .btn, .party-actions .btn, .ai-hero .export-btns .btn { margin: 3px; line-height: 1.25; text-align: center; }
 @media (max-width: 480px) {
   .export .export-btns .btn { font-size: .74rem; padding-inline: 2px; }
+  /* Os outros grupos de botões também numa linha só no celular ("IMAGEM DA / EQUIPE", "COPIAR / (SHOWDOWN)" e o
+     "(11)" sozinho embaixo de "Comparar com outra versão" quebravam) */
+  .party-actions .btn, .team-actions .btn, .changes [data-history] { font-size: .74rem; padding-inline: 4px; }
+  .changes [data-history] { width: calc(100% - 6px); }
+  /* Equipe salva: "Copiar (Showdown)" não cabe em meia largura; fica inteiro em cima (como no Exportar) e,
+     com a imagem, Apagar inteiro embaixo, sem sobra torta */
+  .team-actions [data-team-copy], .team-actions:has([data-team-img]) [data-team-del] { grid-column: 1 / -1; }
 }
 .status { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
 .status:empty { display: none; }
@@ -508,18 +515,6 @@ details > summary { cursor: pointer; min-height: 44px; display: flex; align-item
 .fold[open] > summary { background: var(--accent); color: var(--accent-ink); }
 .fold + .fold { margin-top: 12px; }
 .fold[open] > summary { margin-bottom: 10px; }
-.typetab { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 6px 0; }
-.typetab th, .typetab td { padding: 3px 4px; text-align: center; vertical-align: middle; }
-.typetab th[scope=row] .type { display: inline-block; min-width: 76px; text-align: center; }
-.typetab th[scope=row] { text-align: left; }
-.typetab thead th { font: .66rem var(--pixel); color: var(--muted); text-transform: uppercase; }
-.typetab tr.alert { background: color-mix(in srgb, var(--accent-2) 14%, transparent); }
-.cnt { display: inline-block; min-width: 36px; min-height: 32px; padding: 2px 6px; border: 0; font-family: var(--pixel); font-size: .8rem; cursor: pointer; }
-button.cnt:focus-visible { outline-offset: 1px; }
-.tt-type { padding: 0; border: 0; background: none; cursor: pointer; }
-.tt-type[aria-expanded="true"] .type, .cnt[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--ink); }
-.tt-more > td { padding: 4px 4px 10px; text-align: left; }
-.tt-more > td { background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
 .tt-grp { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 6px; align-items: start; padding: 6px 4px 0; }
 .tt-grp > b { font: .62rem/1.3 var(--pixel); text-transform: uppercase; padding: 4px 0; }
 .tt-grp.weak > b { color: var(--accent-2); }
@@ -532,11 +527,35 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .tt-grp li img { width: 44px; height: 32px; object-fit: contain; }
 .tt-grp li i { font: normal .7rem var(--pixel); color: var(--muted); }
 .tt-grp.weak li i { color: var(--accent-2); }
-.cnt.weak { background: var(--accent-2); color: var(--top-ink-on-gold); }
-.cnt.resist { background: var(--accent); color: var(--accent-ink); }
-.cnt.immune { background: var(--edge); color: var(--win); }
-.cnt.zero { color: var(--muted); cursor: default; background: transparent; }
 .k-line { margin: 6px 0; line-height: 2; }
+/* Análise: fraquezas em grade (um bloco por tipo de ataque, com fracos / resistem / imunes) */
+.tt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 6px; font: .62rem var(--pixel); text-transform: uppercase; color: var(--muted); }
+.tt-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tt-legend i { width: 10px; height: 10px; }
+.tt-legend .weak, .tc-n .weak { background: var(--accent-2); color: var(--top-ink-on-gold); }
+.tt-legend .resist, .tc-n .resist { background: var(--accent); color: var(--accent-ink); }
+.tt-legend .immune, .tc-n .immune { background: var(--edge); color: var(--win); }
+.tgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+@container (min-width: 520px) { .tgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+#analysis-win { container-type: inline-size; }
+.tcell {
+  display: grid; gap: 4px; justify-items: stretch; padding: 5px 5px 6px; border: 0; cursor: pointer; font: inherit; color: var(--ink);
+  background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi);
+}
+.tcell[disabled] { cursor: default; }
+.tcell .type { display: block; text-align: center; }
+.tcell.alert { background: color-mix(in srgb, var(--accent-2) 16%, var(--win)); box-shadow: inset 0 0 0 2px var(--accent-2); }
+.tcell[aria-expanded="true"] { box-shadow: inset 0 0 0 3px var(--ink); }
+.tc-n { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+.tc-n i { font: normal .78rem/1.6 var(--pixel); text-align: center; }
+.tc-n i.zero { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hi); }
+.tt-panel { margin-top: 6px; padding: 6px 4px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+.tt-title { display: block; padding: 4px; }
+.cov-head { margin: 12px 0 6px; font: .74rem var(--pixel); text-transform: uppercase; }
+.cov-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+@container (min-width: 520px) { .cov-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cov .type { display: block; text-align: center; padding-block: 4px; }
+.cov.off .type { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 2px var(--hi); text-decoration: line-through; }
 
 /* Busca */
 .search-form { display: grid; gap: 8px; }
@@ -854,9 +873,13 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 
 /* O que mudou (histórico) */
 .ch-sum { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
-.ch-pill { padding: 4px 10px; font-size: .8rem; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
-.ch-pill.up b { color: var(--accent); }
-.ch-pill.down b { color: var(--accent-2); }
+/* Abas do "O que mudou": os botões pixelados do app, como as abas das regiões em "Onde encontrar" */
+.ch-tab { min-height: 36px; padding: 4px 10px; font-size: .74rem; gap: 6px; }
+.ch-tab.up b { color: var(--accent); }
+.ch-tab.down b { color: var(--accent-2); }
+.ch-sum .ch-tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.ch-sum .ch-tab[aria-selected="true"] b { color: inherit; }
+.ch-pane > .hint { margin-top: 0; }
 .ch-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 6px; }
 .ch-mon {
   width: 100%; min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 2px; text-align: left;
@@ -865,7 +888,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ch-mon img { width: 56px; height: 46px; flex: none; image-rendering: pixelated; object-fit: contain; }
 .ch-mon > span { flex: 1; min-width: 0; display: grid; font-size: .8rem; line-height: 1.3; }
 .ch-mon b { overflow-wrap: anywhere; }
-.ch-mon small { color: var(--muted); font-size: .72rem; overflow-wrap: anywhere; }
+.ch-mon small { color: var(--muted); font-size: .72rem; overflow-wrap: anywhere; text-wrap: pretty; } /* sem o "1" de "posição 1" sozinho na linha de baixo */
 .changes [data-history] { margin-top: 12px; }
 .hist { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
 .hist-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--win-2); }
@@ -889,6 +912,15 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .team-icons img.gone, .team-gone img { opacity: .35; filter: grayscale(1); }
 .team-gone { cursor: default; }
 .team-actions { margin-top: 10px; }
+/* Membros da equipe salva em blocos como os da seção Equipe: 3 por linha no celular, 6 no computador */
+.team-mons { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+.team-mons .ch-mon { flex-direction: column; justify-content: start; gap: 2px; padding: 4px 4px 6px; text-align: center; height: 100%; }
+.team-mons .ch-mon > span { justify-items: center; }
+.team-mons .ch-mon img { width: 68px; height: 50px; }
+.team-mons .ch-mon { position: relative; }
+.team-mons .ch-mon .shiny { position: absolute; top: 4px; right: 6px; }
+/* Nível como nos blocos da seção Equipe (pixelado, na cor de destaque) */
+.team-mons .tm-lv { font: .72rem var(--pixel); color: var(--accent); text-transform: uppercase; }
 /* Ações da equipe salva em grade (como Exportar); Apagar em vermelho */
 .team-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .team-actions .btn { margin: 3px; line-height: 1.25; text-align: center; }
@@ -1006,7 +1038,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .bt-pane { display: grid; gap: 12px; }
 .bt-pane[hidden] { display: none; }
 
-/* Ferramentas em grade: Montar equipe em destaque em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+/* Ferramentas em grade: Montar equipe mais largo em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
 #out .tool-win:not([open]) { display: none; }
 .tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .tool-card {
@@ -1014,16 +1046,14 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
   font: inherit; -webkit-tap-highlight-color: transparent;
 }
-.tool-card.hot { grid-column: 1 / -1; min-height: 0; background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 rgba(0,0,0,.22); }
+.tool-card.hot { grid-column: 1 / -1; min-height: 0; }
 .tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
 .tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
-.tool-card.hot span { color: inherit; opacity: .85; }
 .tool-card:active { transform: translateY(2px); }
 .tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
-/* Aberta: o cartão fica "afundado", como um botão ligado */
-.tool-card[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--accent), inset 0 6px 0 var(--hi); padding-top: 16px; padding-bottom: 10px; }
-.tool-card:not(.hot)[aria-pressed="true"] b { color: var(--accent); }
-.tool-card.hot[aria-pressed="true"] { box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); }
+/* Aberta: o cartão fica verde e "afundado", como as abas escolhidas; fechadas, todas iguais */
+.tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
+.tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
 @media (min-width: 1000px) {
   .tools-grid { grid-template-columns: 2fr 1fr 1fr; }
   .tool-card.hot { grid-column: auto; min-height: 88px; }

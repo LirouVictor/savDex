@@ -14,7 +14,7 @@ const when = ts => new Date(ts).toLocaleString(locale(), { dateStyle: 'short', t
 function placeText(x) {
   const m = x.now;
   if (!m) return t('não está mais no save');
-  const place = m.location === 'party' ? t('na equipe, posição {n}', { n: m.slot }) : t('{box}, posição {n}', { box: m.where, n: m.slot });
+  const place = m.location === 'party' ? t('Equipe · {n}', { n: m.slot }) : t('{box} · {n}', { box: m.where, n: m.slot });
   return m.speciesId !== x.saved.speciesId ? `${t('evoluiu de {name}', { name: x.saved.species.name })} · ${place}` : place;
 }
 
@@ -28,7 +28,7 @@ function teamBody(team, located, ti, T) {
   const rows = located.map((x, mi) => {
     const m = x.now || x.saved;
     const inner = `${icon(m)}<span><b>${monShort(m)}${m.shiny ? ' <span class="shiny">★</span>' : ''}</b>
-      <small>${m.level ? `${t('Nv.')} ${m.level} · ` : ''}${esc(placeText(x))}</small></span>`;
+      ${m.level ? `<small class="tm-lv">${t('Nv.')} ${m.level}</small>` : ''}<small>${esc(placeText(x))}</small></span>`;
     return x.now
       ? `<li><button class="ch-mon" type="button" data-team-mon="${ti}:${mi}">${inner}</button></li>`
       : `<li><div class="ch-mon team-gone">${inner}</div></li>`;
