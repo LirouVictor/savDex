@@ -40,12 +40,17 @@ async function tx(mode, fn, store = STORE) {
   }
 }
 
-/** @param {{name:string, bytes:ArrayBuffer}} save */
-export async function rememberSave({ name, bytes }) {
-  try { await tx('readwrite', s => s.put({ name, bytes, savedAt: Date.now() }, KEY)); return true; } catch { return false; }
+/**
+ * @param {{name:string, bytes:ArrayBuffer, handle?:FileSystemFileHandle}} save
+ * handle = referência ao arquivo (seletor do sistema), para reler o save atualizado; não tem o conteúdo.
+ */
+export async function rememberSave({ name, bytes, handle }) {
+  const rec = { name, bytes, savedAt: Date.now() };
+  if (handle) rec.handle = handle;
+  try { await tx('readwrite', s => s.put(rec, KEY)); return true; } catch { return false; }
 }
 
-/** @returns {Promise<{name:string, bytes:ArrayBuffer, savedAt:number}|null>} */
+/** @returns {Promise<{name:string, bytes:ArrayBuffer, savedAt:number, handle?:FileSystemFileHandle}|null>} */
 export async function loadRememberedSave() {
   try { return (await tx('readonly', s => s.get(KEY))) || null; } catch { return null; }
 }

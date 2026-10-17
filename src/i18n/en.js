@@ -46,6 +46,11 @@ export default {
   'Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, abra o .sav de novo para atualizar.':
     'Showing the saved copy of "{name}" (opened on {when}). If you played after that, open the .sav again to update it.',
   'Abrir save atualizado': 'Open updated save',
+  'Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, toque em Atualizar para ler o arquivo de novo.':
+    'Showing the saved copy of "{name}" (opened on {when}). If you played after that, tap Refresh to read the file again.',
+  'Atualizar': 'Refresh',
+  'Não consegui ler o arquivo de novo (ele pode ter sido movido ou renomeado). Escolha o .sav outra vez.':
+    'Couldn’t read the file again (it may have been moved or renamed). Pick the .sav once more.',
   'Você está vendo um save de exemplo, com Pokémon fictícios. Abra o seu .sav para ver os seus.':
     'You are looking at an example save with made-up Pokémon. Open your .sav to see yours.',
   'Abrir meu save': 'Open my save',
