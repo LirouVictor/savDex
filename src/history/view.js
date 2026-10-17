@@ -25,24 +25,22 @@ function chip(m, i, extra = '') {
 export function changesWin(d, base, versions, { swapped = false } = {}) {
   const mons = [];
   const add = m => mons.push(m) - 1;
-  const sec = (title, items, note = '') => (items.length
-    ? `<details class="fold"><summary>${title}</summary>${note ? `<p class="hint">${note}</p>` : ''}<ul class="ch-list">${items.join('')}</ul></details>` : '');
+  // Cada categoria vira uma aba (o número e o nome); a lista da aba escolhida aparece embaixo, uma por vez
   const lv = n => `${t('Nv.')} ${n}`;
-  const sum = [
-    [d.added.length, t('novo'), t('novos'), 'up'], [d.evolved.length, t('evoluiu'), t('evoluíram'), 'up'],
-    [d.leveled.length, t('subiu de nível'), t('subiram de nível'), 'up'], [d.learned.length, t('aprendeu golpes'), t('aprenderam golpes'), 'up'],
-    [(d.trained || []).length, t('treinado'), t('treinados'), 'up'],
-    [d.removed.length, t('saiu'), t('saíram'), 'down'],
-  ].filter(([n]) => n).map(([n, one, many, cls]) => `<span class="ch-pill ${cls}"><b>${n}</b> ${n === 1 ? one : many}</span>`).join('');
+  const cats = [
+    ['up', t('novo'), t('novos'), d.added.map(m => chip(m, add(m), m.level ? lv(m.level) : ''))],
+    ['up', t('evoluiu'), t('evoluíram'), d.evolved.map(e => chip(e.to, add(e.to), esc(t('era {name}', { name: e.from.species.name }))))],
+    ['up', t('subiu de nível'), t('subiram de nível'), d.leveled.map(e => chip(e.mon, add(e.mon), `${lv(e.from)} → ${e.to}`))],
+    ['up', t('aprendeu golpes'), t('aprenderam golpes'), d.learned.map(e => chip(e.mon, add(e.mon), esc(e.moves.map(mv => mv.name).join(', '))))],
+    ['up', t('treinado'), t('treinados'), (d.trained || []).map(e => chip(e.mon, add(e.mon), esc(e.what.map(w => t(w)).join(', ')))), t('Mesmo Pokémon com IVs, natureza ou habilidade diferentes (itens de treino do jogo).')],
+    ['down', t('saiu'), t('saíram'), d.removed.map(m => chip(m, add(m), m.level ? lv(m.level) : '')), t('Estavam na versão mais antiga e não aparecem na mais nova: soltos, trocados ou usados no jogo. Se um deles ainda estiver com você, o app não conseguiu reconhecê-lo (mudou demais entre as versões).')],
+  ].filter(c => c[3].length);
+  const tabs = cats.map(([cls, one, many, items], i) => `<button type="button" class="ch-pill ${cls}" role="tab" id="ch-tab-${i}" aria-controls="ch-pane-${i}" aria-selected="${i === 0}" data-ch-tab="${i}"><b>${items.length}</b> ${items.length === 1 ? one : many}</button>`).join('');
+  const panes = cats.map(([, , , items, note], i) => `<div class="ch-pane" role="tabpanel" id="ch-pane-${i}" aria-labelledby="ch-tab-${i}"${i ? ' hidden' : ''}>
+    ${note ? `<p class="hint">${note}</p>` : ''}<ul class="ch-list">${items.join('')}</ul></div>`).join('');
   const body = !d.changed
     ? `<p class="hint">${t('Nenhuma mudança nos Pokémon desde essa versão.')}</p>`
-    : `<div class="ch-sum">${sum}</div>
-    ${sec(t('Novos'), d.added.map(m => chip(m, add(m), m.level ? lv(m.level) : '')))}
-    ${sec(t('Evoluíram'), d.evolved.map(e => chip(e.to, add(e.to), esc(t('era {name}', { name: e.from.species.name })))))}
-    ${sec(t('Subiram de nível'), d.leveled.map(e => chip(e.mon, add(e.mon), `${lv(e.from)} → ${e.to}`)))}
-    ${sec(t('Golpes novos'), d.learned.map(e => chip(e.mon, add(e.mon), esc(e.moves.map(mv => mv.name).join(', ')))))}
-    ${sec(t('Treinados'), (d.trained || []).map(e => chip(e.mon, add(e.mon), esc(e.what.map(w => t(w)).join(', ')))), t('Mesmo Pokémon com IVs, natureza ou habilidade diferentes (itens de treino do jogo).'))}
-    ${sec(t('Saíram'), d.removed.map(m => chip(m, add(m), m.level ? lv(m.level) : '')), t('Estavam na versão mais antiga e não aparecem na mais nova: soltos, trocados ou usados no jogo. Se um deles ainda estiver com você, o app não conseguiu reconhecê-lo (mudou demais entre as versões).'))}`;
+    : `<div class="ch-sum" role="tablist">${tabs}</div>${panes}`;
   const total = d.total.after - d.total.before;
   const html = `<section class="win changes" aria-labelledby="changes-h">
     <div class="win-title"><h2 id="changes-h">${t('O que mudou')}</h2><small>${t(swapped ? 'até a versão aberta em {when}' : 'desde {when}', { when: when(base.savedAt) })}</small></div>

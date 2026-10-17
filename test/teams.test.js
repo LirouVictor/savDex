@@ -87,7 +87,7 @@ suite('equipes salvas', () => {
     expect(html).toContain('Equipes salvas');
     expect(html).toContain('1 de 20');
     expect(html).toContain('evoluiu de Charmander');
-    expect(html).toContain('BOX2, posição 2');
+    expect(html).toContain('BOX2 · 2');
     expect(html).toContain('não está mais no save');
     expect(html).toContain('1 fora do save');
     expect(html).toContain('montada pela IA');

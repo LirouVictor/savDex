@@ -132,17 +132,19 @@ function render() {
     if (m) openDetail(m, btn);
   });
 
-  // Análise: tocar num tipo ou número abre, logo abaixo da linha, quem é fraco/resiste/imune (um tipo por vez)
-  const typetab = out.querySelector('.typetab');
-  if (typetab) typetab.addEventListener('click', e => {
+  // Análise: tocar num tipo mostra, embaixo da grade, quem é fraco/resiste/imune (um tipo por vez)
+  const tgrid = out.querySelector('.tgrid');
+  if (tgrid) tgrid.addEventListener('click', e => {
     const b = e.target.closest('[data-tt]');
     if (!b) return;
-    const more = typetab.querySelector('#tt-' + b.dataset.tt);
-    const open = more.hidden;
-    typetab.querySelectorAll('.tt-more').forEach(r => { r.hidden = true; });
-    typetab.querySelectorAll('[data-tt]').forEach(x => x.setAttribute('aria-expanded', 'false'));
-    more.hidden = !open;
-    if (open) typetab.querySelectorAll(`[data-tt="${b.dataset.tt}"]`).forEach(x => x.setAttribute('aria-expanded', 'true'));
+    const panel = out.querySelector('#tt-panel');
+    const open = b.getAttribute('aria-expanded') !== 'true';
+    tgrid.querySelectorAll('[data-tt]').forEach(x => x.setAttribute('aria-expanded', 'false'));
+    panel.hidden = !open;
+    if (open) {
+      b.setAttribute('aria-expanded', 'true');
+      panel.innerHTML = `<b class="tt-title">${b.querySelector('.type').outerHTML}</b>` + tgrid.querySelector(`[data-tt-who="${b.dataset.tt}"]`).innerHTML;
+    }
   });
 
   setupAi(out);
@@ -820,6 +822,12 @@ async function showChanges(base) {
   slot.onclick = e => {
     const b = e.target.closest('[data-ch]');
     if (b) { openDetail(mons[+b.dataset.ch], b); return; }
+    const tab = e.target.closest('[data-ch-tab]');
+    if (tab) {
+      slot.querySelectorAll('[data-ch-tab]').forEach(x => x.setAttribute('aria-selected', String(x === tab)));
+      slot.querySelectorAll('.ch-pane').forEach(p => { p.hidden = p.id !== 'ch-pane-' + tab.dataset.chTab; });
+      return;
+    }
     if (e.target.closest('[data-history]')) openHistory(e.target.closest('[data-history]'));
   };
 }
