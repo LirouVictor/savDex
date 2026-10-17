@@ -5,7 +5,7 @@ import { t, getLang } from '../i18n.js';
 import { esc } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import W from '../data/quetzal-wild.json';
-import LG from '../data/quetzal-legends.json';
+import LR from '../data/quetzal-legend-rules.json';
 
 const MAP_URL = {
   hoenn: new URL('../data/maps/quetzal-hoenn.png', import.meta.url).href,
@@ -22,7 +22,7 @@ const STATIC = 7;
 
 /** Onde a espécie (número do Quetzal) aparece: [{ place, region, name, rows: [[jeito, mín., máx., chance]] }]. */
 export function wildPlaces(id) {
-  const rows = [...(W.wild[id] || []), ...guideRows(id)];
+  const rows = W.wild[id] || [];
   if (!rows.length) return [];
   const en = getLang() === 'en';
   const by = new Map();
@@ -32,18 +32,6 @@ export function wildPlaces(id) {
     by.get(p).rows.push([how, min, max, pct]);
   }
   return [...by.values()];
-}
-
-// Encontros únicos que a tabela da ROM não tem (Hoenn e Kanto): o lugar vem do guia, achado pelo nome em W.places
-const placeIndex = (name, region) => W.places.findIndex(p => p[2] === region && p[0].toLowerCase() === name.toLowerCase());
-function guideRows(id) {
-  const out = [];
-  for (const g of LG.legends[id] || []) {
-    if (!g.place) continue;
-    const p = placeIndex(g.place, g.region);
-    if (p >= 0 && !(W.wild[id] || []).some(r => r[0] === p && r[1] === STATIC)) out.push([p, STATIC, g.lv || 0, g.lv || 0, 0]);
-  }
-  return out;
 }
 
 /**
@@ -85,29 +73,34 @@ function regionHtml(region, places, on, req = '') {
 }
 
 /**
- * Como fazer o encontro único aparecer numa região: insígnias, Liga e item lidos da ROM (só Johto, a tabela da ROM) e o
- * resto pelo guia da comunidade (src/data/quetzal-legends.json, tools/quetzal-legends-src.mjs).
+ * Como fazer o encontro único aparecer numa região, tudo lido da ROM (quetzal-legend-rules.json, por região;
+ * tools/quetzal-legend-rules.py). Johto: insígnias, Liga e item da tabela de encontros únicos (quetzal-wild.json →
+ * legend) e as regras de equipe das funções que conferem o encontro. Hoenn e Kanto (as Ilhas Sete usam as de Kanto):
+ * as funções que conferem cada encontro (tools/quetzal-legend-rules-hk.json), com a Liga, as insígnias e as marcas da
+ * história nas próprias linhas.
  */
 function reqHtml(id, region, Q) {
-  const rom = region === 'johto' ? (W.legend || {})[id] : null;
-  const guide = (LG.legends[id] || []).filter(g => g.region === region);
-  if (!rom && !guide.length) return '';
   const en = getLang() === 'en', r = regionName(region);
-  const fromRom = [];
-  if (rom && rom.badges) fromRom.push(t('{n} insígnias de {r}', { n: rom.badges, r }));
-  if (rom && rom.league) fromRom.push(t('Ter vencido a Liga de {r}', { r }));
-  if (rom && rom.item) fromRom.push(t('{item} na mochila', { item: (Q.items || {})[rom.item] || '#' + rom.item }));
-  const lines = [...fromRom.map(x => `<li class="rom">${esc(x)}</li>`), ...guide.flatMap(g => (en ? g.en : g.pt).map(x => `<li>${esc(x)}</li>`))];
-  const src = [];
-  if (fromRom.length) src.push(t('Insígnias, Liga e item: lidos da ROM.'));
-  else if (rom) src.push(t('A ROM não pede insígnias, Liga nem item.'));
-  if (guide.length) {
-    const g = guide[0];
-    const guia = `<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(t('guia da comunidade'))}</a>`;
-    const v = g.ver ? ' ' + t('(versão {v})', { v: esc(g.ver) }) : '';
-    src.push(rom ? t('O resto: {guia}{v}, não conferido no jogo.', { guia, v }) : t('Pelo {guia}{v}, não conferido no jogo. A tabela de encontros únicos da ROM só tem Johto.', { guia, v }));
-  } else src.push(t('O guia da comunidade não tem os outros requisitos deste encontro.'));
-  return `<div class="wild-req"><h4>${t('Como fazer aparecer')}</h4>${lines.length ? `<ul>${lines.join('')}</ul>` : ''}<p class="hint">${src.join(' ')}</p></div>`;
+  const li = x => `<li>${esc(x)}</li>`;
+  const key = region.startsWith('sevii') ? 'kanto' : region;
+  const rule = (LR.legend[key] || {})[id];
+  const rom = region === 'johto' ? (W.legend || {})[id] : null;
+  if (!rom && !rule) return '';
+  const lines = [];
+  if (rom && rom.badges) lines.push(t('{n} insígnias de {r}', { n: rom.badges, r }));
+  if (rom && rom.league) lines.push(t('Ter vencido a Liga de {r}', { r }));
+  if (rom && rom.item) lines.push(t('{item} na mochila', { item: (Q.items || {})[rom.item] || '#' + rom.item }));
+  if (rule) lines.push(...(en ? rule.en : rule.pt));
+  const vis = rule ? (en ? rule.ven : rule.vpt) : [];
+  const hint = [t('Lido da ROM do jogo; não conferido no jogo.')];
+  if (rule && rule.partial) hint.push(t('Em parte: o app ainda não leu tudo o que este encontro pede.'));
+  if (region === 'johto') {
+    hint.push(vis.length ? t('Com a opção LENDÁRIOS = VISÍVEIS (provável), as regras de equipe e o item não valem; valem as insígnias, a Liga e: {x}', { x: vis.join(' ') })
+      : t('Com a opção LENDÁRIOS = VISÍVEIS (provável), só valem as insígnias e a Liga.'));
+  } else if (vis.length) {
+    hint.push(t('Com a opção LENDÁRIOS = VISÍVEIS (provável), a equipe não é conferida; vale: {x}', { x: vis.join(' ') }));
+  }
+  return `<div class="wild-req"><h4>${t('Como fazer aparecer')}</h4>${lines.length ? `<ul>${lines.map(li).join('')}</ul>` : ''}<p class="hint">${hint.map(esc).join(' ')}</p></div>`;
 }
 
 /**

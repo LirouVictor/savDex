@@ -612,7 +612,6 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .wild-req { margin-top: 10px; padding: 8px 10px; background: var(--win-2); box-shadow: inset 4px 0 0 #ff2d75; }
 .wild-req h4 { margin: 0 0 4px; font-size: .9rem; }
 .wild-req ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: .88rem; }
-.wild-req li.rom { font-weight: 600; }
 .wild-req .hint { margin: 6px 0 0; }
 .wild-anc { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
 .wild-anc img { width: 40px; height: 32px; object-fit: contain; }

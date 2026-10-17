@@ -174,22 +174,36 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
     expect(wildHtml(150, Q, { caught: true })).toContain('já marca esta espécie como capturada');
   });
 
-  it('requisitos: insígnias, Liga e item da ROM e o resto do guia', () => {
+  it('requisitos pela ROM em todas as regiões: Johto pela tabela de encontros únicos, Hoenn e Kanto pelas funções de cada encontro', () => {
     const lugia = wildHtml(249, Q);
     expect(lugia).toContain('Como fazer aparecer');
-    expect(lugia).toContain('<li class="rom">8 insígnias de Johto</li>');
-    expect(lugia).toContain('Insígnias, Liga e item: lidos da ROM.');
+    expect(lugia).toContain('<li>8 insígnias de Johto</li>');
+    expect(lugia).toContain('Em parte');
     const suicune = wildHtml(245, Q);
-    expect(suicune).toContain('Vaporeon');
-    expect(suicune).toContain('A ROM não pede insígnias, Liga nem item.');
-    expect(suicune).toContain('pkmnquetzal.top/en/johto/legendary-pokemon/suicune.html');
-    expect(wildHtml(1141, Q)).toContain('Prison Bottle na mochila');
-    // Hoenn e Kanto: o lugar vem do guia (a tabela da ROM só tem Johto)
+    expect(suicune).toContain('<li>Vaporeon no 1º lugar.</li>');
+    expect(suicune).toContain('Lido da ROM do jogo');
+    // O guia dizia Ghost; a ROM pede Dragon
+    expect(wildHtml(384, Q)).toContain('Do 3º ao 6º lugar, Pokémon do tipo Dragon.');
+    const hoopa = wildHtml(1141, Q);
+    expect(hoopa).toContain('Prison Bottle na mochila');
+    expect(hoopa).toContain('Teleport');
+    // Hoenn e Kanto: lugar e nível dos roteiros dos mapas na ROM; requisitos das funções que conferem cada encontro
     const mewtwo = wildPlaces(150).map(p => p.region);
     expect(mewtwo).toEqual(expect.arrayContaining(['johto', 'hoenn', 'kanto']));
+    const at = (id, en) => wildPlaces(id).find(p => WILD.places[p.place][0] === en);
+    expect(at(144, 'Shoal Cave').rows).toContainEqual([7, 30, 30, 0]);
+    expect(at(384, 'Sky Pillar').rows).toContainEqual([7, 50, 50, 0]);
+    expect(at(243, 'Route 10').rows).toContainEqual([7, 40, 40, 0]);
+    // Articuno: regras diferentes em cada região
+    const articuno = wildHtml(144, Q, { region: 'hoenn' });
+    expect(articuno).toContain('<li>Equipe de 5 ou 6 Pokémon do tipo Ice.</li>');
+    expect(articuno).toContain('a equipe não é conferida; vale: Ter vencido a Liga de Hoenn.');
+    expect(articuno).toContain('Encontro da história');
+    expect(wildHtml(243, Q)).toContain('<li>Equipe de 6 Pokémon do tipo Electric.</li>');
+    expect(wildHtml(494, Q)).toContain('<li>Ter mais de ₽ 999.999 (₽ 1.000.000 ou mais).</li>');
     const deoxys = wildHtml(386, Q, { region: 'hoenn' });
-    expect(deoxys).toContain('Aurora Ticket');
-    expect(deoxys).toContain('A tabela de encontros únicos da ROM só tem Johto.');
+    expect(deoxys).toContain('Em parte');
+    expect(deoxys).not.toContain('guia');
     // Quem só evolui de um lendário não mostra os requisitos do ancestral
     expect(wildHtml(26, Q)).not.toContain('Como fazer aparecer');
   });
@@ -204,7 +218,7 @@ suite('Pokédex em inglês', () => {
     const data = { summary: { dex: { caught: [1] } }, party: [], pc: { boxes: [] } };
     let html = pokedexWin(data, TQ) + listNote({ id: 'quetzal' }) + listNote({ id: 'hgss', gen: 4 });
     entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]) }); });
-    html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q) + wildHtml(249, Q) + wildHtml(245, Q) + wildHtml(1141, Q) + wildHtml(382, Q);
+    html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q) + wildHtml(249, Q) + wildHtml(245, Q) + wildHtml(1141, Q) + wildHtml(382, Q) + wildHtml(144, Q) + wildHtml(377, Q) + wildHtml(894, Q);
     expect(html).toContain('Where to find');
     expect(html).toContain('Safari Zone');
     expect(html).toContain('Learns the move');

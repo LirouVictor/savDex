@@ -1129,13 +1129,15 @@ export default {
   '{n} insígnias de {r}': '{n} {r} badges',
   'Ter vencido a Liga de {r}': 'Beat the {r} League',
   '{item} na mochila': '{item} in the bag',
-  'Insígnias, Liga e item: lidos da ROM.': 'Badges, League and item: read from the ROM.',
-  'A ROM não pede insígnias, Liga nem item.': 'The ROM asks for no badges, League or item.',
-  'O resto: {guia}{v}, não conferido no jogo.': 'The rest: {guia}{v}, not checked in the game.',
-  '(versão {v})': '(version {v})',
-  'Pelo {guia}{v}, não conferido no jogo. A tabela de encontros únicos da ROM só tem Johto.': 'From the {guia}{v}, not checked in the game. The ROM table of one-time encounters only covers Johto.',
-  'guia da comunidade': 'community guide',
-  'O guia da comunidade não tem os outros requisitos deste encontro.': 'The community guide doesn’t have the other requirements for this encounter.',
+
+
+
+  'Lido da ROM do jogo; não conferido no jogo.': 'Read from the game ROM; not checked in the game.',
+  'Em parte: o app ainda não leu tudo o que este encontro pede.': 'Partly: the app has not read everything this encounter asks for yet.',
+  'Com a opção LENDÁRIOS = VISÍVEIS (provável), as regras de equipe e o item não valem; valem as insígnias, a Liga e: {x}': 'With the LEGENDARIES = VISIBLE option (probable), the party rules and the item don\'t apply; the badges, the League and this do: {x}',
+  'Com a opção LENDÁRIOS = VISÍVEIS (provável), a equipe não é conferida; vale: {x}': 'With the LEGENDARIES = VISIBLE option (probable), the party isn\'t checked; this applies: {x}',
+  'Com a opção LENDÁRIOS = VISÍVEIS (provável), só valem as insígnias e a Liga.': 'With the LEGENDARIES = VISIBLE option (probable), only the badges and the League apply.',
+
   'Como fazer aparecer': 'How to make it appear',
   'A Pokédex do save já marca esta espécie como capturada.': 'The save’s Pokédex already marks this species as caught.',
   'A Pokédex do save ainda não marca esta espécie como capturada.': 'The save’s Pokédex doesn’t mark this species as caught yet.',
