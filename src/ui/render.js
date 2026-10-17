@@ -228,6 +228,8 @@ export function partyWin(d, { canSave = false } = {}) {
 }
 
 export function pcWin(d) {
+  // A legenda do quadradinho só aparece se algum Pokémon do PC tem a marca (nos saves com a ROM, nenhum)
+  const probable = d.pc.boxes.some(b => b.slots.some(s => s.species.confidence !== 'confirmado'));
   const options = d.pc.boxes.map(b => `<option value="${b.index}">${esc(b.name)} · ${b.slots.length ? b.slots.length + '/30' : t('vazia')}${b.partial ? ` (${t('parcial')})` : ''}</option>`).join('');
   return `<section class="win" id="pc-win" aria-labelledby="pc-h">
     <div class="win-title"><h2 id="pc-h">PC</h2><small id="pc-count"></small></div>
@@ -238,7 +240,7 @@ export function pcWin(d) {
       <button class="btn btn-ghost btn-icon" type="button" data-box-step="1" aria-label="${t('Próxima caixa')}">▶</button>
     </div>
     <div class="box-grid" id="box-grid" role="grid" aria-label="${t('Pokémon na caixa')}"></div>
-    <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')} <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}</p>
+    <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')}${probable ? ` <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}` : ''}</p>
   </section>`;
 }
 
