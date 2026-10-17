@@ -74,15 +74,20 @@ export function makeResolver(T) {
     const [name, types, stats, abilities, genderRate, national, pokeapi, spriteId, icon, form, showdown, cosmetic] = row;
     const ovForm = ov && ov.pokeapi ? T.forms[ov.pokeapi] : null;
     const noSprite = ov && 'pokeapi' in ov && !ov.pokeapi;
-    const sprite = noSprite ? null : ovForm ? ovForm.id : spriteId || (cosmetic ? national : null);
+    // Arceus e Silvally: as formas por tipo não são "pokemon" na PokeAPI (não há forma para casar), mas o
+    // repositório de sprites tem a imagem de cada uma (493-ice.png, 773-fire.png)
+    const plate = !spriteId && !ov && (national === 493 || national === 773) && types.length === 1 && typeName(types[0]) !== 'normal'
+      ? typeName(types[0]) : null;
+    const plateName = plate ? plate[0].toUpperCase() + plate.slice(1) : null;
+    const sprite = noSprite ? null : ovForm ? ovForm.id : spriteId || (plate ? `${national}-${plate}` : cosmetic ? national : null);
     return {
       name: ov ? ov.name : name,
-      form: ov ? ov.form || null : form,
-      showdown: (ov && ov.showdown) || showdown || name,
+      form: ov ? ov.form || null : form || plateName,
+      showdown: (ov && ov.showdown) || showdown || (plate ? `${name}-${plateName}` : name),
       confidence: CONFIRMED,
       evidence: ov ? ov.evidence || null
         : cosmetic ? 'Forma de aparência (os dados são os da forma padrão); sprite da forma padrão.'
-        : spriteId ? null : 'Sem sprite correspondente na PokeAPI.',
+        : spriteId || plate ? null : 'Sem sprite correspondente na PokeAPI.',
       spriteId: sprite,
       // ID da PokeAPI para evoluções e golpes por nível: a forma, se o app tiver os dados dela; senão, a espécie
       dexId: ovForm ? ovForm.id : national,

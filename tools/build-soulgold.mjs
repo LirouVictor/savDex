@@ -298,7 +298,7 @@ async function main() {
   }
   console.log('Conferindo ícones de menu das formas…');
   for (let i = 0; i < icons.length; i += 16) {
-    await Promise.all(icons.slice(i, i + 16).map(async id => { if (await exists(`${SPRITES}/versions/generation-viii/icons/${species[id][3]}.png`)) species[id][4] = 1; }));
+    await Promise.all(icons.slice(i, i + 16).map(async id => { if (await exists(`${SPRITES.replace('/master/', '/ba403973fdf9d0ac59175813861e6a1f8ed5020c/')}/versions/generation-viii/icons/${species[id][3]}.png`)) species[id][4] = 1; }));
   }
 
   // Golpes: ID do app pelo nome (descrição, golpes por nível do dex.json) ou o nome (texto); dados da ROM

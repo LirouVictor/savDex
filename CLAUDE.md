@@ -59,7 +59,7 @@ Site estático (Vite + JS puro) que lê saves de GBA — **Pokémon Quetzal** (R
 
 - **Não chutar.** O que não foi confirmado em save aparece como "não lido" ou "provável" na UI e nas exportações. Ao confirmar algo, atualizar este arquivo.
 - Nomes de espécies, golpes, itens e habilidades ficam **em inglês** (o jogo PT-BR também usa inglês para eles; o Showdown exige). A interface é em português.
-- Nada de marcas, logos ou assets de UI extraídos dos jogos. Sprites vêm do repositório PokeAPI/sprites por URL. **Exceção** (decisão do autor, 2026-10): o mapa da região do Quetzal, tirado da ROM, na Pokédex (onde encontrar).
+- Nada de marcas, logos ou assets de UI extraídos dos jogos. Sprites vêm do repositório PokeAPI/sprites por URL. Os ícones de menu (Gen 8) vêm do commit `ba40397` desse repositório (`ICON_COMMIT` em `src/ui/sprites.js`): o PokeAPI apagou a pasta `generation-viii/icons` em 2026-10-16; ícone que falha cai no sprite grande e depois na silhueta. Arceus e Silvally do Quetzal usam `493-<tipo>.png`/`773-<tipo>.png` (`romSpecies` em `describe.js`). **Exceção** (decisão do autor, 2026-10): o mapa da região do Quetzal, tirado da ROM, na Pokédex (onde encontrar).
 - Sem `window.claude`; downloads via Blob + `<a download>`.
 
 ---

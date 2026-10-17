@@ -123,7 +123,7 @@ export function wildHtml(id, Q, { region = null, nameOf = null, caught = null } 
     if (anc == null) return `<section class="dsec wild"><h3>${t('Onde encontrar')}</h3><p class="hint">${t('Não aparece na natureza do jogo (grama, cavernas, água, Rock Smash e encontros únicos). Pode vir de evento, presente, ovo ou troca.')}</p></section>`;
     places = wildPlaces(anc);
     const sp = nameOf ? nameOf(anc) : null;
-    note = `<p class="wild-anc">${sp ? `<img src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">` : ''}
+    note = `<p class="wild-anc">${sp ? `<img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">` : ''}
       <span>${t('Não aparece na natureza. Capture {name} e evolua:', { name: `<b>${esc(sp ? sp.name : '#' + anc)}</b>` })}</span></p>`;
   }
   let once = '';

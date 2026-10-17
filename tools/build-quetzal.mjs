@@ -359,7 +359,7 @@ async function main() {
   }
   console.log('Conferindo ícones de menu…');
   for (let i = 0; i < icons.length; i += 16) {
-    await Promise.all(icons.slice(i, i + 16).map(async e => { e.icon = await exists(`${SPRITES}/versions/generation-viii/icons/${e.spriteId}.png`); }));
+    await Promise.all(icons.slice(i, i + 16).map(async e => { e.icon = await exists(`${SPRITES.replace('/master/', '/ba403973fdf9d0ac59175813861e6a1f8ed5020c/')}/versions/generation-viii/icons/${e.spriteId}.png`); }));
   }
 
   // Compacta: [nome, [tipos], [stats], [habilidades], gênero, nº nacional, forma da PokeAPI, sprite, ícone, rótulo, Showdown, aparência]
