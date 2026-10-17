@@ -35,7 +35,7 @@ export function changesWin(d, base, versions, { swapped = false } = {}) {
     ['up', t('treinado'), t('treinados'), (d.trained || []).map(e => chip(e.mon, add(e.mon), esc(e.what.map(w => t(w)).join(', ')))), t('Mesmo Pokémon com IVs, natureza ou habilidade diferentes (itens de treino do jogo).')],
     ['down', t('saiu'), t('saíram'), d.removed.map(m => chip(m, add(m), m.level ? lv(m.level) : '')), t('Estavam na versão mais antiga e não aparecem na mais nova: soltos, trocados ou usados no jogo. Se um deles ainda estiver com você, o app não conseguiu reconhecê-lo (mudou demais entre as versões).')],
   ].filter(c => c[3].length);
-  const tabs = cats.map(([cls, one, many, items], i) => `<button type="button" class="ch-pill ${cls}" role="tab" id="ch-tab-${i}" aria-controls="ch-pane-${i}" aria-selected="${i === 0}" data-ch-tab="${i}"><b>${items.length}</b> ${items.length === 1 ? one : many}</button>`).join('');
+  const tabs = cats.map(([cls, one, many, items], i) => `<button type="button" class="btn btn-ghost ch-tab ${cls}" role="tab" id="ch-tab-${i}" aria-controls="ch-pane-${i}" aria-selected="${i === 0}" data-ch-tab="${i}"><b>${items.length}</b> ${items.length === 1 ? one : many}</button>`).join('');
   const panes = cats.map(([, , , items, note], i) => `<div class="ch-pane" role="tabpanel" id="ch-pane-${i}" aria-labelledby="ch-tab-${i}"${i ? ' hidden' : ''}>
     ${note ? `<p class="hint">${note}</p>` : ''}<ul class="ch-list">${items.join('')}</ul></div>`).join('');
   const body = !d.changed

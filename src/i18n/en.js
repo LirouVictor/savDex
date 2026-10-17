@@ -161,11 +161,8 @@ export default {
   'tipos': 'types',
   'Fraquezas e resistências': 'Weaknesses and resistances',
   'Ataque': 'Attack',
-  'Toque num tipo ou num número para ver quem. Linhas destacadas: tipos que acertam muitos membros em cheio. Não considera habilidades (Levitate etc.) nem itens.':
-    'Tap a type or a number to see who. Highlighted rows: types that hit many members super effectively. Ignores abilities (Levitate etc.) and items.',
   'Cobertura dos golpes': 'Move coverage',
   'Golpes de dano da equipe:': 'Party damaging moves:',
-  'Super efetivo contra:': 'Super effective against:',
   'Nenhum golpe super efetivo contra:': 'No super effective move against:',
   'IA': 'AI',
   'Serviço de IA': 'AI service',

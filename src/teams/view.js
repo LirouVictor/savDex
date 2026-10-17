@@ -28,7 +28,7 @@ function teamBody(team, located, ti, T) {
   const rows = located.map((x, mi) => {
     const m = x.now || x.saved;
     const inner = `${icon(m)}<span><b>${monShort(m)}${m.shiny ? ' <span class="shiny">★</span>' : ''}</b>
-      ${m.level ? `<small>${t('Nv.')} ${m.level}</small>` : ''}<small>${esc(placeText(x))}</small></span>`;
+      ${m.level ? `<small class="tm-lv">${t('Nv.')} ${m.level}</small>` : ''}<small>${esc(placeText(x))}</small></span>`;
     return x.now
       ? `<li><button class="ch-mon" type="button" data-team-mon="${ti}:${mi}">${inner}</button></li>`
       : `<li><div class="ch-mon team-gone">${inner}</div></li>`;
