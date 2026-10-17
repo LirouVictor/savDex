@@ -1,10 +1,19 @@
 // Textos das janelas Privacidade, Termos de uso e Novidades (português e inglês).
 // Carregado só quando uma delas é aberta. Ao mudar o que o app guarda ou envia, atualizar a Privacidade.
 
-export const UPDATED = '2026-10-21';
+export const UPDATED = '2026-10-26';
 
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
+  {
+    date: '2026-10-26',
+    pt: [
+      'Abrir o save atualizado com um toque: no Chrome (Android ou computador), o .sav escolhido fica lembrado e, depois de jogar, o botão “Atualizar” lê o arquivo de novo, sem procurar a pasta do emulador. No computador, com o app instalado, a versão nova abre sozinha.',
+    ],
+    en: [
+      'Open the updated save with one tap: in Chrome (Android or computer), the .sav you pick is remembered and, after playing, the “Refresh” button reads the file again without browsing to the emulator folder. On a computer, with the app installed, the new version opens by itself.',
+    ],
+  },
   {
     date: '2026-10-25',
     pt: [
@@ -422,7 +431,7 @@ const PRIVACY = {
 <h3>Seu save</h3>
 <ul>
   <li>O arquivo é lido no navegador. Ele <b>não é enviado</b> para nenhum servidor, nem para o savDex.</li>
-  <li>Uma cópia do último save aberto fica guardada <b>só neste navegador</b> (IndexedDB), para abrir sozinha na próxima visita. O botão <b>Esquecer este save</b> apaga essa cópia. O save de exemplo não é guardado.</li>
+  <li>Uma cópia do último save aberto fica guardada <b>só neste navegador</b> (IndexedDB), para abrir sozinha na próxima visita. Quando o navegador permite, fica junto uma referência ao arquivo escolhido, para o botão <b>Atualizar</b> ler a versão nova; o navegador só deixa ler esse arquivo. O botão <b>Esquecer este save</b> apaga a cópia e a referência. O save de exemplo não é guardado.</li>
   <li><b>Histórico</b>: cada vez que você abre o save depois de jogar, uma versão dele fica guardada neste navegador (até 30 por save), para o app mostrar o que mudou. O botão <b>Apagar o histórico deste save</b>, na janela Histórico, apaga essas versões.</li>
   <li><b>Equipes salvas</b>: quando você toca em <b>Salvar equipe</b>, os dados dos Pokémon dessa equipe (espécie, golpes, item, natureza, IVs, onde estavam) ficam guardados neste navegador (até 20 por save), para o app mostrar onde cada um está nas próximas versões do save. O botão <b>Apagar</b> de cada equipe, em Ferramentas → Equipes salvas, apaga a equipe.</li>
   <li>A <b>imagem da equipe</b> é desenhada no aparelho; ela só sai daqui se você a compartilhar.</li>
@@ -451,7 +460,7 @@ const PRIVACY = {
 <h3>Your save</h3>
 <ul>
   <li>The file is read in the browser. It is <b>never uploaded</b> to any server, savDex included.</li>
-  <li>A copy of the last save you opened is kept <b>only in this browser</b> (IndexedDB) so it opens by itself next time. The <b>Forget this save</b> button deletes that copy. The example save is not kept.</li>
+  <li>A copy of the last save you opened is kept <b>only in this browser</b> (IndexedDB) so it opens by itself next time. When the browser allows it, a reference to the file you picked is kept too, so the <b>Refresh</b> button can read the new version; the browser only lets it read that file. The <b>Forget this save</b> button deletes the copy and the reference. The example save is not kept.</li>
   <li><b>History</b>: each time you open the save after playing, a version of it is kept in this browser (up to 30 per save) so the app can show what changed. The <b>Delete this save’s history</b> button, in the History window, deletes those versions.</li>
   <li><b>Saved teams</b>: when you tap <b>Save team</b>, the data of that team’s Pokémon (species, moves, item, nature, IVs, where they were) is kept in this browser (up to 20 per save), so the app can show where each one is in later versions of the save. The <b>Delete</b> button of each team, in Tools → Saved teams, deletes it.</li>
   <li>The <b>party image</b> is drawn on your device; it only leaves it if you share it.</li>

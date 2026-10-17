@@ -47,6 +47,8 @@ const ready = loadLang().catch(e => console.error(e)).then(() => {
   delete root.dataset.langWait;
 });
 let showingDemo = false;
+// Referência ao arquivo do save (seletor do sistema), para reler a versão atualizada com um toque
+let savedHandle = null;
 
 // Tema: segue o sistema até o usuário escolher; a escolha fica salva neste aparelho.
 const systemDark = matchMedia('(prefers-color-scheme: dark)');
@@ -83,8 +85,10 @@ function showError(msg) {
 
 function showSavedNote(name, savedAt) {
   const when = new Date(savedAt).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' });
-  $('#saved-text').textContent = t('Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, abra o .sav de novo para atualizar.', { name, when });
-  $('#saved-open').textContent = t('Abrir save atualizado');
+  $('#saved-text').textContent = savedHandle
+    ? t('Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, toque em Atualizar para ler o arquivo de novo.', { name, when })
+    : t('Mostrando a cópia guardada de "{name}" (aberta em {when}). Se você jogou depois disso, abra o .sav de novo para atualizar.', { name, when });
+  $('#saved-open').textContent = savedHandle ? t('Atualizar') : t('Abrir save atualizado');
   $('#forget').classList.remove('hidden');
   $('#saved-note').classList.remove('hidden');
 }
@@ -115,12 +119,18 @@ async function openBytes(buf, name, opts = {}) {
   scrollTo(0, 0);
 }
 
-async function load(file) {
+/**
+ * @param {File} file
+ * @param {FileSystemFileHandle} [handle] referência ao arquivo, quando escolhido pelo seletor do sistema
+ */
+async function load(file, handle) {
   try {
     const buf = await file.arrayBuffer();
     await openBytes(buf, file.name);
-    // Guarda uma cópia para abrir automaticamente na próxima visita (só neste aparelho).
-    rememberSave({ name: file.name, bytes: buf });
+    savedHandle = handle || null;
+    // Guarda uma cópia para abrir automaticamente na próxima visita (só neste aparelho)
+    // e, se houver, a referência ao arquivo para reler a versão atualizada sem escolher de novo.
+    rememberSave({ name: file.name, bytes: buf, handle: savedHandle || undefined });
   } catch (e) {
     console.error(e);
     showError(e && e.name === 'SaveError'
@@ -144,6 +154,7 @@ $('#demo').addEventListener('click', openDemo);
 
 $('#forget').addEventListener('click', async () => {
   await forgetSave();
+  savedHandle = null;
   $('#saved-note').classList.add('hidden');
   $('#out').classList.add('hidden');
   $('#out').innerHTML = '';
@@ -180,8 +191,61 @@ ready.then(takeSharedSave).then(async shared => {
   if (demo) return openDemo();
   const saved = await loadRememberedSave();
   if (!saved || !$('#out').classList.contains('hidden')) return;
+  savedHandle = saved.handle || null;
+  // Com a permissão ainda valendo (o Chrome do computador a mantém no app instalado), lê o arquivo
+  // atual sozinho se ele mudou depois da cópia; sem ela, abre a cópia e o botão Atualizar relê.
+  if (savedHandle) {
+    try {
+      if ((await savedHandle.queryPermission({ mode: 'read' })) === 'granted') {
+        const file = await savedHandle.getFile();
+        if (file.lastModified > saved.savedAt) return load(file, savedHandle);
+      }
+    } catch { /* arquivo movido ou sem permissão: fica a cópia */ }
+  }
   openBytes(saved.bytes, saved.name, { fromCopy: saved.savedAt }).catch(() => forgetSave());
 });
+
+// Seletor do sistema (File System Access; Chrome do Android 132+ e do computador): o app guarda a
+// referência ao arquivo escolhido e, nas próximas visitas, relê o .sav atualizado com um toque, sem
+// procurar o arquivo de novo. Sem a API, os botões continuam abrindo o <input type="file">.
+async function pickFile() {
+  let handle;
+  try {
+    [handle] = await window.showOpenFilePicker({ id: 'save' });
+  } catch (e) {
+    if (e && e.name !== 'AbortError') $('#file').click();
+    return;
+  }
+  let file;
+  try { file = await handle.getFile(); } catch { return showError(t('Não consegui ler este arquivo. Confira se é o .sav (ou .sps) de um jogo suportado e tente de novo.')); }
+  await load(file, handle);
+}
+
+// Relê o arquivo guardado (botão Atualizar). Pede a permissão de leitura de novo, se o navegador pedir.
+async function refreshSave() {
+  const handle = savedHandle;
+  let file;
+  try {
+    if ((await handle.queryPermission({ mode: 'read' })) !== 'granted'
+      && (await handle.requestPermission({ mode: 'read' })) !== 'granted') return;
+    file = await handle.getFile();
+  } catch {
+    savedHandle = null;
+    return showError(t('Não consegui ler o arquivo de novo (ele pode ter sido movido ou renomeado). Escolha o .sav outra vez.'));
+  }
+  await load(file, handle);
+}
+
+if (typeof window.showOpenFilePicker === 'function') {
+  // Captura: roda antes do clique abrir o <input>; os outros ouvintes (fechar o aviso de erro) continuam.
+  document.addEventListener('click', e => {
+    const label = e.target instanceof Element && e.target.closest('label[for="file"]');
+    if (!label) return;
+    e.preventDefault();
+    if (label.id === 'saved-open' && savedHandle && !showingDemo) refreshSave();
+    else pickFile();
+  }, true);
+}
 
 $('#file').addEventListener('change', e => {
   const f = e.target.files && e.target.files[0];
