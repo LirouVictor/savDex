@@ -230,13 +230,17 @@ async function setupPokedex(out) {
   let pd;
   try { pd = await pokedexState(); } catch (e) { console.error(e); cur.pokedexWired = false; $('#pdx-count').textContent = t('Não consegui abrir a Pokédex.'); return; }
   if (state !== cur) return;
-  $('#pdx-note').textContent = pd.P.listNote(cur.data.game);
+  const note = pd.P.listNote(cur.data.game);
+  $('#pdx-note').innerHTML = note ? R.infoBtn(t('Pokédex'), note) : '';
   const show = () => {
     const total = pd.list.length;
     const pages = Math.max(1, Math.ceil(total / pd.P.PAGE));
     pd.page = Math.min(Math.max(0, pd.page), pages - 1);
     const start = pd.page * pd.P.PAGE;
-    $('#pdx-results').innerHTML = pd.list.slice(start, start + pd.P.PAGE).map((e, j) => pd.P.entryRow(e, start + j, pd.caught)).join('');
+    // Na ordem da Pokédex, a forma logo depois da espécie entra recuada embaixo dela
+    const byDex = !$('#pdx-sort').value || $('#pdx-sort').value === 'dex';
+    $('#pdx-results').innerHTML = pd.list.slice(start, start + pd.P.PAGE)
+      .map((e, j) => pd.P.entryRow(e, start + j, pd.caught, byDex && j ? pd.list[start + j - 1] : null)).join('');
     $('#pdx-count').textContent = t(total === 1 ? '1 espécie.' : '{n} espécies.', { n: total });
     const pager = $('#pdx-pager');
     pager.classList.toggle('hidden', pages <= 1);
@@ -247,7 +251,30 @@ async function setupPokedex(out) {
   // Filtros escondidos atrás do botão "Filtros" (o nome e a ordem ficam sempre à vista); na tela larga, abertos
   const FILTERS = ['pdx-move', 'pdx-where', 'pdx-type', 'pdx-type2', 'pdx-caught', 'pdx-resist', 'pdx-gen', 'pdx-evo', 'pdx-cat', 'pdx-min'];
   const toggle = $('#pdx-ftoggle'), panel = $('#pdx-filters');
-  const setOpen = on => { panel.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); };
+  const active = $('#pdx-active');
+  const setOpen = on => { panel.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); active.hidden = on; };
+  // Os filtros ligados, à vista com os filtros recolhidos: uma etiqueta por filtro, o ✕ desliga
+  const PREFIX = { 'pdx-move': t('Golpes'), 'pdx-type': t('Tipo'), 'pdx-type2': t('Segundo tipo') };
+  const showActive = () => {
+    const chips = FILTERS.map(id => {
+      const el = $('#' + id);
+      if (!el || !el.value.trim()) return '';
+      let label;
+      if (id === 'pdx-min') label = `${$('#pdx-stat').selectedOptions[0].textContent} ≥ ${el.value.trim()}`;
+      else if (el.tagName === 'SELECT') label = (PREFIX[id] ? `${PREFIX[id]}: ` : '') + el.selectedOptions[0].textContent;
+      else label = `${PREFIX[id]}: ${el.value.trim()}`;
+      return `<button type="button" class="pdx-fchip" data-unfilter="${id}" aria-label="${R.esc(t('Desligar o filtro {f}', { f: label }))}">${R.esc(label)} <span aria-hidden="true">✕</span></button>`;
+    }).filter(Boolean);
+    active.innerHTML = chips.join('') + (chips.length > 1 ? `<button type="button" class="pdx-fchip pdx-fclear" data-unfilter="*">${t('Limpar filtros')}</button>` : '');
+  };
+  active.addEventListener('click', e => {
+    const b = e.target.closest('[data-unfilter]');
+    if (!b) return;
+    if (b.dataset.unfilter === '*') { $('#pdx-clear').click(); return; }
+    $('#' + b.dataset.unfilter).value = '';
+    run();
+    active.querySelector('[data-unfilter]')?.focus();
+  });
   setOpen(window.matchMedia('(min-width: 960px)').matches);
   toggle.addEventListener('click', () => setOpen(panel.hidden));
   const run = async () => {
@@ -277,6 +304,7 @@ async function setupPokedex(out) {
     // Quantos filtros estão ligados (aparece no botão, que fica fechado no celular)
     const on = FILTERS.filter(id => v(id).trim()).length;
     $('#pdx-on').textContent = on ? `(${on})` : '';
+    showActive();
     pd.page = 0;
     show();
   };
@@ -366,12 +394,39 @@ async function openSpecies(entry, opener) {
   const wasOpen = dlg.open;
   const owned = pd.P.ownedOf(entry, state.all);
   const i = pd.list.indexOf(entry);
-  dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned, nav: i >= 0 ? { i, n: pd.list.length } : null });
+  dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned, nav: i >= 0 ? { i, n: pd.list.length } : null, tab: pd.tab });
+  // Abas: a escolhida vale para as próximas espécies (‹ ›); a barra das abas fica presa embaixo da barra do nome
+  const tabs = dlg.querySelector('.pdx-tabs');
+  const setTab = (k, remember = true) => {
+    const btn = tabs.querySelector(`[data-ptab="${k}"]`);
+    if (!btn || btn.hidden) return;
+    if (remember) pd.tab = k;
+    for (const b of tabs.querySelectorAll('[data-ptab]')) b.setAttribute('aria-selected', String(b === btn));
+    for (const p of dlg.querySelectorAll('[data-pane]')) p.hidden = p.dataset.pane !== k;
+    // Rolou para baixo do cabeçalho: a aba nova começa no topo, logo embaixo das abas
+    const top = tabs.offsetTop - parseFloat(tabs.style.top || 0);
+    if (dlg.scrollTop > top) dlg.scrollTop = top;
+  };
+  tabs.addEventListener('click', e => { const b = e.target.closest('[data-ptab]'); if (b) setTab(b.dataset.ptab); });
+  tabs.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.stopPropagation();
+    const list = [...tabs.querySelectorAll('[data-ptab]:not([hidden])')];
+    const at = list.indexOf(document.activeElement);
+    const next = list[(at + (e.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length];
+    if (next) { setTab(next.dataset.ptab); next.focus(); }
+  });
   fillWild(dlg, entry, pd);
-  fillUsage(dlg, entry, pd);
+  // Competitivo: a aba só aparece com dados; se era a escolhida, abre quando os dados chegam
+  fillUsage(dlg, entry, pd).then(has => {
+    const b = tabs.querySelector('[data-ptab="usage"]');
+    if (!b || !b.isConnected) return;
+    b.hidden = !has;
+    if (has && pd.tab === 'usage') setTab('usage', false);
+  });
   fillDex(dlg, pd.P.speciesMon(entry)).then(() => {
     // Estágios da linha evolutiva viram botões (abrem o detalhe deles)
-    for (const node of dlg.querySelectorAll('[data-dex] .evo-node[data-evo-id]:not(.here)')) {
+    for (const node of dlg.querySelectorAll('[data-evo] .evo-node[data-evo-id]:not(.here), [data-dex] .evo-node[data-evo-id]:not(.here)')) {
       if (!evoEntry(pd, node.dataset.evoId)) continue;
       node.classList.add('evo-link');
       node.setAttribute('role', 'button');
@@ -384,8 +439,6 @@ async function openSpecies(entry, opener) {
   dlg.querySelector('[data-cmp]').addEventListener('click', () => {
     setCompare(entry);
     dlg.close();
-    const box = document.getElementById('pdx-cmp');
-    if (box) box.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
   const mon = dlg.querySelector('.mon');
   const openEvo = node => { const e = evoEntry(pd, node.dataset.evoId); if (e) openSpecies(e, opener); };
@@ -414,23 +467,27 @@ async function openSpecies(entry, opener) {
     else if (e.key === 'ArrowRight') go(1);
   };
   stickyName(dlg);
-  if (wasOpen) { dlg.scrollTop = 0; return; }
+  const place = () => { tabs.style.top = `${dlg.querySelector('.sheet-bar').offsetHeight - 16}px`; };
+  if (wasOpen) { place(); dlg.scrollTop = 0; return; }
   showSheet(dlg, opener);
+  place();
 }
 
 // Uso no competitivo (estatísticas do Smogon, as mesmas do montador), num pacote à parte
 let usageMod = null;
 async function fillUsage(dlg, entry, pd) {
   const slot = dlg.querySelector('[data-usage]');
-  if (!slot) return;
+  if (!slot) return false;
   try {
     const U = await (usageMod ||= import('./pokedex/usage.js').catch(e => { usageMod = null; throw e; }));
     const idx = await U.loadSmogon(state.data.game);
-    if (!slot.isConnected) return;
+    if (!slot.isConnected) return false;
     slot.innerHTML = U.usageHtml(idx, entry, T, pd.entries);
+    return !!slot.innerHTML;
   } catch (e) {
     console.error(e);
     slot.innerHTML = '';
+    return false;
   }
 }
 
@@ -897,13 +954,19 @@ async function fillDex(dlg, m) {
   if (!slot) return;
   try {
     const key = dexKey();
-    if (!dexLoaded.has(key)) slot.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
+    // Detalhe da espécie (Pokédex): a evolução fica no Resumo (`[data-evo]`) e os golpes na aba deles
+    const evoSlot = dlg.querySelector('[data-evo]');
+    if (!dexLoaded.has(key)) for (const x of [slot, evoSlot]) if (x) x.innerHTML = `<p class="hint">${t('Carregando evolução e golpes…')}</p>`;
     const D = await loadDex();
     dexLoaded.add(key);
     if (!slot.isConnected) return; // o detalhe já foi trocado
-    slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
+    if (evoSlot) {
+      evoSlot.innerHTML = D.ui.evolutionHtml(m, D.dex, T);
+      slot.innerHTML = D.ui.learnsetHtml(m, D.dex, T) || `<p class="hint">${t('Sem lista de golpes para esta espécie.')}</p>`;
+      slot.querySelector('details')?.setAttribute('open', ''); // na aba própria, a primeira lista já aberta
+    } else slot.innerHTML = D.ui.evolutionHtml(m, D.dex, T) + D.ui.learnsetHtml(m, D.dex, T);
     // Linha mais larga que a tela (rola para o lado): começa mostrando o Pokémon aberto, não sempre o primeiro estágio
-    const evo = slot.querySelector('.evo'), here = evo && evo.querySelector('.here');
+    const evo = dlg.querySelector('.evo'), here = evo && evo.querySelector('.here');
     if (here && evo.scrollWidth > evo.clientWidth) evo.scrollLeft = here.getBoundingClientRect().left - evo.getBoundingClientRect().left - (evo.clientWidth - here.offsetWidth) / 2;
   } catch (e) {
     console.error(e);

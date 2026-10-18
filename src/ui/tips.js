@@ -109,6 +109,9 @@ async function show(el, ctx) {
         info.power ? `${t('Poder')} ${info.power}` : '', info.accuracy ? `${t('Precisão')} ${info.accuracy}%` : ''].filter(Boolean).join(' · ');
     }
     res = id !== null ? moveText(id, ctx) : Promise.resolve({ text: null });
+  } else if (kind === 'i') {
+    // Explicação de um bloco (infoBtn em render.js): o texto vem pronto no próprio botão
+    res = Promise.resolve({ text: el.dataset.info || null });
   } else {
     res = abilityText(key, ctx);
   }

@@ -3,7 +3,7 @@
 // Pokémon, a evolução e os golpes). Filtro por golpe: os golpes por nível, tutor/TM e ovo do mesmo `dex` do detalhe.
 
 import { t, getLang } from '../i18n.js';
-import { esc, monHeader, matchupTable, tipBtn, muLabel } from '../ui/render.js';
+import { esc, monHeader, matchupTable, tipBtn, muLabel, infoBtn } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { BASE_ORDER } from '../parser/stats.js';
@@ -172,15 +172,21 @@ export function filterEntries(entries, f, ctx = {}) {
 const numLabel = e => (e.nat != null ? '#' + String(e.nat).padStart(4, '0') : '');
 const formLabel = sp => (sp.form ? ` <span class="form">(${esc(sp.form === '?' ? t('forma ?') : formName(sp.form))})</span>` : '');
 
-/** Uma linha da lista (o mesmo estilo dos resultados da Buscar). */
-export function entryRow(e, i, caught) {
+/**
+ * Uma linha da lista (o mesmo estilo dos resultados da Buscar). `prev` = a entrada da linha de cima: a forma (Mega,
+ * regional…) logo depois da própria espécie entra recuada, só com o nome da forma.
+ */
+export function entryRow(e, i, caught, prev = null) {
   const sp = e.species;
   const got = caught && e.nat != null && caught.has(e.nat);
-  return `<li><button class="result pdx-row" type="button" data-pdx="${i}">
+  const sub = !!(sp.form && prev && prev.nat != null && prev.nat === e.nat);
+  const name = sub ? `<b><span class="sr">${esc(sp.name)} </span>${esc(sp.form === '?' ? t('forma ?') : formName(sp.form))}</b>`
+    : `<b>${esc(sp.name)}</b>${formLabel(sp)}`;
+  return `<li><button class="result pdx-row${sub ? ' pdx-form' : ''}" type="button" data-pdx="${i}">
     <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
-    <span class="r-main"><b>${esc(sp.name)}</b>${formLabel(sp)}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">✓<span class="sr"> ${t('capturado')}</span></span>` : ''}
-      <span class="r-sub pdx-sub">${numLabel(e) ? `<span>${numLabel(e)}</span>` : ''}${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span></span>
-    <span class="r-lv pdx-bst" title="${esc(t('Total dos stats base'))}">${bst(sp)}<small>BST</small></span>
+    <span class="r-main">${!sub && numLabel(e) ? `<span class="pdx-no">${numLabel(e)}</span>` : ''}${name}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">✓<span class="sr"> ${t('capturado')}</span></span>` : ''}
+      <span class="r-sub pdx-sub">${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span></span>
+    <span class="pdx-bst" title="${esc(t('Total dos stats base'))}">${bst(sp)}<small>BST</small></span>
   </button></li>`;
 }
 
@@ -198,12 +204,12 @@ function abilitiesHtml(sp) {
   const row = (k, v) => `<div><dt>${k}</dt><dd>${tipBtn('a', v, `<b>${esc(v)}</b>`)}</dd></div>`;
   const list = [a1 && row(t('Habilidade 1'), a1), a2 && a2 !== a1 && row(t('Habilidade 2'), a2), ha && ha !== a1 && ha !== a2 && row(t('Oculta'), ha)].filter(Boolean).join('');
   if (!list) return '';
-  return `<section class="dsec"><h3>${t('Habilidades')}</h3><dl class="facts-grid">${list}</dl>
-    ${sp.abilitiesProbable ? `<p class="hint">${t('Habilidades dos jogos mais recentes (PokeAPI); podem ser diferentes neste jogo.')}</p>` : ''}</section>`;
+  const about = sp.abilitiesProbable ? ` ${infoBtn(t('Habilidades'), t('Habilidades dos jogos mais recentes (PokeAPI); podem ser diferentes neste jogo.'))}` : '';
+  return `<section class="dsec"><h3>${t('Habilidades')}${about}</h3><dl class="facts-grid">${list}</dl></section>`;
 }
 
-/** Geração, gênero e se é lendário/mítico ou mega. */
-function infoHtml(e) {
+/** Capturado, geração, gênero, categoria e total dos stats: etiquetas embaixo do nome (antes, uma seção "Dados"). */
+function chipsHtml(e, caught) {
   const sp = e.species;
   const g = genOf(e.nat);
   const f = femalePct(sp);
@@ -211,12 +217,15 @@ function infoHtml(e) {
   const gender = f === undefined ? null : f === null ? t('Sem gênero') : f === 0 ? t('Só machos') : f === 100 ? t('Só fêmeas')
     : `♂ ${fmt(Math.round((100 - f) * 10) / 10)}% · ♀ ${fmt(f)}%`;
   const kind = isLegendary(sp) ? t('Lendário ou mítico') : isMega(sp) ? t('Megaevolução') : isRegional(sp) ? t('Forma regional') : null;
-  const row = (k, v) => `<div><dt>${k}</dt><dd><b>${v}</b></dd></div>`;
-  return `<section class="dsec"><h3>${t('Dados')}</h3><dl class="facts-grid">
-    ${row(t('Geração'), g ? t('Geração {n}', { n: g }) : t('Própria do jogo'))}
-    ${gender ? row(t('Gênero'), esc(gender)) : ''}
-    ${kind ? row(t('Categoria'), kind) : ''}
-  </dl></section>`;
+  const chip = (v, title = '', cls = '') => `<li class="pdx-chip${cls}"${title ? ` title="${esc(title)}"` : ''}>${v}</li>`;
+  const got = caught && e.nat != null ? caught.has(e.nat) : null;
+  return `<ul class="pdx-chips">
+    ${got == null ? '' : got ? chip(`✓ ${t('Capturado')}`, t('Capturado na Pokédex do save'), ' on') : chip(t('Não capturado'), t('Ainda não capturado na Pokédex do save'))}
+    ${chip(g ? t('Geração {n}', { n: g }) : t('Própria do jogo'))}
+    ${gender ? chip(esc(gender), t('Gênero')) : ''}
+    ${kind ? chip(kind) : ''}
+    ${chip(`BST ${bst(sp)}`, t('Total dos stats base'))}
+  </ul>`;
 }
 
 /** Os Pokémon do save desta espécie (tocar abre o detalhe deles). */
@@ -246,37 +255,44 @@ export function matchupHtml(e, T, ab = null) {
   return table.replace('</h3>', `</h3>${chips}`);
 }
 
+/** As abas do detalhe da espécie (a do competitivo só aparece quando há dados; a de onde encontrar, só no Quetzal). */
+export const TABS = ['sum', 'wild', 'moves', 'usage'];
+
 /**
- * Detalhe de uma espécie (na janela do detalhe; onde encontrar entra no `[data-wild]`, o uso no competitivo no
- * `[data-usage]` e a evolução e os golpes no `[data-dex]` depois).
- * @param {{ caught?: Set<number>|null, owned?: Array, nav?: { i: number, n: number }|null }} opts `nav`: posição na
- *   lista filtrada (anterior/próxima)
+ * Detalhe de uma espécie (na janela do detalhe), em abas: Resumo (evolução, habilidades, stats, dano recebido, os do
+ * save), Onde encontrar (`[data-wild]`), Golpes (`[data-dex]`) e Competitivo (`[data-usage]`). A evolução entra no
+ * `[data-evo]` e os golpes no `[data-dex]` depois, carregados à parte.
+ * @param {{ caught?: Set<number>|null, owned?: Array, nav?: { i: number, n: number }|null, tab?: string }} opts `nav`:
+ *   posição na lista filtrada (anterior/próxima); `tab`: a aba aberta (a última escolhida)
  */
-export function speciesDetail(e, T, { caught = null, owned = [], nav = null } = {}) {
+export function speciesDetail(e, T, { caught = null, owned = [], nav = null, tab = 'sum' } = {}) {
   const sp = e.species;
   const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
-  const got = caught && e.nat != null ? (caught.has(e.nat) ? t('Capturado na Pokédex do save') : t('Ainda não capturado na Pokédex do save')) : '';
-  const arrows = nav && nav.n > 1 ? `<button class="btn btn-ghost btn-icon" type="button" data-nav="-1" aria-label="${t('Anterior')}"${nav.i <= 0 ? ' disabled' : ''}>‹</button>
-    <button class="btn btn-ghost btn-icon" type="button" data-nav="1" aria-label="${t('Próxima')}"${nav.i >= nav.n - 1 ? ' disabled' : ''}>›</button>` : '';
-  return `<div class="sheet-bar${tc}">
+  const arrows = nav && nav.n > 1 ? `<button class="btn btn-ghost btn-icon pdx-arrow" type="button" data-nav="-1" aria-label="${t('Anterior')}"${nav.i <= 0 ? ' disabled' : ''}>‹</button>
+    <span class="pdx-pos" title="${esc(t('{i} de {n} na lista', { i: nav.i + 1, n: nav.n }))}">${nav.i + 1}/${nav.n}</span>
+    <button class="btn btn-ghost btn-icon pdx-arrow" type="button" data-nav="1" aria-label="${t('Próxima')}"${nav.i >= nav.n - 1 ? ' disabled' : ''}>›</button>` : '';
+  const tabs = [['sum', t('Resumo')], T.quetzal && ['wild', t('Onde encontrar')], ['moves', t('Golpes')], ['usage', t('Competitivo')]].filter(Boolean);
+  const cur = tabs.some(([k]) => k === tab) && tab !== 'usage' ? tab : 'sum'; // o competitivo só depois de saber se há dados
+  const tabBtn = ([k, label]) => `<button type="button" role="tab" class="pdx-tab" data-ptab="${k}" id="pdx-tab-${k}" aria-controls="pdx-pane-${k}" aria-selected="${k === cur}"${k === 'usage' ? ' hidden' : ''}>${label}</button>`;
+  const pane = (k, html) => `<div class="pdx-pane" role="tabpanel" id="pdx-pane-${k}" aria-labelledby="pdx-tab-${k}" data-pane="${k}"${k === cur ? '' : ' hidden'}>${html}</div>`;
+  return `<div class="sheet-bar pdx-sheet-bar${tc}">
     <b class="sheet-bar-name" aria-hidden="true">${esc(sp.name)}</b>
     ${arrows}
     <button class="btn btn-ghost btn-icon pdx-vs" type="button" data-cmp aria-label="${t('Comparar com outra espécie')}" title="${t('Comparar com outra espécie')}">VS</button>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
   </div>
-  <div class="mon">
+  <div class="mon pdx-detail">
     <div class="mon-hero${tc}">
-      ${monHeader(speciesMon(e), 'h2', ' id="detail-title"')}
-      ${got ? `<p class="mon-sub">${got}</p>` : ''}
-      ${nav && nav.n > 1 ? `<p class="mon-sub pdx-pos">${t('{i} de {n} na lista', { i: nav.i + 1, n: nav.n })}</p>` : ''}
+      ${monHeader(speciesMon(e), 'h2', ' id="detail-title"').replace(/<\/div>\s*<\/div>$/, `${chipsHtml(e, caught)}</div></div>`)}
     </div>
-    <div class="mon-cols">
-      <div>${abilitiesHtml(sp)}${infoHtml(e)}${baseStatsHtml(sp)}</div>
-      <div><div data-mu>${matchupHtml(e, T)}</div>${ownedHtml(owned)}</div>
-    </div>
-    ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}
-    <div class="usage-slot" data-usage></div>
-    <div class="dex-slot" data-dex></div>
+    <div class="bt-tabs pdx-tabs" role="tablist" aria-label="${esc(t('Partes do detalhe'))}">${tabs.map(tabBtn).join('')}</div>
+    ${pane('sum', `<div class="pdx-sum">
+      <div class="pdx-l">${abilitiesHtml(sp)}${baseStatsHtml(sp)}</div>
+      <div class="pdx-r"><div class="evo-slot" data-evo></div><div data-mu>${matchupHtml(e, T)}</div>${ownedHtml(owned)}</div>
+    </div>`)}
+    ${T.quetzal ? pane('wild', '<div class="wild-slot" data-wild></div>') : ''}
+    ${pane('moves', '<div class="dex-slot" data-dex></div>')}
+    ${pane('usage', '<div class="usage-slot" data-usage></div>')}
   </div>`;
 }
 
@@ -302,15 +318,19 @@ export function compareHtml(a, b, T) {
   };
   const va = Object.fromEntries(BASE_ORDER.map((k, i) => [k, a.species.baseStats[i]]));
   const vb = Object.fromEntries(BASE_ORDER.map((k, i) => [k, b.species.baseStats[i]]));
-  const cell = (x, y) => `<td class="num${x > y ? ' cmp-hi' : ''}">${x}</td>`;
+  const cell = (x, y) => `<td class="num${x > y ? ' cmp-hi' : ''}">${x}${x > y ? `<span class="sr"> (${t('maior')})</span>` : ''}</td>`;
   const bar = (x, side) => `<td class="cmp-bar ${side}"><div class="bar"><i style="width:${Math.round(Math.min(1, x / 255) * 100)}%;--h:${Math.round(Math.min(1, x / 150) * 120)}"></i></div></td>`;
   const stats = SHOWDOWN_ORDER.map(k => `<tr>${bar(va[k], 'l')}${cell(va[k], vb[k])}<th scope="row">${STAT_LABEL[k]}</th>${cell(vb[k], va[k])}${bar(vb[k], 'r')}</tr>`).join('')
     + `<tr class="pdx-total"><td></td>${cell(bst(a.species), bst(b.species))}<th scope="row">${t('Total')}</th>${cell(bst(b.species), bst(a.species))}<td></td></tr>`;
   const abil = e => [...new Set(e.species.abilities.filter(Boolean))].map(x => tipBtn('a', x, esc(x))).join('<br>') || '—';
   const ma = typeMults(a.species, T), mb = typeMults(b.species, T);
   const mu = x => (x == null ? '<span class="cmp-n">1×</span>' : `<span class="mu-x ${x > 1 ? 'weak' : x > 0 ? 'resist' : 'immune'}">${muLabel(x)}</span>`);
-  const rows = T.types.filter(ty => ty && ty !== 'stellar' && (ma.has(ty) || mb.has(ty)))
-    .map(ty => `<tr><td>${mu(ma.get(ty))}</td><th scope="row"><span class="type t-${esc(ty)}">${esc(ty)}</span></th><td>${mu(mb.get(ty))}</td></tr>`).join('');
+  // O que muda entre as duas primeiro; o que é igual nas duas fica recolhido
+  const row = ty => `<tr><td>${mu(ma.get(ty))}</td><th scope="row"><span class="type t-${esc(ty)}">${esc(ty)}</span></th><td>${mu(mb.get(ty))}</td></tr>`;
+  const all = T.types.filter(ty => ty && ty !== 'stellar' && (ma.has(ty) || mb.has(ty)));
+  const diff = all.filter(ty => ma.get(ty) !== mb.get(ty)), same = all.filter(ty => ma.get(ty) === mb.get(ty));
+  const rows = diff.length ? `<table class="cmp-mu"><tbody>${diff.map(row).join('')}</tbody></table>` : `<p class="hint">${t('Recebem o mesmo dano de todos os tipos.')}</p>`;
+  const rest = same.length ? `<details class="cmp-same"><summary>${t('Iguais nas duas ({n})', { n: same.length })}</summary><table class="cmp-mu"><tbody>${same.map(row).join('')}</tbody></table></details>` : '';
   return `<div class="sheet-bar cmp-bar">
     <b class="sheet-bar-name" aria-hidden="true">${esc(a.species.name)} × ${esc(b.species.name)}</b>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
@@ -320,8 +340,7 @@ export function compareHtml(a, b, T) {
     <div class="cmp-heads">${head(a, 0)}<span class="cmp-x" aria-hidden="true">VS</span>${head(b, 1)}</div>
     <section class="dsec"><h3>${t('Stats base')}</h3><table class="stats cmp-stats"><tbody>${stats}</tbody></table></section>
     <section class="dsec"><h3>${t('Habilidades')}</h3><div class="cmp-abs"><p>${abil(a)}</p><p>${abil(b)}</p></div></section>
-    <section class="dsec"><h3>${t('Dano recebido')}</h3><table class="cmp-mu"><tbody>${rows}</tbody></table>
-      <p class="hint">${t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.')}</p></section>
+    <section class="dsec"><h3>${t('Dano recebido')} ${infoBtn(t('Dano recebido'), t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.'))}</h3>${rows}${rest}</section>
     <p class="hint">${t('Toque no nome de um dos dois para abrir o detalhe.')}</p>
   </div>`;
 }

@@ -603,26 +603,29 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .pdx-bar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
 .pdx-bar select { font-size: .85rem; padding: 6px; min-width: 0; }
 .pdx-bar .btn { min-height: 40px; }
-.pdx-bar .btn[aria-expanded="true"] { background: var(--win-2); box-shadow: inset 0 -3px 0 var(--hi); }
+/* Filtros abertos = estado ligado (verde, como o cartão da ferramenta aberta) */
+.pdx-bar .btn[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+.pdx-bar .btn[aria-expanded="true"] .pdx-on { color: inherit; }
 .pdx-filters { display: grid; gap: 6px; box-shadow: inset 0 0 0 3px var(--hi); padding: 10px; }
 .pdx-filters[hidden] { display: none; }
 .pdx-filters .search-row .pdx-wide { grid-column: 1 / -1; }
 .pdx-filters > .btn { justify-self: start; }
 /* Comparar: aviso em cima da lista enquanto a segunda espécie não é escolhida */
-.pdx-cmp { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--edge); font-size: .85rem; }
+/* Aviso do Comparar: preso embaixo da tela (acima da barra do app no celular) enquanto a lista rola */
+.pdx-cmp { position: sticky; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--edge), 0 4px 0 var(--hi); font-size: .85rem; }
+@media (min-width: 1000px) { .pdx-cmp { bottom: 8px; } }
 .pdx-cmp.hidden { display: none; }
 .pdx-vs { font: .7rem var(--pixel); }
-.pdx-pos { font-size: .78rem; }
 .pdx-on { color: var(--accent); margin-left: 4px; }
 .pdx-min { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 6px; margin: 6px 0; font-size: .85rem; }
 .pdx-min select, .pdx-min input { font-size: .85rem; padding: 6px; min-width: 0; }
 .pdx-got { color: var(--accent); font-weight: 700; }
 /* Tipos em chips, como no resto do app, e o total dos stats com rótulo */
 .pdx-sub { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.pdx-sub .type { font-size: .58rem; padding: 2px 4px 1px; }
-.pdx-bst { display: grid; justify-items: end; line-height: 1.1; }
-.pdx-bst small { font-size: .55rem; color: var(--muted); }
-.pdx-stats .pdx-total th, .pdx-stats .pdx-total td { border-top: 2px solid var(--hi); padding-top: 5px; color: var(--accent); }
+.pdx-sub .type { font-size: .6rem; padding: 2px 4px 1px; }
+.pdx-bst { display: grid; justify-items: end; line-height: 1.1; font: .75rem var(--pixel); color: var(--ink); }
+.pdx-bst small { font-size: .6rem; color: var(--muted); }
+.pdx-stats .pdx-total th, .pdx-stats .pdx-total td { border-top: 2px solid var(--hi); padding-top: 5px; }
 .pdx-owned { margin-top: 0; }
 /* Pokédex: onde encontrar (mapa da região do jogo, com os lugares marcados) */
 .wild-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
@@ -894,7 +897,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .ch-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 6px; }
 .ch-mon {
   width: 100%; min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 4px 8px 4px 2px; text-align: left;
-  font: inherit; color: var(--ink); background: var(--win-2); border: 0; cursor: pointer; box-shadow: inset 0 0 0 2px var(--hi);
+  font: inherit; color: var(--ink); background: var(--win-2); border: 0; cursor: pointer; box-shadow: inset 0 0 0 2px var(--hi); text-decoration: none;
 }
 .ch-mon img { width: 56px; height: 46px; flex: none; image-rendering: pixelated; object-fit: contain; }
 .ch-mon > span { flex: 1; min-width: 0; display: grid; font-size: .8rem; line-height: 1.3; }
@@ -1133,13 +1136,13 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .cmp-head b { font: .78rem var(--pixel); text-decoration: underline dotted; text-underline-offset: 3px; }
 .cmp-head small { font-size: .75rem; color: var(--muted); }
 .cmp-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
-.cmp-types .type { font-size: .58rem; padding: 2px 4px 1px; }
+.cmp-types .type { font-size: .6rem; padding: 2px 4px 1px; }
 .cmp-bar .sheet-bar-name { visibility: visible; }
 .cmp-x { font: .8rem var(--pixel); color: var(--muted); }
 .cmp-stats { width: 100%; table-layout: fixed; }
 .cmp-stats th { width: 44px; text-align: center; }
 .cmp-stats td.num { width: 40px; text-align: center; }
-.cmp-stats .cmp-hi { color: var(--accent); font-weight: 700; }
+.cmp-stats .cmp-hi { font-weight: 700; text-decoration: underline 3px var(--edge); text-underline-offset: 4px; } /* o maior em destaque sem o verde, que é de estado ligado */
 .cmp-bar.l .bar { transform: scaleX(-1); }
 .cmp-abs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; font-size: .85rem; }
 .cmp-abs p { margin: 0; }
@@ -1148,4 +1151,99 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .cmp-mu th { text-align: center; }
 .cmp-mu .mu-x { min-width: 44px; }
 .cmp-n { color: var(--muted); font-size: .75rem; }
-@media (min-width: 640px) { .pdx-bar { grid-template-columns: auto minmax(0, 360px); } }
+@media (min-width: 640px) { .pdx-bar { grid-template-columns: auto minmax(0, 360px); justify-content: space-between; } }
+
+/* Pokédex (revisão de design, 2026-10): lista mais densa, filtros ligados à vista, detalhe em abas */
+.pdx-row { min-height: 46px; grid-template-columns: 40px 1fr auto; gap: 8px; padding: 1px 10px 1px 2px; }
+.pdx-row img { width: 40px; height: 34px; align-self: center; }
+.pdx-row img:not(.ico) { padding: 2px; box-sizing: border-box; } /* sprite grande de reserva: do tamanho do ícone */
+.pdx-row .r-main b { font-weight: 650; }
+.pdx-no { margin-right: 6px; font: .6rem var(--pixel); color: var(--muted); }
+.pdx-form { padding-left: 24px; grid-template-columns: 34px 1fr auto; background: var(--win-2); }
+.pdx-form img { width: 34px; height: 28px; }
+.pdx-form .r-main b { font-weight: 500; }
+.pdx-count { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.pdx-active { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pdx-active:empty, .pdx-active[hidden] { display: none; }
+.pdx-fchip {
+  min-height: 32px; padding: 3px 9px; border: 0; background: var(--win-2); color: var(--ink); font: .8rem var(--body); cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--edge);
+}
+.pdx-fchip span { margin-left: 2px; color: var(--muted); }
+.pdx-fclear { font: .62rem var(--pixel); text-transform: uppercase; box-shadow: inset 0 0 0 2px var(--hi); }
+@media (min-width: 960px) {
+  .pdx-filters .search-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pdx-filters .search-row .pdx-wide { grid-column: span 2; }
+  .pdx-filters .search-row select:last-of-type:nth-of-type(odd) { grid-column: auto; }
+  .pdx-min { grid-template-columns: auto minmax(0, 200px) minmax(0, 200px); justify-content: start; }
+}
+
+/* Botão ⓘ: a explicação do bloco no balão (ui/tips.js) */
+.info-btn {
+  display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; padding: 0; border: 0; vertical-align: middle;
+  background: var(--win); color: var(--muted); font: italic 700 .85rem/1 Georgia, "Times New Roman", serif; text-transform: none; cursor: pointer; box-shadow: inset 0 0 0 2px var(--hi); text-decoration: none;
+}
+.info-btn[aria-expanded="true"] { background: var(--edge); color: var(--win); }
+.dsec > h3 > .learn-count { margin-left: 0; }
+.mu-note { font-size: .8rem; margin-top: 4px; }
+
+/* Detalhe da espécie: barra com ‹ n/total ›, etiquetas embaixo do nome, abas presas embaixo da barra */
+.pdx-sheet-bar .btn-icon { width: 40px; }
+.pdx-arrow { font: 1.6rem/1 var(--body); }
+.pdx-pos { padding: 0 2px; font: .62rem var(--pixel); color: var(--muted); white-space: nowrap; }
+.pdx-chips { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.pdx-chip { padding: 1px 7px; font-size: .78rem; white-space: nowrap; background: var(--win); box-shadow: inset 0 0 0 2px var(--hi); }
+.pdx-chip.on { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); font-weight: 700; }
+.pdx-detail .mon-hero { padding-bottom: 10px; }
+/* Altura fixa: trocar de aba não faz a janela pular de lugar (centralizada, ela mudava de altura com o conteúdo) */
+.sheet:has(.pdx-detail) { height: calc(100dvh - 24px); }
+.bt-tabs.pdx-tabs { margin: 10px 0 12px; }
+.bt-tabs.pdx-tabs { grid-auto-columns: auto; }
+.pdx-tabs button { white-space: normal; line-height: 1.25; padding: 6px 8px; overflow: visible; }
+.pdx-tabs button[hidden] { display: none; }
+.pdx-pane[hidden] { display: none; }
+.pdx-sum, .pdx-l, .pdx-r { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.pdx-pane .dex-slot > .dsec.fold:first-child > summary { margin-top: 0; }
+@media (max-width: 959px) {
+  /* Celular: uma coluna, a evolução primeiro */
+  .pdx-l, .pdx-r { display: contents; }
+  .pdx-r .evo-slot { order: -1; }
+}
+@media (min-width: 960px) {
+  .sheet:has(.pdx-detail) { width: min(960px, calc(100vw - 48px)); }
+  .pdx-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; }
+  .pdx-tabs { max-width: 560px; }
+  /* Onde encontrar: o mapa à esquerda e os lugares à direita (tocar num lugar e ver no mapa sem rolar) */
+  .pdx-pane .wild-region:not([hidden]) { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .pdx-pane .wild-region .wild-map { margin: 0; position: sticky; top: 112px; }
+  .pdx-pane .wild-region .wild-list { grid-template-columns: 1fr; }
+  .pdx-pane .wild-region .wild-req { grid-column: 1 / -1; }
+}
+@media (max-width: 420px) {
+  .pdx-sheet-bar { gap: 3px; padding-left: 12px; }
+  .pdx-sheet-bar .btn-icon { width: 36px; }
+  .pdx-sheet-bar .sheet-bar-name { font-size: .78rem; }
+}
+
+/* Linha evolutiva: no celular, 3 estágios cabem sem rolar (o nome quebra em vez de cortar); 3+ ramos em grade */
+.evo-fan { grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: center; gap: 6px; }
+.evo-trunk { display: flex; align-items: center; gap: 4px; }
+.evo-down { transform: rotate(90deg); }
+.evo-branches { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.evo-branch { display: grid; }
+.evo-branch.wide { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 4px; }
+.evo-branch > .evo-node { height: 100%; }
+.evo-fan .evo-node b { width: auto; min-width: 0; }
+@media (max-width: 480px) {
+  .evo { gap: 6px 2px; padding: 6px; }
+  .evo-node { min-height: 78px; padding: 4px 3px; }
+  .evo-node b { width: auto; min-width: 0; max-width: 92px; font-size: .62rem; overflow-wrap: normal; }
+  .evo-node small { max-width: 96px; font-size: .68rem; }
+  .evo-arrow { border-width: 5px; border-left-width: 7px; border-right-width: 0; }
+}
+
+/* Comparar: o igual nas duas recolhido */
+.cmp-same { margin-top: 6px; }
+.cmp-same > summary::before { content: '▸ '; }
+.cmp-same[open] > summary::before { content: '▾ '; }
+.cmp-same > summary { list-style: none; display: flex; align-items: center; min-height: 36px; font: .68rem var(--pixel); text-transform: uppercase; color: var(--muted); }

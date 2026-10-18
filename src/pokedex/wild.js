@@ -2,7 +2,7 @@
 // no mapa da região como o jogo desenha. Pacote carregado só ao abrir o detalhe de uma espécie de um save do Quetzal.
 
 import { t, getLang } from '../i18n.js';
-import { esc } from '../ui/render.js';
+import { esc, infoBtn } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import W from '../data/quetzal-wild.json';
 import LR from '../data/quetzal-legend-rules.json';
@@ -169,8 +169,8 @@ export function wildHtml(id, Q, { region = null, nameOf = null, caught = null } 
   const first = regions.includes(region) ? region : regions[0];
   const tabs = regions.length > 1 ? `<div class="wild-tabs" role="group" aria-label="${esc(t('Região'))}">${regions.map(r => `<button type="button" class="btn btn-ghost" data-region="${r}" aria-pressed="${r === first}">${esc(regionName(r))} <span class="wild-n">${places.filter(p => p.region === r).length}</span></button>`).join('')}</div>` : '';
   const body = regions.map(r => regionHtml(r, places.filter(p => p.region === r), r === first, note ? '' : reqHtml(id, r, Q))).join('');
-  return `<section class="dsec wild"><h3>${t('Onde encontrar')} <span class="learn-count">${places.length}</span></h3>${note}${once}${tabs}${body}
-    <p class="hint">${t('Lido da ROM do Quetzal. Chances pelas regras do motor (pokeemerald); a mesma espécie em vários andares de um lugar mostra a maior chance. Toque num lugar para ver no mapa.')}</p></section>`;
+  const about = t('Lido da ROM do Quetzal. Chances pelas regras do motor (pokeemerald); a mesma espécie em vários andares de um lugar mostra a maior chance. Toque num lugar para ver no mapa.');
+  return `<section class="dsec wild"><h3>${t('Onde encontrar')} <span class="learn-count">${places.length}</span> ${infoBtn(t('Onde encontrar'), about)}</h3>${note}${once}${tabs}${body}</section>`;
 }
 
 /** Abas das regiões e o toque num lugar (destaca no mapa). */

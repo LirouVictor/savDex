@@ -45,6 +45,10 @@ const CATEGORY = ['Físico', 'Especial', 'Status'];
 /** Nome de golpe ou habilidade que mostra a descrição ao tocar (ui/tips.js). kind 'm' (id ou nome) ou 'a' (nome). */
 export const tipBtn = (kind, key, label) =>
   `<button type="button" class="tip-btn" data-tip="${kind}:${esc(key)}" aria-expanded="false">${label}</button>`;
+/** Botão ⓘ ao lado de um título: a explicação do bloco aparece no mesmo balão dos golpes (ui/tips.js), em vez de um
+ * parágrafo sempre à vista. */
+export const infoBtn = (title, text) =>
+  `<button type="button" class="tip-btn info-btn" data-tip="i:${esc(title)}" data-info="${esc(text)}" aria-expanded="false" aria-label="${esc(t('Sobre: {s}', { s: title }))}">i</button>`;
 export const categoryName = c => (c !== null && c !== undefined ? t(CATEGORY[c]) : '');
 
 function movesList(moves) {
@@ -276,7 +280,8 @@ export function matchupTable(m, T, ability = null) {
     .join('');
   if (!rows) return '';
   const hint = ab ? t('Com a habilidade {a}; não considera item.', { a: ab }) : t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.');
-  return `<section class="dsec mu-sec"><h3>${t('Dano recebido')}</h3>${rows}<p class="hint">${esc(hint)}</p></section>`;
+  const short = ab ? t('Com a habilidade {a}.', { a: ab }) : t('Só pelos tipos.');
+  return `<section class="dsec mu-sec"><h3>${t('Dano recebido')} ${infoBtn(t('Dano recebido'), hint)}</h3>${rows}<p class="hint mu-note">${esc(short)}</p></section>`;
 }
 
 /** Natureza, item, habilidade, bola e Hidden Power numa grade de duas colunas. */
@@ -512,15 +517,15 @@ export function pokedexWin(d, T) {
         <button class="btn btn-ghost btn-small" type="button" id="pdx-clear">${t('Limpar filtros')}</button>
       </div>
     </div>
-    <div class="pdx-cmp hidden" id="pdx-cmp" role="status"></div>
-    <p class="hint" id="pdx-note"></p>
-    <p class="hint" id="pdx-count" role="status"></p>
+    <div class="pdx-active" id="pdx-active" aria-label="${t('Filtros ligados')}"></div>
+    <p class="hint pdx-count"><span id="pdx-count" role="status"></span> <span id="pdx-note"></span></p>
     <ul class="results" id="pdx-results"></ul>
     <nav class="pager hidden" id="pdx-pager" aria-label="${t('Páginas da Pokédex')}">
       <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
       <span class="page-info" id="pdx-page"></span>
       <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
     </nav>
+    <div class="pdx-cmp hidden" id="pdx-cmp" role="status"></div>
   </details>`;
 }
 

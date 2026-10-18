@@ -6,6 +6,21 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-28',
+    pt: [
+      'Pokédex com visual novo: o detalhe da espécie fica em abas (Resumo, Onde encontrar, Golpes, Competitivo), com capturado, geração, gênero e o total dos stats em chips no topo e a posição na lista (6/1274) entre as setas.',
+      'A linha evolutiva cabe no celular; as que se dividem em muitas (Eevee, Applin) ficam numa grade embaixo da forma inicial.',
+      'As explicações longas ficam no botão “i” ao lado do título; os filtros ligados aparecem como etiquetas com ✕ acima da lista, e as formas ficam recuadas embaixo da espécie.',
+      'No computador, o detalhe usa duas colunas e o mapa do Onde encontrar fica ao lado da lista de lugares. Ao comparar, o aviso fica preso embaixo da tela e o dano recebido mostra primeiro o que muda.',
+    ],
+    en: [
+      'Refreshed Pokédex: species details are split into tabs (Summary, Where to find, Moves, Competitive), with caught, generation, gender and the base stat total as chips at the top and the position in the list (6/1274) between the arrows.',
+      'The evolution line fits on phones; lines with many branches (Eevee, Applin) show as a grid under the first stage.',
+      'Long explanations sit behind the “i” button next to the title; active filters show as tags with ✕ above the list, and forms are indented under their species.',
+      'On a computer, the details use two columns and the Where to find map sits beside the list of places. When comparing, the notice stays pinned at the bottom and damage taken shows what differs first.',
+    ],
+  },
+  {
     date: '2026-10-27',
     pt: [
       'Pokédex: os filtros ficam atrás do botão “Filtros” (no celular, a lista aparece logo embaixo da busca), com o número de filtros ligados no botão.',
