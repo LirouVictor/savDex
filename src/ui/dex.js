@@ -43,8 +43,40 @@ export function evoTree(chain) {
   return { cells: cells.sort((a, b) => a.row - b.row || a.depth - b.depth), rows: row, cols };
 }
 
+/**
+ * Linha com um ponto de 3+ ramos (Eevee, Tyrogue, Applin): o tronco até o ponto numa fileira e os ramos numa grade
+ * embaixo, em vez de uma fileira por ramo (a do Eevee media duas telas no celular). Cada ramo é uma linha reta (Dipplin →
+ * Hydrapple ocupa a fileira). @returns {{ trunk: Array, branches: Array<Array> }|null} null = a árvore de sempre
+ */
+export function evoFan(chain) {
+  const roots = chain.filter(n => !n[1] || !chain.some(o => o[0] === n[1]));
+  if (roots.length !== 1) return null;
+  const kids = id => chain.filter(n => n !== roots[0] && n[1] === id && n[0] !== id);
+  const trunk = [roots[0]];
+  for (let k = kids(roots[0][0]); k.length === 1 && trunk.length < chain.length; k = kids(trunk[trunk.length - 1][0])) trunk.push(k[0]);
+  const fork = kids(trunk[trunk.length - 1][0]);
+  if (fork.length < 3) return null;
+  const branches = [];
+  for (const c of fork) {
+    const line = [c];
+    for (let k = kids(c[0]); k.length && line.length < chain.length; k = kids(line[line.length - 1][0])) {
+      if (k.length > 1) return null; // ramo que se divide de novo: a árvore de sempre
+      line.push(k[0]);
+    }
+    branches.push(line);
+  }
+  return { trunk, branches };
+}
+
 /** A árvore em grade (colunas: estágio, seta, estágio…); `node(n)` devolve o HTML de um Pokémon. */
 export function evoGridHtml(chain, node) {
+  const fan = evoFan(chain);
+  if (fan) {
+    const arrow = '<span class="evo-arrow" aria-hidden="true"></span>';
+    const line = ns => ns.map(node).join(arrow);
+    return `<div class="evo evo-fan"><div class="evo-trunk">${line(fan.trunk)}</div><span class="evo-arrow evo-down" aria-hidden="true"></span>
+      <div class="evo-branches">${fan.branches.map(b => `<div class="evo-branch${b.length > 1 ? ' wide' : ''}">${line(b)}</div>`).join('')}</div></div>`;
+  }
   const { cells, cols } = evoTree(chain);
   const tmpl = ['auto', ...Array(cols - 1).fill('18px auto')].join(' ');
   const at = c => `grid-row:${c.row + 1} / span ${c.span}`;

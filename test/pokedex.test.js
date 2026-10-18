@@ -255,7 +255,7 @@ suite('Pokédex: aparece no jogo, habilidade no dano, uso no competitivo e compa
     const html = usageHtml(idx, by('Pelipper'), TQ, entries);
     expect(html).toContain('Hurricane');
     expect(html).toContain('data-pdx-entry');
-    expect(usageHtml(idx, by('Browt'), TQ, entries)).toContain('Sem dados');
+    expect(usageHtml(idx, by('Browt'), TQ, entries)).toBe(''); // sem dados: a aba Competitivo não aparece
     expect(usageHtml(null, by('Pelipper'), TQ, entries)).toContain('Não consegui');
   });
 
@@ -286,5 +286,18 @@ suite('Pokédex em inglês', () => {
     expect(html).toContain('Safari Zone');
     expect(html).toContain('Learns the move');
     expect([...missing]).toEqual([]);
+  });
+});
+
+suite('Pokédex: linha evolutiva com 3+ ramos', () => {
+  it('Eevee: o tronco numa fileira e os ramos em grade; 2 ramos ficam na árvore de sempre', async () => {
+    const { evoFan, evoGridHtml } = await import('../src/ui/dex.js');
+    const eevee = [[133, null], [134, 133], [135, 133], [136, 133], [196, 133]];
+    expect(evoFan(eevee)).toEqual({ trunk: [[133, null]], branches: [[[134, 133]], [[135, 133]], [[136, 133]], [[196, 133]]] });
+    // Applin: Dipplin → Hydrapple ocupa a fileira
+    const applin = [[840, null], [841, 840], [842, 840], [1011, 840], [1019, 1011]];
+    expect(evoFan(applin).branches[2]).toEqual([[1011, 840], [1019, 1011]]);
+    expect(evoGridHtml(applin, n => `<div class="evo-node">${n[0]}</div>`)).toContain('evo-branch wide');
+    expect(evoFan([[60, null], [61, 60], [62, 61], [186, 61]])).toBeNull();
   });
 });

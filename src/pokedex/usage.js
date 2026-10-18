@@ -3,7 +3,7 @@
 // sets e os parceiros que mais aparecem com ela. Pacote carregado só ao abrir o detalhe de uma espécie.
 
 import { t } from '../i18n.js';
-import { esc, tipBtn } from '../ui/render.js';
+import { esc, tipBtn, infoBtn } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { loadSmogon, toId } from '../builder/smogon.js';
 
@@ -48,7 +48,7 @@ export function usageHtml(idx, e, T, entries) {
   if (!idx) return `<section class="dsec usage">${h}<p class="hint">${t('Não consegui carregar as estatísticas de uso (sem internet na primeira vez?).')}</p></section>`;
   const id = idx.find(e.species);
   const u = id && idx.usage(id);
-  if (!u) return `<section class="dsec usage">${h}<p class="hint">${t('Sem dados de uso no competitivo para esta espécie ({f}).', { f: idx.label })}</p></section>`;
+  if (!u) return ''; // sem dados: a aba Competitivo não aparece
   if (!names.has(T)) names.set(T, namer(T));
   const N = names.get(T);
   if (!entryMaps.has(entries)) entryMaps.set(entries, entryMap(idx, entries));
@@ -73,10 +73,10 @@ export function usageHtml(idx, e, T, entries) {
     }).join('');
 
   const head = t('{f}: em {p}% dos times (nº {r})', { f: u.format, p: pct(u.rate) || '<1', r: u.rank });
-  return `<section class="dsec usage">${h}
+  const about = t('Estatísticas de uso públicas do Smogon ({m}, corte 1500): a fração dos sets que leva cada golpe, item e habilidade, e quantas vezes mais que o acaso o parceiro aparece no mesmo time. Só o que existe neste jogo.', { m: u.month });
+  return `<section class="dsec usage"><h3>${t('Uso no competitivo')} ${infoBtn(t('Uso no competitivo'), about)}</h3>
     <p class="usage-head">${esc(head)}</p>
     <div class="usage-cols">${block(t('Golpes'), moves)}${block(t('Itens'), items)}${block(t('Habilidades'), abilities)}</div>
     ${mates ? `<h4>${t('Costuma jogar com')}</h4><ul class="usage-mates">${mates}</ul>` : ''}
-    <p class="hint">${esc(t('Estatísticas de uso públicas do Smogon ({m}, corte 1500): a fração dos sets que leva cada golpe, item e habilidade, e quantas vezes mais que o acaso o parceiro aparece no mesmo time. Só o que existe neste jogo.', { m: u.month }))}</p>
   </section>`;
 }

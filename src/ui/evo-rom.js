@@ -7,7 +7,7 @@
 // - SoulGold (src/data/soulgold.json → evolutions): enums EvolutionMethods (1–8) e EvolutionConditions (0–38)
 //   do pokeemerald-expansion atual; cada evolução tem um método e uma lista de condições.
 
-import { esc } from './render.js';
+import { esc, infoBtn } from './render.js';
 import { t } from '../i18n.js';
 import { SILHOUETTE, iconUrl, spriteUrl } from './sprites.js';
 import { makeResolver, moveInfo } from '../parser/describe.js';
@@ -258,7 +258,6 @@ function chainHtml(m, chain, species, grid, none, hint) {
       ${how ? `<small>${esc(how)}</small>` : ''}
     </div>`;
   });
-  return `<section class="dsec"><h3>${t('Evolução')}</h3>
-    ${html}
-    <p class="hint">${hint}</p></section>`;
+  return `<section class="dsec"><h3>${t('Evolução')} ${infoBtn(t('Evolução'), hint)}</h3>
+    ${html}</section>`;
 }
