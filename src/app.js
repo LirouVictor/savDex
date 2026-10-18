@@ -8,6 +8,7 @@ import { t, locale } from './i18n.js';
 import { download, downloadBlob, copyText } from './ui/io.js';
 import * as R from './ui/render.js';
 import { searchMons } from './search.js';
+import { makeResolver } from './parser/describe.js';
 import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.js';
 import { saveKey, signature, diffSaves, orderSaves, evolutionCheck } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
@@ -243,7 +244,12 @@ async function setupPokedex(out) {
     pager.querySelector('[data-page="1"]').disabled = pd.page >= pages - 1;
     $('#pdx-page').textContent = t('Página {p} de {n}', { p: pd.page + 1, n: pages });
   };
-  const MORE = ['pdx-type2', 'pdx-resist', 'pdx-gen', 'pdx-evo', 'pdx-cat', 'pdx-min'];
+  // Filtros escondidos atrás do botão "Filtros" (o nome e a ordem ficam sempre à vista); na tela larga, abertos
+  const FILTERS = ['pdx-move', 'pdx-where', 'pdx-type', 'pdx-type2', 'pdx-caught', 'pdx-resist', 'pdx-gen', 'pdx-evo', 'pdx-cat', 'pdx-min'];
+  const toggle = $('#pdx-ftoggle'), panel = $('#pdx-filters');
+  const setOpen = on => { panel.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); };
+  setOpen(window.matchMedia('(min-width: 960px)').matches);
+  toggle.addEventListener('click', () => setOpen(panel.hidden));
   const run = async () => {
     const v = id => ($('#' + id) ? $('#' + id).value : '');
     const moveQ = v('pdx-move').trim();
@@ -253,26 +259,35 @@ async function setupPokedex(out) {
       try { pd.dex = (await loadDex()).dex; } catch (e) { console.error(e); $('#pdx-count').textContent = t('Não consegui carregar os golpes.'); return; }
       if (state !== cur) return;
     }
+    // Onde conseguir (Quetzal): os encontros lidos da ROM, no pacote do "Onde encontrar"
+    if (v('pdx-where') && !pd.obtain) {
+      $('#pdx-count').textContent = t('Carregando os encontros…');
+      try {
+        const Wm = await loadWild();
+        const RS = makeResolver(T);
+        pd.obtain = Wm.obtainable(T.quetzal, id => RS.species(id));
+      } catch (e) { console.error(e); $('#pdx-count').textContent = t('Não consegui carregar os encontros.'); return; }
+      if (state !== cur) return;
+    }
     const moves = moveQ ? pd.P.movesMatchingAll(moveQ, pd.entries, pd.dex, T) : null;
     pd.list = pd.P.filterEntries(pd.entries, {
-      q: v('pdx-q'), type: v('pdx-type'), caught: v('pdx-caught'), sort: v('pdx-sort'), moves,
+      q: v('pdx-q'), type: v('pdx-type'), caught: v('pdx-caught'), sort: v('pdx-sort'), moves, where: v('pdx-where'),
       type2: v('pdx-type2'), resist: v('pdx-resist'), gen: v('pdx-gen'), evo: v('pdx-evo'), cat: v('pdx-cat'), stat: v('pdx-stat'), min: v('pdx-min').trim(),
-    }, { caught: pd.caught, dex: pd.dex, T });
-    // Quantos dos filtros escondidos em "Mais filtros" estão ligados (aparece no título fechado)
-    const on = MORE.filter(id => v(id).trim()).length;
+    }, { caught: pd.caught, dex: pd.dex, T, obtain: pd.obtain });
+    // Quantos filtros estão ligados (aparece no botão, que fica fechado no celular)
+    const on = FILTERS.filter(id => v(id).trim()).length;
     $('#pdx-on').textContent = on ? `(${on})` : '';
     pd.page = 0;
     show();
   };
   let timer = 0;
   const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
-  for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-sort', 'pdx-caught', 'pdx-stat', ...MORE]) {
+  for (const id of ['pdx-q', 'pdx-sort', 'pdx-stat', ...FILTERS]) {
     const el = $('#' + id);
     if (el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
   }
   $('#pdx-clear').addEventListener('click', () => {
-    for (const id of ['pdx-q', 'pdx-move', 'pdx-type', 'pdx-caught', ...MORE]) if ($('#' + id)) $('#' + id).value = '';
-    $('#pdx-sort').value = 'dex';
+    for (const id of FILTERS) if ($('#' + id)) $('#' + id).value = '';
     $('#pdx-stat').value = 'bst';
     run();
   });
@@ -286,9 +301,61 @@ async function setupPokedex(out) {
   });
   $('#pdx-results').addEventListener('click', e => {
     const b = e.target.closest('[data-pdx]');
-    if (b) openSpecies(pd.list[+b.dataset.pdx], b);
+    if (!b) return;
+    const entry = pd.list[+b.dataset.pdx];
+    if (pd.cmp) compareSpecies(pd.cmp, entry, b);
+    else openSpecies(entry, b);
   });
+  // Comparar: a primeira espécie vem do detalhe ("VS"); o próximo toque na lista abre a comparação
+  $('#pdx-cmp').addEventListener('click', e => { if (e.target.closest('[data-cmp-cancel]')) setCompare(null); });
   run();
+}
+
+/** Marca (ou desmarca, com null) a primeira espécie da comparação e mostra o aviso em cima da lista. */
+function setCompare(entry) {
+  const pd = state.pokedex;
+  const box = document.getElementById('pdx-cmp');
+  if (!pd || !box) return;
+  pd.cmp = entry;
+  box.classList.toggle('hidden', !entry);
+  box.innerHTML = entry ? `<span>${t('Comparar com {name}: toque em outra espécie da lista.', { name: `<b>${R.esc(entry.species.name)}${entry.species.form ? ` (${R.esc(entry.species.form)})` : ''}</b>` })}</span>
+    <button class="btn btn-ghost btn-small" type="button" data-cmp-cancel>${t('Cancelar')}</button>` : '';
+}
+
+/** Duas espécies lado a lado (na janela do detalhe). */
+async function compareSpecies(a, b, opener) {
+  const pd = await pokedexState();
+  setCompare(null);
+  const dlg = document.getElementById('detail');
+  dlg.innerHTML = pd.P.compareHtml(a, b, T);
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  dlg.querySelector('.mon').addEventListener('click', e => {
+    const h = e.target.closest('[data-cmp-open]');
+    if (h) openSpecies(h.dataset.cmpOpen === '0' ? a : b, opener);
+  });
+  if (!dlg.open) showSheet(dlg, opener);
+  dlg.scrollTop = 0;
+}
+
+/** Abre a janela do detalhe e devolve o foco (e a rolagem da página) a quem a abriu, ao fechar. */
+function showSheet(dlg, opener) {
+  const scroll = window.scrollY;
+  dlg.addEventListener('close', () => {
+    opener.focus({ preventScroll: true });
+    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
+  }, { once: true });
+  dlg.showModal();
+}
+
+/** A entrada da Pokédex de um estágio da linha evolutiva (`data-evo-id`: números do jogo, ou da PokeAPI nos oficiais). */
+function evoEntry(pd, ids) {
+  const nums = ids.split(' ').map(Number);
+  const rom = !!(T.quetzal || T.unbound || T.soulgold);
+  for (const n of nums) {
+    const e = rom ? pd.entries.find(x => x.id === n) : pd.entries.find(x => (x.species.dexId || (!x.species.form && x.nat)) === n);
+    if (e) return e;
+  }
+  return null;
 }
 
 /** Detalhe de uma espécie da Pokédex (na janela do detalhe). */
@@ -298,31 +365,83 @@ async function openSpecies(entry, opener) {
   const dlg = document.getElementById('detail');
   const wasOpen = dlg.open;
   const owned = pd.P.ownedOf(entry, state.all);
-  dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned });
+  const i = pd.list.indexOf(entry);
+  dlg.innerHTML = pd.P.speciesDetail(entry, T, { caught: pd.caught, owned, nav: i >= 0 ? { i, n: pd.list.length } : null });
   fillWild(dlg, entry, pd);
-  fillDex(dlg, pd.P.speciesMon(entry));
-  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
-  dlg.querySelector('.mon').addEventListener('click', e => {
-    const b = e.target.closest('[data-own]');
-    if (b) openDetail(owned[+b.dataset.own], opener);
+  fillUsage(dlg, entry, pd);
+  fillDex(dlg, pd.P.speciesMon(entry)).then(() => {
+    // Estágios da linha evolutiva viram botões (abrem o detalhe deles)
+    for (const node of dlg.querySelectorAll('[data-dex] .evo-node[data-evo-id]:not(.here)')) {
+      if (!evoEntry(pd, node.dataset.evoId)) continue;
+      node.classList.add('evo-link');
+      node.setAttribute('role', 'button');
+      node.tabIndex = 0;
+    }
   });
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  const go = d => { const next = pd.list[i + d]; if (next) openSpecies(next, opener); };
+  for (const b of dlg.querySelectorAll('[data-nav]')) b.addEventListener('click', () => go(+b.dataset.nav));
+  dlg.querySelector('[data-cmp]').addEventListener('click', () => {
+    setCompare(entry);
+    dlg.close();
+    const box = document.getElementById('pdx-cmp');
+    if (box) box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+  const mon = dlg.querySelector('.mon');
+  const openEvo = node => { const e = evoEntry(pd, node.dataset.evoId); if (e) openSpecies(e, opener); };
+  mon.addEventListener('click', e => {
+    const b = e.target.closest('[data-own]');
+    if (b) return openDetail(owned[+b.dataset.own], opener);
+    const ab = e.target.closest('[data-mu-ab]');
+    if (ab) {
+      mon.querySelector('[data-mu]').innerHTML = pd.P.matchupHtml(entry, T, ab.dataset.muAb || null);
+      mon.querySelector(`[data-mu-ab="${CSS.escape(ab.dataset.muAb)}"]`)?.focus();
+      return;
+    }
+    const mate = e.target.closest('[data-pdx-entry]');
+    if (mate) return openSpecies(pd.entries[+mate.dataset.pdxEntry], opener);
+    const node = e.target.closest('.evo-link');
+    if (node) openEvo(node);
+  });
+  mon.addEventListener('keydown', e => {
+    const node = e.target.closest('.evo-link');
+    if (node && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEvo(node); }
+  });
+  // Setas do teclado: anterior/próxima (fora dos campos e das listas que rolam para o lado)
+  dlg.onkeydown = e => {
+    if (!dlg.querySelector('[data-nav]') || e.target.closest('input, select, textarea, .evo, .wild-map')) return;
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+  };
   stickyName(dlg);
   if (wasOpen) { dlg.scrollTop = 0; return; }
-  const scroll = window.scrollY;
-  dlg.addEventListener('close', () => {
-    opener.focus({ preventScroll: true });
-    if (window.scrollY !== scroll) window.scrollTo(0, scroll);
-  }, { once: true });
-  dlg.showModal();
+  showSheet(dlg, opener);
+}
+
+// Uso no competitivo (estatísticas do Smogon, as mesmas do montador), num pacote à parte
+let usageMod = null;
+async function fillUsage(dlg, entry, pd) {
+  const slot = dlg.querySelector('[data-usage]');
+  if (!slot) return;
+  try {
+    const U = await (usageMod ||= import('./pokedex/usage.js').catch(e => { usageMod = null; throw e; }));
+    const idx = await U.loadSmogon(state.data.game);
+    if (!slot.isConnected) return;
+    slot.innerHTML = U.usageHtml(idx, entry, T, pd.entries);
+  } catch (e) {
+    console.error(e);
+    slot.innerHTML = '';
+  }
 }
 
 // Onde encontrar (Quetzal): locais da natureza e o mapa da região, num pacote à parte
 let wildMod = null;
+const loadWild = () => (wildMod ||= import('./pokedex/wild.js').catch(e => { wildMod = null; throw e; }));
 async function fillWild(dlg, entry, pd) {
   const slot = dlg.querySelector('[data-wild]');
   if (!slot) return;
   try {
-    const Wm = await (wildMod ||= import('./pokedex/wild.js').catch(e => { wildMod = null; throw e; }));
+    const Wm = await loadWild();
     if (!slot.isConnected) return;
     const icons = state.data.summary && state.data.summary.badges && state.data.summary.badges.icons;
     const region = icons ? ({ 1: 'kanto', 9: 'johto', 17: 'hoenn' })[icons[0]] : null;

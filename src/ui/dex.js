@@ -67,7 +67,7 @@ export function evolutionHtml(m, dex, T) {
   const grid = evoGridHtml(chain, ([id, , pt, eng]) => {
     const how = en ? eng : pt;
     const icon = id <= LAST_GEN8_ICON ? iconUrl(id) : spriteUrl(id);
-    return `<div class="evo-node${id === sid ? ' here' : ''}">
+    return `<div class="evo-node${id === sid ? ' here' : ''}" data-evo-id="${id}">
       <img data-sprite="1" src="${esc(icon)}" data-next="${esc(SILHOUETTE)}" alt="" width="48" height="40" decoding="async" loading="lazy" crossorigin="anonymous"${id <= LAST_GEN8_ICON ? ' class="ico"' : ''}>
       <b>${esc(speciesName(id, dex, T))}</b>
       ${how ? `<small>${esc(how)}</small>` : ''}

@@ -3,15 +3,18 @@
 // Pokémon, a evolução e os golpes). Filtro por golpe: os golpes por nível, tutor/TM e ovo do mesmo `dex` do detalhe.
 
 import { t, getLang } from '../i18n.js';
-import { esc, monHeader, matchupTable, tipBtn } from '../ui/render.js';
+import { esc, monHeader, matchupTable, tipBtn, muLabel } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
 import { BASE_ORDER } from '../parser/stats.js';
 import { moveInfo } from '../parser/describe.js';
 import { dexIds } from '../ui/dex.js';
-import { defenseMatchups } from '../analysis.js';
+import { defenseMatchups, defenseWithAbility, abilityChangesDefense } from '../analysis.js';
 import speciesData from '../data/species.json';
 import { pokedexEntries, bst } from './entries.js';
+
+// Mesma chave de obtainable() em wild.js (que fica em outro pacote, com os encontros)
+const obtainKey = (nat, sp) => `${nat}|${sp.types.join('/')}|${(sp.baseStats || []).join(',')}`;
 
 export { pokedexEntries };
 
@@ -123,8 +126,10 @@ const SORTS = {
  *   stat?: string, min?: number|string }} f `type2`: '' qualquer, 'none' só um tipo, ou o tipo; `gen`: '1'–'9' ou
  *   'hack' (espécies próprias do jogo); `evo`: 'yes' ainda evolui, 'no' não evolui mais; `cat`: 'legend', 'nolegend',
  *   'mega', 'regional', 'base'; `resist`: tipo de ataque que ela resiste ou é imune (só pelos tipos); `stat` + `min`:
- *   stat base (hp…spe ou bst) no mínimo `min`
- * @param {{ caught?: Set<number>|null, dex?: object|null, T?: object }} ctx
+ *   stat base (hp…spe ou bst) no mínimo `min`; `where` (Quetzal): 'wild' aparece nos encontros, 'evo' aparece ou
+ *   evolui de quem aparece, 'none' nenhum dos dois
+ * @param {{ caught?: Set<number>|null, dex?: object|null, T?: object, obtain?: Map<string, string>|null }} ctx
+ *   `obtain`: obtainable() de wild.js
  */
 export function filterEntries(entries, f, ctx = {}) {
   const terms = norm(f.q).split(/\s+/).filter(Boolean);
@@ -140,6 +145,10 @@ export function filterEntries(entries, f, ctx = {}) {
     if (f.type2 && f.type2 !== 'none' && (!sp.types.includes(f.type2) || (f.type2 === f.type && sp.types.length > 1))) return false;
     if (f.caught && ctx.caught && e.nat != null && ctx.caught.has(e.nat) !== (f.caught === 'yes')) return false;
     if (f.caught && ctx.caught && e.nat == null) return false;
+    if (f.where && ctx.obtain) {
+      const how = ctx.obtain.get(obtainKey(e.nat ?? `q${e.id}`, sp));
+      if (f.where === 'none' ? how : f.where === 'wild' ? how !== 'wild' : !how) return false;
+    }
     if (f.gen && String(genOf(e.nat) ?? 'hack') !== f.gen) return false;
     if (f.cat === 'legend' && !isLegendary(sp)) return false;
     if (f.cat === 'nolegend' && isLegendary(sp)) return false;
@@ -224,34 +233,103 @@ function ownedHtml(owned) {
     ${owned.length > 12 ? `<p class="hint">${t('Mostrando 12 de {n}. Use a Buscar para ver todos.', { n: owned.length })}</p>` : ''}</section>`;
 }
 
-/** Detalhe de uma espécie (na janela do detalhe; onde encontrar entra no `[data-wild]` e a evolução e os golpes no `[data-dex]` depois). */
-export function speciesDetail(e, T, { caught = null, owned = [] } = {}) {
-  const m = speciesMon(e);
+/**
+ * Dano recebido com a escolha da habilidade: as da espécie que mudam o dano (Levitate, Thick Fat…) viram botões; sem
+ * nenhuma, só pelos tipos. @param {string|null} ab a habilidade escolhida (null = só os tipos)
+ */
+export function matchupHtml(e, T, ab = null) {
+  const opts = [...new Set(e.species.abilities.filter(abilityChangesDefense))];
+  const table = matchupTable(speciesMon(e), T, opts.includes(ab) ? ab : null);
+  if (!opts.length || !table) return table;
+  const btn = (v, label) => `<button type="button" class="btn btn-ghost btn-small" data-mu-ab="${esc(v)}" aria-pressed="${(v || null) === (ab || null)}">${esc(label)}</button>`;
+  const chips = `<div class="mu-abs" role="group" aria-label="${esc(t('Habilidade'))}">${btn('', t('Só os tipos'))}${opts.map(a => btn(a, a)).join('')}</div>`;
+  return table.replace('</h3>', `</h3>${chips}`);
+}
+
+/**
+ * Detalhe de uma espécie (na janela do detalhe; onde encontrar entra no `[data-wild]`, o uso no competitivo no
+ * `[data-usage]` e a evolução e os golpes no `[data-dex]` depois).
+ * @param {{ caught?: Set<number>|null, owned?: Array, nav?: { i: number, n: number }|null }} opts `nav`: posição na
+ *   lista filtrada (anterior/próxima)
+ */
+export function speciesDetail(e, T, { caught = null, owned = [], nav = null } = {}) {
   const sp = e.species;
   const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
   const got = caught && e.nat != null ? (caught.has(e.nat) ? t('Capturado na Pokédex do save') : t('Ainda não capturado na Pokédex do save')) : '';
+  const arrows = nav && nav.n > 1 ? `<button class="btn btn-ghost btn-icon" type="button" data-nav="-1" aria-label="${t('Anterior')}"${nav.i <= 0 ? ' disabled' : ''}>‹</button>
+    <button class="btn btn-ghost btn-icon" type="button" data-nav="1" aria-label="${t('Próxima')}"${nav.i >= nav.n - 1 ? ' disabled' : ''}>›</button>` : '';
   return `<div class="sheet-bar${tc}">
     <b class="sheet-bar-name" aria-hidden="true">${esc(sp.name)}</b>
+    ${arrows}
+    <button class="btn btn-ghost btn-icon pdx-vs" type="button" data-cmp aria-label="${t('Comparar com outra espécie')}" title="${t('Comparar com outra espécie')}">VS</button>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
   </div>
   <div class="mon">
     <div class="mon-hero${tc}">
-      ${monHeader(m, 'h2', ' id="detail-title"')}
+      ${monHeader(speciesMon(e), 'h2', ' id="detail-title"')}
       ${got ? `<p class="mon-sub">${got}</p>` : ''}
+      ${nav && nav.n > 1 ? `<p class="mon-sub pdx-pos">${t('{i} de {n} na lista', { i: nav.i + 1, n: nav.n })}</p>` : ''}
     </div>
     <div class="mon-cols">
       <div>${abilitiesHtml(sp)}${infoHtml(e)}${baseStatsHtml(sp)}</div>
-      <div>${matchupTable(m, T)}${ownedHtml(owned)}</div>
+      <div><div data-mu>${matchupHtml(e, T)}</div>${ownedHtml(owned)}</div>
     </div>
     ${T.quetzal ? '<div class="wild-slot" data-wild></div>' : ''}
+    <div class="usage-slot" data-usage></div>
     <div class="dex-slot" data-dex></div>
+  </div>`;
+}
+
+/** Multiplicador de dano de cada tipo de ataque (só tipos). */
+function typeMults(sp, T) {
+  const out = new Map();
+  for (const [x, types] of defenseWithAbility(sp.types, { types: T.types, chart: T.typechart })) for (const ty of types) out.set(ty, x);
+  return out;
+}
+
+/**
+ * Duas espécies lado a lado: tipos, stats base (o maior de cada um em destaque), habilidades e dano recebido por tipo.
+ * Tocar no nome de uma abre o detalhe dela (`data-cmp-open` = 0 ou 1).
+ */
+export function compareHtml(a, b, T) {
+  const head = (e, k) => {
+    const sp = e.species;
+    return `<button type="button" class="cmp-head" data-cmp-open="${k}">
+      <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" crossorigin="anonymous">
+      <b>${esc(sp.name)}</b>${sp.form ? `<small>${esc(sp.form === '?' ? t('forma ?') : formName(sp.form))}</small>` : ''}
+      <span class="cmp-types">${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span>
+    </button>`;
+  };
+  const va = Object.fromEntries(BASE_ORDER.map((k, i) => [k, a.species.baseStats[i]]));
+  const vb = Object.fromEntries(BASE_ORDER.map((k, i) => [k, b.species.baseStats[i]]));
+  const cell = (x, y) => `<td class="num${x > y ? ' cmp-hi' : ''}">${x}</td>`;
+  const bar = (x, side) => `<td class="cmp-bar ${side}"><div class="bar"><i style="width:${Math.round(Math.min(1, x / 255) * 100)}%;--h:${Math.round(Math.min(1, x / 150) * 120)}"></i></div></td>`;
+  const stats = SHOWDOWN_ORDER.map(k => `<tr>${bar(va[k], 'l')}${cell(va[k], vb[k])}<th scope="row">${STAT_LABEL[k]}</th>${cell(vb[k], va[k])}${bar(vb[k], 'r')}</tr>`).join('')
+    + `<tr class="pdx-total"><td></td>${cell(bst(a.species), bst(b.species))}<th scope="row">${t('Total')}</th>${cell(bst(b.species), bst(a.species))}<td></td></tr>`;
+  const abil = e => [...new Set(e.species.abilities.filter(Boolean))].map(x => tipBtn('a', x, esc(x))).join('<br>') || '—';
+  const ma = typeMults(a.species, T), mb = typeMults(b.species, T);
+  const mu = x => (x == null ? '<span class="cmp-n">1×</span>' : `<span class="mu-x ${x > 1 ? 'weak' : x > 0 ? 'resist' : 'immune'}">${muLabel(x)}</span>`);
+  const rows = T.types.filter(ty => ty && ty !== 'stellar' && (ma.has(ty) || mb.has(ty)))
+    .map(ty => `<tr><td>${mu(ma.get(ty))}</td><th scope="row"><span class="type t-${esc(ty)}">${esc(ty)}</span></th><td>${mu(mb.get(ty))}</td></tr>`).join('');
+  return `<div class="sheet-bar cmp-bar">
+    <b class="sheet-bar-name" aria-hidden="true">${esc(a.species.name)} × ${esc(b.species.name)}</b>
+    <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
+  </div>
+  <div class="mon cmp">
+    <h2 class="sr" id="detail-title">${esc(t('{a} e {b} lado a lado', { a: a.species.name, b: b.species.name }))}</h2>
+    <div class="cmp-heads">${head(a, 0)}<span class="cmp-x" aria-hidden="true">VS</span>${head(b, 1)}</div>
+    <section class="dsec"><h3>${t('Stats base')}</h3><table class="stats cmp-stats"><tbody>${stats}</tbody></table></section>
+    <section class="dsec"><h3>${t('Habilidades')}</h3><div class="cmp-abs"><p>${abil(a)}</p><p>${abil(b)}</p></div></section>
+    <section class="dsec"><h3>${t('Dano recebido')}</h3><table class="cmp-mu"><tbody>${rows}</tbody></table>
+      <p class="hint">${t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.')}</p></section>
+    <p class="hint">${t('Toque no nome de um dos dois para abrir o detalhe.')}</p>
   </div>`;
 }
 
 /** Observação sobre a lista de cada jogo. */
 export function listNote(game) {
   const id = game && game.id;
-  if (id === 'quetzal') return t('Espécies e formas da ROM do Quetzal. O app ainda não sabe quais aparecem no jogo.');
+  if (id === 'quetzal') return t('Espécies e formas da ROM do Quetzal. Para ver só as que aparecem no jogo, use Filtros (encontros lidos da ROM; presentes, ovos e trocas não entram).');
   if (id === 'soulgold') return t('Espécies da Pokédex de Johto do SoulGold e as formas delas.');
   if (id === 'unbound') return t('Espécies e formas da ROM do Unbound.');
   if (game && game.gen >= 4) return t('Tipos e stats da época; habilidades e golpes por nível dos jogos mais recentes.');

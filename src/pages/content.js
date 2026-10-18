@@ -6,6 +6,23 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-27',
+    pt: [
+      'Pokédex: os filtros ficam atrás do botão “Filtros” (no celular, a lista aparece logo embaixo da busca), com o número de filtros ligados no botão.',
+      'Quetzal: filtro “Onde conseguir” na Pokédex: só as espécies que aparecem no jogo (natureza e encontros únicos lidos da ROM), as que evoluem delas, ou as que não aparecem. Presentes, ovos e trocas não entram.',
+      'Detalhe da espécie: botões ‹ › (e as setas do teclado) para passar pela lista filtrada; tocar num estágio da linha evolutiva abre o detalhe dele; o dano recebido pode contar a habilidade (Levitate, Thick Fat, Filter…); e a nova seção “Uso no competitivo”, com os golpes, itens e habilidades mais usados e os parceiros mais comuns (estatísticas do Smogon; tocar num parceiro abre o detalhe dele).',
+      'Comparar duas espécies: “VS” no detalhe e depois outra espécie da lista mostra as duas lado a lado (stats base, habilidades e dano recebido por tipo).',
+      'O detalhe de um Pokémon do save conta a habilidade dele no dano recebido (um Bronzong com Levitate aparece imune a Ground).',
+    ],
+    en: [
+      'Pokédex: the filters sit behind the “Filters” button (on phones, the list shows right below the search), with the number of active filters on the button.',
+      'Quetzal: “Where to get it” filter in the Pokédex: only the species that appear in the game (wild and one-time encounters read from the ROM), the ones that evolve from them, or the ones that don’t appear. Gifts, eggs and trades aren’t included.',
+      'Species details: ‹ › buttons (and the arrow keys) to go through the filtered list; tapping an evolution stage opens its details; damage taken can count the ability (Levitate, Thick Fat, Filter…); and the new “Competitive usage” section, with the most used moves, items and abilities and the most common partners (Smogon stats; tapping a partner opens its details).',
+      'Compare two species: “VS” in the details and then another species from the list shows both side by side (base stats, abilities and damage taken by type).',
+      'A saved Pokémon’s details count its ability in damage taken (a Bronzong with Levitate shows as immune to Ground).',
+    ],
+  },
+  {
     date: '2026-10-26',
     pt: [
       'Abrir o save atualizado com um toque: no Chrome (Android ou computador), o .sav escolhido fica lembrado e, depois de jogar, o botão “Atualizar” lê o arquivo de novo, sem procurar a pasta do emulador. No computador, com o app instalado, a versão nova abre sozinha.',

@@ -65,7 +65,7 @@ function candidates(sp) {
 /**
  * Índice das tabelas de um jogo.
  * @param {object[]} tables conteúdo de src/data/smogon/<formato>.json, na ordem de smogonFormats
- * @returns {{ find, pair, partners, moves, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `moves(id)`: os golpes
+ * @returns {{ find, pair, partners, moves, usage, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `moves(id)`: os golpes
  *   que os sets dela levam (Map ID do golpe → fração dos sets; null sem dados), e do mesmo jeito `items(id)` e
  *   `abilities(id)`; `pair(a, b)`: a
  *   sinergia da dupla na primeira tabela que conhece as duas (Ubers só vale para quem não está na National Dex);
@@ -121,6 +121,16 @@ export function smogonIndex(tables) {
     moves: usageOf('moves'),
     items: usageOf('items'),
     abilities: usageOf('abilities'),
+    // Quanto a espécie é usada no primeiro formato que a conhece: fração dos times, posição e o formato
+    usage: id => {
+      for (const p of parts) {
+        const i = p.t.ids.indexOf(id);
+        if (i < 0 || !p.t.usage) continue;
+        const u = p.t.usage[i];
+        return { rate: u, rank: 1 + p.t.usage.filter(x => x > u).length, format: FORMAT_NAME[p.t.format] || p.t.format, month: p.t.month };
+      }
+      return null;
+    },
     label: `Smogon, ${tables.map(t => FORMAT_NAME[t.format] || t.format).join(' + ')}`, // "Smogon, Gen 9 National Dex + National Dex Ubers"
     find: sp => candidates(sp).find(knows) || null,
     pair: (a, b) => {

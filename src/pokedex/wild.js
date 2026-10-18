@@ -49,6 +49,41 @@ export function wildAncestor(id, Q) {
   return null;
 }
 
+/**
+ * O que aparece no jogo, para o filtro da Pokédex: as espécies dos encontros (natureza e encontros únicos) e as que
+ * evoluem delas (evoluções da ROM, em qualquer número de passos). A chave é a da lista da Pokédex (Dex Nacional + tipos
+ * + stats), então uma forma só de aparência que aparece (Vivillon de outro padrão) conta para a forma da lista.
+ * @param {object} Q quetzal.json
+ * @param {(id: number) => object} spOf espécie de um número do Quetzal (makeResolver(T).species)
+ * @returns {Map<string, 'wild'|'evo'>}
+ */
+export function obtainable(Q, spOf) {
+  const out = new Map();
+  const natOf = id => (id <= 898 ? id : (Q.species[id] || [])[5] ?? `q${id}`);
+  const mark = (id, how) => {
+    const sp = spOf(id);
+    if (!sp || !sp.types) return;
+    const k = obtainKey(natOf(id), sp);
+    if (out.get(k) !== 'wild') out.set(k, how);
+  };
+  const queue = Object.keys(W.wild).map(Number);
+  for (const id of queue) mark(id, 'wild');
+  const seen = new Set(queue);
+  while (queue.length) {
+    const id = queue.shift();
+    for (const e of (Q.evolutions || {})[id] || []) {
+      if (!e[2] || seen.has(e[2])) continue;
+      seen.add(e[2]);
+      mark(e[2], 'evo');
+      queue.push(e[2]);
+    }
+  }
+  return out;
+}
+
+/** Chave de uma entrada da Pokédex para `obtainable` (a mesma em view.js). */
+const obtainKey = (nat, sp) => `${nat}|${sp.types.join('/')}|${(sp.baseStats || []).join(',')}`;
+
 export const lv = (a, b) => (!a ? '' : a === b ? `${t('Nv.')} ${a}` : `${t('Nv.')} ${a}–${b}`);
 
 /** O mapa da região com um retângulo (`data-pin` = posição na lista) em cada lugar (índices de W.places). */
