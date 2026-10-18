@@ -1214,7 +1214,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
   .pdx-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; }
   .pdx-tabs { max-width: 560px; }
   /* Onde encontrar: o mapa à esquerda e os lugares à direita (tocar num lugar e ver no mapa sem rolar) */
-  .pdx-pane .wild-region { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .pdx-pane .wild-region:not([hidden]) { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 12px; align-items: start; }
   .pdx-pane .wild-region .wild-map { margin: 0; position: sticky; top: 112px; }
   .pdx-pane .wild-region .wild-list { grid-template-columns: 1fr; }
   .pdx-pane .wild-region .wild-req { grid-column: 1 / -1; }
