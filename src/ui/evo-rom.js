@@ -252,7 +252,7 @@ function chainHtml(m, chain, species, grid, none, hint) {
     const sp = species(id);
     const icon = !sp.spriteId ? SILHOUETTE : sp.hasIcon ? iconUrl(sp.spriteId) : spriteUrl(sp.spriteId);
     const name = sp.form ? `${sp.name} (${sp.form})` : sp.name;
-    return `<div class="evo-node${ids.includes(m.speciesId) ? ' here' : ''}">
+    return `<div class="evo-node${ids.includes(m.speciesId) ? ' here' : ''}" data-evo-id="${[id, ...ids.filter(x => x !== id)].join(' ')}">
       <img data-sprite="1" src="${esc(icon)}" data-next="${esc(SILHOUETTE)}" alt="" width="48" height="40" decoding="async" loading="lazy" crossorigin="anonymous"${sp.hasIcon ? ' class="ico"' : ''}>
       <b>${esc(name)}</b>
       ${how ? `<small>${esc(how)}</small>` : ''}

@@ -54,3 +54,40 @@ export function defenseMatchups(defTypes, T) {
   }
   return groups;
 }
+
+// Habilidades que mudam o dano recebido por tipo (só as que valem sempre; Multiscale, Fluffy no contato etc. ficam de
+// fora): multiplicador por tipo de ataque, e as que cortam o super efetivo (Filter…) ou só deixam passar ele (Wonder Guard)
+const ABILITY_DEF = {
+  Levitate: { ground: 0 }, 'Earth Eater': { ground: 0 },
+  'Lightning Rod': { electric: 0 }, 'Volt Absorb': { electric: 0 }, 'Motor Drive': { electric: 0 },
+  'Storm Drain': { water: 0 }, 'Water Absorb': { water: 0 }, 'Dry Skin': { water: 0, fire: 1.25 },
+  'Flash Fire': { fire: 0 }, 'Well-Baked Body': { fire: 0 }, 'Sap Sipper': { grass: 0 },
+  'Thick Fat': { fire: 0.5, ice: 0.5 }, Heatproof: { fire: 0.5 }, 'Water Bubble': { fire: 0.5 }, 'Purifying Salt': { ghost: 0.5 },
+  Fluffy: { fire: 2 },
+};
+const SUPER_CUT = new Set(['Filter', 'Solid Rock', 'Prism Armor']);
+
+/** A habilidade muda o dano recebido de algum tipo? */
+export const abilityChangesDefense = a => !!a && (a in ABILITY_DEF || SUPER_CUT.has(a) || a === 'Wonder Guard');
+
+/**
+ * Dano recebido por tipo de ataque com a habilidade (sem habilidade, o mesmo de defenseMatchups).
+ * @returns {Array<[number, string[]]>} [multiplicador, tipos], do maior para o menor, sem o neutro (1×)
+ */
+export function defenseWithAbility(defTypes, T, ability = null) {
+  const idx = new Map(T.types.map((t, i) => [t, i]));
+  const mod = ABILITY_DEF[ability] || {};
+  const groups = new Map();
+  if (!defTypes.length) return [];
+  T.types.forEach((t, i) => {
+    if (!t || t === 'stellar') return;
+    let x = defTypes.reduce((m, d) => m * (idx.has(d) ? T.chart[i][idx.get(d)] : 1), 1);
+    if (SUPER_CUT.has(ability) && x > 1) x *= 0.75;
+    if (ability === 'Wonder Guard' && x <= 1) x = 0;
+    if (t in mod) x *= mod[t];
+    if (x === 1) return;
+    if (!groups.has(x)) groups.set(x, []);
+    groups.get(x).push(t);
+  });
+  return [...groups].sort((a, b) => b[0] - a[0]);
+}

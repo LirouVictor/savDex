@@ -599,9 +599,20 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .r-sub { display: block; color: var(--muted); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-lv { font: .75rem var(--pixel); color: var(--accent); }
 /* Pokédex: bolinha de capturado, total dos stats em destaque */
-.pdx-more { box-shadow: inset 0 0 0 3px var(--hi); padding: 8px 10px; }
-.pdx-more > summary { cursor: pointer; font-size: .85rem; font-weight: 700; padding: 6px 0; min-height: 32px; }
-.pdx-more[open] > summary { margin-bottom: 6px; }
+/* Pokédex: o nome e a ordem sempre à vista; o resto atrás do botão Filtros (aberto na tela larga) */
+.pdx-bar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
+.pdx-bar select { font-size: .85rem; padding: 6px; min-width: 0; }
+.pdx-bar .btn { min-height: 40px; }
+.pdx-bar .btn[aria-expanded="true"] { background: var(--win-2); box-shadow: inset 0 -3px 0 var(--hi); }
+.pdx-filters { display: grid; gap: 6px; box-shadow: inset 0 0 0 3px var(--hi); padding: 10px; }
+.pdx-filters[hidden] { display: none; }
+.pdx-filters .search-row .pdx-wide { grid-column: 1 / -1; }
+.pdx-filters > .btn { justify-self: start; }
+/* Comparar: aviso em cima da lista enquanto a segunda espécie não é escolhida */
+.pdx-cmp { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; padding: 8px 10px; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--edge); font-size: .85rem; }
+.pdx-cmp.hidden { display: none; }
+.pdx-vs { font: .7rem var(--pixel); }
+.pdx-pos { font-size: .78rem; }
 .pdx-on { color: var(--accent); margin-left: 4px; }
 .pdx-min { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 6px; margin: 6px 0; font-size: .85rem; }
 .pdx-min select, .pdx-min input { font-size: .85rem; padding: 6px; min-width: 0; }
@@ -638,7 +649,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 /* Detalhe: dano recebido, evolução e golpes por nível */
 .dsec { margin: 4px 0 0; }
 .dsec > h3, .dsec > summary { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: .78rem var(--pixel); text-transform: uppercase; }
-.mu-row { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: center; padding: 3px 0; }
+.mu-row { display: grid; grid-template-columns: 48px 1fr; gap: 8px; align-items: center; padding: 3px 0; }
 .mu-x { display: inline-block; text-align: center; padding: 2px 0; font: .72rem var(--pixel); }
 .mu-x.weak { background: var(--accent-2); color: #fff; }
 .mu-x.resist { background: var(--accent); color: var(--accent-ink); }
@@ -1090,3 +1101,51 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .tip-h small, .tip-note { color: var(--muted); font-size: .74rem; }
 .tip-note { display: block; margin-top: 6px !important; }
 .move-desc .tip-note { margin-top: 2px !important; }
+
+/* Pokédex: estágio da linha evolutiva que abre o detalhe dele */
+.evo-link { cursor: pointer; }
+.evo-link b { text-decoration: underline dotted; text-underline-offset: 3px; }
+.evo-link:hover, .evo-link:focus-visible { box-shadow: inset 0 0 0 2px var(--edge), inset 0 -3px 0 var(--edge); outline: none; }
+/* Dano recebido com a habilidade escolhida */
+.mu-abs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.mu-abs .btn { min-height: 40px; padding: 2px 10px; font-size: .62rem; }
+.mu-abs .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+/* Uso no competitivo */
+.usage-head { margin: 0 0 8px; font-size: .9rem; }
+.usage h4 { margin: 8px 0 4px; font: .72rem var(--pixel); color: var(--muted); text-transform: uppercase; }
+.usage-cols { display: grid; gap: 4px 16px; }
+@media (min-width: 640px) { .usage-cols { grid-template-columns: 1.4fr 1fr 1fr; } }
+.usage-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.usage-list li { display: grid; grid-template-columns: minmax(0, 1fr) 56px 40px; align-items: center; gap: 6px; font-size: .85rem; }
+.usage-list li > b { font: .7rem var(--pixel); text-align: right; }
+.usage-bar { height: 6px; background: var(--hi); }
+.usage-bar i { display: block; height: 100%; background: var(--edge); }
+.usage-mates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 640px) { .usage-mates { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.usage-mate { width: 100%; display: grid; justify-items: center; gap: 2px; padding: 4px; border: 0; background: var(--win-2); color: var(--ink); font: inherit; cursor: pointer; box-shadow: inset 0 -3px 0 var(--hi); }
+.usage-mate img { width: 48px; height: 40px; object-fit: contain; }
+.usage-mate b { font: .62rem var(--pixel); text-align: center; overflow-wrap: anywhere; }
+.usage-mate small { font-size: .7rem; color: var(--muted); }
+/* Comparar duas espécies */
+.cmp-heads { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; margin: 8px 0 4px; }
+.cmp-head { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border: 0; background: var(--win-2); color: var(--ink); font: inherit; cursor: pointer; box-shadow: inset 0 -3px 0 var(--hi); }
+.cmp-head img { width: 64px; height: 54px; object-fit: contain; }
+.cmp-head b { font: .78rem var(--pixel); text-decoration: underline dotted; text-underline-offset: 3px; }
+.cmp-head small { font-size: .75rem; color: var(--muted); }
+.cmp-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+.cmp-types .type { font-size: .58rem; padding: 2px 4px 1px; }
+.cmp-bar .sheet-bar-name { visibility: visible; }
+.cmp-x { font: .8rem var(--pixel); color: var(--muted); }
+.cmp-stats { width: 100%; table-layout: fixed; }
+.cmp-stats th { width: 44px; text-align: center; }
+.cmp-stats td.num { width: 40px; text-align: center; }
+.cmp-stats .cmp-hi { color: var(--accent); font-weight: 700; }
+.cmp-bar.l .bar { transform: scaleX(-1); }
+.cmp-abs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; font-size: .85rem; }
+.cmp-abs p { margin: 0; }
+.cmp-mu { width: 100%; }
+.cmp-mu td { width: 40%; text-align: center; }
+.cmp-mu th { text-align: center; }
+.cmp-mu .mu-x { min-width: 44px; }
+.cmp-n { color: var(--muted); font-size: .75rem; }
+@media (min-width: 640px) { .pdx-bar { grid-template-columns: auto minmax(0, 360px); } }

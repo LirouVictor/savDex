@@ -2,8 +2,8 @@
 
 import { spriteSrc, iconSrc, spriteUrl, badgeUrl } from './sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
-import { analyzeTeam, defenseMatchups } from '../analysis.js';
-import { t, num } from '../i18n.js';
+import { analyzeTeam, defenseWithAbility, abilityChangesDefense } from '../analysis.js';
+import { t, num, getLang } from '../i18n.js';
 import { freeAbilityMode } from '../ai/free.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -264,14 +264,19 @@ export function boxGrid(box) {
 }
 
 /** Fraquezas e resistências deste Pokémon (só pelos tipos). */
-export function matchupTable(m, T) {
-  const g = defenseMatchups(m.species.types, { types: T.types, chart: T.typechart });
-  const rows = [['4×', 4, 'weak'], ['2×', 2, 'weak'], ['½', 0.5, 'resist'], ['¼', 0.25, 'resist'], ['0', 0, 'immune']]
-    .filter(([, k]) => g[k].length)
-    .map(([label, k, cls]) => `<div class="mu-row"><span class="mu-x ${cls}">${label}</span><span class="mu-types">${g[k].map(typeChip).join(' ')}</span></div>`)
+const FRACTION = { 0.125: '⅛', 0.25: '¼', 0.5: '½' };
+/** Rótulo do multiplicador de dano (4×, 1,5×, ½, 0). */
+export const muLabel = x => FRACTION[x] || (x === 0 ? '0' : `${getLang() === 'en' ? x : String(x).replace('.', ',')}×`);
+
+/** Dano recebido por tipo; com `ability`, conta a habilidade (Levitate, Thick Fat, Filter…). */
+export function matchupTable(m, T, ability = null) {
+  const ab = abilityChangesDefense(ability) ? ability : null;
+  const rows = defenseWithAbility(m.species.types, { types: T.types, chart: T.typechart }, ab)
+    .map(([x, types]) => `<div class="mu-row"><span class="mu-x ${x > 1 ? 'weak' : x > 0 ? 'resist' : 'immune'}">${muLabel(x)}</span><span class="mu-types">${types.map(typeChip).join(' ')}</span></div>`)
     .join('');
   if (!rows) return '';
-  return `<section class="dsec"><h3>${t('Dano recebido')}</h3>${rows}<p class="hint">${t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.')}</p></section>`;
+  const hint = ab ? t('Com a habilidade {a}; não considera item.', { a: ab }) : t('Só pelos tipos; não considera habilidade (Levitate etc.) nem item.');
+  return `<section class="dsec mu-sec"><h3>${t('Dano recebido')}</h3>${rows}<p class="hint">${esc(hint)}</p></section>`;
 }
 
 /** Natureza, item, habilidade, bola e Hidden Power numa grade de duas colunas. */
@@ -308,7 +313,7 @@ export function monDetail(m, T) {
     </div>
     <div class="mon-cols">
       <div>${factsGrid(m)}${movesList(m.moves)}</div>
-      <div>${m.stats ? statsTable(m) : ivEvTable(m)}${T ? matchupTable(m, T) : ''}</div>
+      <div>${m.stats ? statsTable(m) : ivEvTable(m)}${T ? matchupTable(m, T, m.ability && m.ability.name) : ''}</div>
     </div>
     <div class="dex-slot" data-dex></div>
     <details class="fold adv"><summary>${t('Avançado')}</summary>
@@ -467,11 +472,8 @@ export function pokedexWin(d, T) {
     <div class="search-form">
       <label class="sr" for="pdx-q">${t('Pokémon ou habilidade')}</label>
       <input id="pdx-q" type="search" placeholder="${t('Pokémon ou habilidade')}" autocomplete="off" enterkeyhint="search">
-      <label class="sr" for="pdx-move">${t('Aprende os golpes')}</label>
-      <input id="pdx-move" type="search" placeholder="${t('Aprende os golpes (ex.: Surf, Ice Beam)')}" autocomplete="off" enterkeyhint="search">
-      <div class="search-row">
-        <label class="sr" for="pdx-type">${t('Tipo')}</label>
-        <select id="pdx-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+      <div class="pdx-bar">
+        <button class="btn btn-ghost btn-small" type="button" id="pdx-ftoggle" aria-expanded="false" aria-controls="pdx-filters">${t('Filtros')} <span class="pdx-on" id="pdx-on"></span></button>
         <label class="sr" for="pdx-sort">${t('Ordem')}</label>
         <select id="pdx-sort">
           <option value="dex">${t('Nº da Pokédex')}</option>
@@ -479,14 +481,19 @@ export function pokedexWin(d, T) {
           <option value="bst">${t('Total dos stats base')}</option>
           ${SHOWDOWN_ORDER.map(k => `<option value="${k}">${t('{s} base', { s: STAT_LABEL[k] })}</option>`).join('')}
         </select>
-        ${caught ? `<label class="sr" for="pdx-caught">${t('Capturados')}</label>
-        <select id="pdx-caught"><option value="">${t('Capturados e não capturados')}</option><option value="yes">${t('Só capturados')}</option><option value="no">${t('Só não capturados')}</option></select>` : ''}
       </div>
-      <details class="pdx-more" id="pdx-more">
-        <summary>${t('Mais filtros')} <span class="pdx-on" id="pdx-on"></span></summary>
+      <div class="pdx-filters" id="pdx-filters" hidden>
+        <label class="sr" for="pdx-move">${t('Aprende os golpes')}</label>
+        <input id="pdx-move" type="search" placeholder="${t('Aprende os golpes (ex.: Surf, Ice Beam)')}" autocomplete="off" enterkeyhint="search">
         <div class="search-row">
+          ${T.quetzal ? `<label class="sr" for="pdx-where">${t('Onde conseguir')}</label>
+          <select id="pdx-where" class="pdx-wide"><option value="">${t('Aparece no jogo ou não')}</option><option value="evo">${t('Aparece ou evolui de quem aparece')}</option><option value="wild">${t('Aparece na natureza ou em encontro único')}</option><option value="none">${t('Não aparece nos encontros do jogo')}</option></select>` : ''}
+          <label class="sr" for="pdx-type">${t('Tipo')}</label>
+          <select id="pdx-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
           <label class="sr" for="pdx-type2">${t('Segundo tipo')}</label>
           <select id="pdx-type2"><option value="">${t('Qualquer segundo tipo')}</option><option value="none">${t('Só um tipo')}</option>${typeOpts}</select>
+          ${caught ? `<label class="sr" for="pdx-caught">${t('Capturados')}</label>
+          <select id="pdx-caught"><option value="">${t('Capturados e não capturados')}</option><option value="yes">${t('Só capturados')}</option><option value="no">${t('Só não capturados')}</option></select>` : ''}
           <label class="sr" for="pdx-resist">${t('Resiste a')}</label>
           <select id="pdx-resist"><option value="">${t('Resiste a qualquer tipo')}</option>${typeOpts.replace(/>([a-z]+)</g, (_, x) => `>${t('Resiste a {t}', { t: x })}<`)}</select>
           <label class="sr" for="pdx-gen">${t('Geração')}</label>
@@ -503,8 +510,9 @@ export function pokedexWin(d, T) {
           <input id="pdx-min" type="number" inputmode="numeric" min="0" max="999" step="10" placeholder="${t('ex.: 100')}">
         </div>
         <button class="btn btn-ghost btn-small" type="button" id="pdx-clear">${t('Limpar filtros')}</button>
-      </details>
+      </div>
     </div>
+    <div class="pdx-cmp hidden" id="pdx-cmp" role="status"></div>
     <p class="hint" id="pdx-note"></p>
     <p class="hint" id="pdx-count" role="status"></p>
     <ul class="results" id="pdx-results"></ul>

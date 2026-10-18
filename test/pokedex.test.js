@@ -14,8 +14,14 @@ import { gen3Tables } from '../src/parser/gen3.js';
 import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
 import { pokedexWin } from '../src/ui/render.js';
-import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote } from '../src/pokedex/view.js';
-import { wildPlaces, wildAncestor, wildHtml } from '../src/pokedex/wild.js';
+import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote, matchupHtml, compareHtml } from '../src/pokedex/view.js';
+import { wildPlaces, wildAncestor, wildHtml, obtainable } from '../src/pokedex/wild.js';
+import { usageHtml } from '../src/pokedex/usage.js';
+import { smogonIndex } from '../src/builder/smogon.js';
+import SM9 from '../src/data/smogon/gen9nationaldex.json';
+import SM9U from '../src/data/smogon/gen9nationaldexubers.json';
+import { makeResolver } from '../src/parser/describe.js';
+import { defenseWithAbility } from '../src/analysis.js';
 import WILD from '../src/data/quetzal-wild.json';
 
 const TQ = { ...BASE, quetzal: Q };
@@ -209,6 +215,61 @@ suite('Pokédex: onde encontrar (Quetzal)', () => {
   });
 });
 
+suite('Pokédex: aparece no jogo, habilidade no dano, uso no competitivo e comparação', () => {
+  const entries = pokedexEntries(TQ, { id: 'quetzal' });
+  const RS = makeResolver(TQ);
+  const obtain = obtainable(Q, id => RS.species(id));
+  const by = (n, form = null) => entries.find(e => e.species.name === n && (e.species.form || null) === form);
+
+  it('aparece no jogo: encontros da ROM e quem evolui deles', () => {
+    const wild = names(filterEntries(entries, { where: 'wild' }, { obtain }));
+    const evo = names(filterEntries(entries, { where: 'evo' }, { obtain }));
+    const none = names(filterEntries(entries, { where: 'none' }, { obtain }));
+    expect(wild).toContain('Zigzagoon');
+    expect(wild).not.toContain('Garchomp-Mega');
+    expect(evo.length).toBeGreaterThan(wild.length);
+    expect(evo).toContain('Linoone');
+    expect(none).toContain('Garchomp-Mega');
+    expect(evo.length + none.length).toBe(entries.length);
+    expect(filterEntries(entries, { where: 'evo' }, {})).toHaveLength(entries.length); // sem os encontros, sem filtro
+  });
+
+  it('dano recebido com a habilidade: Levitate, Thick Fat, Filter, Wonder Guard', () => {
+    const T = { types: TQ.types, chart: TQ.typechart };
+    const g = (types, ab) => Object.fromEntries(defenseWithAbility(types, T, ab).map(([x, ts]) => [x, ts]));
+    expect(g(['ghost', 'poison'], null)[2]).toContain('ground');
+    expect(g(['ghost', 'poison'], 'Levitate')[0]).toContain('ground');
+    expect(g(['grass', 'poison'], 'Thick Fat')[1]).toBeUndefined();
+    expect(g(['rock'], 'Solid Rock')[1.5]).toContain('water');
+    expect(g(['bug', 'ghost'], 'Wonder Guard')[0]).toContain('normal');
+    // Botões só com as habilidades da espécie que mudam o dano
+    const html = matchupHtml(by('Bronzong'), TQ);
+    expect(html).toContain('data-mu-ab=""');
+    expect(matchupHtml(by('Bronzong'), TQ, 'Heatproof')).toContain('Com a habilidade Heatproof');
+    expect(matchupHtml(by('Bronzong'), TQ, 'Heavy Metal')).not.toContain('Com a habilidade');
+    expect(matchupHtml(by('Bulbasaur'), TQ)).not.toContain('data-mu-ab');
+  });
+
+  it('uso no competitivo: golpes, itens e parceiros que existem no jogo', () => {
+    const idx = smogonIndex([SM9, SM9U]);
+    const html = usageHtml(idx, by('Pelipper'), TQ, entries);
+    expect(html).toContain('Hurricane');
+    expect(html).toContain('data-pdx-entry');
+    expect(usageHtml(idx, by('Browt'), TQ, entries)).toContain('Sem dados');
+    expect(usageHtml(null, by('Pelipper'), TQ, entries)).toContain('Não consegui');
+  });
+
+  it('detalhe com anterior/próxima e a comparação de duas espécies', () => {
+    const html = speciesDetail(by('Pelipper'), TQ, { nav: { i: 0, n: 3 } });
+    expect(html).toMatch(/data-nav="-1"[^>]*disabled/);
+    expect(html).toContain('1 de 3 na lista');
+    expect(speciesDetail(by('Pelipper'), TQ)).not.toContain('data-nav');
+    const cmp = compareHtml(by('Pelipper'), by('Gengar'), TQ);
+    expect(cmp).toContain('data-cmp-open="1"');
+    expect(cmp).toContain('cmp-hi');
+  });
+});
+
 suite('Pokédex em inglês', () => {
   afterAll(() => setLang('pt'));
   it('nenhum texto sem tradução', () => {
@@ -217,7 +278,9 @@ suite('Pokédex em inglês', () => {
     const entries = pokedexEntries(TQ, { id: 'quetzal' });
     const data = { summary: { dex: { caught: [1] } }, party: [], pc: { boxes: [] } };
     let html = pokedexWin(data, TQ) + listNote({ id: 'quetzal' }) + listNote({ id: 'hgss', gen: 4 });
-    entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]) }); });
+    entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]), nav: { i, n: 5 } }) + matchupHtml(e, TQ, 'Overgrow') + compareHtml(e, entries[0], TQ); });
+    const idx = smogonIndex([SM9, SM9U]);
+    html += usageHtml(idx, entries.find(e => e.species.name === 'Pelipper'), TQ, entries) + usageHtml(null, entries[0], TQ, entries) + usageHtml(idx, entries.find(e => e.species.name === 'Browt'), TQ, entries);
     html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q) + wildHtml(249, Q) + wildHtml(245, Q) + wildHtml(1141, Q) + wildHtml(382, Q) + wildHtml(144, Q) + wildHtml(377, Q) + wildHtml(894, Q);
     expect(html).toContain('Where to find');
     expect(html).toContain('Safari Zone');
