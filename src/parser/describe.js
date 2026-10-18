@@ -40,13 +40,13 @@ export function moveInfo(id, T) {
   const name = own || (row ? row[0] : null);
   if (md) {
     const type = md[0] !== null ? T.types[md[0]] : row ? T.types[row[1]] : null;
-    return { name: name || `#${id}`, type: type || null, power: md[1], accuracy: md[2], category: md[4], known: !!name };
+    return { name: name || `#${id}`, type: type || null, power: md[1], accuracy: md[2], pp: md[3] ?? null, category: md[4], known: !!name };
   }
-  if (own) return { name, type: null, power: null, accuracy: null, category: null, known: true };
+  if (own) return { name, type: null, power: null, accuracy: null, pp: null, category: null, known: true };
   const det = T.moveDetails[id];
   return {
     name: name || `#${id}`, type: row ? T.types[row[1]] || null : null,
-    power: det ? det[0] : null, accuracy: det ? det[1] : null, category: det ? det[3] : null, known: !!name,
+    power: det ? det[0] : null, accuracy: det ? det[1] : null, pp: det ? det[2] ?? null : null, category: det ? det[3] : null, known: !!name,
   };
 }
 

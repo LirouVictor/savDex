@@ -13,7 +13,11 @@
 // Golpes: de cada espécie, a fração dos sets que leva cada golpe (o peso do golpe ÷ o peso da espécie; os 12 mais usados,
 // com 4% ou mais). O montador usa como referência para o moveset de cada Pokémon (src/builder/moveset.js). Itens e
 // habilidades do mesmo jeito (os 8 itens e as 3 habilidades mais usados, com 4% ou mais), para o item e a habilidade
-// que o montador sugere a cada um.
+// que o montador sugere a cada um. Natureza e EVs: as naturezas mais usadas (somando os spreads de cada uma) e os spreads
+// (natureza + EVs) mais usados, para o card do membro do montador e a Pokédex (src/builder/spread.js).
+//
+// Sem acesso ao smogon.com, `node tools/build-spreads.mjs` acrescenta só a natureza e os EVs às tabelas que já existem, a
+// partir das estatísticas que o projeto pkmn/smogon processa dos mesmos arquivos.
 //
 // Uso: npm run smogon [-- AAAA-MM]   (precisa de rede; o resultado é versionado no git)
 
@@ -35,9 +39,16 @@ const MIN_LOG = Math.log2(1.5); // duplas guardadas: 1,5× ou mais (ou 1/1,5 ou 
 const TOP_POS = 15, TOP_NEG = 5; // por espécie: as duplas mais fortes e as que mais se evitam
 const MOVE_MIN = 0.04, MOVE_TOP = 12; // golpes por espécie: em 4% ou mais dos sets, os 12 mais usados
 const ITEM_TOP = 8, ABILITY_TOP = 3;
+export const NATURE_TOP = 3, SPREAD_TOP = 4, SPREAD_MIN = 0.02; // spreads se dividem muito: os 4 mais usados, com 2%+
 /** [ID, fração dos sets, ...] das chaves de um bloco do chaos (Moves, Items, Abilities), as `top` mais usadas com 4%+. */
-const shares = (obj, w, top) => Object.entries(obj || {}).filter(([k]) => k && k !== 'nothing').map(([k, v]) => [k, v / w])
-  .filter(x => x[1] >= MOVE_MIN).sort((a, b) => b[1] - a[1]).slice(0, top).flatMap(([k, v]) => [k, r2(v)]);
+export const shares = (obj, w, top, min = MOVE_MIN) => Object.entries(obj || {}).filter(([k]) => k && k !== 'nothing').map(([k, v]) => [k, v / w])
+  .filter(x => x[1] >= min).sort((a, b) => b[1] - a[1]).slice(0, top).flatMap(([k, v]) => [k, r2(v)]);
+/** Natureza → soma dos spreads com ela ("Jolly:0/252/0/0/4/252" → Jolly). */
+export const natureSum = spreads => {
+  const out = {};
+  for (const [k, v] of Object.entries(spreads || {})) { const n = k.split(':')[0]; if (n) out[n] = (out[n] || 0) + v; }
+  return out;
+};
 
 const toId = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -108,16 +119,24 @@ function build(format, month, chaos) {
     moves: names.map(n => shares(data[n].Moves, W[n] || 1, MOVE_TOP)),
     items: names.map(n => shares(data[n].Items, W[n] || 1, ITEM_TOP)),
     abilities: names.map(n => shares(data[n].Abilities, W[n] || 1, ABILITY_TOP)),
+    // Naturezas [nome, fração, ...] e spreads ["Natureza:HP/Atk/Def/SpA/SpD/Spe", fração, ...] (ordem do Showdown)
+    natures: names.map(n => shares(natureSum(data[n].Spreads), W[n] || 1, NATURE_TOP)),
+    spreads: names.map(n => shares(data[n].Spreads, W[n] || 1, SPREAD_TOP, SPREAD_MIN)),
   };
 }
 
-const latest = process.argv[2] || await latestMonth();
-await mkdir(OUT, { recursive: true });
-for (const [format, fixed] of FORMATS) {
-  const month = fixed || latest;
-  const chaos = JSON.parse(await get(`${BASE}/${month}/chaos/${format}-${CUTOFF}.json`));
-  const table = build(format, month, chaos);
-  const json = JSON.stringify(table);
-  await writeFile(path.join(OUT, `${format}.json`), json + '\n');
-  console.log(`${format} (${month}): ${table.ids.length} espécies, ${table.pairs.length} duplas, ${table.battles} batalhas, ${(json.length / 1024).toFixed(0)} KB`);
+// Importado por build-spreads.mjs: só roda o download quando chamado direto
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();
+
+async function main() {
+  const latest = process.argv[2] || await latestMonth();
+  await mkdir(OUT, { recursive: true });
+  for (const [format, fixed] of FORMATS) {
+    const month = fixed || latest;
+    const chaos = JSON.parse(await get(`${BASE}/${month}/chaos/${format}-${CUTOFF}.json`));
+    const table = build(format, month, chaos);
+    const json = JSON.stringify(table);
+    await writeFile(path.join(OUT, `${format}.json`), json + '\n');
+    console.log(`${format} (${month}): ${table.ids.length} espécies, ${table.pairs.length} duplas, ${table.battles} batalhas, ${(json.length / 1024).toFixed(0)} KB`);
+  }
 }

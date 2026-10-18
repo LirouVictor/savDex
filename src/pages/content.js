@@ -6,6 +6,21 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-29',
+    pt: [
+      'Nova ferramenta “Golpes”: todos os golpes do jogo do save, com tipo, categoria, poder, precisão e PP, e filtros por nome, tipo, categoria e pelos golpes que os seus Pokémon sabem ou aprendem.',
+      'O detalhe de um golpe traz a descrição, quem do seu save já sabe ou pode aprender (e como: por nível, tutor, TM ou ovo) e todas as espécies que aprendem; tocar numa delas abre a Pokédex.',
+      'Montar equipe (Quetzal e SoulGold): o card de cada membro mostra a natureza e os EVs mais usados no competitivo para os golpes dele, diz se o seu Pokémon já está assim (ou qual Mint dar) e avisa IVs abaixo de 31 nos stats que importam. O Copiar (Showdown) leva a natureza e os EVs.',
+      'Pokédex: a aba Competitivo mostra também as naturezas e os spreads de EVs mais usados.',
+    ],
+    en: [
+      'New “Moves” tool: every move in the save’s game, with type, category, power, accuracy and PP, and filters by name, type, category and the moves your Pokémon know or can learn.',
+      'A move’s details show its description, who in your save already knows it or can learn it (and how: level, tutor, TM or egg) and every species that learns it; tapping one opens the Pokédex.',
+      'Team builder (Quetzal and SoulGold): each member’s card shows the competitive nature and EVs for its moves, says whether your Pokémon already matches (or which Mint to give) and flags IVs below 31 in the stats that matter. Copy (Showdown) includes the nature and EVs.',
+      'Pokédex: the Competitive tab also shows the most used natures and EV spreads.',
+    ],
+  },
+  {
     date: '2026-10-28',
     pt: [
       'Pokédex com visual novo: o detalhe da espécie fica em abas (Resumo, Onde encontrar, Golpes, Competitivo), com capturado, geração, gênero e o total dos stats em chips no topo e a posição na lista (6/1274) entre as setas.',

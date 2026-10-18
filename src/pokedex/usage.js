@@ -6,6 +6,7 @@ import { t } from '../i18n.js';
 import { esc, tipBtn, infoBtn } from '../ui/render.js';
 import { iconSrc } from '../ui/sprites.js';
 import { loadSmogon, toId } from '../builder/smogon.js';
+import { parseSpread, evText } from '../builder/spread.js';
 
 export { loadSmogon };
 
@@ -59,7 +60,10 @@ export function usageHtml(idx, e, T, entries) {
   const moves = list(top(idx.moves(id), 6), 'm', N.moves);
   const items = list(top(idx.items(id), 3), null, N.items);
   const abilities = list(top(idx.abilities(id), 2), 'a', N.abilities);
-  const block = (title, html) => (html ? `<div class="usage-col"><h4>${title}</h4><ul class="usage-list">${html}</ul></div>` : '');
+  const natures = list(top(idx.natures && idx.natures(id), 2), null, { get: k => k });
+  const spreads = top(idx.spreads && idx.spreads(id), 3).map(([k, v]) => { const x = parseSpread(k); return x && [`${x.nature} · ${evText(x.evs)}`, v]; })
+    .filter(Boolean).map(([n, v]) => `<li><span>${esc(n)}</span><span class="usage-bar"><i style="width:${pct(v)}%"></i></span><b>${pct(v)}%</b></li>`).join('');
+  const block = (title, html, wide = false) => (html ? `<div class="usage-col${wide ? ' usage-wide' : ''}"><h4>${title}</h4><ul class="usage-list">${html}</ul></div>` : '');
 
   // Parceiros: os que mais aparecem junto (2× ou mais que o acaso) e existem neste jogo
   const index = new Map(entries.map((x, i) => [x, i]));
@@ -73,10 +77,10 @@ export function usageHtml(idx, e, T, entries) {
     }).join('');
 
   const head = t('{f}: em {p}% dos times (nº {r})', { f: u.format, p: pct(u.rate) || '<1', r: u.rank });
-  const about = t('Estatísticas de uso públicas do Smogon ({m}, corte 1500): a fração dos sets que leva cada golpe, item e habilidade, e quantas vezes mais que o acaso o parceiro aparece no mesmo time. Só o que existe neste jogo.', { m: u.month });
+  const about = t('Estatísticas de uso públicas do Smogon ({m}, corte 1500): a fração dos sets que leva cada golpe, item, habilidade, natureza e spread de EVs, e quantas vezes mais que o acaso o parceiro aparece no mesmo time. Só o que existe neste jogo.', { m: u.month });
   return `<section class="dsec usage"><h3>${t('Uso no competitivo')} ${infoBtn(t('Uso no competitivo'), about)}</h3>
     <p class="usage-head">${esc(head)}</p>
-    <div class="usage-cols">${block(t('Golpes'), moves)}${block(t('Itens'), items)}${block(t('Habilidades'), abilities)}</div>
+    <div class="usage-cols">${block(t('Golpes'), moves)}${block(t('Itens'), items)}${block(t('Habilidades'), abilities)}${block(t('Naturezas'), natures)}${block(t('Natureza e EVs'), spreads, true)}</div>
     ${mates ? `<h4>${t('Costuma jogar com')}</h4><ul class="usage-mates">${mates}</ul>` : ''}
   </section>`;
 }
