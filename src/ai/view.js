@@ -144,7 +144,25 @@ function memberSheet(x, m, byRef) {
       <span class="ai-why">${rich(x.motivo, byRef)}</span>
       ${x.golpes ? movesetHtml(x.golpes, true) : ''}
     </div>
+    ${x.spread ? spreadHtml(x.spread) : ''}
     <p><button class="btn btn-ghost btn-small" type="button" data-ref="${esc(x.ref)}">${t('Ver o Pokémon do save')}</button></p>`;
+}
+
+/** Natureza e EVs do competitivo (builder/spread.js) e o que muda no Pokémon do save. */
+function spreadHtml(s) {
+  const ok = txt => `<span class="spread-ok">✓ ${esc(txt)}</span>`;
+  const nature = s.natureOk ? ok(t('igual à do seu')) : s.now
+    ? esc(s.mint ? t('a do seu é {now}: dê uma {mint}', { now: s.now, mint: s.mint }) : t('a do seu é {now}', { now: s.now })) : '';
+  const evs = s.evsOk ? ok(t('iguais aos do seu')) : s.evsNow ? esc(t('os do seu: {evs}', { evs: s.evsNow })) : '';
+  const pct = n => `<i>${esc(t('{n}% dos sets', { n }))}</i>`;
+  const rows = [
+    [t('Natureza'), `<b>${esc(s.nature)}</b> ${pct(s.natPct)}${nature ? `<br><small>${nature}</small>` : ''}`],
+    [t('EVs'), `${esc(s.evs)} ${pct(s.pct)}${evs ? `<br><small>${evs}</small>` : ''}`],
+    ...(s.lowIvs.length ? [[t('IVs'), esc(t('abaixo de 31 em {list}', { list: s.lowIvs.join(', ') }))]] : []),
+  ];
+  return `<h3 class="sheet-h">${t('Natureza e EVs')}</h3>
+    <dl class="sheet-facts spread-facts">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <p class="hint">${t('Os mais usados nos sets do Smogon da espécie que combinam com os golpes acima. O Copiar (Showdown) leva estes.')}</p>`;
 }
 
 const bullets = (items, byRef) => (items.length ? `<ul class="ai-list">${items.map(x => `<li>${rich(x, byRef)}</li>`).join('')}</ul>` : '');

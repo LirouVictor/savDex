@@ -8,6 +8,8 @@ import { prepareBuild, freeTeams, altTeams, scoreParts, shownRoleBits, roleTeach
 import { rolesOfMon, teamStrategies, planText, STRATEGIES, strategiesOf, roleMask } from './strategies.js';
 import { referenceTeams, adaptReference, missingMembers, byOwned, FID_ROLES, MIN_KEEP } from './reference.js';
 import { SRC } from './moveset.js';
+import { pickSpread, compareSpread, evText } from './spread.js';
+import { STAT_LABEL } from '../export.js';
 import { makeResolver } from '../parser/describe.js';
 import { teamThreats, variantOf } from './threats.js';
 import { idealSwaps } from './ideal.js';
@@ -108,7 +110,7 @@ const teachFor = (e, f, kind) => [...e.teach].find(([name]) => (kind === 'set'
  * Função de cada membro na equipe e até 3 motivos curtos, do mais importante para o menos (os nomes viram referências
  * E1/C3-12). O que é para fazer (ensinar, evoluir) fica nos próximos passos.
  */
-function describeMember(e, team, plan, types, shownSet = null, item = undefined, combos = null) {
+function describeMember(e, team, plan, types, shownSet = null, item = undefined, combos = null, spread = null) {
   const m = e.m, f = plan.field;
   // Com o moveset (Quetzal), os golpes que contam são os dele, não os do save
   const bf = shownSet ? { ...e.bf, moves: shownSet } : e.bf;
@@ -182,7 +184,31 @@ function describeMember(e, team, plan, types, shownSet = null, item = undefined,
   const real = realOf(m), g = m.gear || {};
   if (item !== undefined && item) out.item = { name: item, give: !(real.item && real.item.name === item) };
   if (g.ability) out.habilidade = { name: g.ability, from: g.from, patch: g.patch };
+  if (spread) out.spread = spreadView(spread, real, e);
   return out;
+}
+
+/**
+ * Natureza e EVs do competitivo para o moveset: pela forma de batalha (a mega, se tem dados) ou pela espécie. null sem a
+ * referência competitiva com o item do competitivo (fora do Quetzal e do SoulGold) ou sem dados da espécie.
+ */
+function memberSpread(e, set) {
+  const gear = e.mctx && e.mctx.gen && e.mctx.gen.gear;
+  if (!gear || !gear.comp.spreads) return null;
+  const c = gear.comp;
+  const id = [e.bf.species, e.m.species].map(sp => c.find(sp)).find(x => x && c.spreads(x) && c.spreads(x).size);
+  return id ? pickSpread(c.natures(id), c.spreads(id), set) : null;
+}
+/** O que o card mostra: o spread, a fração dos sets e a comparação com o Pokémon do save (natureza, EVs, IVs). */
+function spreadView(s, real, e) {
+  const gear = e.mctx.gen.gear;
+  const cmp = compareSpread(s, real, name => gear.items.has(toId(name)));
+  return {
+    nature: s.nature, natPct: Math.round(s.natureShare * 100), evs: evText(s.evs), pct: Math.round(s.share * 100),
+    natureOk: cmp.natureOk, now: real.nature ? real.nature.name : null, mint: cmp.mint,
+    evsOk: cmp.evsOk, evsNow: cmp.evs ? evText(cmp.evs) || t('nenhum') : null,
+    lowIvs: cmp.lowIvs.map(k => `${STAT_LABEL[k]} ${real.ivs[k]}`),
+  };
 }
 
 const ROCK = { sol: 'Heat Rock', chuva: 'Damp Rock', 'tempestade de areia': 'Smooth Rock', 'neve/granizo': 'Icy Rock' };
@@ -495,7 +521,9 @@ function describeTeam(res, types, pool, ctx, { ref = false } = {}) {
   const items = new Map(team.filter(e => e.set).map(e => [e, shownItem(e, plan, shownSets.get(e))]));
   // Interações (Quetzal): as combinações de habilidade, item e golpes de cada um, com o campo do plano, e as da equipe
   const combos = new Map(team.filter(e => e.set).map(e => [e, shownCombos(e, shownSets.get(e), items.get(e), plan.field || null)]).filter(([, x]) => x));
-  const membros = team.map(e => describeMember(e, team, plan, types, shownSets.get(e) || null, items.has(e) ? items.get(e) : undefined, combos.get(e) || null));
+  // Natureza e EVs do competitivo (com o item do competitivo: Quetzal, SoulGold), para os golpes que o card mostra
+  const spreads = new Map(team.filter(e => e.set).map(e => [e, memberSpread(e, shownSets.get(e))]).filter(([, x]) => x));
+  const membros = team.map(e => describeMember(e, team, plan, types, shownSets.get(e) || null, items.has(e) ? items.get(e) : undefined, combos.get(e) || null, spreads.get(e) || null));
   const { good, bad } = teamPoints(team, plan, types);
   const r = {
     // Sem resumo: a aba e o título já dizem o plano
@@ -512,8 +540,10 @@ function describeTeam(res, types, pool, ctx, { ref = false } = {}) {
     shownSets, shownItems: items,
     name: r.nome, plan, score: res.score, parts: scoreParts(team, plan, types), team: mons, r, src: res, alt: res.alt || 0, comp: !!team[0].sctx, kind: ref ? 'ref' : 'free',
     // Copiar (Showdown): com o moveset do app no lugar dos golpes do save
+    // (e a natureza e os EVs do competitivo; os IVs continuam os do Pokémon)
     showdown: team.map(e => (shownSets.has(e) ? { ...e.m, moves: shownSets.get(e),
-      item: items.get(e) ? { id: null, name: items.get(e), confidence: 'confirmado' } : e.m.item } : e.m)),
+      item: items.get(e) ? { id: null, name: items.get(e), confidence: 'confirmado' } : e.m.item,
+      ...(spreads.has(e) ? { nature: { name: spreads.get(e).nature }, evs: spreads.get(e).evs } : {}) } : e.m)),
     // Toque no card: o Pokémon real; nos textos e nas contas, a forma evoluída (quem o app contou evoluído)
     // (as alternativas do "ideal × o que você tem" também: os textos citam o Pokémon pela referência)
     byRef: new Map([...(ideal ? ideal.alts : []), ...mons].map(m => [refOf(m), realOf(m)])),

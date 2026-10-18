@@ -93,6 +93,7 @@ function render() {
       ${R.toolsWin(data.game)}
       ${R.builderWin(data, Object.values(PROVIDERS))}
       ${R.pokedexWin(data, T)}
+      ${R.movesWin(T)}
       ${R.searchWin(data, T)}
       <div id="teams-slot"></div>
       ${R.exportWin()}
@@ -183,12 +184,13 @@ function render() {
 
   // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
   // quando a Busca abre
-  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win']) {
+  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win', 'moves-win']) {
     const det = out.querySelector('#' + id);
     det.addEventListener('toggle', () => {
       setFoldOpen(id, det.open);
       if (id === 'search-win' && det.open && !state.searched) runSearch();
       if (id === 'pokedex-win' && det.open) setupPokedex(out);
+      if (id === 'moves-win' && det.open) setupMoves(out);
     });
     if (foldOpen(id)) det.open = true;
   }
@@ -384,6 +386,117 @@ function evoEntry(pd, ids) {
     if (e) return e;
   }
   return null;
+}
+
+// Golpedex: o pacote (lista e detalhe dos golpes) só carrega quando a janela abre; usa as espécies da Pokédex e os
+// golpes por nível/tutor/ovo do detalhe (loadDex)
+let movesMod = null;
+const loadMoves = () => (movesMod ||= import('./movedex/view.js').catch(e => { movesMod = null; throw e; }));
+
+/** A Golpedex do save aberto: os golpes do jogo e quem aprende cada um, montados uma vez por save. */
+async function movesState() {
+  const cur = state;
+  if (!cur.movedex) {
+    const [M, pd, D] = await Promise.all([loadMoves(), pokedexState(), loadDex()]);
+    const learners = M.learnersIndex(pd.entries, D.dex);
+    // A entrada da Pokédex de cada Pokémon do save (espécie e forma)
+    const byKey = new Map(pd.entries.map(e => [`${e.id}|${e.species.form || ''}`, e]));
+    const entryOf = m => byKey.get(`${m.speciesId}|${m.species.form || ''}`) || byKey.get(`${m.speciesId}|`) || null;
+    const mine = M.mineIndex(cur.all, learners, entryOf);
+    cur.movedex = { M, pd, dex: D.dex, learners, entryOf, rows: M.moveRows(T, cur.data.game, learners, mine), list: [], page: 0 };
+  }
+  return cur.movedex;
+}
+
+async function setupMoves(out) {
+  const cur = state;
+  const $ = s => out.querySelector(s);
+  if (cur.movesWired) return;
+  cur.movesWired = true;
+  $('#mv-count').textContent = t('Carregando…');
+  let md;
+  try { md = await movesState(); } catch (e) { console.error(e); cur.movesWired = false; $('#mv-count').textContent = t('Não consegui abrir os golpes.'); return; }
+  if (state !== cur) return;
+  if (!md.dex.rom) $('#mv-note').innerHTML = R.infoBtn(t('Golpes'), t('Quem aprende: golpes por nível dos jogos oficiais mais recentes; o jogo do save pode ser diferente. TM e tutor não entram.'));
+  const show = () => {
+    const total = md.list.length;
+    const pages = Math.max(1, Math.ceil(total / md.M.PAGE));
+    md.page = Math.min(Math.max(0, md.page), pages - 1);
+    const start = md.page * md.M.PAGE;
+    $('#mv-results').innerHTML = md.list.slice(start, start + md.M.PAGE).map((r, j) => md.M.moveRow(r, start + j)).join('');
+    $('#mv-count').textContent = t(total === 1 ? '1 golpe.' : '{n} golpes.', { n: total });
+    const pager = $('#mv-pager');
+    pager.classList.toggle('hidden', pages <= 1);
+    pager.querySelector('[data-page="-1"]').disabled = md.page === 0;
+    pager.querySelector('[data-page="1"]').disabled = md.page >= pages - 1;
+    $('#mv-page').textContent = t('Página {p} de {n}', { p: md.page + 1, n: pages });
+  };
+  const run = () => {
+    const v = id => $('#' + id).value;
+    md.list = md.M.filterMoves(md.rows, { q: v('mv-q'), type: v('mv-type'), cat: v('mv-cat'), mine: v('mv-mine'), sort: v('mv-sort') });
+    md.page = 0;
+    show();
+  };
+  let timer = 0;
+  const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
+  for (const id of ['mv-q', 'mv-type', 'mv-cat', 'mv-mine', 'mv-sort']) {
+    const el = $('#' + id);
+    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
+  }
+  $('#mv-pager').addEventListener('click', e => {
+    const b = e.target.closest('[data-page]');
+    if (!b) return;
+    md.page += Number(b.dataset.page);
+    show();
+    const count = $('#mv-count');
+    if (count.getBoundingClientRect().top < 0) count.scrollIntoView({ block: 'start' });
+  });
+  $('#mv-results').addEventListener('click', e => {
+    const b = e.target.closest('[data-mv]');
+    if (b) openMove(md.list[+b.dataset.mv], b);
+  });
+  run();
+}
+
+/** Detalhe de um golpe da Golpedex (na janela do detalhe). */
+async function openMove(row, opener) {
+  if (!row) return;
+  const md = await movesState();
+  const dlg = document.getElementById('detail');
+  const wasOpen = dlg.open;
+  const i = md.list.indexOf(row);
+  const { html, lists } = md.M.moveDetail(row, { T, dex: md.dex, learners: md.learners, all: state.all, entries: md.pd.entries, entryOf: md.entryOf, nav: i >= 0 ? { i, n: md.list.length } : null });
+  dlg.innerHTML = html;
+  const text = dlg.querySelector('[data-mtext]');
+  moveText(row.id, tipCtx()).then(r => {
+    if (!text.isConnected) return;
+    text.textContent = r.text || t('Sem descrição para este golpe.');
+    if (r.note) text.insertAdjacentHTML('beforeend', `<small class="tip-note">${R.esc(r.note)}</small>`);
+  }).catch(() => { text.textContent = t('Sem descrição para este golpe.'); });
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  const go = d => { const next = md.list[i + d]; if (next) openMove(next, opener); };
+  for (const b of dlg.querySelectorAll('[data-nav]')) b.addEventListener('click', () => go(+b.dataset.nav));
+  dlg.querySelector('.mon').addEventListener('click', e => {
+    const mon = e.target.closest('[data-mon]');
+    if (mon) return openDetail(state.all[+mon.dataset.mon], opener);
+    const sp = e.target.closest('[data-pdx-entry]');
+    if (sp) return openSpecies(md.pd.entries[+sp.dataset.pdxEntry], opener);
+    const more = e.target.closest('[data-more]');
+    if (more) {
+      const k = +more.dataset.more;
+      const ul = dlg.querySelector(`[data-list="${k}"]`);
+      ul.insertAdjacentHTML('beforeend', md.M.learnerChips(lists[k], new Map(md.pd.entries.map((x, j) => [x, j])), new Set(state.all.filter(m => !m.egg).map(md.entryOf).filter(Boolean)), md.M.LEARNER_SHOW));
+      more.remove();
+    }
+  });
+  dlg.onkeydown = e => {
+    if (!dlg.querySelector('[data-nav]') || e.target.closest('input, select, textarea')) return;
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+  };
+  stickyName(dlg);
+  if (wasOpen) { dlg.scrollTop = 0; return; }
+  showSheet(dlg, opener);
 }
 
 /** Detalhe de uma espécie da Pokédex (na janela do detalhe). */

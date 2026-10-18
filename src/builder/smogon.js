@@ -67,7 +67,7 @@ function candidates(sp) {
  * @param {object[]} tables conteúdo de src/data/smogon/<formato>.json, na ordem de smogonFormats
  * @returns {{ find, pair, partners, moves, usage, matrix, label: string }} `find(sp)`: o ID da espécie (ou null); `moves(id)`: os golpes
  *   que os sets dela levam (Map ID do golpe → fração dos sets; null sem dados), e do mesmo jeito `items(id)` e
- *   `abilities(id)`; `pair(a, b)`: a
+ *   `abilities(id)`, `natures(id)` e `spreads(id)`; `pair(a, b)`: a
  *   sinergia da dupla na primeira tabela que conhece as duas (Ubers só vale para quem não está na National Dex);
  *   `partners(a)`: as duplas guardadas da espécie (Map ID → sinergia); `matrix(ids)`: as duplas de uma lista de IDs numa
  *   matriz (para a nota, que roda dezenas de milhares de vezes)
@@ -121,6 +121,9 @@ export function smogonIndex(tables) {
     moves: usageOf('moves'),
     items: usageOf('items'),
     abilities: usageOf('abilities'),
+    // Natureza e EVs (spread.js): naturezas e spreads "Natureza:HP/Atk/Def/SpA/SpD/Spe" → fração dos sets
+    natures: usageOf('natures'),
+    spreads: usageOf('spreads'),
     // Quanto a espécie é usada no primeiro formato que a conhece: fração dos times, posição e o formato
     usage: id => {
       for (const p of parts) {

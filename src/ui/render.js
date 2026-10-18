@@ -398,6 +398,7 @@ export function toolsWin(game) {
     <div class="tools-grid">
       ${card('builder-win', 'party', t('Montar equipe'), t('Adapta equipes do competitivo (Smogon) aos Pokémon do seu save'), ' hot')}
       ${card('pokedex-win', 'dex-ico', t('Pokédex'), game && game.id === 'quetzal' ? t('Todas as espécies do jogo e onde encontrar cada uma') : t('Todas as espécies do jogo e o que aprendem'))}
+      ${card('moves-win', 'bolt', t('Golpes'), t('Todos os golpes do jogo e quem aprende cada um'))}
       ${card('search-win', 'box', t('Buscar'), t('Equipe e PC por nome, golpe, tipo e IVs'))}
     </div>
   </section>`;
@@ -526,6 +527,39 @@ export function pokedexWin(d, T) {
       <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
     </nav>
     <div class="pdx-cmp hidden" id="pdx-cmp" role="status"></div>
+  </details>`;
+}
+
+/**
+ * Golpedex (Ferramentas): todos os golpes do jogo do save, com quem aprende cada um. Fechada até o usuário abrir; a
+ * lista e o detalhe ficam num pacote à parte (src/movedex/), carregado só ao abrir.
+ */
+export function movesWin(T) {
+  const gen3 = !!(T.gen3 || T.nds);
+  const typeOpts = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy')).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  return `<details class="win win-fold tool-win" id="moves-win">
+    <summary class="win-title"><h2 id="moves-h">${t('Golpes')}</h2><small>${t('todos os golpes do jogo')}</small></summary>
+    <div class="search-form">
+      <label class="sr" for="mv-q">${t('Nome do golpe')}</label>
+      <input id="mv-q" type="search" placeholder="${t('Nome do golpe')}" autocomplete="off" enterkeyhint="search">
+      <div class="search-row">
+        <label class="sr" for="mv-type">${t('Tipo')}</label>
+        <select id="mv-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+        <label class="sr" for="mv-cat">${t('Categoria')}</label>
+        <select id="mv-cat"><option value="">${t('Todas as categorias')}</option><option value="0">${t('Físico')}</option><option value="1">${t('Especial')}</option><option value="2">${t('Status')}</option></select>
+        <label class="sr" for="mv-mine">${t('Seus Pokémon')}</label>
+        <select id="mv-mine"><option value="">${t('Todos os golpes')}</option><option value="can">${t('Algum Pokémon seu sabe ou aprende')}</option><option value="know">${t('Algum Pokémon seu já sabe')}</option></select>
+        <label class="sr" for="mv-sort">${t('Ordem')}</label>
+        <select id="mv-sort"><option value="name">${t('Nome')}</option><option value="power">${t('Poder (maior)')}</option><option value="accuracy">${t('Precisão (maior)')}</option><option value="pp">${t('PP (maior)')}</option><option value="species">${t('Mais espécies aprendem')}</option></select>
+      </div>
+    </div>
+    <p class="hint pdx-count"><span id="mv-count" role="status"></span> <span id="mv-note"></span></p>
+    <ul class="results" id="mv-results"></ul>
+    <nav class="pager hidden" id="mv-pager" aria-label="${t('Páginas dos golpes')}">
+      <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
+      <span class="page-info" id="mv-page"></span>
+      <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
+    </nav>
   </details>`;
 }
 
