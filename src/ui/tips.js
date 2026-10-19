@@ -2,10 +2,13 @@
 // Os textos ficam em pacotes à parte, carregados só no primeiro toque:
 //   - golpes: move-text.json (pokeemerald-expansion, pelo ID do app);
 //   - habilidades: ability-text.json (expansion, pelo nome) e, no SoulGold, as da ROM (soulgold-ability-text.json);
-//   - jogos oficiais: o texto da época (text-gen3/4/5.json, PokeAPI: Emerald, Platinum, Black 2/White 2).
+//   - jogos oficiais: o texto da época (text-gen3/4/5.json, PokeAPI: Emerald, Platinum, Black 2/White 2);
+//   - interface em português: o texto da tradução do Pokémon Quetzal (move-text-pt.json, ability-text-pt.json, lidos da
+//     ROM PT-BR: npm run texts-pt). Os nomes continuam em inglês. Fora do Quetzal, a nota avisa que é o texto dele e,
+//     nos oficiais, mostra também o texto da época (o efeito pode ser outro: Lightning Rod na Gen 3 não dá imunidade).
 // Um elemento vira gatilho com data-tip="m:<id ou nome do golpe>" ou data-tip="a:<nome da habilidade>".
 
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 import { moveInfo } from '../parser/describe.js';
 import { typeChip } from './render.js';
 
@@ -21,6 +24,10 @@ const load = (key, imp) => {
 const moveTexts = () => load('moves', () => import('../data/move-text.json'));
 const abilityTexts = () => load('abilities', () => import('../data/ability-text.json'));
 const soulgoldAbilities = () => load('sg', () => import('../data/soulgold-ability-text.json'));
+const movePt = () => load('moves-pt', () => import('../data/move-text-pt.json'));
+const abilityPt = () => load('abilities-pt', () => import('../data/ability-text-pt.json'));
+/** Último golpe da tradução que tem o mesmo ID no app (o 848 do Quetzal é o Nihil Light, próprio dele). */
+const PT_SAME_ID = 847;
 const eraTexts = gen => load(`gen${gen}`, () => (gen === 3 ? import('../data/text-gen3.json') : gen === 4 ? import('../data/text-gen4.json') : import('../data/text-gen5.json')));
 
 // Nome do golpe → ID do app (o montador e as estatísticas de uso só têm o nome)
@@ -35,13 +42,24 @@ function moveIdByName(name, T) {
   return byName.get(normName(name)) ?? null;
 }
 
+/** Texto em português (tradução do Quetzal) com a nota de onde vem; `era` = o da época nos oficiais, que vai na nota. */
+function inPortuguese(text, game, era, what) {
+  if (game === 'quetzal') return { text, note: null };
+  const gen = ERA[game];
+  const note = what === 'm' ? t('Texto do Pokémon Quetzal; neste jogo o golpe pode ser diferente.')
+    : t('Texto do Pokémon Quetzal; neste jogo a habilidade pode ser diferente.');
+  return { text, note: era && era !== text ? `${note} ${t('Texto do {game}: {text}', { game: ERA_NAME[gen], text: era })}` : note };
+}
+
 /** Descrição de um golpe no jogo do save: { text, note } (text null = sem descrição). */
 export async function moveText(id, { game, T }) {
   const gen = ERA[game];
-  if (gen && id > 0) {
-    const era = await eraTexts(gen);
-    if (era.moves[id]) return { text: era.moves[id], note: t('Texto do {game}.', { game: ERA_NAME[gen] }) };
+  const era = gen && id > 0 ? (await eraTexts(gen)).moves[id] || null : null;
+  if (getLang() === 'pt' && id > 0 && (id <= PT_SAME_ID || (game === 'quetzal' && T && T.quetzal))) {
+    const pt = (await movePt())[id];
+    if (pt) return inPortuguese(pt, game, era, 'm');
   }
+  if (era) return { text: era, note: t('Texto do {game}.', { game: ERA_NAME[gen] }) };
   const text = id > 0 ? (await moveTexts())[id] || null : null;
   return { text, note: text && game === 'unbound' ? t('Texto do pokeemerald-expansion; o Unbound pode ter mudado o golpe.') : null };
 }
@@ -50,10 +68,12 @@ export async function moveText(id, { game, T }) {
 export async function abilityText(name, { game }) {
   const k = normName(name);
   const gen = ERA[game];
-  if (gen) {
-    const era = await eraTexts(gen);
-    if (era.abilities[k]) return { text: era.abilities[k], note: t('Texto do {game}.', { game: ERA_NAME[gen] }) };
+  const era = gen ? (await eraTexts(gen)).abilities[k] || null : null;
+  if (getLang() === 'pt') {
+    const pt = (await abilityPt())[k];
+    if (pt) return inPortuguese(pt, game, era, 'a');
   }
+  if (era) return { text: era, note: t('Texto do {game}.', { game: ERA_NAME[gen] }) };
   if (game === 'soulgold') {
     const sg = await soulgoldAbilities();
     if (sg[k]) return { text: sg[k], note: null };

@@ -304,7 +304,7 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
   #pc-win { grid-area: pc; }
   #tools-win { grid-area: tools; }
   /* O resto em fileiras inteiras, na ordem da página; a ferramenta fechada não deixa fileira vazia */
-  #builder-win, #pokedex-win, #moves-win, #search-win, #teams-slot, #export-win { grid-column: 1 / -1; }
+  #builder-win, #pokedex-win, #moves-win, #abilities-win, #search-win, #teams-slot, #export-win { grid-column: 1 / -1; }
   .nav { display: none; }
   body:has(#out:not(.hidden)) { padding-bottom: 0; }
   .foot { max-width: 1200px; }
@@ -1090,7 +1090,7 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
 .tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
 @media (min-width: 1000px) {
-  .tools-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .tools-grid { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
   .tool-card.hot { grid-column: auto; min-height: 88px; }
   .tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: auto; }
 }
@@ -1268,6 +1268,11 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .mv-facts { margin: 12px 0; }
 @media (min-width: 520px) { .mv-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .mv-own .r-sub { white-space: normal; }
+.ab-row { grid-template-columns: 1fr auto; min-height: 46px; padding-left: 10px; }
+.ab-row .r-main b { font-weight: 650; }
+.ab-sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ab-nums { grid-template-columns: 52px; }
+@media (min-width: 520px) { .ab-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .mv-learners .usage-mate.own b::after { content: " ✓"; color: var(--accent); }
 .mv-detail h4 { margin: 10px 0 6px; font: .66rem var(--pixel); text-transform: uppercase; color: var(--muted); }
 @media (min-width: 960px) {
