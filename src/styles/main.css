@@ -1252,6 +1252,283 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .cmp-same[open] > summary::before { content: '▾ '; }
 .cmp-same > summary { list-style: none; display: flex; align-items: center; min-height: 36px; font: .68rem var(--pixel); text-transform: uppercase; color: var(--muted); }
 
+/* Golpedex e Dex de habilidades: o mesmo visual da Pokédex (lista densa, detalhe com chips e abas) */
+.mv-row, .ab-row { grid-template-columns: minmax(0, 1fr) auto; min-height: 50px; padding: 5px 10px; }
+.dx-name { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; }
+.dx-name b { font-weight: 650; }
+.mv-sub { display: flex; gap: 5px; align-items: center; margin-top: 3px; }
+.mv-sub .type { font-size: .6rem; }
+.mv-row .mv-nums, .ab-row .mv-nums { grid-row: auto; grid-column: auto; display: grid; grid-template-columns: repeat(3, 38px); gap: 2px; text-align: right; font: .72rem var(--pixel); }
+.ab-row .ab-nums { grid-template-columns: 52px; }
+.mv-nums small { display: block; font: .55rem var(--body); color: var(--muted); text-transform: uppercase; }
+.ab-nums { grid-template-columns: 52px; }
+.ab-sub { margin-top: 2px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ab-tag { padding: 0 5px; font-size: .7rem; color: var(--muted); }
+/* Quantos do save têm: ✓ N (ligado, verde) ou +N (podem ter) */
+.own-pill { padding: 0 5px; font: .6rem/1.7 var(--pixel); color: var(--muted); white-space: nowrap; box-shadow: inset 0 0 0 2px var(--hi); }
+.own-pill.on { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+/* Categoria do golpe: losango (físico), anel (especial), traço (status) */
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 1px 6px 0; font: .6rem/1.5 var(--pixel); text-transform: uppercase; white-space: nowrap;
+  color: var(--ink); background: var(--win); box-shadow: inset 0 0 0 2px var(--c);
+}
+.cat-chip i { flex: none; width: 8px; height: 8px; background: var(--c); }
+.cat-0 { --c: var(--plus); }
+.cat-0 i { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.cat-1 { --c: var(--minus); }
+.cat-1 i { background: none; box-shadow: inset 0 0 0 2px var(--c); }
+.cat-2 { --c: var(--muted); }
+.cat-2 i { height: 3px; }
+/* Detalhe: nome, chips, os números e a descrição no topo; os do save e quem tem/aprende em abas */
+.dx-hero { padding-top: 4px; }
+.dx-hero h2 { margin: 0; }
+.dx-hero .pdx-chips { align-items: center; }
+.dx-hero .pdx-chips .type { font-size: .7rem; }
+.dx-hero .cat-chip { font-size: .66rem; padding: 2px 7px 1px; }
+.dx-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 420px; margin: 10px 0 0; }
+.dx-stats div { min-width: 0; padding: 4px 8px 5px; background: var(--win); box-shadow: inset 0 0 0 2px var(--hi); }
+.dx-stats dt { font: .55rem var(--pixel); text-transform: uppercase; color: var(--muted); }
+.dx-stats dd { margin: 2px 0 0; font: 1rem var(--pixel); }
+.dx-text { max-width: 68ch; margin: 10px 0 0; font-size: .92rem; line-height: 1.45; }
+.dx-text .tip-note { display: block; margin-top: 4px; color: var(--muted); font-size: .78rem; }
+.tab-n { margin-left: 2px; opacity: .7; }
+.sheet:has(.mv-detail) { height: calc(100dvh - 24px); }
+.mv-detail h4 { margin: 12px 0 6px; font: .66rem var(--pixel); text-transform: uppercase; color: var(--muted); }
+.mv-detail .pdx-pane > h4:first-child, .mv-detail .pdx-pane > .hint:first-child + h4 { margin-top: 0; }
+.mv-detail .pdx-pane > .hint:first-child { margin-top: 0; }
+.own-note { margin: -2px 0 6px; font-size: .8rem; }
+.own-list { margin-top: 0; }
+.own-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; white-space: normal; }
+.how-tag { padding: 0 5px; font: .58rem/1.7 var(--pixel); text-transform: uppercase; white-space: nowrap; background: var(--win-2); box-shadow: inset 0 0 0 2px var(--hi); }
+/* Espécies que aprendem/têm: sprite, nome e nível lado a lado (mais por tela que os blocos de antes) */
+.sp-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+@media (min-width: 640px) { .sp-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .sp-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sp-chip {
+  width: 100%; height: 100%; min-height: 44px; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 4px;
+  padding: 2px 8px 2px 2px; border: 0; background: var(--win-2); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  box-shadow: inset 0 -3px 0 var(--hi);
+}
+.sp-chip img { width: 40px; height: 34px; object-fit: contain; }
+.sp-chip b { display: block; font-size: .8rem; font-weight: 650; line-height: 1.2; overflow-wrap: break-word; }
+.sp-chip small { display: block; font-size: .7rem; color: var(--muted); line-height: 1.2; }
+.sp-chip .sp-lv { font: .58rem var(--pixel); white-space: nowrap; }
+.sp-chip.own { box-shadow: inset 0 0 0 2px var(--accent); }
+.sp-own { color: var(--accent); }
+.sp-more { margin-top: 6px; }
+@media (min-width: 960px) {
+  .sheet:has(.mv-detail) { width: min(960px, calc(100vw - 48px)); }
+  .mv-detail .pdx-tabs { max-width: 420px; }
+  #mv-filters .search-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #mv-filters .search-row .pdx-wide { grid-column: auto; }
+  #ab-filters .search-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Os números à direita do nome e da descrição (no celular, entre os dois) */
+  .dx-hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-areas: "name stats" "chips stats" "text stats"; column-gap: 24px; align-items: start; }
+  .dx-hero h2 { grid-area: name; }
+  .dx-hero .pdx-chips { grid-area: chips; }
+  .dx-hero .dx-text { grid-area: text; }
+  .dx-hero .dx-stats { grid-area: stats; margin: 0; align-self: end; }
+}
+.ai-facts { margin: 12px 0; }
+
+/* Equipes de referência (montador): o grupo das abas, os membros da original e os links da fonte */
+.builder-group { margin: .6rem 0 .2rem; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.ref-links a { color: var(--accent); }
+
+/* Abas do resultado do montador: presas no topo ao rolar, como um seletor de 4 partes */
+.bt-tabs {
+  position: sticky; top: var(--bar-h, 68px); z-index: 3; scroll-margin-top: calc(var(--bar-h, 68px) + 4px); display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  margin: 4px 0 10px; background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), 0 4px 0 var(--win);
+}
+.bt-tabs button {
+  min-height: 44px; padding: 6px 2px; border: 0; background: transparent; color: var(--ink); cursor: pointer;
+  font: .68rem var(--pixel); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bt-tabs button[aria-selected="true"] { background: var(--edge); color: var(--win); }
+.bt-tabs button:focus-visible { outline: 3px solid var(--accent); outline-offset: -6px; }
+.bt-pane { display: grid; gap: 12px; }
+.bt-pane[hidden] { display: none; }
+
+/* Ferramentas em grade: Montar equipe mais largo em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+#out .tool-win:not([open]) { display: none; }
+.tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tool-card {
+  display: grid; gap: 4px; align-content: start; min-height: 88px; padding: 12px 12px 14px; text-align: left; cursor: pointer;
+  border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
+  font: inherit; -webkit-tap-highlight-color: transparent;
+}
+.tool-card.hot { grid-column: 1 / -1; min-height: 0; }
+.tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: 1 / -1; } /* sobrou um sozinho na fileira */
+.tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
+.tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
+.tool-card:active { transform: translateY(2px); }
+.tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+/* Aberta: o cartão fica verde e "afundado", como as abas escolhidas; fechadas, todas iguais */
+.tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
+.tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
+@media (min-width: 1000px) {
+  .tools-grid { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
+  .tool-card.hot { grid-column: auto; min-height: 88px; }
+  .tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: auto; }
+}
+
+
+/* Golpes e habilidades com a descrição ao tocar (ui/tips.js) */
+.tip-btn { all: unset; cursor: pointer; text-decoration: underline dotted color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: 3px; text-decoration-thickness: 1px; overflow-wrap: anywhere; }
+.tip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tip-btn[aria-expanded="true"] { text-decoration-style: solid; color: var(--accent); }
+.ai-mv > .tip-btn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tip { position: fixed; inset: auto; margin: 0; padding: 10px 12px; max-height: 50vh; overflow: auto; color: var(--ink); background: var(--win); border: 0; box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 rgba(0, 0, 0, .25); font: .86rem/1.4 var(--body); }
+.tip p { margin: 0; }
+.tip-h { display: grid; gap: 1px; margin-bottom: 4px !important; }
+.tip-h b { font-size: .92rem; }
+.tip-h small, .tip-note { color: var(--muted); font-size: .74rem; }
+.tip-note { display: block; margin-top: 6px !important; }
+.move-desc .tip-note { margin-top: 2px !important; }
+
+/* Pokédex: estágio da linha evolutiva que abre o detalhe dele */
+.evo-link { cursor: pointer; }
+.evo-link b { text-decoration: underline dotted; text-underline-offset: 3px; }
+.evo-link:hover, .evo-link:focus-visible { box-shadow: inset 0 0 0 2px var(--edge), inset 0 -3px 0 var(--edge); outline: none; }
+/* Dano recebido com a habilidade escolhida */
+.mu-abs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.mu-abs .btn { min-height: 40px; padding: 2px 10px; font-size: .62rem; }
+.mu-abs .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+/* Uso no competitivo */
+.usage-head { margin: 0 0 8px; font-size: .9rem; }
+.usage h4 { margin: 8px 0 4px; font: .72rem var(--pixel); color: var(--muted); text-transform: uppercase; }
+.usage-cols { display: grid; gap: 4px 16px; }
+@media (min-width: 640px) { .usage-cols { grid-template-columns: 1.4fr 1fr 1fr; } .usage-wide { grid-column: span 2; } }
+.usage-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.usage-list li { display: grid; grid-template-columns: minmax(0, 1fr) 56px 40px; align-items: center; gap: 6px; font-size: .85rem; }
+.usage-list li > b { font: .7rem var(--pixel); text-align: right; }
+.usage-bar { height: 6px; background: var(--hi); }
+.usage-bar i { display: block; height: 100%; background: var(--edge); }
+.usage-mates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 640px) { .usage-mates { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.usage-mate { width: 100%; display: grid; justify-items: center; gap: 2px; padding: 4px; border: 0; background: var(--win-2); color: var(--ink); font: inherit; cursor: pointer; box-shadow: inset 0 -3px 0 var(--hi); }
+.usage-mate img { width: 48px; height: 40px; object-fit: contain; }
+.usage-mate b { font: .62rem var(--pixel); text-align: center; overflow-wrap: anywhere; }
+.usage-mate small { font-size: .7rem; color: var(--muted); }
+/* Comparar duas espécies */
+.cmp-heads { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; margin: 8px 0 4px; }
+.cmp-head { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border: 0; background: var(--win-2); color: var(--ink); font: inherit; cursor: pointer; box-shadow: inset 0 -3px 0 var(--hi); }
+.cmp-head img { width: 64px; height: 54px; object-fit: contain; }
+.cmp-head b { font: .78rem var(--pixel); text-decoration: underline dotted; text-underline-offset: 3px; }
+.cmp-head small { font-size: .75rem; color: var(--muted); }
+.cmp-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+.cmp-types .type { font-size: .6rem; padding: 2px 4px 1px; }
+.cmp-bar .sheet-bar-name { visibility: visible; }
+.cmp-x { font: .8rem var(--pixel); color: var(--muted); }
+.cmp-stats { width: 100%; table-layout: fixed; }
+.cmp-stats th { width: 44px; text-align: center; }
+.cmp-stats td.num { width: 40px; text-align: center; }
+.cmp-stats .cmp-hi { font-weight: 700; text-decoration: underline 3px var(--edge); text-underline-offset: 4px; } /* o maior em destaque sem o verde, que é de estado ligado */
+.cmp-bar.l .bar { transform: scaleX(-1); }
+.cmp-abs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; font-size: .85rem; }
+.cmp-abs p { margin: 0; }
+.cmp-mu { width: 100%; }
+.cmp-mu td { width: 40%; text-align: center; }
+.cmp-mu th { text-align: center; }
+.cmp-mu .mu-x { min-width: 44px; }
+.cmp-n { color: var(--muted); font-size: .75rem; }
+@media (min-width: 640px) { .pdx-bar { grid-template-columns: auto minmax(0, 360px); justify-content: space-between; } }
+
+/* Pokédex (revisão de design, 2026-10): lista mais densa, filtros ligados à vista, detalhe em abas */
+.pdx-row { min-height: 46px; grid-template-columns: 40px 1fr auto; gap: 8px; padding: 1px 10px 1px 2px; }
+.pdx-row img { width: 40px; height: 34px; align-self: center; }
+.pdx-row img:not(.ico) { padding: 2px; box-sizing: border-box; } /* sprite grande de reserva: do tamanho do ícone */
+.pdx-row .r-main b { font-weight: 650; }
+.pdx-no { margin-right: 6px; font: .6rem var(--pixel); color: var(--muted); }
+.pdx-form { padding-left: 24px; grid-template-columns: 34px 1fr auto; background: var(--win-2); }
+.pdx-form img { width: 34px; height: 28px; }
+.pdx-form .r-main b { font-weight: 500; }
+.pdx-count { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.pdx-active { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pdx-active:empty, .pdx-active[hidden] { display: none; }
+.pdx-fchip {
+  min-height: 32px; padding: 3px 9px; border: 0; background: var(--win-2); color: var(--ink); font: .8rem var(--body); cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--edge);
+}
+.pdx-fchip span { margin-left: 2px; color: var(--muted); }
+.pdx-fclear { font: .62rem var(--pixel); text-transform: uppercase; box-shadow: inset 0 0 0 2px var(--hi); }
+@media (min-width: 960px) {
+  .pdx-filters .search-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pdx-filters .search-row .pdx-wide { grid-column: span 2; }
+  .pdx-filters .search-row select:last-of-type:nth-of-type(odd) { grid-column: auto; }
+  .pdx-min { grid-template-columns: auto minmax(0, 200px) minmax(0, 200px); justify-content: start; }
+}
+
+/* Botão ⓘ: a explicação do bloco no balão (ui/tips.js) */
+.info-btn {
+  display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; padding: 0; border: 0; vertical-align: middle;
+  background: var(--win); color: var(--muted); font: italic 700 .85rem/1 Georgia, "Times New Roman", serif; text-transform: none; cursor: pointer; box-shadow: inset 0 0 0 2px var(--hi); text-decoration: none;
+}
+.info-btn[aria-expanded="true"] { background: var(--edge); color: var(--win); }
+.dsec > h3 > .learn-count { margin-left: 0; }
+.mu-note { font-size: .8rem; margin-top: 4px; }
+
+/* Detalhe da espécie: barra com ‹ n/total ›, etiquetas embaixo do nome, abas presas embaixo da barra */
+.pdx-sheet-bar .btn-icon { width: 40px; }
+.pdx-arrow { font: 1.6rem/1 var(--body); }
+.pdx-pos { padding: 0 2px; font: .62rem var(--pixel); color: var(--muted); white-space: nowrap; }
+.pdx-chips { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.pdx-chip { padding: 1px 7px; font-size: .78rem; white-space: nowrap; background: var(--win); box-shadow: inset 0 0 0 2px var(--hi); }
+.pdx-chip.on { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); font-weight: 700; }
+.pdx-detail .mon-hero { padding-bottom: 10px; }
+/* Altura fixa: trocar de aba não faz a janela pular de lugar (centralizada, ela mudava de altura com o conteúdo) */
+.sheet:has(.pdx-detail) { height: calc(100dvh - 24px); }
+.bt-tabs.pdx-tabs { margin: 10px 0 12px; }
+.bt-tabs.pdx-tabs { grid-auto-columns: auto; }
+.pdx-tabs button { white-space: normal; line-height: 1.25; padding: 6px 8px; overflow: visible; }
+.pdx-tabs button[hidden] { display: none; }
+.pdx-pane[hidden] { display: none; }
+.pdx-sum, .pdx-l, .pdx-r { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.pdx-pane .dex-slot > .dsec.fold:first-child > summary { margin-top: 0; }
+@media (max-width: 959px) {
+  /* Celular: uma coluna, a evolução primeiro */
+  .pdx-l, .pdx-r { display: contents; }
+  .pdx-r .evo-slot { order: -1; }
+}
+@media (min-width: 960px) {
+  .sheet:has(.pdx-detail) { width: min(960px, calc(100vw - 48px)); }
+  .pdx-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; }
+  .pdx-tabs { max-width: 560px; }
+  /* Onde encontrar: o mapa à esquerda e os lugares à direita (tocar num lugar e ver no mapa sem rolar) */
+  .pdx-pane .wild-region:not([hidden]) { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .pdx-pane .wild-region .wild-map { margin: 0; position: sticky; top: 112px; }
+  .pdx-pane .wild-region .wild-list { grid-template-columns: 1fr; }
+  .pdx-pane .wild-region .wild-req { grid-column: 1 / -1; }
+}
+@media (max-width: 420px) {
+  .pdx-sheet-bar { gap: 3px; padding-left: 12px; }
+  .pdx-sheet-bar .btn-icon { width: 36px; }
+  .pdx-sheet-bar .sheet-bar-name { font-size: .78rem; }
+}
+
+/* Linha evolutiva: no celular, 3 estágios cabem sem rolar (o nome quebra em vez de cortar); 3+ ramos em grade */
+.evo-fan { grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: center; gap: 6px; }
+.evo-trunk { display: flex; align-items: center; gap: 4px; }
+.evo-down { transform: rotate(90deg); }
+.evo-branches { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.evo-branch { display: grid; }
+.evo-branch.wide { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 4px; }
+.evo-branch > .evo-node { height: 100%; }
+.evo-fan .evo-node b { width: auto; min-width: 0; }
+@media (max-width: 480px) {
+  .evo { gap: 6px 2px; padding: 6px; }
+  .evo-node { min-height: 78px; padding: 4px 3px; }
+  .evo-node b { width: auto; min-width: 0; max-width: 92px; font-size: .62rem; overflow-wrap: normal; }
+  .evo-node small { max-width: 96px; font-size: .68rem; }
+  .evo-arrow { border-width: 5px; border-left-width: 7px; border-right-width: 0; }
+}
+
+/* Comparar: o igual nas duas recolhido */
+.cmp-same { margin-top: 6px; }
+.cmp-same > summary::before { content: '▸ '; }
+.cmp-same[open] > summary::before { content: '▾ '; }
+.cmp-same > summary { list-style: none; display: flex; align-items: center; min-height: 36px; font: .68rem var(--pixel); text-transform: uppercase; color: var(--muted); }
+
 /* Golpedex: lista com poder, precisão e PP à direita; detalhe com os do save e quem aprende */
 .mv-row { grid-template-columns: 1fr auto; min-height: 46px; padding-left: 10px; box-shadow: inset 4px 0 0 var(--t, var(--hi)), inset 0 -2px 0 var(--hi); }
 .mv-row .r-main b { font-weight: 650; }
@@ -1259,7 +1536,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .mv-sub .type { font-size: .62rem; }
 .mv-mine { margin-left: 6px; font: .6rem var(--pixel); color: var(--accent); }
 .mv-mine.can { color: var(--muted); }
-.mv-nums { display: grid; grid-template-columns: repeat(3, 38px); gap: 2px; text-align: right; font: .72rem var(--pixel); }
+.mv-row .mv-nums, .ab-row .mv-nums { grid-row: auto; grid-column: auto; display: grid; grid-template-columns: repeat(3, 38px); gap: 2px; text-align: right; font: .72rem var(--pixel); }
+.ab-row .ab-nums { grid-template-columns: 52px; }
 .mv-nums small { display: block; font: .55rem var(--body); color: var(--muted); text-transform: uppercase; }
 .mv-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .mv-hero h2 { margin: 0; }
