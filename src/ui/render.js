@@ -399,6 +399,7 @@ export function toolsWin(game) {
       ${card('builder-win', 'party', t('Montar equipe'), t('Adapta equipes do competitivo (Smogon) aos Pokémon do seu save'), ' hot')}
       ${card('pokedex-win', 'dex-ico', t('Pokédex'), game && game.id === 'quetzal' ? t('Todas as espécies do jogo e onde encontrar cada uma') : t('Todas as espécies do jogo e o que aprendem'))}
       ${card('moves-win', 'bolt', t('Golpes'), t('Todos os golpes do jogo e quem aprende cada um'))}
+      ${card('abilities-win', 'spark', t('Habilidades'), t('Todas as habilidades do jogo e quem tem cada uma'))}
       ${card('search-win', 'box', t('Buscar'), t('Equipe e PC por nome, golpe, tipo e IVs'))}
     </div>
   </section>`;
@@ -558,6 +559,33 @@ export function movesWin(T) {
     <nav class="pager hidden" id="mv-pager" aria-label="${t('Páginas dos golpes')}">
       <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
       <span class="page-info" id="mv-page"></span>
+      <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
+    </nav>
+  </details>`;
+}
+
+/**
+ * Dex de habilidades (Ferramentas): as habilidades das espécies do jogo do save, com a descrição e quem tem. Fechada até
+ * o usuário abrir; a lista e o detalhe ficam num pacote à parte (src/abilitydex/), carregado só ao abrir.
+ */
+export function abilitiesWin() {
+  return `<details class="win win-fold tool-win" id="abilities-win">
+    <summary class="win-title"><h2 id="abilities-h">${t('Habilidades')}</h2><small>${t('todas as habilidades do jogo')}</small></summary>
+    <div class="search-form">
+      <label class="sr" for="ab-q">${t('Nome ou efeito da habilidade')}</label>
+      <input id="ab-q" type="search" placeholder="${t('Nome ou efeito (ex.: chuva)')}" autocomplete="off" enterkeyhint="search">
+      <div class="search-row">
+        <label class="sr" for="ab-mine">${t('Seus Pokémon')}</label>
+        <select id="ab-mine"><option value="">${t('Todas as habilidades')}</option><option value="could">${t('Algum Pokémon seu tem ou pode ter')}</option><option value="has">${t('Algum Pokémon seu tem')}</option></select>
+        <label class="sr" for="ab-sort">${t('Ordem')}</label>
+        <select id="ab-sort"><option value="name">${t('Nome')}</option><option value="species">${t('Mais espécies têm')}</option></select>
+      </div>
+    </div>
+    <p class="hint pdx-count"><span id="ab-count" role="status"></span></p>
+    <ul class="results" id="ab-results"></ul>
+    <nav class="pager hidden" id="ab-pager" aria-label="${t('Páginas das habilidades')}">
+      <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
+      <span class="page-info" id="ab-page"></span>
       <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
     </nav>
   </details>`;

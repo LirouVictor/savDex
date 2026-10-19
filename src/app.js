@@ -13,7 +13,8 @@ import { PROVIDERS, provider, providerId, setProviderId } from './ai/providers.j
 import { saveKey, signature, diffSaves, orderSaves, evolutionCheck } from './history/diff.js';
 import { changesWin, historyStartWin, historyList } from './history/view.js';
 import { listHistory, addHistory, clearHistory, listTeams, addTeam, putTeam, deleteTeam } from './ui/store.js';
-import { installTips, moveText } from './ui/tips.js';
+import { installTips, moveText, abilityText } from './ui/tips.js';
+import { freeAbilityMode } from './ai/free.js';
 
 const PAGE = 15; // resultados da busca por página
 
@@ -94,6 +95,7 @@ function render() {
       ${R.builderWin(data, Object.values(PROVIDERS))}
       ${R.pokedexWin(data, T)}
       ${R.movesWin(T)}
+      ${R.abilitiesWin()}
       ${R.searchWin(data, T)}
       <div id="teams-slot"></div>
       ${R.exportWin()}
@@ -184,13 +186,14 @@ function render() {
 
   // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
   // quando a Busca abre
-  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win', 'moves-win']) {
+  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win', 'moves-win', 'abilities-win']) {
     const det = out.querySelector('#' + id);
     det.addEventListener('toggle', () => {
       setFoldOpen(id, det.open);
       if (id === 'search-win' && det.open && !state.searched) runSearch();
       if (id === 'pokedex-win' && det.open) setupPokedex(out);
       if (id === 'moves-win' && det.open) setupMoves(out);
+      if (id === 'abilities-win' && det.open) setupAbilities(out);
     });
     if (foldOpen(id)) det.open = true;
   }
@@ -456,6 +459,109 @@ async function setupMoves(out) {
     if (b) openMove(md.list[+b.dataset.mv], b);
   });
   run();
+}
+
+// Dex de habilidades: o pacote só carrega quando a janela abre; usa as espécies da Pokédex e as descrições de tips.js
+let abilitiesMod = null;
+const loadAbilities = () => (abilitiesMod ||= import('./abilitydex/view.js').catch(e => { abilitiesMod = null; throw e; }));
+
+/** As habilidades do save aberto, com quem tem e a descrição de cada uma, montadas uma vez por save. */
+async function abilitiesState() {
+  const cur = state;
+  if (!cur.abilitydex) {
+    const [A, pd] = await Promise.all([loadAbilities(), pokedexState()]);
+    const byKey = new Map(pd.entries.map(e => [`${e.id}|${e.species.form || ''}`, e]));
+    const entryOf = m => byKey.get(`${m.speciesId}|${m.species.form || ''}`) || byKey.get(`${m.speciesId}|`) || null;
+    const rows = A.abilityRows(pd.entries, cur.all, entryOf);
+    const ctx = tipCtx();
+    await Promise.all(rows.map(r => abilityText(r.name, ctx).then(x => { r.text = x.text; r.note = x.note; })));
+    cur.abilitydex = { A, pd, entryOf, rows, list: [], page: 0 };
+  }
+  return cur.abilitydex;
+}
+
+async function setupAbilities(out) {
+  const cur = state;
+  const $ = s => out.querySelector(s);
+  if (cur.abilitiesWired) return;
+  cur.abilitiesWired = true;
+  $('#ab-count').textContent = t('Carregando…');
+  let ad;
+  try { ad = await abilitiesState(); } catch (e) { console.error(e); cur.abilitiesWired = false; $('#ab-count').textContent = t('Não consegui abrir as habilidades.'); return; }
+  if (state !== cur) return;
+  const show = () => {
+    const total = ad.list.length;
+    const pages = Math.max(1, Math.ceil(total / ad.A.PAGE));
+    ad.page = Math.min(Math.max(0, ad.page), pages - 1);
+    const start = ad.page * ad.A.PAGE;
+    $('#ab-results').innerHTML = ad.list.slice(start, start + ad.A.PAGE).map((r, j) => ad.A.abilityRow(r, start + j)).join('');
+    $('#ab-count').textContent = t(total === 1 ? '1 habilidade.' : '{n} habilidades.', { n: total });
+    const pager = $('#ab-pager');
+    pager.classList.toggle('hidden', pages <= 1);
+    pager.querySelector('[data-page="-1"]').disabled = ad.page === 0;
+    pager.querySelector('[data-page="1"]').disabled = ad.page >= pages - 1;
+    $('#ab-page').textContent = t('Página {p} de {n}', { p: ad.page + 1, n: pages });
+  };
+  const run = () => {
+    const v = id => $('#' + id).value;
+    ad.list = ad.A.filterAbilities(ad.rows, { q: v('ab-q'), mine: v('ab-mine'), sort: v('ab-sort') });
+    ad.page = 0;
+    show();
+  };
+  let timer = 0;
+  const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
+  for (const id of ['ab-q', 'ab-mine', 'ab-sort']) {
+    const el = $('#' + id);
+    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
+  }
+  $('#ab-pager').addEventListener('click', e => {
+    const b = e.target.closest('[data-page]');
+    if (!b) return;
+    ad.page += Number(b.dataset.page);
+    show();
+    const count = $('#ab-count');
+    if (count.getBoundingClientRect().top < 0) count.scrollIntoView({ block: 'start' });
+  });
+  $('#ab-results').addEventListener('click', e => {
+    const b = e.target.closest('[data-ab]');
+    if (b) openAbility(ad.list[+b.dataset.ab], b);
+  });
+  run();
+}
+
+/** Detalhe de uma habilidade (na janela do detalhe). */
+async function openAbility(row, opener) {
+  if (!row) return;
+  const ad = await abilitiesState();
+  const dlg = document.getElementById('detail');
+  const wasOpen = dlg.open;
+  const i = ad.list.indexOf(row);
+  const { html, lists } = ad.A.abilityDetail(row, { all: state.all, entries: ad.pd.entries, entryOf: ad.entryOf, free: freeAbilityMode(state.data.game), nav: i >= 0 ? { i, n: ad.list.length } : null });
+  dlg.innerHTML = html;
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  const go = d => { const next = ad.list[i + d]; if (next) openAbility(next, opener); };
+  for (const b of dlg.querySelectorAll('[data-nav]')) b.addEventListener('click', () => go(+b.dataset.nav));
+  dlg.querySelector('.mon').addEventListener('click', e => {
+    const mon = e.target.closest('[data-mon]');
+    if (mon) return openDetail(state.all[+mon.dataset.mon], opener);
+    const sp = e.target.closest('[data-pdx-entry]');
+    if (sp) return openSpecies(ad.pd.entries[+sp.dataset.pdxEntry], opener);
+    const more = e.target.closest('[data-more]');
+    if (more) {
+      const k = +more.dataset.more;
+      const ul = dlg.querySelector(`[data-list="${k}"]`);
+      ul.insertAdjacentHTML('beforeend', ad.A.learnerChips(lists[k], new Map(ad.pd.entries.map((x, j) => [x, j])), new Set(state.all.filter(m => !m.egg).map(ad.entryOf).filter(Boolean)), ad.A.LEARNER_SHOW));
+      more.remove();
+    }
+  });
+  dlg.onkeydown = e => {
+    if (!dlg.querySelector('[data-nav]') || e.target.closest('input, select, textarea')) return;
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+  };
+  stickyName(dlg);
+  if (wasOpen) { dlg.scrollTop = 0; return; }
+  showSheet(dlg, opener);
 }
 
 /** Detalhe de um golpe da Golpedex (na janela do detalhe). */

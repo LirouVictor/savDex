@@ -6,6 +6,17 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-30',
+    pt: [
+      'Descrições de golpes e habilidades em português (na interface em português), com o texto da tradução do Pokémon Quetzal. Os nomes continuam em inglês, como no jogo. Fora do Quetzal, a descrição avisa que é o texto dele e, nos jogos oficiais, mostra também o texto da época.',
+      'Nova ferramenta “Habilidades”: todas as habilidades das espécies do jogo, com a descrição, busca pelo nome ou pelo efeito (ex.: “chuva”) e quantos Pokémon do seu save têm cada uma. O detalhe mostra quem do save tem, quem pode ter (e se é com Ability Capsule ou Ability Patch) e todas as espécies que a têm, comum ou oculta.',
+    ],
+    en: [
+      'Move and ability descriptions in Portuguese (with the Portuguese interface), from the Pokémon Quetzal translation. Names stay in English, as in the game. Outside Quetzal, the description says where the text comes from and, in the official games, also shows the text from that generation.',
+      'The new “Abilities” tool lists every ability of the game’s species, with its description, search by name or effect (e.g. “rain”) and how many Pokémon in your save have each one. The detail shows who in the save has it, who can have it (and whether with an Ability Capsule or Ability Patch) and every species that has it, regular or hidden.',
+    ],
+  },
+  {
     date: '2026-10-29',
     pt: [
       'Nova ferramenta “Golpes”: todos os golpes do jogo do save, com tipo, categoria, poder, precisão e PP, e filtros por nome, tipo, categoria e pelos golpes que os seus Pokémon sabem ou aprendem.',
