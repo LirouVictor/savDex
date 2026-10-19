@@ -391,6 +391,63 @@ function evoEntry(pd, ids) {
   return null;
 }
 
+/**
+ * Filtros recolhidos atrás do botão "Filtros" (a busca e a ordem ficam à vista), como na Pokédex: `pre` = prefixo dos
+ * ids (`mv` → #mv-ftoggle, #mv-filters, #mv-active, #mv-on, #mv-clear); `ids` = os filtros; `prefix` = rótulo antes do
+ * valor na etiqueta do filtro ligado. Devolve `sync()`, que atualiza a contagem e as etiquetas (chamar no fim do filtro).
+ */
+function foldFilters($, pre, ids, prefix, run) {
+  const toggle = $(`#${pre}-ftoggle`), panel = $(`#${pre}-filters`), active = $(`#${pre}-active`);
+  const setOpen = on => { panel.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); active.hidden = on; };
+  setOpen(window.matchMedia('(min-width: 960px)').matches);
+  toggle.addEventListener('click', () => setOpen(panel.hidden));
+  const clear = () => { for (const id of ids) $('#' + id).value = ''; run(); };
+  $(`#${pre}-clear`).addEventListener('click', clear);
+  active.addEventListener('click', e => {
+    const b = e.target.closest('[data-unfilter]');
+    if (!b) return;
+    if (b.dataset.unfilter === '*') return clear();
+    $('#' + b.dataset.unfilter).value = '';
+    run();
+    active.querySelector('[data-unfilter]')?.focus();
+  });
+  return () => {
+    const on = ids.filter(id => $('#' + id).value);
+    $(`#${pre}-on`).textContent = on.length ? `(${on.length})` : '';
+    const chips = on.map(id => {
+      const label = (prefix[id] ? `${prefix[id]}: ` : '') + $('#' + id).selectedOptions[0].textContent;
+      return `<button type="button" class="pdx-fchip" data-unfilter="${id}" aria-label="${R.esc(t('Desligar o filtro {f}', { f: label }))}">${R.esc(label)} <span aria-hidden="true">✕</span></button>`;
+    });
+    active.innerHTML = chips.join('') + (chips.length > 1 ? `<button type="button" class="pdx-fchip pdx-fclear" data-unfilter="*">${t('Limpar filtros')}</button>` : '');
+  };
+}
+
+/**
+ * Abas dos detalhes de golpe e de habilidade (as mesmas da Pokédex): a escolhida fica em `st.tab` e vale para o próximo
+ * (‹ ›); as setas trocam de aba quando o foco está nelas.
+ */
+function wireDetailTabs(dlg, st) {
+  const tabs = dlg.querySelector('.pdx-tabs');
+  if (!tabs) return;
+  const setTab = k => {
+    const btn = tabs.querySelector(`[data-ptab="${k}"]`);
+    if (!btn) return;
+    st.tab = k;
+    for (const b of tabs.querySelectorAll('[data-ptab]')) b.setAttribute('aria-selected', String(b === btn));
+    for (const p of dlg.querySelectorAll('[data-pane]')) p.hidden = p.dataset.pane !== k;
+    const top = tabs.offsetTop - parseFloat(tabs.style.top || 0);
+    if (dlg.scrollTop > top) dlg.scrollTop = top;
+  };
+  tabs.addEventListener('click', e => { const b = e.target.closest('[data-ptab]'); if (b) setTab(b.dataset.ptab); });
+  tabs.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.stopPropagation();
+    const list = [...tabs.querySelectorAll('[data-ptab]')];
+    const next = list[(list.indexOf(document.activeElement) + (e.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length];
+    if (next) { setTab(next.dataset.ptab); next.focus(); }
+  });
+}
+
 // Golpedex: o pacote (lista e detalhe dos golpes) só carrega quando a janela abre; usa as espécies da Pokédex e os
 // golpes por nível/tutor/ovo do detalhe (loadDex)
 let movesMod = null;
@@ -421,6 +478,8 @@ async function setupMoves(out) {
   try { md = await movesState(); } catch (e) { console.error(e); cur.movesWired = false; $('#mv-count').textContent = t('Não consegui abrir os golpes.'); return; }
   if (state !== cur) return;
   if (!md.dex.rom) $('#mv-note').innerHTML = R.infoBtn(t('Golpes'), t('Quem aprende: golpes por nível dos jogos oficiais mais recentes; o jogo do save pode ser diferente. TM e tutor não entram.'));
+  const FILTERS = ['mv-type', 'mv-cat', 'mv-mine'];
+  let sync = () => {};
   const show = () => {
     const total = md.list.length;
     const pages = Math.max(1, Math.ceil(total / md.M.PAGE));
@@ -438,11 +497,13 @@ async function setupMoves(out) {
     const v = id => $('#' + id).value;
     md.list = md.M.filterMoves(md.rows, { q: v('mv-q'), type: v('mv-type'), cat: v('mv-cat'), mine: v('mv-mine'), sort: v('mv-sort') });
     md.page = 0;
+    sync();
     show();
   };
+  sync = foldFilters($, 'mv', FILTERS, { 'mv-type': t('Tipo') }, run);
   let timer = 0;
   const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
-  for (const id of ['mv-q', 'mv-type', 'mv-cat', 'mv-mine', 'mv-sort']) {
+  for (const id of ['mv-q', 'mv-sort', ...FILTERS]) {
     const el = $('#' + id);
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
   }
@@ -489,6 +550,8 @@ async function setupAbilities(out) {
   let ad;
   try { ad = await abilitiesState(); } catch (e) { console.error(e); cur.abilitiesWired = false; $('#ab-count').textContent = t('Não consegui abrir as habilidades.'); return; }
   if (state !== cur) return;
+  const FILTERS = ['ab-mine', 'ab-slot'];
+  let sync = () => {};
   const show = () => {
     const total = ad.list.length;
     const pages = Math.max(1, Math.ceil(total / ad.A.PAGE));
@@ -504,13 +567,15 @@ async function setupAbilities(out) {
   };
   const run = () => {
     const v = id => $('#' + id).value;
-    ad.list = ad.A.filterAbilities(ad.rows, { q: v('ab-q'), mine: v('ab-mine'), sort: v('ab-sort') });
+    ad.list = ad.A.filterAbilities(ad.rows, { q: v('ab-q'), mine: v('ab-mine'), slot: v('ab-slot'), sort: v('ab-sort') });
     ad.page = 0;
+    sync();
     show();
   };
+  sync = foldFilters($, 'ab', FILTERS, {}, run);
   let timer = 0;
   const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
-  for (const id of ['ab-q', 'ab-mine', 'ab-sort']) {
+  for (const id of ['ab-q', 'ab-sort', ...FILTERS]) {
     const el = $('#' + id);
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', later);
   }
@@ -536,8 +601,9 @@ async function openAbility(row, opener) {
   const dlg = document.getElementById('detail');
   const wasOpen = dlg.open;
   const i = ad.list.indexOf(row);
-  const { html, lists } = ad.A.abilityDetail(row, { all: state.all, entries: ad.pd.entries, entryOf: ad.entryOf, free: freeAbilityMode(state.data.game), nav: i >= 0 ? { i, n: ad.list.length } : null });
+  const { html, lists } = ad.A.abilityDetail(row, { all: state.all, entries: ad.pd.entries, entryOf: ad.entryOf, free: freeAbilityMode(state.data.game), nav: i >= 0 ? { i, n: ad.list.length } : null, tab: ad.tab });
   dlg.innerHTML = html;
+  wireDetailTabs(dlg, ad);
   dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
   const go = d => { const next = ad.list[i + d]; if (next) openAbility(next, opener); };
   for (const b of dlg.querySelectorAll('[data-nav]')) b.addEventListener('click', () => go(+b.dataset.nav));
@@ -560,8 +626,10 @@ async function openAbility(row, opener) {
     else if (e.key === 'ArrowRight') go(1);
   };
   stickyName(dlg);
-  if (wasOpen) { dlg.scrollTop = 0; return; }
+  const place = () => { const tabs = dlg.querySelector('.pdx-tabs'); if (tabs) tabs.style.top = `${dlg.querySelector('.sheet-bar').offsetHeight - 16}px`; };
+  if (wasOpen) { place(); dlg.scrollTop = 0; return; }
   showSheet(dlg, opener);
+  place();
 }
 
 /** Detalhe de um golpe da Golpedex (na janela do detalhe). */
@@ -571,8 +639,9 @@ async function openMove(row, opener) {
   const dlg = document.getElementById('detail');
   const wasOpen = dlg.open;
   const i = md.list.indexOf(row);
-  const { html, lists } = md.M.moveDetail(row, { T, dex: md.dex, learners: md.learners, all: state.all, entries: md.pd.entries, entryOf: md.entryOf, nav: i >= 0 ? { i, n: md.list.length } : null });
+  const { html, lists } = md.M.moveDetail(row, { T, dex: md.dex, learners: md.learners, all: state.all, entries: md.pd.entries, entryOf: md.entryOf, nav: i >= 0 ? { i, n: md.list.length } : null, tab: md.tab });
   dlg.innerHTML = html;
+  wireDetailTabs(dlg, md);
   const text = dlg.querySelector('[data-mtext]');
   moveText(row.id, tipCtx()).then(r => {
     if (!text.isConnected) return;
@@ -601,8 +670,10 @@ async function openMove(row, opener) {
     else if (e.key === 'ArrowRight') go(1);
   };
   stickyName(dlg);
-  if (wasOpen) { dlg.scrollTop = 0; return; }
+  const place = () => { const tabs = dlg.querySelector('.pdx-tabs'); if (tabs) tabs.style.top = `${dlg.querySelector('.sheet-bar').offsetHeight - 16}px`; };
+  if (wasOpen) { place(); dlg.scrollTop = 0; return; }
   showSheet(dlg, opener);
+  place();
 }
 
 /** Detalhe de uma espécie da Pokédex (na janela do detalhe). */

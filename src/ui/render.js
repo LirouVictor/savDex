@@ -543,16 +543,23 @@ export function movesWin(T) {
     <div class="search-form">
       <label class="sr" for="mv-q">${t('Nome do golpe')}</label>
       <input id="mv-q" type="search" placeholder="${t('Nome do golpe')}" autocomplete="off" enterkeyhint="search">
-      <div class="search-row">
-        <label class="sr" for="mv-type">${t('Tipo')}</label>
-        <select id="mv-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
-        <label class="sr" for="mv-cat">${t('Categoria')}</label>
-        <select id="mv-cat"><option value="">${t('Todas as categorias')}</option><option value="0">${t('Físico')}</option><option value="1">${t('Especial')}</option><option value="2">${t('Status')}</option></select>
-        <label class="sr" for="mv-mine">${t('Seus Pokémon')}</label>
-        <select id="mv-mine"><option value="">${t('Todos os golpes')}</option><option value="can">${t('Algum Pokémon seu sabe ou aprende')}</option><option value="know">${t('Algum Pokémon seu já sabe')}</option></select>
+      <div class="pdx-bar">
+        <button class="btn btn-ghost btn-small" type="button" id="mv-ftoggle" aria-expanded="false" aria-controls="mv-filters">${t('Filtros')} <span class="pdx-on" id="mv-on"></span></button>
         <label class="sr" for="mv-sort">${t('Ordem')}</label>
         <select id="mv-sort"><option value="name">${t('Nome')}</option><option value="power">${t('Poder (maior)')}</option><option value="accuracy">${t('Precisão (maior)')}</option><option value="pp">${t('PP (maior)')}</option><option value="species">${t('Mais espécies aprendem')}</option></select>
       </div>
+      <div class="pdx-filters" id="mv-filters" hidden>
+        <div class="search-row">
+          <label class="sr" for="mv-type">${t('Tipo')}</label>
+          <select id="mv-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+          <label class="sr" for="mv-cat">${t('Categoria')}</label>
+          <select id="mv-cat"><option value="">${t('Todas as categorias')}</option><option value="0">${t('Físico')}</option><option value="1">${t('Especial')}</option><option value="2">${t('Status')}</option></select>
+          <label class="sr" for="mv-mine">${t('Seus Pokémon')}</label>
+          <select id="mv-mine" class="pdx-wide"><option value="">${t('Todos os golpes')}</option><option value="can">${t('Algum Pokémon seu sabe ou aprende')}</option><option value="know">${t('Algum Pokémon seu já sabe')}</option></select>
+        </div>
+        <button class="btn btn-ghost btn-small" type="button" id="mv-clear">${t('Limpar filtros')}</button>
+      </div>
+      <div class="pdx-active" id="mv-active"></div>
     </div>
     <p class="hint pdx-count"><span id="mv-count" role="status"></span> <span id="mv-note"></span></p>
     <ul class="results" id="mv-results"></ul>
@@ -574,12 +581,21 @@ export function abilitiesWin() {
     <div class="search-form">
       <label class="sr" for="ab-q">${t('Nome ou efeito da habilidade')}</label>
       <input id="ab-q" type="search" placeholder="${t('Nome ou efeito (ex.: chuva)')}" autocomplete="off" enterkeyhint="search">
-      <div class="search-row">
-        <label class="sr" for="ab-mine">${t('Seus Pokémon')}</label>
-        <select id="ab-mine"><option value="">${t('Todas as habilidades')}</option><option value="could">${t('Algum Pokémon seu tem ou pode ter')}</option><option value="has">${t('Algum Pokémon seu tem')}</option></select>
+      <div class="pdx-bar">
+        <button class="btn btn-ghost btn-small" type="button" id="ab-ftoggle" aria-expanded="false" aria-controls="ab-filters">${t('Filtros')} <span class="pdx-on" id="ab-on"></span></button>
         <label class="sr" for="ab-sort">${t('Ordem')}</label>
         <select id="ab-sort"><option value="name">${t('Nome')}</option><option value="species">${t('Mais espécies têm')}</option></select>
       </div>
+      <div class="pdx-filters" id="ab-filters" hidden>
+        <div class="search-row">
+          <label class="sr" for="ab-mine">${t('Seus Pokémon')}</label>
+          <select id="ab-mine"><option value="">${t('Todas as habilidades')}</option><option value="could">${t('Algum Pokémon seu tem ou pode ter')}</option><option value="has">${t('Algum Pokémon seu tem')}</option></select>
+          <label class="sr" for="ab-slot">${t('Comum ou oculta')}</label>
+          <select id="ab-slot"><option value="">${t('Comum ou oculta')}</option><option value="normal">${t('Comum em alguma espécie')}</option><option value="hidden">${t('Só como oculta')}</option></select>
+        </div>
+        <button class="btn btn-ghost btn-small" type="button" id="ab-clear">${t('Limpar filtros')}</button>
+      </div>
+      <div class="pdx-active" id="ab-active"></div>
     </div>
     <p class="hint pdx-count"><span id="ab-count" role="status"></span></p>
     <ul class="results" id="ab-results"></ul>

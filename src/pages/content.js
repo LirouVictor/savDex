@@ -6,6 +6,17 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-10-31',
+    pt: [
+      'Golpes e Habilidades com o visual da Pokédex: os filtros ficam atrás do botão “Filtros” (os ligados aparecem como etiquetas com ✕), a lista ficou mais compacta e a categoria do golpe ganhou uma etiqueta própria (físico, especial, status).',
+      'No detalhe de um golpe ou de uma habilidade, o topo mostra tipo, categoria, poder, precisão, PP e a descrição, e o resto fica em abas: “No seu save” (separado entre quem já sabe, quem aprende agora e quem precisa de treino) e “Quem aprende”/“Quem tem”, com as espécies em blocos menores, nome e nível lado a lado.',
+    ],
+    en: [
+      'Moves and Abilities now look like the Pokédex: filters sit behind the “Filters” button (the active ones show as chips with ✕), the list is more compact and the move category has its own tag (physical, special, status).',
+      'A move or ability’s details show type, category, power, accuracy, PP and the description at the top, and the rest in tabs: “In your save” (split into who already knows it, who can learn it now and who needs training) and “Who learns it”/“Who has it”, with smaller species tiles showing name and level side by side.',
+    ],
+  },
+  {
     date: '2026-10-30',
     pt: [
       'Descrições de golpes e habilidades em português (na interface em português), com o texto da tradução do Pokémon Quetzal. Os nomes continuam em inglês, como no jogo. Fora do Quetzal, a descrição avisa que é o texto dele e, nos jogos oficiais, mostra também o texto da época.',

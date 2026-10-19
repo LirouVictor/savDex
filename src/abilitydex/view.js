@@ -4,9 +4,8 @@
 
 import { t } from '../i18n.js';
 import { esc } from '../ui/render.js';
-import { iconSrc } from '../ui/sprites.js';
 import { normName } from '../ui/tips.js';
-import { learnerChips, LEARNER_SHOW } from '../movedex/view.js';
+import { learnerChips, LEARNER_SHOW, ownPill, ownRow, ownGroups, speciesGroups, detailBar, detailTabs } from '../movedex/view.js';
 
 export const PAGE = 30;
 export { learnerChips, LEARNER_SHOW };
@@ -52,92 +51,76 @@ const SORTS = {
   species: (a, b) => b.species - a.species || a.name.localeCompare(b.name),
 };
 
-/** @param {{ q?: string, mine?: ''|'has'|'could', sort?: string }} f  A busca vale para o nome e a descrição. */
+/**
+ * @param {{ q?: string, mine?: ''|'has'|'could', slot?: ''|'normal'|'hidden', sort?: string }} f  A busca vale para o
+ *   nome e a descrição; `slot`: comum (1ª/2ª) em alguma espécie ou só oculta.
+ */
 export function filterAbilities(rows, f) {
   const q = norm(f.q).trim();
   const out = rows.filter(r => (!q || r.search.includes(q) || norm(r.text).includes(q))
-    && (!f.mine || (f.mine === 'has' ? r.mine.length : r.mine.length || r.could.length)));
+    && (!f.mine || (f.mine === 'has' ? r.mine.length : r.mine.length || r.could.length))
+    && (!f.slot || (f.slot === 'normal' ? r.normal.length : !r.normal.length && r.hidden.length)));
   return out.sort(SORTS[f.sort] || SORTS.name);
 }
 
 /** Uma linha da lista: nome, quantos do save têm, a descrição (duas linhas) e quantas espécies. */
 export function abilityRow(r, i) {
-  const mine = r.mine.length ? `<span class="mv-mine" title="${esc(t('Pokémon do save que têm'))}">✓ ${r.mine.length}</span>`
-    : r.could.length ? `<span class="mv-mine can" title="${esc(t('Pokémon do save que podem ter (outra habilidade da espécie)'))}">+${r.could.length}</span>` : '';
+  const mine = ownPill(r.mine.length, r.could.length, t('Pokémon do save que têm'), t('Pokémon do save que podem ter (outra habilidade da espécie)'));
+  const onlyHidden = !r.normal.length && r.hidden.length ? `<span class="pdx-chip ab-tag">${t('só oculta')}</span>` : '';
   return `<li><button class="result ab-row" type="button" data-ab="${i}">
-    <span class="r-main"><b>${esc(r.name)}</b>${mine}<span class="r-sub ab-sub">${esc(r.text || '—')}</span></span>
+    <span class="r-main"><span class="dx-name"><b>${esc(r.name)}</b>${mine}${onlyHidden}</span><span class="r-sub ab-sub">${esc(r.text || '—')}</span></span>
     <span class="mv-nums ab-nums"><span title="${esc(t('Espécies'))}">${r.species}<small>${t('Espécies')}</small></span></span>
   </button></li>`;
 }
 
-/** Como trocar para esta habilidade no jogo (o item), ou só onde a espécie a tem. */
+/** Como trocar para esta habilidade no jogo: [etiqueta, explicação] (o item, ou só onde a espécie a tem). */
 function swapHow(slot, free) {
-  if (slot === 2) return free === 'patch' ? t('oculta da espécie: dê um Ability Patch') : t('oculta da espécie');
-  return free ? t('habilidade {n} da espécie: dê uma Ability Capsule', { n: slot + 1 }) : t('habilidade {n} da espécie', { n: slot + 1 });
+  if (slot === 2) return free === 'patch' ? ['Ability Patch', t('oculta da espécie: dê um Ability Patch')] : [t('Oculta'), t('oculta da espécie')];
+  return free ? ['Ability Capsule', t('habilidade {n} da espécie: dê uma Ability Capsule', { n: slot + 1 })] : [t('Habilidade {n}', { n: slot + 1 }), t('habilidade {n} da espécie', { n: slot + 1 })];
 }
 
-/** Os Pokémon do save que têm a habilidade e os que podem ter (a espécie tem em outro espaço). */
+/** Os Pokémon do save que têm a habilidade e os que podem ter (a espécie tem em outro espaço), em grupos. */
 function mineHtml(r, all, entryOf, free) {
-  const rows = [...r.mine.map(i => ({ i, has: true })), ...r.could.map(i => ({ i, has: false }))];
-  if (!rows.length) return `<section class="dsec"><h3>${t('No seu save')}</h3><p class="hint">${t('Nenhum Pokémon do save tem esta habilidade.')}</p></section>`;
-  rows.sort((a, b) => (b.has ? 1 : 0) - (a.has ? 1 : 0) || (all[b.i].level || 0) - (all[a.i].level || 0));
-  const shown = rows.slice(0, 24);
-  const items = shown.map(({ i, has }) => {
-    const m = all[i];
-    const where = m.location === 'party' ? `${t('Equipe')} ${m.slot}` : `${m.where} · ${m.slot}`;
-    const e = entryOf(m);
-    const slot = !has && e ? e.species.abilities.findIndex(x => x && normName(x) === r.key) : -1;
-    const sub = has ? where : `${where} · ${swapHow(slot, free)}`;
-    return `<li><button class="result" type="button" data-mon="${i}">
-      <img data-sprite="1" src="${esc(iconSrc(m.species))}"${m.species.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
-      <span class="r-main"><b>${esc(m.hasNickname ? m.nickname : m.species.name)}</b>${has ? ` <span class="mv-mine">✓ ${t('tem')}</span>` : ''}<span class="r-sub">${esc(sub)}</span></span>
-      <span class="r-lv">${t('Nv.')} ${m.level ?? '?'}</span></button></li>`;
-  }).join('');
-  return `<section class="dsec"><h3>${t('No seu save')} <span class="learn-count">${rows.length}</span></h3>
-    <p class="hint">${esc(t('{k} têm, {c} podem ter.', { k: r.mine.length, c: r.could.length }))}</p>
-    <ul class="results pdx-owned mv-own">${items}</ul>
-    ${rows.length > shown.length ? `<p class="hint">${t('Mostrando {s} de {n}.', { s: shown.length, n: rows.length })}</p>` : ''}</section>`;
-}
-
-/** As espécies que têm a habilidade (1ª/2ª e oculta; as do save primeiro). `lists` guarda as listas para o "Mostrar todas". */
-function holdersHtml(r, index, owned, lists) {
-  const order = (a, b) => (owned.has(b[0]) ? 1 : 0) - (owned.has(a[0]) ? 1 : 0);
-  const groups = [
-    [t('Habilidade comum'), r.normal.map(e => [e, null]).sort(order)],
-    [t('Habilidade oculta'), r.hidden.map(e => [e, null]).sort(order)],
-  ].filter(([, list]) => list.length);
-  return `<section class="dsec"><h3>${t('Quem tem')}</h3>${groups.map(([title, list]) => {
-    const k = lists.push(list) - 1;
-    return `<h4>${esc(title)} <span class="learn-count">${list.length}</span></h4>
-    <ul class="usage-mates mv-learners" data-list="${k}">${learnerChips(list, index, owned, 0, LEARNER_SHOW)}</ul>
-    ${list.length > LEARNER_SHOW ? `<button type="button" class="btn btn-ghost btn-small" data-more="${k}">${t('Mostrar todas ({n})', { n: list.length })}</button>` : ''}`;
-  }).join('')}</section>`;
+  const n = r.mine.length + r.could.length;
+  if (!n) return { n, html: `<p class="hint">${t('Nenhum Pokémon do save tem esta habilidade.')}</p>` };
+  const byLv = (a, b) => (all[b].level || 0) - (all[a].level || 0);
+  const could = i => {
+    const e = entryOf(all[i]);
+    const slot = e ? e.species.abilities.findIndex(x => x && normName(x) === r.key) : -1;
+    return ownRow(all[i], i, slot >= 0 ? [swapHow(slot, free)] : []);
+  };
+  return { n, html: ownGroups([
+    { title: t('Têm'), rows: [...r.mine].sort(byLv).map(i => ownRow(all[i], i)) },
+    { title: t('Podem ter'), note: free ? t('A espécie tem esta habilidade em outro espaço; o item do jogo troca.') : t('A espécie tem esta habilidade em outro espaço.'), rows: [...r.could].sort(byLv).map(could) },
+  ]) };
 }
 
 /**
- * Detalhe de uma habilidade (na janela do detalhe): a descrição, os do save e quem tem.
+ * Detalhe de uma habilidade (na janela do detalhe): a descrição no topo e, em abas, os do save e quem tem.
  * @returns {{ html: string, lists: Array }}
  */
 export function abilityDetail(r, ctx) {
-  const { all, entries, entryOf, nav, free } = ctx;
+  const { all, entries, entryOf, nav, free, tab = 'mine' } = ctx;
   const index = new Map(entries.map((e, i) => [e, i]));
   const owned = new Set(all.filter(m => !m.egg).map(entryOf).filter(Boolean));
   const lists = [];
-  const arrows = nav && nav.n > 1 ? `<button class="btn btn-ghost btn-icon pdx-arrow" type="button" data-nav="-1" aria-label="${t('Anterior')}"${nav.i <= 0 ? ' disabled' : ''}>‹</button>
-    <span class="pdx-pos">${nav.i + 1}/${nav.n}</span>
-    <button class="btn btn-ghost btn-icon pdx-arrow" type="button" data-nav="1" aria-label="${t('Próximo')}"${nav.i >= nav.n - 1 ? ' disabled' : ''}>›</button>` : '';
-  const fact = (k, v) => `<div><dt>${k}</dt><dd><b>${v}</b></dd></div>`;
-  const html = `<div class="sheet-bar pdx-sheet-bar">
-    <b class="sheet-bar-name" aria-hidden="true">${esc(r.name)}</b>
-    ${arrows}
-    <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
-  </div>
+  const order = (a, b) => (owned.has(b[0]) ? 1 : 0) - (owned.has(a[0]) ? 1 : 0);
+  const mine = mineHtml(r, all, entryOf, free);
+  const who = speciesGroups([
+    [t('Habilidade comum'), r.normal.map(e => [e, null]).sort(order)],
+    [t('Habilidade oculta'), r.hidden.map(e => [e, null]).sort(order)],
+  ], index, owned, lists);
+  const chip = (v, cls = '') => `<li class="pdx-chip${cls}">${esc(v)}</li>`;
+  const html = `${detailBar(r.name, '', nav)}
   <div class="mon mv-detail">
-    <div class="mon-hero"><div class="mv-hero"><h2 id="detail-title">${esc(r.name)}</h2></div>
-      <p class="mv-text">${esc(r.text || t('Sem descrição para esta habilidade.'))}${r.note ? `<small class="tip-note">${esc(r.note)}</small>` : ''}</p></div>
-    <dl class="facts-grid mv-facts ab-facts">${fact(t('Espécies'), r.species)}${fact(t('Como oculta'), r.hidden.length)}</dl>
-    <div class="mv-cols"><div>${mineHtml(r, all, entryOf, free)}</div>
-    <div>${holdersHtml(r, index, owned, lists)}</div></div>
+    <div class="mon-hero dx-hero">
+      <h2 id="detail-title">${esc(r.name)}</h2>
+      <ul class="pdx-chips">${chip(t(r.species === 1 ? '1 espécie' : '{n} espécies', { n: r.species }))}
+        ${!r.normal.length ? chip(t('só oculta')) : r.hidden.length ? chip(t('{n} como oculta', { n: r.hidden.length })) : ''}
+        ${r.mine.length ? chip(`✓ ${t('{n} do save têm', { n: r.mine.length })}`, ' on') : ''}</ul>
+      <p class="dx-text">${esc(r.text || t('Sem descrição para esta habilidade.'))}${r.note ? `<small class="tip-note">${esc(r.note)}</small>` : ''}</p>
+    </div>
+    ${detailTabs([['mine', t('No seu save'), mine.n, mine.html], ['who', t('Quem tem'), r.species, who || `<p class="hint">—</p>`]], tab === 'mine' && !mine.n ? 'who' : tab)}
   </div>`;
   return { html, lists };
 }
