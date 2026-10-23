@@ -157,69 +157,78 @@ export function soulgoldLearnDex(L, SG, TC = null) {
   return dex;
 }
 
-export function learnsetHtml(m, dex, T) {
+/** Cabeçalho das colunas das listas de golpes (Nv., golpe, tipo, categoria, poder). */
+const moveHead = lv => `<li class="lm lm-head${lv ? '' : ' lm-nolv'}" aria-hidden="true">${lv ? `<span>${t('Nv.')}</span>` : ''}<span>${t('Golpe')}</span><span>${t('Tipo')}</span><span>${t('Cat.')}</span><span>${t('Poder')}</span></li>`;
+
+/**
+ * Uma linha da lista de golpes: nível (ou "Evo."), nome (descrição ao tocar ou, com `link`, o golpe na Golpedex), tipo,
+ * categoria (losango/anel/traço) e poder. `lv` undefined = lista sem nível; `label` = o TM do golpe.
+ */
+function moveRow({ lv, mv, info, has = false, future = false, label = '', link = false }) {
+  const name = info ? info.name : String(mv);
+  const num = typeof mv === 'number';
+  const btn = !num ? esc(name) : link ? `<button type="button" class="tip-btn" data-open-move="${mv}">${esc(name)}</button>` : tipBtn('m', mv, esc(name));
+  const c = info ? info.category : null;
+  const cat = c == null ? '<span></span>' : `<span class="lm-cat cat-${c}" title="${esc(categoryName(c))}"><i aria-hidden="true"></i><span class="sr">${esc(categoryName(c))}</span></span>`;
+  return `<li class="lm${lv === undefined ? ' lm-nolv' : ''}${has ? ' has' : ''}${future ? ' future' : ''}">
+      ${lv === undefined ? '' : `<span class="lm-lv">${lv === 0 ? t('Evo.') : lv}</span>`}
+      <span class="lm-main"><b>${btn}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${label ? `<small>${esc(label)}</small>` : ''}</span>
+      <span class="lm-type">${info && info.type ? typeChip(info.type) : ''}</span>
+      ${cat}
+      <span class="lm-pow">${info && info.power ? info.power : '—'}</span>
+    </li>`;
+}
+
+/** @param {{ link?: boolean }} opts `link`: tocar no golpe abre o detalhe dele na Golpedex (detalhe da espécie) */
+export function learnsetHtml(m, dex, T, opts = {}) {
   const pid = dex.rom ? m.speciesId : dexIds(m, dex).pid;
   const raw = pid ? dex.learn[pid] : null;
   if (!raw) return '';
   const [vi, ...flat] = raw;
   const known = new Set(m.moves.map(mv => mv.id));
-  const items = [];
+  const items = [moveHead(true)];
   let count = 0, divided = false;
   for (let i = 0; i < flat.length; i += 2) {
     const lv = flat[i], mv = flat[i + 1];
     const info = typeof mv === 'number' ? moveInfo(mv, T) : null;
-    const name = info ? info.name : String(mv);
-    const type = info ? info.type : null;
-    const cat = info ? categoryName(info.category) : '';
     const has = typeof mv === 'number' && known.has(mv);
     const future = !!m.level && lv > m.level;
     // Divisória no nível atual: acima dela, o que o Pokémon ainda vai aprender
     if (future && !divided && count) items.push(`<li class="lm-now"><span>${esc(t('Nível atual: {n}', { n: m.level }))}</span></li>`);
     if (future) divided = true;
     count++;
-    const meta = [cat, info && info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
-    items.push(`<li class="lm${type ? ` t-${esc(type)}` : ''}${has ? ' has' : ''}${future ? ' future' : ''}">
-      <span class="lm-lv">${lv === 0 ? t('Evo.') : `<small>${t('Nv.')}</small>${lv}`}</span>
-      <span class="lm-main"><b>${typeof mv === 'number' ? tipBtn('m', mv, esc(name)) : esc(name)}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
-      ${type ? typeChip(type) : ''}
-    </li>`);
+    items.push(moveRow({ lv, mv, info, has, future, link: opts.link }));
   }
+  const tap = opts.link ? t('Toque num golpe para ver o detalhe dele.') : '';
   return `<details class="dsec learn fold"><summary><span>${t('Golpes por nível')}</span>${dex.rom ? '' : probable()}<span class="learn-count">${count}</span></summary>
-    <p class="hint">${esc(t('Lista de {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))}</p>
+    <p class="hint">${esc(t('Golpes como em {game}. ✓ = já conhece. Evo. = aprende ao evoluir.', { game: dex.versions[vi] || t('jogo oficial') }))} ${esc(tap)}</p>
     <ul class="learn-list">${items.join('')}</ul>
-  </details>${teachHtml(m, dex, T)}${
+  </details>${teachHtml(m, dex, T, opts)}${
   dex.egg ? moveListHtml(m, dex.egg[m.speciesId], T, t('Golpes de ovo'), dex.teach === 'item'
     ? t('Passados ao filhote no cruzamento (lista da ROM). ✓ = já conhece.')
-    : t('Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.')) : ''}`;
+    : t('Passados ao filhote no cruzamento (lista da ROM; o jogo não os ensina pelo menu NOVO MOV.). ✓ = já conhece.'), null, opts) : ''}`;
 }
 
 /**
  * Golpes ensinados fora do nível. Quetzal: o tutor do menu do Pokémon (qualquer um, a qualquer momento). SoulGold: os
  * TMs/HMs (itens que o jogador precisa conseguir; o número de cada um) e, à parte, os de tutor.
  */
-function teachHtml(m, dex, T) {
+function teachHtml(m, dex, T, opts = {}) {
   const ids = dex.tutor && dex.tutor[m.speciesId];
   if (!ids) return '';
-  if (dex.teach !== 'item') return moveListHtml(m, ids, T, t('Golpes por tutor'), t('No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.'));
+  if (dex.teach !== 'item') return moveListHtml(m, ids, T, t('Golpes por tutor'), t('No jogo: menu do Pokémon → NOVO MOV. → TUTOR (qualquer um, a qualquer momento). ✓ = já conhece.'), null, opts);
   const tm = ids.filter(id => dex.tm[id]), npc = ids.filter(id => !dex.tm[id]);
-  return moveListHtml(m, tm, T, t('Golpes por TM/HM'), t('Com o TM ou HM do jogo (é preciso conseguir o item). ✓ = já conhece.'), id => dex.tm[id])
-    + moveListHtml(m, npc, T, t('Golpes por tutor'), t('Ensinados por tutores do jogo; o app não sabe onde eles ficam. ✓ = já conhece.'));
+  return moveListHtml(m, tm, T, t('Golpes por TM/HM'), t('Com o TM ou HM do jogo (é preciso conseguir o item). ✓ = já conhece.'), id => dex.tm[id], opts)
+    + moveListHtml(m, npc, T, t('Golpes por tutor'), t('Ensinados por tutores do jogo; o app não sabe onde eles ficam. ✓ = já conhece.'), null, opts);
 }
 
 /** Uma lista de golpes sem nível (tutor, ovo), em ordem alfabética, com o tipo, a categoria e o poder (e o TM, `label`). */
-function moveListHtml(m, ids, T, title, hint, label = null) {
+function moveListHtml(m, ids, T, title, hint, label = null, opts = {}) {
   if (!ids || !ids.length) return '';
   const known = new Set(m.moves.map(mv => mv.id));
   const rows = ids.map(id => ({ id, info: moveInfo(id, T) })).filter(x => x.info && x.info.name)
     .sort((a, b) => a.info.name.localeCompare(b.info.name));
-  const items = rows.map(({ id, info }) => {
-    const has = known.has(id);
-    const meta = [label && label(id), categoryName(info.category), info.power ? `${t('Poder')} ${info.power}` : ''].filter(Boolean).join(' · ');
-    return `<li class="lm lm-nolv${info.type ? ` t-${esc(info.type)}` : ''}${has ? ' has' : ''}">
-      <span class="lm-main"><b>${tipBtn('m', id, esc(info.name))}${has ? ` <span class="known" title="${t('Já conhece')}">✓</span>` : ''}</b>${meta ? `<small>${esc(meta)}</small>` : ''}</span>
-      ${info.type ? typeChip(info.type) : ''}
-    </li>`;
-  });
+  const items = [moveHead(false), ...rows.map(({ id, info }) => moveRow({ mv: id, info, has: known.has(id), label: label ? label(id) : '', link: opts.link }))];
   return `<details class="dsec learn fold"><summary><span>${esc(title)}</span><span class="learn-count">${rows.length}</span></summary>
     <p class="hint">${esc(hint)}</p>
     <ul class="learn-list">${items.join('')}</ul>

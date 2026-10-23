@@ -69,7 +69,7 @@ suite('Unbound: golpes por nível da ROM', () => {
     const names = levelMoveNames(mon(1), dex, T);
     expect(names.slice(0, 3)).toEqual(['Tackle', 'Growl', 'Vine Whip']);
     const html = learnsetHtml(mon(1, [{ id: appMove('Tackle') }]), dex, T);
-    expect(html).toContain('Lista de Pokémon Unbound');
+    expect(html).toContain('Golpes como em Pokémon Unbound');
     expect(html).toContain('data-tip="m:33" aria-expanded="false">Tackle</button> <span class="known"');
     expect(html).not.toContain('provável');
   });
