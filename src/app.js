@@ -90,8 +90,7 @@ function render() {
       <div id="teams-slot"></div>
     </div>
     <div class="grp" id="grp-pc">
-      ${R.pcWin(data)}
-      ${R.searchWin(data, T)}
+      ${R.pcWin(data, T)}
       ${R.exportWin()}
     </div>
     <div class="grp" id="grp-dex">
@@ -155,22 +154,29 @@ function render() {
   setupAi(out);
   setupBuilder(out);
 
-  // Busca
+  // Busca, dentro do PC: com algo digitado, um filtro ou outra ordem, a lista fica no lugar da caixa
+  const $ = sel => out.querySelector(sel);
   let timer = 0;
   const run = () => { clearTimeout(timer); timer = setTimeout(runSearch, 150); };
-  ['#q', '#f-type', '#f-sort'].forEach(sel => {
-    const el = out.querySelector(sel);
-    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', run);
-  });
-  // Filtros: um ativo por vez; tocar de novo desliga
-  out.querySelector('.flags').addEventListener('click', e => {
-    const b = e.target.closest('.flag');
+  const syncPc = foldFilters($, 'pc', ['f-type', 'f-flag'], { 'f-type': t('Tipo') }, runSearch, false);
+  state.syncPc = () => {
+    syncPc();
+    for (const b of out.querySelectorAll('#pc-tgrid [data-type]')) b.setAttribute('aria-pressed', String($('#f-type').value === b.dataset.type));
+  };
+  $('#pc-tgrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-type]');
     if (!b) return;
-    const on = b.getAttribute('aria-pressed') !== 'true';
-    out.querySelectorAll('.flag').forEach(x => x.setAttribute('aria-pressed', 'false'));
-    b.setAttribute('aria-pressed', String(on));
-    state.flag = on ? b.dataset.flag : '';
+    const el = $('#f-type');
+    el.value = el.value === b.dataset.type ? '' : b.dataset.type;
     runSearch();
+  });
+  $('#q').addEventListener('input', run);
+  for (const id of ['#f-sort', '#f-flag']) $(id).addEventListener('change', runSearch);
+  $('#pc-back').addEventListener('click', () => {
+    for (const id of ['#q', '#f-type', '#f-flag']) $(id).value = '';
+    $('#f-sort').value = 'pos';
+    runSearch();
+    $('#pc-win').scrollIntoView({ block: 'start' });
   });
   out.querySelector('#pager').addEventListener('click', e => {
     const b = e.target.closest('[data-page]');
@@ -185,14 +191,13 @@ function render() {
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
 
-  // As janelas da Dex abrem pelas abas (só uma aberta por vez). A Busca (embaixo do PC) e a parte com IA, dentro do
-  // Montar equipe, lembram se ficaram abertas; a lista da Busca só é montada quando ela abre
-  for (const id of ['ai-win', 'search-win', ...R.DEX_TABS]) {
+  // As janelas da Dex abrem pelas abas (só uma aberta por vez). A parte com IA, dentro do Montar equipe, lembra se
+  // ficou aberta
+  for (const id of ['ai-win', ...R.DEX_TABS]) {
     const det = out.querySelector('#' + id);
     const dexWin = R.DEX_TABS.includes(id);
     det.addEventListener('toggle', () => {
       if (!dexWin) setFoldOpen(id, det.open);
-      if (id === 'search-win' && det.open && !state.searched) runSearch();
       if (id === 'pokedex-win' && det.open) setupPokedex(out);
       if (id === 'moves-win' && det.open) setupMoves(out);
       if (id === 'abilities-win' && det.open) setupAbilities(out);
@@ -354,7 +359,7 @@ async function setupPokedex(out) {
     run();
     active.querySelector('[data-unfilter]')?.focus();
   });
-  setOpen(window.matchMedia('(min-width: 960px)').matches);
+  setOpen(openWide && window.matchMedia('(min-width: 960px)').matches);
   toggle.addEventListener('click', () => setOpen(panel.hidden));
   const run = async () => {
     const v = id => ($('#' + id) ? $('#' + id).value : '');
@@ -500,15 +505,15 @@ function evoEntry(pd, ids) {
  * ids (`mv` → #mv-ftoggle, #mv-filters, #mv-active, #mv-on, #mv-clear); `ids` = os filtros; `prefix` = rótulo antes do
  * valor na etiqueta do filtro ligado. Devolve `sync()`, que atualiza a contagem e as etiquetas (chamar no fim do filtro).
  */
-function foldFilters($, pre, ids, prefix, run) {
+function foldFilters($, pre, ids, prefix, run, openWide = true) {
   const toggle = $(`#${pre}-ftoggle`), panel = $(`#${pre}-filters`), active = $(`#${pre}-active`);
   const setOpen = on => { panel.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); active.hidden = on; };
-  setOpen(window.matchMedia('(min-width: 960px)').matches);
+  setOpen(openWide && window.matchMedia('(min-width: 960px)').matches);
   toggle.addEventListener('click', () => setOpen(panel.hidden));
   const clear = () => { for (const id of ids) $('#' + id).value = ''; run(); };
   $(`#${pre}-clear`).addEventListener('click', clear);
   // Atalhos (como na Pokédex): ligam o valor no filtro; o mesmo valor de novo desliga
-  const win = panel.closest('details');
+  const win = panel.closest('.win');
   const quick = win.querySelector('.pdx-quick');
   quick?.addEventListener('click', e => {
     const b = e.target.closest('[data-quick]');
@@ -1328,11 +1333,15 @@ function confirmSend(html, opener) {
 
 function runSearch() {
   const v = id => document.getElementById(id).value;
-  const f = { q: v('q'), type: v('f-type'), flag: state.flag || '', sort: v('f-sort') };
-  state.results = searchMons(state.all, f);
+  const f = { q: v('q'), type: v('f-type'), flag: v('f-flag'), sort: v('f-sort') };
   state.filtered = !!(f.q.trim() || f.type || f.flag);
+  const list = state.filtered || f.sort !== 'pos';
+  if (state.syncPc) state.syncPc();
+  document.getElementById('pc-box').hidden = list;
+  document.getElementById('pc-list').hidden = !list;
   state.page = 0;
-  state.searched = true;
+  if (!list) { document.getElementById('results').innerHTML = ''; return; }
+  state.results = searchMons(state.all, f);
   showResults();
 }
 
