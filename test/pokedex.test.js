@@ -340,7 +340,8 @@ suite('Dex (área de tela inteira)', () => {
     expect(nav).toContain('data-go="grp-dex"');
     expect(nav).not.toContain('grp-tools');
     const head = dexHead();
-    expect(DEX_TABS).toEqual(['pokedex-win', 'moves-win', 'abilities-win', 'builder-win', 'search-win']);
+    expect(DEX_TABS).toEqual(['pokedex-win', 'moves-win', 'abilities-win', 'builder-win']);
+    expect(head).not.toContain('search-win');
     for (const id of DEX_TABS) expect(head).toContain(`data-dex-tab="${id}"`);
     expect(head).not.toContain('data-dex-back');
   });

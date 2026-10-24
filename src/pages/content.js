@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-04',
+    pt: [
+      'O Buscar voltou para a página do save, logo embaixo do PC (a Dex fica com Pokémon, Golpes, Habilidades e Montar).',
+    ],
+    en: [
+      'Search is back on the save page, right under the PC (the Dex keeps Pokémon, Moves, Abilities and Build).',
+    ],
+  },
+  {
     date: '2026-11-03',
     pt: [
       'Montar equipe e Buscar também viraram abas da Dex (a seção Ferramentas saiu; Exportar fica no fim do PC e as Equipes salvas na Equipe). A Dex não tem mais o botão de voltar: saia pela barra de baixo ou pelo Voltar do celular.',
