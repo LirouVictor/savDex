@@ -14,7 +14,7 @@ import { gen3Tables } from '../src/parser/gen3.js';
 import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
 import { pokedexWin } from '../src/ui/render.js';
-import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote, matchupHtml, compareHtml } from '../src/pokedex/view.js';
+import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote, matchupHtml, compareHtml, statRanks, statRange, baseStatsHtml } from '../src/pokedex/view.js';
 import { wildPlaces, wildAncestor, wildHtml, obtainable } from '../src/pokedex/wild.js';
 import { usageHtml } from '../src/pokedex/usage.js';
 import { smogonIndex } from '../src/builder/smogon.js';
@@ -139,6 +139,37 @@ suite('Pokédex: filtros e detalhe', () => {
     const m = speciesMon(e);
     expect(evolutionHtml(m, dex, TQ)).toContain('Wingull');
     expect(learnsetHtml(m, dex, TQ)).toContain('Hurricane');
+  });
+
+  it('stats: faixa no nível, posição entre as espécies, brilhante e número como na lista', () => {
+    // Charmeleon (58/64/58/80/65/80): faixas no Nv. 100 e 50 pela fórmula
+    const r = statRange([58, 64, 58, 80, 65, 80], 100);
+    expect(r.hp).toEqual([226, 320]);
+    expect(r.spe).toEqual([148, 284]);
+    expect(statRange([58, 64, 58, 80, 65, 80], 50).spa).toEqual([76, 145]);
+    expect(statRange([1, 90, 45, 30, 30, 40], 100).hp).toEqual([1, 1]); // Shedinja
+    const ranks = statRanks(entries);
+    expect(statRanks(entries)).toBe(ranks); // uma vez por lista
+    expect(ranks.pct(5, 0)).toBe(0);
+    expect(ranks.pct(5, 999)).toBe(100);
+    const e = entries.find(x => x.species.name === 'Charmeleon');
+    const html = speciesDetail(e, TQ, { ranks });
+    expect(html).toMatch(/226–320 · maior que \d+% das espécies/);
+    expect(html).toContain('#0005');
+    expect(html).toContain('data-shiny="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/5.png"');
+    expect(html).not.toContain('pdx-total'); // o total fica no chip BST
+    expect(baseStatsHtml(e.species, ranks, 50)).toContain('aria-pressed="true">Nv. 50');
+  });
+
+  it('golpes em colunas; no detalhe da espécie, o golpe abre o detalhe dele', () => {
+    const m = speciesMon(entries.find(x => x.species.name === 'Pelipper'));
+    const html = learnsetHtml(m, dex, TQ);
+    expect(html).toContain('lm-head');
+    expect(html).toMatch(/lm-cat cat-[012]/);
+    expect(html).not.toContain('data-open-move');
+    const linked = learnsetHtml(m, dex, TQ, { link: true });
+    expect(linked).toMatch(/data-open-move="\d+"/);
+    expect(linked).toContain('Toque num golpe para ver o detalhe dele.');
   });
 });
 
@@ -278,7 +309,8 @@ suite('Pokédex em inglês', () => {
     const entries = pokedexEntries(TQ, { id: 'quetzal' });
     const data = { summary: { dex: { caught: [1] } }, party: [], pc: { boxes: [] } };
     let html = pokedexWin(data, TQ) + listNote({ id: 'quetzal' }) + listNote({ id: 'hgss', gen: 4 });
-    entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]), nav: { i, n: 5 } }) + matchupHtml(e, TQ, 'Overgrow') + compareHtml(e, entries[0], TQ); });
+    const ranks = statRanks(entries);
+    entries.slice(0, 5).forEach((e, i) => { html += entryRow(e, i, new Set([1])) + speciesDetail(e, TQ, { caught: new Set([1]), nav: { i, n: 5 }, ranks }) + learnsetHtml(speciesMon(e), quetzalLearnDex(QL, QT), TQ, { link: true }) + matchupHtml(e, TQ, 'Overgrow') + compareHtml(e, entries[0], TQ); });
     const idx = smogonIndex([SM9, SM9U]);
     html += usageHtml(idx, entries.find(e => e.species.name === 'Pelipper'), TQ, entries) + usageHtml(null, entries[0], TQ, entries) + usageHtml(idx, entries.find(e => e.species.name === 'Browt'), TQ, entries);
     html += wildHtml(147, Q) + wildHtml(6, Q) + wildHtml(151, Q) + wildHtml(246, Q) + wildHtml(249, Q) + wildHtml(245, Q) + wildHtml(1141, Q) + wildHtml(382, Q) + wildHtml(144, Q) + wildHtml(377, Q) + wildHtml(894, Q);

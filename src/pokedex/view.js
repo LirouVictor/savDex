@@ -4,9 +4,9 @@
 
 import { t, getLang } from '../i18n.js';
 import { esc, monHeader, matchupTable, tipBtn, muLabel, infoBtn } from '../ui/render.js';
-import { iconSrc } from '../ui/sprites.js';
+import { iconSrc, spriteSrc } from '../ui/sprites.js';
 import { SHOWDOWN_ORDER, STAT_LABEL, formName } from '../export.js';
-import { BASE_ORDER } from '../parser/stats.js';
+import { BASE_ORDER, calcStats } from '../parser/stats.js';
 import { moveInfo } from '../parser/describe.js';
 import { dexIds } from '../ui/dex.js';
 import { defenseMatchups, defenseWithAbility, abilityChangesDefense } from '../analysis.js';
@@ -190,13 +190,48 @@ export function entryRow(e, i, caught, prev = null) {
   </button></li>`;
 }
 
-/** Stats base em barras (escala até 255, como nas Pokédex dos jogos), com o total. */
-function baseStatsHtml(sp) {
+/**
+ * Posição de cada stat base (e do total, índice 6) entre as espécies da lista: valores em ordem, uma vez por lista.
+ * `pct(i, v)` = % das espécies com o stat menor que v.
+ */
+const RANKS = new WeakMap();
+export function statRanks(entries) {
+  let r = RANKS.get(entries);
+  if (r) return r;
+  const cols = [0, 1, 2, 3, 4, 5, 6].map(i => entries.map(e => (i === 6 ? bst(e.species) : e.species.baseStats[i])).sort((a, b) => a - b));
+  const below = (arr, v) => { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] < v) lo = m + 1; else hi = m; } return lo; };
+  r = { n: entries.length, pct: (i, v) => Math.round(100 * below(cols[i], v) / cols[i].length) };
+  RANKS.set(entries, r);
+  return r;
+}
+
+/** Faixa de cada stat no nível: do menor (IV 0, sem EVs, natureza contra) ao maior (IV 31, 252 EVs, natureza a favor). */
+export function statRange(base, level) {
+  const z = Object.fromEntries(BASE_ORDER.map(k => [k, 0])), iv = Object.fromEntries(BASE_ORDER.map(k => [k, 31])), ev = Object.fromEntries(BASE_ORDER.map(k => [k, 252]));
+  return Object.fromEntries(BASE_ORDER.map(k => [k, [
+    calcStats(base, z, z, level, { plus: null, minus: k })[k],
+    calcStats(base, iv, ev, level, { plus: k, minus: null })[k],
+  ]]));
+}
+
+/**
+ * Stats base em barras (escala até 255, como nas Pokédex dos jogos); embaixo de cada uma, a faixa no nível escolhido
+ * (100 ou 50) e a posição entre as espécies da lista (`ranks`). O total fica no chip "BST" do topo.
+ */
+export function baseStatsHtml(sp, ranks = null, level = 100) {
   const v = Object.fromEntries(BASE_ORDER.map((k, i) => [k, sp.baseStats[i]]));
-  const rows = SHOWDOWN_ORDER.map(k => `<tr><th scope="row">${STAT_LABEL[k]}</th><td class="num">${v[k]}</td>
-    <td><div class="bar"><i style="width:${Math.round(Math.min(1, v[k] / 255) * 100)}%;--h:${Math.round(Math.min(1, v[k] / 150) * 120)}"></i></div></td></tr>`).join('');
-  return `<section class="dsec"><h3>${t('Stats base')}</h3>
-    <table class="stats pdx-stats"><tbody>${rows}<tr class="pdx-total"><th scope="row">${t('Total')}</th><td class="num">${bst(sp)}</td><td></td></tr></tbody></table></section>`;
+  const range = statRange(sp.baseStats, level);
+  const rows = SHOWDOWN_ORDER.map(k => {
+    const p = ranks ? ranks.pct(BASE_ORDER.indexOf(k), v[k]) : null;
+    const rk = `${range[k][0]}–${range[k][1]}${p == null ? '' : ` · ${t('maior que {p}% das espécies', { p })}`}`;
+    return `<tr><th scope="row">${STAT_LABEL[k]}</th><td class="num">${v[k]}</td>
+    <td><div class="bar"><i style="width:${Math.round(Math.min(1, v[k] / 255) * 100)}%;--h:${Math.round(Math.min(1, v[k] / 150) * 120)}"></i></div><small class="pdx-rk">${esc(rk)}</small></td></tr>`;
+  }).join('');
+  const btn = lv => `<button type="button" class="btn btn-ghost btn-small" data-stat-lv="${lv}" aria-pressed="${lv === level}">${t('Nv.')} ${lv}</button>`;
+  const about = infoBtn(t('Stats base'), t('Embaixo de cada barra: o stat no nível escolhido, do menor possível (IV 0, sem EVs, natureza contra) ao maior (IV 31, 252 EVs, natureza a favor), e a posição entre as {n} espécies e formas desta Pokédex.', { n: ranks ? ranks.n : '?' }));
+  return `<section class="dsec" data-stats><h3>${t('Stats base')} ${about}</h3>
+    <div class="pdx-lv" role="group" aria-label="${esc(t('Nível da faixa'))}">${btn(100)}${btn(50)}</div>
+    <table class="stats pdx-stats"><tbody>${rows}</tbody></table></section>`;
 }
 
 function abilitiesHtml(sp) {
@@ -209,7 +244,7 @@ function abilitiesHtml(sp) {
 }
 
 /** Capturado, geração, gênero, categoria e total dos stats: etiquetas embaixo do nome (antes, uma seção "Dados"). */
-function chipsHtml(e, caught) {
+function chipsHtml(e, caught, ranks = null) {
   const sp = e.species;
   const g = genOf(e.nat);
   const f = femalePct(sp);
@@ -224,7 +259,7 @@ function chipsHtml(e, caught) {
     ${chip(g ? t('Geração {n}', { n: g }) : t('Própria do jogo'))}
     ${gender ? chip(esc(gender), t('Gênero')) : ''}
     ${kind ? chip(kind) : ''}
-    ${chip(`BST ${bst(sp)}`, t('Total dos stats base'))}
+    ${chip(`BST ${bst(sp)}`, ranks ? `${t('Total dos stats base')} · ${t('maior que {p}% das espécies', { p: ranks.pct(6, bst(sp)) })}` : t('Total dos stats base'))}
   </ul>`;
 }
 
@@ -255,6 +290,20 @@ export function matchupHtml(e, T, ab = null) {
   return table.replace('</h3>', `</h3>${chips}`);
 }
 
+/**
+ * Cabeçalho do detalhe: retrato (com o botão do brilhante, quando há sprite), nome, número no formato da lista e chips.
+ */
+function heroHtml(e, caught, ranks) {
+  const sp = e.species;
+  let h = monHeader(speciesMon(e), 'h2', ' id="detail-title"').replace(/<\/div>\s*<\/div>$/, `${chipsHtml(e, caught, ranks)}</div></div>`);
+  if (e.nat != null) h = h.replace(`>#${e.nat}<`, `>${numLabel(e)}<`);
+  if (sp.spriteId) {
+    const shiny = `<button type="button" class="pdx-shiny" data-shiny="${esc(spriteSrc(sp, true))}" data-normal="${esc(spriteSrc(sp))}" aria-pressed="false">✦ ${t('brilhante')}</button>`;
+    h = h.replace(/(<div class="portrait[^"]*">[\s\S]*?)<\/div>/, `$1${shiny}</div>`);
+  }
+  return h;
+}
+
 /** As abas do detalhe da espécie (a do competitivo só aparece quando há dados; a de onde encontrar, só no Quetzal). */
 export const TABS = ['sum', 'wild', 'moves', 'usage'];
 
@@ -265,7 +314,7 @@ export const TABS = ['sum', 'wild', 'moves', 'usage'];
  * @param {{ caught?: Set<number>|null, owned?: Array, nav?: { i: number, n: number }|null, tab?: string }} opts `nav`:
  *   posição na lista filtrada (anterior/próxima); `tab`: a aba aberta (a última escolhida)
  */
-export function speciesDetail(e, T, { caught = null, owned = [], nav = null, tab = 'sum' } = {}) {
+export function speciesDetail(e, T, { caught = null, owned = [], nav = null, tab = 'sum', ranks = null, level = 100 } = {}) {
   const sp = e.species;
   const tc = sp.types[0] ? ` t-${esc(sp.types[0])}` : '';
   const arrows = nav && nav.n > 1 ? `<button class="btn btn-ghost btn-icon pdx-arrow" type="button" data-nav="-1" aria-label="${t('Anterior')}"${nav.i <= 0 ? ' disabled' : ''}>‹</button>
@@ -276,18 +325,18 @@ export function speciesDetail(e, T, { caught = null, owned = [], nav = null, tab
   const tabBtn = ([k, label]) => `<button type="button" role="tab" class="pdx-tab" data-ptab="${k}" id="pdx-tab-${k}" aria-controls="pdx-pane-${k}" aria-selected="${k === cur}"${k === 'usage' ? ' hidden' : ''}>${label}</button>`;
   const pane = (k, html) => `<div class="pdx-pane" role="tabpanel" id="pdx-pane-${k}" aria-labelledby="pdx-tab-${k}" data-pane="${k}"${k === cur ? '' : ' hidden'}>${html}</div>`;
   return `<div class="sheet-bar pdx-sheet-bar${tc}">
-    <b class="sheet-bar-name" aria-hidden="true">${esc(sp.name)}</b>
+    <b class="sheet-bar-name" aria-hidden="true"><img src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" crossorigin="anonymous">${esc(sp.name)}</b>
     ${arrows}
     <button class="btn btn-ghost btn-icon pdx-vs" type="button" data-cmp aria-label="${t('Comparar com outra espécie')}" title="${t('Comparar com outra espécie')}">VS</button>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
   </div>
   <div class="mon pdx-detail">
     <div class="mon-hero${tc}">
-      ${monHeader(speciesMon(e), 'h2', ' id="detail-title"').replace(/<\/div>\s*<\/div>$/, `${chipsHtml(e, caught)}</div></div>`)}
+      ${heroHtml(e, caught, ranks)}
     </div>
     <div class="bt-tabs pdx-tabs" role="tablist" aria-label="${esc(t('Partes do detalhe'))}">${tabs.map(tabBtn).join('')}</div>
     ${pane('sum', `<div class="pdx-sum">
-      <div class="pdx-l">${abilitiesHtml(sp)}${baseStatsHtml(sp)}</div>
+      <div class="pdx-l">${abilitiesHtml(sp)}${baseStatsHtml(sp, ranks, level)}</div>
       <div class="pdx-r"><div class="evo-slot" data-evo></div><div data-mu>${matchupHtml(e, T)}</div>${ownedHtml(owned)}</div>
     </div>`)}
     ${T.quetzal ? pane('wild', '<div class="wild-slot" data-wild></div>') : ''}

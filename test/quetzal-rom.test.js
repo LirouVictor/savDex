@@ -88,7 +88,7 @@ suite('Quetzal: golpes por nível da ROM', () => {
     expect(levelMoveNames(mon(1308), dex, TQ)).toEqual(expect.arrayContaining(['Shadow Punch', 'Rage Fist']));
     const html = learnsetHtml(mon(1), dex, TQ);
     expect(html).toContain('Magical Leaf');
-    expect(html).toContain('Lista de Pokémon Quetzal');
+    expect(html).toContain('Golpes como em Pokémon Quetzal');
     expect(html).not.toContain('provável');
     const lines = learnLines([{ ...mon(1308, ['Rage Fist']), location: 'party', slot: 1 }], dex, TQ, { id: 'quetzal' });
     expect(lines[1]).toBe('Aprende por nível (tabela do próprio jogo):');

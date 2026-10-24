@@ -6,6 +6,19 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-01',
+    pt: [
+      'Pokédex mais prática: atalhos embaixo da busca (Não capturados, Aparece no jogo, Lendários, Megas, Regionais, Ainda evolui) e os tipos numa grade colorida em “Filtros” (toque em até dois). Os ícones da lista ficaram maiores.',
+      'No detalhe da espécie, cada stat mostra a faixa no Nv. 100 ou 50 (do menor ao maior possível) e se é alto entre as espécies do jogo; o retrato tem um botão para ver o brilhante; a aba Golpes virou uma tabela (nível, golpe, tipo, categoria, poder) e tocar num golpe abre o detalhe dele.',
+      'No celular, arraste o detalhe para o lado para ir à próxima espécie. No computador, o detalhe abre ao lado da lista, sem cobrir a página.',
+    ],
+    en: [
+      'A handier Pokédex: shortcuts under the search (Not caught, Found in the game, Legendaries, Megas, Regional, Still evolves) and the types in a color grid under “Filters” (tap up to two). The list icons are bigger.',
+      'In a species’ details, each stat shows its range at Lv. 100 or 50 (lowest to highest possible) and how high it ranks among the game’s species; the portrait has a button to see the shiny; the Moves tab is now a table (level, move, type, category, power) and tapping a move opens its details.',
+      'On phones, swipe the details sideways to go to the next species. On computers, the details open next to the list instead of covering the page.',
+    ],
+  },
+  {
     date: '2026-10-31',
     pt: [
       'Golpes e Habilidades com o visual da Pokédex: os filtros ficam atrás do botão “Filtros” (os ligados aparecem como etiquetas com ✕), a lista ficou mais compacta e a categoria do golpe ganhou uma etiqueta própria (físico, especial, status).',

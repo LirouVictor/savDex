@@ -474,6 +474,17 @@ export function pokedexWin(d, T) {
   const gens = T.gen3 ? [1, 2, 3] : T.nds ? (T.nds && d.game && d.game.gen >= 5 ? [1, 2, 3, 4, 5] : [1, 2, 3, 4]) : T.unbound ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 4, 5, 6, 7, 8, 9];
   if (T.quetzal) gens.push('hack');
   const mega = !!(T.quetzal || T.unbound || T.soulgold), regional = mega;
+  const typeList = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy'));
+  // Atalhos à vista: cada um liga (ou desliga) um valor de um dos filtros
+  const q = (sel, v, label, title = '') => `<button type="button" class="pdx-qchip" data-quick="${sel}:${v}" aria-pressed="false"${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+  const quick = [
+    caught && q('pdx-caught', 'no', t('Não capturados')),
+    T.quetzal && q('pdx-where', 'evo', t('Aparece no jogo'), t('Aparece ou evolui de quem aparece')),
+    q('pdx-cat', 'legend', t('Lendários')),
+    mega && q('pdx-cat', 'mega', t('Megas')),
+    regional && q('pdx-cat', 'regional', t('Regionais')),
+    q('pdx-evo', 'yes', t('Ainda evolui')),
+  ].filter(Boolean);
   return `<details class="win win-fold tool-win" id="pokedex-win">
     <summary class="win-title"><h2 id="pokedex-h">${t('Pokédex')}</h2><small>${t('todas as espécies do jogo')}</small></summary>
     <div class="search-form">
@@ -489,16 +500,19 @@ export function pokedexWin(d, T) {
           ${SHOWDOWN_ORDER.map(k => `<option value="${k}">${t('{s} base', { s: STAT_LABEL[k] })}</option>`).join('')}
         </select>
       </div>
+      <div class="pdx-quick" role="group" aria-label="${t('Atalhos de filtro')}">${quick.join('')}</div>
       <div class="pdx-filters" id="pdx-filters" hidden>
         <label class="sr" for="pdx-move">${t('Aprende os golpes')}</label>
         <input id="pdx-move" type="search" placeholder="${t('Aprende os golpes (ex.: Surf, Ice Beam)')}" autocomplete="off" enterkeyhint="search">
+        <fieldset class="pdx-types">
+          <legend>${t('Tipo (toque em até 2)')}</legend>
+          <select id="pdx-type" hidden><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+          <select id="pdx-type2" hidden><option value="">${t('Qualquer segundo tipo')}</option><option value="none">${t('Só um tipo')}</option>${typeOpts}</select>
+          <div class="pdx-tgrid" id="pdx-tgrid">${typeList.map(x => `<button type="button" class="type t-${esc(x)}" data-type="${esc(x)}" aria-pressed="false">${esc(x)}</button>`).join('')}<button type="button" class="pdx-mono" data-type="none" aria-pressed="false">${t('Só um tipo')}</button></div>
+        </fieldset>
         <div class="search-row">
           ${T.quetzal ? `<label class="sr" for="pdx-where">${t('Onde conseguir')}</label>
           <select id="pdx-where" class="pdx-wide"><option value="">${t('Aparece no jogo ou não')}</option><option value="evo">${t('Aparece ou evolui de quem aparece')}</option><option value="wild">${t('Aparece na natureza ou em encontro único')}</option><option value="none">${t('Não aparece nos encontros do jogo')}</option></select>` : ''}
-          <label class="sr" for="pdx-type">${t('Tipo')}</label>
-          <select id="pdx-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
-          <label class="sr" for="pdx-type2">${t('Segundo tipo')}</label>
-          <select id="pdx-type2"><option value="">${t('Qualquer segundo tipo')}</option><option value="none">${t('Só um tipo')}</option>${typeOpts}</select>
           ${caught ? `<label class="sr" for="pdx-caught">${t('Capturados')}</label>
           <select id="pdx-caught"><option value="">${t('Capturados e não capturados')}</option><option value="yes">${t('Só capturados')}</option><option value="no">${t('Só não capturados')}</option></select>` : ''}
           <label class="sr" for="pdx-resist">${t('Resiste a')}</label>
