@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-05',
+    pt: [
+      'O Buscar agora fica dentro do PC: digite ou toque num filtro e a lista de toda a equipe e de todas as caixas aparece no lugar da caixa; "Ver a caixa" volta.',
+    ],
+    en: [
+      'Search now lives inside the PC: type or tap a filter and the list of the whole party and every box replaces the box; "Back to the box" returns.',
+    ],
+  },
+  {
     date: '2026-11-04',
     pt: [
       'O Buscar voltou para a página do save, logo embaixo do PC (a Dex fica com Pokémon, Golpes, Habilidades e Montar).',

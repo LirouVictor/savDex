@@ -302,7 +302,7 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
   #pc-win { grid-area: pc; }
   #tools-win { grid-area: tools; }
   /* O resto em fileiras inteiras, na ordem da página; a ferramenta fechada não deixa fileira vazia */
-  #builder-win, #pokedex-win, #moves-win, #abilities-win, #search-win, #teams-slot, #export-win { grid-column: 1 / -1; }
+  #builder-win, #pokedex-win, #moves-win, #abilities-win, #teams-slot, #export-win { grid-column: 1 / -1; }
   .nav { display: none; }
   body:has(#out:not(.hidden)) { padding-bottom: 0; }
   .foot { max-width: 1200px; }
@@ -564,9 +564,11 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .search-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 /* Filtros da busca como os filtros da Pokédex e as abas do montador (antes, botões grandes em três fileiras tortas) */
 /* Cada fileira preenchida até a borda (antes, 3 + 2 de larguras diferentes com sobra à direita) */
-.flags { display: flex; flex-wrap: wrap; gap: 6px; padding: 3px; }
-.flags .btn { flex: 1 1 auto; min-height: 40px; padding: 4px 10px; font-size: .68rem; white-space: nowrap; }
-.flag svg { vertical-align: -1px; }
+.pc-search { margin-bottom: 10px; }
+.pdx-qchip svg { vertical-align: -1px; }
+#pc-active:not(:empty) { margin-bottom: 10px; }
+.pc-list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.pc-list-head .hint { margin: 0; }
 .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .search-row select { font-size: .85rem; padding: 6px; }
 /* Número ímpar de listas: a última ocupa a fileira (a 3ª da Pokédex ficava sozinha em meia largura, em duas linhas) */

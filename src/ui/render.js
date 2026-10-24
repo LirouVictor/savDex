@@ -247,20 +247,64 @@ export function partyWin(d, { canSave = false } = {}) {
   </section>`;
 }
 
-export function pcWin(d) {
+/**
+ * PC com a busca: uma caixa por vez e, em cima, a busca e os filtros (como na Dex). Com algo digitado, um filtro ou
+ * outra ordem, a lista de toda a equipe e de todas as caixas fica no lugar da caixa; limpar volta para a caixa.
+ */
+export function pcWin(d, T) {
   // A legenda do quadradinho só aparece se algum Pokémon do PC tem a marca (nos saves com a ROM, nenhum)
   const probable = d.pc.boxes.some(b => b.slots.some(s => s.species.confidence !== 'confirmado'));
   const options = d.pc.boxes.map(b => `<option value="${b.index}">${esc(b.name)} · ${b.slots.length ? b.slots.length + '/30' : t('vazia')}${b.partial ? ` (${t('parcial')})` : ''}</option>`).join('');
+  const typeList = T.types.filter(x => x && x !== 'stellar' && !((T.gen3 || T.nds) && x === 'fairy'));
+  const typeOpts = typeList.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  const fem = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#female"/></svg>';
+  const male = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#male"/></svg>';
   return `<section class="win" id="pc-win" aria-labelledby="pc-h">
     <div class="win-title"><h2 id="pc-h">PC</h2><small id="pc-count"></small></div>
-    <div class="box-nav">
-      <button class="btn btn-ghost btn-icon" type="button" data-box-step="-1" aria-label="${t('Caixa anterior')}">◀</button>
-      <label class="sr" for="box-select">${t('Caixa')}</label>
-      <select id="box-select">${options}</select>
-      <button class="btn btn-ghost btn-icon" type="button" data-box-step="1" aria-label="${t('Próxima caixa')}">▶</button>
+    <div class="search-form pc-search">
+      <label class="sr" for="q">${t('Buscar na equipe e no PC')}</label>
+      <input id="q" type="search" placeholder="${t('Pokémon, golpe, habilidade ou item')}" autocomplete="off" enterkeyhint="search">
+      <div class="pdx-bar">
+        <button class="btn btn-ghost btn-small" type="button" id="pc-ftoggle" aria-expanded="false" aria-controls="pc-filters">${t('Filtros')} <span class="pdx-on" id="pc-on"></span></button>
+        <label class="sr" for="f-sort">${t('Ordem')}</label>
+        <select id="f-sort">
+          <option value="pos">${t('Posição')}</option>
+          <option value="level">${t('Nível (maior)')}</option>
+          <option value="name">${t('Nome')}</option>
+          <option value="dex">${t('Nº da espécie')}</option>
+        </select>
+      </div>
+      ${quickRow([quickChip('f-flag', 'shiny', '★ Shiny'), quickChip('f-flag', 'hidden', t('Hab. oculta')), quickChip('f-flag', 'female', `${fem} ${t('Fêmeas')}`), quickChip('f-flag', 'male', `${male} ${t('Machos')}`), quickChip('f-flag', 'iv31', t('6 IVs 31'))])}
+      <div class="pdx-filters" id="pc-filters" hidden>
+        <fieldset class="pdx-types">
+          <legend>${t('Tipo')}</legend>
+          <select id="f-type" hidden><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+          ${typeGrid('pc-tgrid', typeList)}
+        </fieldset>
+        <select id="f-flag" hidden><option value="">${t('Todas as características')}</option><option value="shiny">Shiny</option><option value="hidden">${t('Hab. oculta')}</option><option value="female">${t('Fêmeas')}</option><option value="male">${t('Machos')}</option><option value="iv31">${t('6 IVs 31')}</option></select>
+        <button class="btn btn-ghost btn-small" type="button" id="pc-clear">${t('Limpar filtros')}</button>
+      </div>
     </div>
-    <div class="box-grid" id="box-grid" role="grid" aria-label="${t('Pokémon na caixa')}"></div>
-    <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')}${probable ? ` <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}` : ''}</p>
+    <div class="pdx-active" id="pc-active" aria-label="${t('Filtros ligados')}"></div>
+    <div id="pc-box">
+      <div class="box-nav">
+        <button class="btn btn-ghost btn-icon" type="button" data-box-step="-1" aria-label="${t('Caixa anterior')}">◀</button>
+        <label class="sr" for="box-select">${t('Caixa')}</label>
+        <select id="box-select">${options}</select>
+        <button class="btn btn-ghost btn-icon" type="button" data-box-step="1" aria-label="${t('Próxima caixa')}">▶</button>
+      </div>
+      <div class="box-grid" id="box-grid" role="grid" aria-label="${t('Pokémon na caixa')}"></div>
+      <p class="box-meta">${t('Toque num Pokémon para ver os detalhes.')}${probable ? ` <span class="legend-q" aria-hidden="true"></span> = ${t('espécie com identificação provável.')}` : ''}</p>
+    </div>
+    <div id="pc-list" hidden>
+      <div class="pc-list-head"><p class="hint" id="search-count" role="status"></p><button class="btn btn-ghost btn-small" type="button" id="pc-back">◀ ${t('Ver a caixa')}</button></div>
+      <ul class="results" id="results"></ul>
+      <nav class="pager hidden" id="pager" aria-label="${t('Páginas dos resultados')}">
+        <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
+        <span id="page-info"></span>
+        <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
+      </nav>
+    </div>
   </section>`;
 }
 
@@ -625,43 +669,6 @@ export function abilitiesWin() {
     <nav class="pager hidden" id="ab-pager" aria-label="${t('Páginas das habilidades')}">
       <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
       <span class="page-info" id="ab-page"></span>
-      <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
-    </nav>
-  </details>`;
-}
-
-/** Busca na equipe e em todas as caixas do PC (fechada até o usuário abrir; resultados em páginas). */
-export function searchWin(d, T) {
-  const typeOpts = T.types.filter(t => t && t !== 'stellar').map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  return `<details class="win win-fold" id="search-win">
-    <summary class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></summary>
-    <div class="search-form">
-      <label class="sr" for="q">${t('Buscar')}</label>
-      <input id="q" type="search" placeholder="${t('Pokémon, golpe, habilidade ou item')}" autocomplete="off" enterkeyhint="search">
-      <div class="search-row">
-        <label class="sr" for="f-type">${t('Tipo')}</label>
-        <select id="f-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
-        <label class="sr" for="f-sort">${t('Ordem')}</label>
-        <select id="f-sort">
-          <option value="pos">${t('Posição')}</option>
-          <option value="level">${t('Nível (maior)')}</option>
-          <option value="name">${t('Nome')}</option>
-          <option value="dex">${t('Nº da espécie')}</option>
-        </select>
-      </div>
-      <div class="flags" role="group" aria-label="${t('Filtros')}">
-        <button class="btn btn-ghost btn-small flag" type="button" data-flag="shiny" aria-pressed="false">★ Shiny</button>
-        <button class="btn btn-ghost btn-small flag" type="button" data-flag="hidden" aria-pressed="false">${t('Hab. oculta')}</button>
-        <button class="btn btn-ghost btn-small flag" type="button" data-flag="female" aria-pressed="false"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#female"/></svg> ${t('Fêmeas')}</button>
-        <button class="btn btn-ghost btn-small flag" type="button" data-flag="male" aria-pressed="false"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" shape-rendering="crispEdges"><use href="#male"/></svg> ${t('Machos')}</button>
-        <button class="btn btn-ghost btn-small flag" type="button" data-flag="iv31" aria-pressed="false">${t('6 IVs 31')}</button>
-      </div>
-    </div>
-    <p class="hint" id="search-count" role="status"></p>
-    <ul class="results" id="results"></ul>
-    <nav class="pager hidden" id="pager" aria-label="${t('Páginas dos resultados')}">
-      <button class="btn btn-ghost btn-small" type="button" data-page="-1">‹ ${t('Anterior')}</button>
-      <span id="page-info"></span>
       <button class="btn btn-ghost btn-small" type="button" data-page="1">${t('Próxima')} ›</button>
     </nav>
   </details>`;
