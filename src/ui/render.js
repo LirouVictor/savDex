@@ -203,12 +203,25 @@ export function monTile(m, attrs = '') {
   </button>`;
 }
 
-/** Barra fixa embaixo com os quatro blocos da página. */
+/** Barra fixa embaixo com os blocos da página (a Dex é uma área própria, de tela inteira). */
 export function navBar() {
   const item = (id, ico, label) => `<button type="button" data-go="${id}"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg><span>${label}</span></button>`;
   return `<nav class="nav" aria-label="${t('Seções')}">
-    ${item('grp-summary', 'card', t('Resumo'))}${item('grp-party', 'party', t('Equipe'))}${item('grp-pc', 'box', 'PC')}${item('grp-tools', 'tools', t('Ferramentas'))}
+    ${item('grp-summary', 'card', t('Resumo'))}${item('grp-party', 'party', t('Equipe'))}${item('grp-pc', 'box', 'PC')}${item('grp-dex', 'dex-ico', 'Dex')}${item('grp-tools', 'tools', t('Ferramentas'))}
   </nav>`;
+}
+
+/** Abas da Dex (Pokémon, Golpes, Habilidades): cada uma abre a janela dela; ‹ volta para a página do save. */
+export const DEX_TABS = ['pokedex-win', 'moves-win', 'abilities-win'];
+export function dexHead() {
+  const tabs = [['pokedex-win', 'dex-ico', 'Pokémon'], ['moves-win', 'bolt', t('Golpes')], ['abilities-win', 'spark', t('Habilidades')]];
+  return `<div class="dex-head">
+    <h2 class="sr" id="dex-h">Dex</h2>
+    <button class="btn btn-ghost btn-icon dex-back" type="button" data-dex-back aria-label="${t('Voltar para o save')}" title="${t('Voltar para o save')}">‹</button>
+    <div class="bt-tabs dex-tabs" role="tablist" aria-labelledby="dex-h">
+      ${tabs.map(([id, ico, label]) => `<button type="button" role="tab" data-dex-tab="${id}" aria-controls="${id}" aria-selected="false"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg>${label}</button>`).join('')}
+    </div>
+  </div>`;
 }
 
 export function warningsWin(warnings) {
@@ -387,19 +400,17 @@ export function check(id, label, desc = '', on = false) {
  * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
  */
 /**
- * Ferramentas em grade: um cartão por janela (Montar equipe em destaque), em vez de três janelas fechadas empilhadas.
- * Tocar abre a janela logo abaixo (a fechada não aparece); o cartão fica marcado enquanto ela está aberta.
+ * Ferramentas em grade: um cartão por janela (Montar equipe em destaque), em vez de janelas fechadas empilhadas.
+ * Tocar abre a janela logo abaixo (a fechada não aparece); o cartão fica marcado enquanto ela está aberta. Pokédex,
+ * Golpes e Habilidades ficam na Dex (`dexHead`), uma área própria de tela inteira.
  */
-export function toolsWin(game) {
+export function toolsWin() {
   const card = (id, ico, title, desc, cls = '') => `<button class="tool-card${cls}" type="button" data-tool="${id}" aria-controls="${id}" aria-pressed="false">
       <b><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg>${title}</b><span>${desc}</span></button>`;
   return `<section class="win tools-win" id="tools-win" aria-labelledby="tools-h">
     <div class="win-title"><h2 id="tools-h">${t('Ferramentas')}</h2></div>
     <div class="tools-grid">
       ${card('builder-win', 'party', t('Montar equipe'), t('Adapta equipes do competitivo (Smogon) aos Pokémon do seu save'), ' hot')}
-      ${card('pokedex-win', 'dex-ico', t('Pokédex'), game && game.id === 'quetzal' ? t('Todas as espécies do jogo e onde encontrar cada uma') : t('Todas as espécies do jogo e o que aprendem'))}
-      ${card('moves-win', 'bolt', t('Golpes'), t('Todos os golpes do jogo e quem aprende cada um'))}
-      ${card('abilities-win', 'spark', t('Habilidades'), t('Todas as habilidades do jogo e quem tem cada uma'))}
       ${card('search-win', 'box', t('Buscar'), t('Equipe e PC por nome, golpe, tipo e IVs'))}
     </div>
   </section>`;

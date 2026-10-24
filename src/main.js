@@ -159,6 +159,8 @@ $('#forget').addEventListener('click', async () => {
   $('#out').classList.add('hidden');
   $('#out').innerHTML = '';
   $('#reopen').classList.add('hidden');
+  $('#dex-open').hidden = true;
+  document.body.classList.remove('dex-mode');
   $('#intro').classList.remove('hidden');
   showingDemo = false;
   scrollTo(0, 0);

@@ -13,7 +13,7 @@ import { setLang, missing } from '../src/i18n.js';
 import { gen3Tables } from '../src/parser/gen3.js';
 import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
-import { pokedexWin } from '../src/ui/render.js';
+import { pokedexWin, navBar, dexHead, toolsWin, DEX_TABS } from '../src/ui/render.js';
 import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote, matchupHtml, compareHtml, statRanks, statRange, baseStatsHtml } from '../src/pokedex/view.js';
 import { wildPlaces, wildAncestor, wildHtml, obtainable } from '../src/pokedex/wild.js';
 import { usageHtml } from '../src/pokedex/usage.js';
@@ -331,5 +331,16 @@ suite('Pokédex: linha evolutiva com 3+ ramos', () => {
     expect(evoFan(applin).branches[2]).toEqual([[1011, 840], [1019, 1011]]);
     expect(evoGridHtml(applin, n => `<div class="evo-node">${n[0]}</div>`)).toContain('evo-branch wide');
     expect(evoFan([[60, null], [61, 60], [62, 61], [186, 61]])).toBeNull();
+  });
+});
+
+suite('Dex (área de tela inteira)', () => {
+  it('a barra de baixo leva à Dex, que tem uma aba por janela; as janelas saíram das Ferramentas', () => {
+    expect(navBar()).toContain('data-go="grp-dex"');
+    const head = dexHead();
+    for (const id of DEX_TABS) expect(head).toContain(`data-dex-tab="${id}"`);
+    expect(head).toContain('data-dex-back');
+    expect(toolsWin()).not.toContain('pokedex-win');
+    expect(toolsWin()).toContain('data-tool="search-win"');
   });
 });
