@@ -48,3 +48,43 @@ export function installImageFallback(root = document) {
     else if (img.src !== SILHOUETTE) img.src = SILHOUETTE;
   }, true);
 }
+
+/**
+ * Centraliza o Pokémon nas imagens marcadas com `data-fit` (lista da Pokédex, barra do detalhe): o ícone de menu e o
+ * sprite grande deixam o desenho num canto, com muita sobra. Ao carregar, acha a área desenhada (pixels não
+ * transparentes) e mostra só uma janela centrada nela (`object-view-box`), do mesmo tamanho para todos os ícones,
+ * para o tamanho de cada Pokémon continuar comparável; o que não cabe na janela é reduzido inteiro.
+ */
+export function installIconFit(root = document) {
+  let ctx = null;
+  root.addEventListener('load', e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fit')) return;
+    img.style.objectViewBox = '';
+    if (img.src.startsWith('data:')) return;
+    const W = img.naturalWidth, H = img.naturalHeight;
+    if (!W || !H || W > 128 || H > 128) return;
+    try {
+      ctx ||= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+      ctx.canvas.width = W; ctx.canvas.height = H;
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(img, 0, 0);
+      const px = ctx.getImageData(0, 0, W, H).data;
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (px[(y * W + x) * 4 + 3] < 16) continue;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      if (x1 < 0) return;
+      // Janela com a proporção da imagem na tela: no ícone (68 × 56), 48 × 40 de base; no sprite grande, só o desenho
+      const ratio = img.clientWidth && img.clientHeight ? img.clientWidth / img.clientHeight : 1.2;
+      let w = x1 - x0 + 3, h = y1 - y0 + 3;
+      if (img.classList.contains('ico')) { w = Math.max(w, 48); h = Math.max(h, 40); }
+      if (w / h > ratio) h = w / ratio; else w = h * ratio;
+      // Centrada no desenho mesmo que passe da borda da imagem (inset negativo = área transparente)
+      const cx = (x0 + x1 + 1) / 2, cy = (y0 + y1 + 1) / 2;
+      const l = cx - w / 2, t = cy - h / 2;
+      img.style.objectViewBox = `inset(${t.toFixed(1)}px ${(W - l - w).toFixed(1)}px ${(H - t - h).toFixed(1)}px ${l.toFixed(1)}px)`;
+    } catch { /* sem CORS ou sem canvas: fica o recorte fixo do CSS */ }
+  }, true);
+}

@@ -4,7 +4,7 @@
 import '@fontsource/silkscreen/latin-400.css';
 import '@fontsource/silkscreen/latin-700.css';
 import './styles/main.css';
-import { installImageFallback } from './ui/sprites.js';
+import { installImageFallback, installIconFit } from './ui/sprites.js';
 import { rememberSave, loadRememberedSave, forgetSave } from './ui/store.js';
 import { t, getLang, loadLang, saveLang, locale } from './i18n.js';
 import { NEWS_LATEST } from './pages/latest.js';
@@ -13,6 +13,7 @@ const $ = s => document.querySelector(s);
 const loadApp = () => import('./app.js');
 
 installImageFallback();
+installIconFit();
 
 // Idioma: em inglês, troca os textos fixos do index.html (marcados com data-i18n) antes de mostrar a página.
 const root = document.documentElement;

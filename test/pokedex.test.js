@@ -13,7 +13,7 @@ import { setLang, missing } from '../src/i18n.js';
 import { gen3Tables } from '../src/parser/gen3.js';
 import { ndsTables } from '../src/parser/nds.js';
 import { quetzalLearnDex, evolutionHtml, learnsetHtml } from '../src/ui/dex.js';
-import { pokedexWin, navBar, dexHead, toolsWin, DEX_TABS } from '../src/ui/render.js';
+import { pokedexWin, navBar, dexHead, DEX_TABS } from '../src/ui/render.js';
 import { pokedexEntries, filterEntries, movesMatching, movesMatchingAll, femalePct, genOf, speciesDetail, speciesMon, ownedOf, entryRow, listNote, matchupHtml, compareHtml, statRanks, statRange, baseStatsHtml } from '../src/pokedex/view.js';
 import { wildPlaces, wildAncestor, wildHtml, obtainable } from '../src/pokedex/wild.js';
 import { usageHtml } from '../src/pokedex/usage.js';
@@ -335,12 +335,13 @@ suite('Pokédex: linha evolutiva com 3+ ramos', () => {
 });
 
 suite('Dex (área de tela inteira)', () => {
-  it('a barra de baixo leva à Dex, que tem uma aba por janela; as janelas saíram das Ferramentas', () => {
-    expect(navBar()).toContain('data-go="grp-dex"');
+  it('a barra de baixo leva à Dex, que tem uma aba por janela, ferramentas incluídas, e não tem botão de voltar', () => {
+    const nav = navBar();
+    expect(nav).toContain('data-go="grp-dex"');
+    expect(nav).not.toContain('grp-tools');
     const head = dexHead();
+    expect(DEX_TABS).toEqual(['pokedex-win', 'moves-win', 'abilities-win', 'builder-win', 'search-win']);
     for (const id of DEX_TABS) expect(head).toContain(`data-dex-tab="${id}"`);
-    expect(head).toContain('data-dex-back');
-    expect(toolsWin()).not.toContain('pokedex-win');
-    expect(toolsWin()).toContain('data-tool="search-win"');
+    expect(head).not.toContain('data-dex-back');
   });
 });
