@@ -207,19 +207,22 @@ export function monTile(m, attrs = '') {
 export function navBar() {
   const item = (id, ico, label) => `<button type="button" data-go="${id}"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg><span>${label}</span></button>`;
   return `<nav class="nav" aria-label="${t('Seções')}">
-    ${item('grp-summary', 'card', t('Resumo'))}${item('grp-party', 'party', t('Equipe'))}${item('grp-pc', 'box', 'PC')}${item('grp-dex', 'dex-ico', 'Dex')}${item('grp-tools', 'tools', t('Ferramentas'))}
+    ${item('grp-summary', 'card', t('Resumo'))}${item('grp-party', 'party', t('Equipe'))}${item('grp-pc', 'box', 'PC')}${item('grp-dex', 'dex-ico', 'Dex')}
   </nav>`;
 }
 
-/** Abas da Dex (Pokémon, Golpes, Habilidades): cada uma abre a janela dela; ‹ volta para a página do save. */
-export const DEX_TABS = ['pokedex-win', 'moves-win', 'abilities-win'];
+/**
+ * Abas da Dex: as dex do jogo (Pokémon, Golpes, Habilidades) e as ferramentas (Montar equipe, Buscar); cada uma abre
+ * a janela dela. Sai pela barra de baixo, pelo Voltar do celular ou pelo botão "Dex" do topo (computador).
+ */
+export const DEX_TABS = ['pokedex-win', 'moves-win', 'abilities-win', 'builder-win', 'search-win'];
 export function dexHead() {
-  const tabs = [['pokedex-win', 'dex-ico', 'Pokémon'], ['moves-win', 'bolt', t('Golpes')], ['abilities-win', 'spark', t('Habilidades')]];
+  const tabs = [['pokedex-win', 'dex-ico', 'Pokémon'], ['moves-win', 'bolt', t('Golpes')], ['abilities-win', 'spark', t('Habilidades')],
+    ['builder-win', 'party', t('Montar')], ['search-win', 'box', t('Buscar')]];
   return `<div class="dex-head">
     <h2 class="sr" id="dex-h">Dex</h2>
-    <button class="btn btn-ghost btn-icon dex-back" type="button" data-dex-back aria-label="${t('Voltar para o save')}" title="${t('Voltar para o save')}">‹</button>
-    <div class="bt-tabs dex-tabs" role="tablist" aria-labelledby="dex-h">
-      ${tabs.map(([id, ico, label]) => `<button type="button" role="tab" data-dex-tab="${id}" aria-controls="${id}" aria-selected="false"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg>${label}</button>`).join('')}
+    <div class="dex-tabs" role="tablist" aria-labelledby="dex-h">
+      ${tabs.map(([id, ico, label]) => `<button type="button" role="tab" data-dex-tab="${id}" aria-controls="${id}" aria-selected="false"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg><span>${label}</span></button>`).join('')}
     </div>
   </div>`;
 }
@@ -399,23 +402,6 @@ export function check(id, label, desc = '', on = false) {
  * a equipe atual ou montar do jeito da IA. Fechada até o usuário abrir; os textos
  * que dependem do serviço (link da chave, aviso de privacidade…) são preenchidos em app.js.
  */
-/**
- * Ferramentas em grade: um cartão por janela (Montar equipe em destaque), em vez de janelas fechadas empilhadas.
- * Tocar abre a janela logo abaixo (a fechada não aparece); o cartão fica marcado enquanto ela está aberta. Pokédex,
- * Golpes e Habilidades ficam na Dex (`dexHead`), uma área própria de tela inteira.
- */
-export function toolsWin() {
-  const card = (id, ico, title, desc, cls = '') => `<button class="tool-card${cls}" type="button" data-tool="${id}" aria-controls="${id}" aria-pressed="false">
-      <b><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" shape-rendering="crispEdges"><use href="#${ico}"/></svg>${title}</b><span>${desc}</span></button>`;
-  return `<section class="win tools-win" id="tools-win" aria-labelledby="tools-h">
-    <div class="win-title"><h2 id="tools-h">${t('Ferramentas')}</h2></div>
-    <div class="tools-grid">
-      ${card('builder-win', 'party', t('Montar equipe'), t('Adapta equipes do competitivo (Smogon) aos Pokémon do seu save'), ' hot')}
-      ${card('search-win', 'box', t('Buscar'), t('Equipe e PC por nome, golpe, tipo e IVs'))}
-    </div>
-  </section>`;
-}
-
 export function builderWin(d, providers = []) {
   const noParty = !(d && d.party && d.party.length);
   const free = freeAbilityMode(d && d.game);
@@ -473,8 +459,14 @@ export function builderWin(d, providers = []) {
   </details>`;
 }
 
+/** Atalho de filtro à vista (Pokédex, Golpes, Habilidades): liga (ou desliga) o valor `v` do filtro `sel`. */
+const quickChip = (sel, v, label, title = '') => `<button type="button" class="pdx-qchip" data-quick="${sel}:${v}" aria-pressed="false"${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+const quickRow = chips => `<div class="pdx-quick" role="group" aria-label="${t('Atalhos de filtro')}">${chips.filter(Boolean).join('')}</div>`;
+/** Grade colorida de tipos dos filtros (as escolhas ficam nos `<select hidden>` do filtro). */
+const typeGrid = (id, types, extra = '') => `<div class="pdx-tgrid" id="${id}">${types.map(x => `<button type="button" class="type t-${esc(x)}" data-type="${esc(x)}" aria-pressed="false">${esc(x)}</button>`).join('')}${extra}</div>`;
+
 /**
- * Pokédex do jogo do save (Ferramentas): busca entre todas as espécies do jogo, com os dados de cada uma. Fechada até o
+ * Pokédex do jogo do save (Dex): busca entre todas as espécies do jogo, com os dados de cada uma. Fechada até o
  * usuário abrir; a lista e os dados ficam num pacote à parte (src/pokedex/), carregado só ao abrir.
  */
 export function pokedexWin(d, T) {
@@ -487,7 +479,7 @@ export function pokedexWin(d, T) {
   const mega = !!(T.quetzal || T.unbound || T.soulgold), regional = mega;
   const typeList = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy'));
   // Atalhos à vista: cada um liga (ou desliga) um valor de um dos filtros
-  const q = (sel, v, label, title = '') => `<button type="button" class="pdx-qchip" data-quick="${sel}:${v}" aria-pressed="false"${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+  const q = quickChip;
   const quick = [
     caught && q('pdx-caught', 'no', t('Não capturados')),
     T.quetzal && q('pdx-where', 'evo', t('Aparece no jogo'), t('Aparece ou evolui de quem aparece')),
@@ -495,7 +487,7 @@ export function pokedexWin(d, T) {
     mega && q('pdx-cat', 'mega', t('Megas')),
     regional && q('pdx-cat', 'regional', t('Regionais')),
     q('pdx-evo', 'yes', t('Ainda evolui')),
-  ].filter(Boolean);
+  ];
   return `<details class="win win-fold tool-win" id="pokedex-win">
     <summary class="win-title"><h2 id="pokedex-h">${t('Pokédex')}</h2><small>${t('todas as espécies do jogo')}</small></summary>
     <div class="search-form">
@@ -511,7 +503,7 @@ export function pokedexWin(d, T) {
           ${SHOWDOWN_ORDER.map(k => `<option value="${k}">${t('{s} base', { s: STAT_LABEL[k] })}</option>`).join('')}
         </select>
       </div>
-      <div class="pdx-quick" role="group" aria-label="${t('Atalhos de filtro')}">${quick.join('')}</div>
+      ${quickRow(quick)}
       <div class="pdx-filters" id="pdx-filters" hidden>
         <label class="sr" for="pdx-move">${t('Aprende os golpes')}</label>
         <input id="pdx-move" type="search" placeholder="${t('Aprende os golpes (ex.: Surf, Ice Beam)')}" autocomplete="off" enterkeyhint="search">
@@ -519,7 +511,7 @@ export function pokedexWin(d, T) {
           <legend>${t('Tipo (toque em até 2)')}</legend>
           <select id="pdx-type" hidden><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
           <select id="pdx-type2" hidden><option value="">${t('Qualquer segundo tipo')}</option><option value="none">${t('Só um tipo')}</option>${typeOpts}</select>
-          <div class="pdx-tgrid" id="pdx-tgrid">${typeList.map(x => `<button type="button" class="type t-${esc(x)}" data-type="${esc(x)}" aria-pressed="false">${esc(x)}</button>`).join('')}<button type="button" class="pdx-mono" data-type="none" aria-pressed="false">${t('Só um tipo')}</button></div>
+          ${typeGrid('pdx-tgrid', typeList, `<button type="button" class="pdx-mono" data-type="none" aria-pressed="false">${t('Só um tipo')}</button>`)}
         </fieldset>
         <div class="search-row">
           ${T.quetzal ? `<label class="sr" for="pdx-where">${t('Onde conseguir')}</label>
@@ -557,12 +549,13 @@ export function pokedexWin(d, T) {
 }
 
 /**
- * Golpedex (Ferramentas): todos os golpes do jogo do save, com quem aprende cada um. Fechada até o usuário abrir; a
- * lista e o detalhe ficam num pacote à parte (src/movedex/), carregado só ao abrir.
+ * Golpedex (Dex): todos os golpes do jogo do save, com quem aprende cada um, no mesmo formato da Pokédex (atalhos,
+ * tipos em grade, filtros recolhidos). A lista e o detalhe ficam num pacote à parte (src/movedex/), carregado ao abrir.
  */
 export function movesWin(T) {
   const gen3 = !!(T.gen3 || T.nds);
-  const typeOpts = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy')).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  const typeList = T.types.filter(x => x && x !== 'stellar' && !(gen3 && x === 'fairy'));
+  const typeOpts = typeList.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
   return `<details class="win win-fold tool-win" id="moves-win">
     <summary class="win-title"><h2 id="moves-h">${t('Golpes')}</h2><small>${t('todos os golpes do jogo')}</small></summary>
     <div class="search-form">
@@ -573,10 +566,14 @@ export function movesWin(T) {
         <label class="sr" for="mv-sort">${t('Ordem')}</label>
         <select id="mv-sort"><option value="name">${t('Nome')}</option><option value="power">${t('Poder (maior)')}</option><option value="accuracy">${t('Precisão (maior)')}</option><option value="pp">${t('PP (maior)')}</option><option value="species">${t('Mais espécies aprendem')}</option></select>
       </div>
+      ${quickRow([quickChip('mv-mine', 'can', t('Seus Pokémon aprendem'), t('Algum Pokémon seu sabe ou aprende')), quickChip('mv-cat', '0', t('Físico')), quickChip('mv-cat', '1', t('Especial')), quickChip('mv-cat', '2', t('Status'))])}
       <div class="pdx-filters" id="mv-filters" hidden>
+        <fieldset class="pdx-types">
+          <legend>${t('Tipo')}</legend>
+          <select id="mv-type" hidden><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
+          ${typeGrid('mv-tgrid', typeList)}
+        </fieldset>
         <div class="search-row">
-          <label class="sr" for="mv-type">${t('Tipo')}</label>
-          <select id="mv-type"><option value="">${t('Todos os tipos')}</option>${typeOpts}</select>
           <label class="sr" for="mv-cat">${t('Categoria')}</label>
           <select id="mv-cat"><option value="">${t('Todas as categorias')}</option><option value="0">${t('Físico')}</option><option value="1">${t('Especial')}</option><option value="2">${t('Status')}</option></select>
           <label class="sr" for="mv-mine">${t('Seus Pokémon')}</label>
@@ -584,8 +581,8 @@ export function movesWin(T) {
         </div>
         <button class="btn btn-ghost btn-small" type="button" id="mv-clear">${t('Limpar filtros')}</button>
       </div>
-      <div class="pdx-active" id="mv-active"></div>
     </div>
+    <div class="pdx-active" id="mv-active" aria-label="${t('Filtros ligados')}"></div>
     <p class="hint pdx-count"><span id="mv-count" role="status"></span> <span id="mv-note"></span></p>
     <ul class="results" id="mv-results"></ul>
     <nav class="pager hidden" id="mv-pager" aria-label="${t('Páginas dos golpes')}">
@@ -597,8 +594,8 @@ export function movesWin(T) {
 }
 
 /**
- * Dex de habilidades (Ferramentas): as habilidades das espécies do jogo do save, com a descrição e quem tem. Fechada até
- * o usuário abrir; a lista e o detalhe ficam num pacote à parte (src/abilitydex/), carregado só ao abrir.
+ * Dex de habilidades (Dex): as habilidades das espécies do jogo do save, com a descrição e quem tem, no mesmo formato
+ * da Pokédex. A lista e o detalhe ficam num pacote à parte (src/abilitydex/), carregado só ao abrir.
  */
 export function abilitiesWin() {
   return `<details class="win win-fold tool-win" id="abilities-win">
@@ -611,6 +608,7 @@ export function abilitiesWin() {
         <label class="sr" for="ab-sort">${t('Ordem')}</label>
         <select id="ab-sort"><option value="name">${t('Nome')}</option><option value="species">${t('Mais espécies têm')}</option></select>
       </div>
+      ${quickRow([quickChip('ab-mine', 'has', t('Seus Pokémon têm'), t('Algum Pokémon seu tem')), quickChip('ab-mine', 'could', t('Seus Pokémon podem ter'), t('Algum Pokémon seu tem ou pode ter')), quickChip('ab-slot', 'hidden', t('Só oculta'), t('Só como oculta'))])}
       <div class="pdx-filters" id="ab-filters" hidden>
         <div class="search-row">
           <label class="sr" for="ab-mine">${t('Seus Pokémon')}</label>
@@ -620,8 +618,8 @@ export function abilitiesWin() {
         </div>
         <button class="btn btn-ghost btn-small" type="button" id="ab-clear">${t('Limpar filtros')}</button>
       </div>
-      <div class="pdx-active" id="ab-active"></div>
     </div>
+    <div class="pdx-active" id="ab-active" aria-label="${t('Filtros ligados')}"></div>
     <p class="hint pdx-count"><span id="ab-count" role="status"></span></p>
     <ul class="results" id="ab-results"></ul>
     <nav class="pager hidden" id="ab-pager" aria-label="${t('Páginas das habilidades')}">

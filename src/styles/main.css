@@ -294,11 +294,9 @@ body:has(#out:not(.hidden)) { padding-bottom: calc(64px + env(safe-area-inset-bo
      inteira), Equipes salvas e Exportar no fim */
   #out {
     grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start;
-    grid-template-areas: "sum sum" "party pc" "tools tools";
+    grid-template-areas: "sum sum" "party pc";
   }
-  /* Buscar ou Montar equipe aberta: as duas em fileiras inteiras (meia largura deixava a outra metade vazia e a
-     equipe do montador espremida em 3 por linha) */
-  #grp-pc, #grp-tools { display: contents; }
+  #grp-pc { display: contents; }
   #grp-summary { grid-area: sum; }
   #grp-party { grid-area: party; }
   #pc-win { grid-area: pc; }
@@ -1080,28 +1078,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .bt-pane { display: grid; gap: 12px; }
 .bt-pane[hidden] { display: none; }
 
-/* Ferramentas em grade: Montar equipe mais largo em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+/* Janela das abas da Dex fechada não aparece */
 #out .tool-win:not([open]) { display: none; }
-.tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.tool-card {
-  display: grid; gap: 4px; align-content: start; min-height: 88px; padding: 12px 12px 14px; text-align: left; cursor: pointer;
-  border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
-  font: inherit; -webkit-tap-highlight-color: transparent;
-}
-.tool-card.hot { grid-column: 1 / -1; min-height: 0; }
-.tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: 1 / -1; } /* sobrou um sozinho na fileira */
-.tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
-.tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
-.tool-card:active { transform: translateY(2px); }
-.tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
-/* Aberta: o cartão fica verde e "afundado", como as abas escolhidas; fechadas, todas iguais */
-.tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
-.tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
-@media (min-width: 1000px) {
-  .tools-grid { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
-  .tool-card.hot { grid-column: auto; min-height: 88px; }
-  .tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: auto; }
-}
 
 
 /* Golpes e habilidades com a descrição ao tocar (ui/tips.js) */
@@ -1357,28 +1335,8 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .bt-pane { display: grid; gap: 12px; }
 .bt-pane[hidden] { display: none; }
 
-/* Ferramentas em grade: Montar equipe mais largo em cima, Pokédex e Buscar lado a lado; a janela fechada não aparece */
+/* Janela das abas da Dex fechada não aparece */
 #out .tool-win:not([open]) { display: none; }
-.tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.tool-card {
-  display: grid; gap: 4px; align-content: start; min-height: 88px; padding: 12px 12px 14px; text-align: left; cursor: pointer;
-  border: 0; color: var(--ink); background: var(--win-2); box-shadow: inset 0 0 0 3px var(--edge), inset 0 -6px 0 var(--hi);
-  font: inherit; -webkit-tap-highlight-color: transparent;
-}
-.tool-card.hot { grid-column: 1 / -1; min-height: 0; }
-.tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: 1 / -1; } /* sobrou um sozinho na fileira */
-.tool-card b { display: flex; align-items: center; gap: 8px; font: .8rem var(--pixel); text-transform: uppercase; }
-.tool-card span { font-size: .85rem; line-height: 1.35; color: var(--muted); }
-.tool-card:active { transform: translateY(2px); }
-.tool-card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
-/* Aberta: o cartão fica verde e "afundado", como as abas escolhidas; fechadas, todas iguais */
-.tool-card[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 3px var(--edge), inset 0 6px 0 rgba(0,0,0,.22); padding-top: 16px; padding-bottom: 10px; }
-.tool-card[aria-pressed="true"] span { color: inherit; opacity: .85; }
-@media (min-width: 1000px) {
-  .tools-grid { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
-  .tool-card.hot { grid-column: auto; min-height: 88px; }
-  .tool-card.hot ~ .tool-card:last-child:nth-child(even) { grid-column: auto; }
-}
 
 
 /* Golpes e habilidades com a descrição ao tocar (ui/tips.js) */
@@ -1599,7 +1557,9 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .pdx-shiny { position: absolute; left: 4px; right: 4px; bottom: 4px; padding: 3px 2px 2px; font: .52rem var(--pixel); text-transform: uppercase; color: var(--ink); background: color-mix(in srgb, var(--win) 85%, transparent); border: 0; box-shadow: inset 0 0 0 2px var(--edge); cursor: pointer; }
 .pdx-shiny[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 /* Barra do detalhe: ícone ao lado do nome quando o cabeçalho sai da tela */
-.sheet-bar-name img { width: 44px; height: 36px; margin: -10px 2px -10px -6px; vertical-align: middle; image-rendering: pixelated; }
+.pdx-sheet-bar .sheet-bar-name { display: flex; align-items: center; gap: 4px; }
+.pdx-sheet-bar .sheet-bar-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sheet-bar-name img { flex: none; width: 40px; height: 34px; image-rendering: pixelated; }
 .sheet-bar-name img.ico { object-view-box: inset(14px 10px 4px 10px); }
 @media (max-width: 480px) { .pdx-sheet-bar.stuck .pdx-pos { display: none; } }
 /* Computador: painel do lado da lista (diálogo sem cobrir a página) */
@@ -1618,30 +1578,35 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .sheet.side .pdx-pane .wild-region:not([hidden]) { display: block; }
 .sheet.side .pdx-pane .wild-region .wild-map { position: relative; top: auto; margin: 8px 0; }
 
-/* Dex: Pokédex, Golpes e Habilidades numa área de tela inteira, no lugar da página do save (`body.dex-mode`, `#dex` no
-   endereço); as abas ficam presas embaixo da barra de cima, com ‹ para voltar */
-#grp-dex { display: none; }
+/* Dex: as dex do jogo e as ferramentas numa área de tela inteira, no lugar da página do save (`body.dex-mode`, `#dex`
+   no endereço); as abas (ícone em cima, nome embaixo, como a barra de baixo) ficam presas embaixo da barra de cima, e
+   o que se prende dentro das janelas (abas do montador) fica embaixo delas */
+#grp-dex { display: none; --dex-top: 68px; --bar-h: calc(var(--dex-top) + 68px); }
 body.dex-mode #grp-dex { display: grid; gap: 12px; }
 body.dex-mode #out > .grp:not(#grp-dex), body.dex-mode #saved-note { display: none; }
 #grp-dex .tool-win > summary { display: none; }
-.dex-head {
-  position: sticky; top: var(--bar-h, 68px); z-index: 4; display: flex; gap: 8px; align-items: stretch;
-  margin: -12px -16px 0; padding: 8px 16px 6px; background: var(--bg);
+.dex-head { position: sticky; top: var(--dex-top); z-index: 4; margin: -12px -16px 0; padding: 8px 16px 6px; background: var(--bg); }
+.dex-tabs {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--win-2);
+  box-shadow: inset 0 0 0 3px var(--edge), 0 4px 0 var(--win);
 }
-.dex-back { flex: none; margin: 0; font: 700 1.7rem/1 var(--body); }
-.dex-tabs { flex: 1; margin: 0; position: static; }
-.dex-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.dex-tabs svg { flex: none; }
-.nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.nav button { font-size: min(.62rem, 2.25vw); padding-inline: 0; } /* "Ferramentas" cabe em 1/5 da tela */
-.nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dex-tabs button {
+  min-height: 50px; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 6px 2px;
+  border: 0; background: transparent; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  font: min(.62rem, 2.25vw) var(--pixel); text-transform: uppercase;
+}
+.dex-tabs button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dex-tabs button[aria-selected="true"] { background: var(--edge); color: var(--win); }
+.dex-tabs button:focus-visible { outline: 3px solid var(--accent); outline-offset: -6px; }
+.nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 #dex-open[hidden] { display: none; }
 #dex-open[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 @media (max-width: 999px) { #dex-open { display: none; } }
-@media (max-width: 480px) { .dex-tabs svg { display: none; } .dex-tabs button { font-size: .62rem; } }
 @media (min-width: 1000px) {
   #grp-dex { grid-column: 1 / -1; }
   .dex-head { margin-inline: 0; padding-inline: 0; }
+  .dex-tabs { grid-template-columns: repeat(5, minmax(0, 160px)); }
+  .dex-tabs button { grid-auto-flow: column; justify-content: center; gap: 8px; font-size: .68rem; }
   /* Com o detalhe da espécie no painel da direita, as abas ficam na largura da lista */
   #grp-dex:has(.pdx-split) .dex-head { max-width: var(--pdx-avail); }
 }

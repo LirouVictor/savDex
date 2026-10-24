@@ -76,8 +76,8 @@ export async function demoBytes() {
 function render() {
   const { data, fileName } = state;
   const out = document.getElementById('out');
-  // Quatro blocos (a barra de baixo leva a cada um; no computador, Equipe e PC ficam lado a lado) e a Dex, que ocupa
-  // a tela no lugar deles (`#dex` no endereço)
+  // Três blocos (a barra de baixo leva a cada um; no computador, Equipe e PC ficam lado a lado) e a Dex, com as dex
+  // do jogo e as ferramentas, que ocupa a tela no lugar deles (`#dex` no endereço)
   out.innerHTML = `
     <div class="grp" id="grp-summary">
       ${R.trainerWin(data, fileName)}
@@ -87,15 +87,10 @@ function render() {
     <div class="grp" id="grp-party">
       ${R.partyWin(data, { canSave: state.persist })}
       ${R.analysisWin(data, T)}
+      <div id="teams-slot"></div>
     </div>
     <div class="grp" id="grp-pc">
       ${R.pcWin(data)}
-    </div>
-    <div class="grp" id="grp-tools">
-      ${R.toolsWin()}
-      ${R.builderWin(data, Object.values(PROVIDERS))}
-      ${R.searchWin(data, T)}
-      <div id="teams-slot"></div>
       ${R.exportWin()}
     </div>
     <div class="grp" id="grp-dex">
@@ -103,6 +98,8 @@ function render() {
       ${R.pokedexWin(data, T)}
       ${R.movesWin(T)}
       ${R.abilitiesWin()}
+      ${R.builderWin(data, Object.values(PROVIDERS))}
+      ${R.searchWin(data, T)}
     </div>
     ${R.navBar()}`;
   out.classList.remove('hidden');
@@ -188,9 +185,9 @@ function render() {
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
 
-  // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
-  // quando a Busca abre. Pokédex, Golpes e Habilidades abrem pelas abas da Dex (só uma aberta por vez)
-  for (const id of ['builder-win', 'ai-win', 'search-win', ...R.DEX_TABS]) {
+  // As janelas da Dex abrem pelas abas (só uma aberta por vez); a lista da Busca só é montada quando ela abre. A parte
+  // com IA, dentro do Montar equipe, lembra se ficou aberta
+  for (const id of ['ai-win', ...R.DEX_TABS]) {
     const det = out.querySelector('#' + id);
     const dexWin = R.DEX_TABS.includes(id);
     det.addEventListener('toggle', () => {
@@ -203,24 +200,12 @@ function render() {
     if (!dexWin && foldOpen(id)) det.open = true;
   }
   setupDex(out);
-  // Cartões das ferramentas: abrem a janela (fechada, ela some; o título dela fecha) e acompanham o estado
-  const cards = [...out.querySelectorAll('[data-tool]')];
-  const syncCards = () => cards.forEach(c => c.setAttribute('aria-pressed', String(out.querySelector('#' + c.dataset.tool).open)));
-  for (const c of cards) {
-    const det = out.querySelector('#' + c.dataset.tool);
-    det.addEventListener('toggle', syncCards);
-    c.addEventListener('click', () => {
-      det.open = !det.open;
-      if (det.open) det.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    });
-  }
-  syncCards();
 }
 
-// Dex: Pokédex, Golpes e Habilidades numa área de tela inteira, no lugar da página do save. O endereço diz qual
-// aba está aberta (`#dex`, `#dex-golpes`, `#dex-habilidades`): o Voltar do Android fecha a Dex e o link pode ser
+// Dex: Pokédex, Golpes, Habilidades, Montar equipe e Buscar numa área de tela inteira, no lugar da página do save. O
+// endereço diz qual aba está aberta (`#dex`, `#dex-golpes`…): o Voltar do Android fecha a Dex e o link pode ser
 // guardado. A aba escolhida fica para a próxima vez.
-const DEX_HASH = { 'pokedex-win': '#dex', 'moves-win': '#dex-golpes', 'abilities-win': '#dex-habilidades' };
+const DEX_HASH = { 'pokedex-win': '#dex', 'moves-win': '#dex-golpes', 'abilities-win': '#dex-habilidades', 'builder-win': '#dex-montar', 'search-win': '#dex-buscar' };
 const dexFromHash = () => Object.keys(DEX_HASH).find(id => DEX_HASH[id] === location.hash) || null;
 let dexPushed = false, dexScroll = 0, dexGoTo = null;
 // A rolagem ao sair da Dex é do app (volta onde estava ou vai ao bloco tocado na barra), não do navegador
@@ -289,7 +274,6 @@ function setupDex(out) {
     const b = e.target.closest('[data-dex-tab]');
     if (b) openDexArea(b.dataset.dexTab);
   });
-  grp.querySelector('[data-dex-back]').addEventListener('click', closeDexArea);
   const top = document.getElementById('dex-open');
   if (top) { top.hidden = false; top.onclick = () => (dexFromHash() ? closeDexArea() : openDexArea()); }
   // Um save novo aberto com a Dex no endereço já abre nela
@@ -523,6 +507,17 @@ function foldFilters($, pre, ids, prefix, run) {
   toggle.addEventListener('click', () => setOpen(panel.hidden));
   const clear = () => { for (const id of ids) $('#' + id).value = ''; run(); };
   $(`#${pre}-clear`).addEventListener('click', clear);
+  // Atalhos (como na Pokédex): ligam o valor no filtro; o mesmo valor de novo desliga
+  const win = panel.closest('details');
+  const quick = win.querySelector('.pdx-quick');
+  quick?.addEventListener('click', e => {
+    const b = e.target.closest('[data-quick]');
+    if (!b) return;
+    const [id, val] = b.dataset.quick.split(':');
+    const el = $('#' + id);
+    el.value = el.value === val ? '' : val;
+    run();
+  });
   active.addEventListener('click', e => {
     const b = e.target.closest('[data-unfilter]');
     if (!b) return;
@@ -532,6 +527,10 @@ function foldFilters($, pre, ids, prefix, run) {
     active.querySelector('[data-unfilter]')?.focus();
   });
   return () => {
+    for (const b of win.querySelectorAll('[data-quick]')) {
+      const [id, val] = b.dataset.quick.split(':');
+      b.setAttribute('aria-pressed', String($('#' + id).value === val));
+    }
     const on = ids.filter(id => $('#' + id).value);
     $(`#${pre}-on`).textContent = on.length ? `(${on.length})` : '';
     const chips = on.map(id => {
@@ -606,7 +605,7 @@ async function setupMoves(out) {
     md.page = Math.min(Math.max(0, md.page), pages - 1);
     const start = md.page * md.M.PAGE;
     $('#mv-results').innerHTML = md.list.slice(start, start + md.M.PAGE).map((r, j) => md.M.moveRow(r, start + j)).join('');
-    $('#mv-count').textContent = t(total === 1 ? '1 golpe.' : '{n} golpes.', { n: total });
+    $('#mv-count').textContent = t(total === 1 ? '1 golpe' : '{n} golpes', { n: total });
     const pager = $('#mv-pager');
     pager.classList.toggle('hidden', pages <= 1);
     pager.querySelector('[data-page="-1"]').disabled = md.page === 0;
@@ -616,11 +615,20 @@ async function setupMoves(out) {
   const run = () => {
     const v = id => $('#' + id).value;
     md.list = md.M.filterMoves(md.rows, { q: v('mv-q'), type: v('mv-type'), cat: v('mv-cat'), mine: v('mv-mine'), sort: v('mv-sort') });
+    for (const b of out.querySelectorAll('#mv-tgrid [data-type]')) b.setAttribute('aria-pressed', String(v('mv-type') === b.dataset.type));
     md.page = 0;
     sync();
     show();
   };
   sync = foldFilters($, 'mv', FILTERS, { 'mv-type': t('Tipo') }, run);
+  // Grade de tipos: um tipo; tocar de novo desliga
+  $('#mv-tgrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-type]');
+    if (!b) return;
+    const el = $('#mv-type');
+    el.value = el.value === b.dataset.type ? '' : b.dataset.type;
+    run();
+  });
   let timer = 0;
   const later = () => { clearTimeout(timer); timer = setTimeout(run, 200); };
   for (const id of ['mv-q', 'mv-sort', ...FILTERS]) {
@@ -678,7 +686,7 @@ async function setupAbilities(out) {
     ad.page = Math.min(Math.max(0, ad.page), pages - 1);
     const start = ad.page * ad.A.PAGE;
     $('#ab-results').innerHTML = ad.list.slice(start, start + ad.A.PAGE).map((r, j) => ad.A.abilityRow(r, start + j)).join('');
-    $('#ab-count').textContent = t(total === 1 ? '1 habilidade.' : '{n} habilidades.', { n: total });
+    $('#ab-count').textContent = t(total === 1 ? '1 habilidade' : '{n} habilidades', { n: total });
     const pager = $('#ab-pager');
     pager.classList.toggle('hidden', pages <= 1);
     pager.querySelector('[data-page="-1"]').disabled = ad.page === 0;

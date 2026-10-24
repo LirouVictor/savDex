@@ -6,6 +6,19 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-03',
+    pt: [
+      'Montar equipe e Buscar também viraram abas da Dex (a seção Ferramentas saiu; Exportar fica no fim do PC e as Equipes salvas na Equipe). A Dex não tem mais o botão de voltar: saia pela barra de baixo ou pelo Voltar do celular.',
+      'Golpes e Habilidades ficaram como a Pokédex: atalhos embaixo da busca (Seus Pokémon aprendem, Físico, Especial, Status; Seus Pokémon têm/podem ter, Só oculta) e, nos golpes, os tipos numa grade colorida.',
+      'Os Pokémon da lista da Pokédex ficam centralizados, e o ícone na barra do detalhe aparece inteiro.',
+    ],
+    en: [
+      'Build team and Search are now Dex tabs too (the Tools section is gone; Export sits at the end of the PC and Saved teams under Team). The Dex no longer has a back button: leave it from the bottom bar or with the phone’s Back button.',
+      'Moves and Abilities now work like the Pokédex: shortcuts under the search (Your Pokémon learn, Physical, Special, Status; Your Pokémon have/can have, Hidden only) and, for moves, the types in a colored grid.',
+      'Pokémon in the Pokédex list are centered, and the icon in the detail bar shows whole.',
+    ],
+  },
+  {
     date: '2026-11-02',
     pt: [
       'Pokédex, Golpes e Habilidades agora ficam juntos na Dex, uma área própria de tela inteira com uma aba para cada. No celular, ela tem um botão na barra de baixo; no computador, um botão “Dex” no topo. O botão Voltar do celular sai da Dex, e o endereço (#dex) pode ir para os favoritos.',

@@ -183,7 +183,7 @@ export function entryRow(e, i, caught, prev = null) {
   const name = sub ? `<b><span class="sr">${esc(sp.name)} </span>${esc(sp.form === '?' ? t('forma ?') : formName(sp.form))}</b>`
     : `<b>${esc(sp.name)}</b>${formLabel(sp)}`;
   return `<li><button class="result pdx-row${sub ? ' pdx-form' : ''}" type="button" data-pdx="${i}">
-    <img data-sprite="1" src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
+    <img data-sprite="1" data-fit src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" loading="lazy" crossorigin="anonymous">
     <span class="r-main">${!sub && numLabel(e) ? `<span class="pdx-no">${numLabel(e)}</span>` : ''}${name}${got ? ` <span class="pdx-got" title="${esc(t('Capturado (Pokédex do save)'))}">✓<span class="sr"> ${t('capturado')}</span></span>` : ''}
       <span class="r-sub pdx-sub">${sp.types.map(x => `<span class="type t-${esc(x)}">${esc(x)}</span>`).join('')}</span></span>
     <span class="pdx-bst" title="${esc(t('Total dos stats base'))}">${bst(sp)}<small>BST</small></span>
@@ -325,7 +325,7 @@ export function speciesDetail(e, T, { caught = null, owned = [], nav = null, tab
   const tabBtn = ([k, label]) => `<button type="button" role="tab" class="pdx-tab" data-ptab="${k}" id="pdx-tab-${k}" aria-controls="pdx-pane-${k}" aria-selected="${k === cur}"${k === 'usage' ? ' hidden' : ''}>${label}</button>`;
   const pane = (k, html) => `<div class="pdx-pane" role="tabpanel" id="pdx-pane-${k}" aria-labelledby="pdx-tab-${k}" data-pane="${k}"${k === cur ? '' : ' hidden'}>${html}</div>`;
   return `<div class="sheet-bar pdx-sheet-bar${tc}">
-    <b class="sheet-bar-name" aria-hidden="true"><img src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" crossorigin="anonymous">${esc(sp.name)}</b>
+    <b class="sheet-bar-name" aria-hidden="true"><img data-fit src="${esc(iconSrc(sp))}"${sp.hasIcon ? ' class="ico"' : ''} alt="" decoding="async" crossorigin="anonymous"><span>${esc(sp.name)}</span></b>
     ${arrows}
     <button class="btn btn-ghost btn-icon pdx-vs" type="button" data-cmp aria-label="${t('Comparar com outra espécie')}" title="${t('Comparar com outra espécie')}">VS</button>
     <button class="btn btn-ghost btn-icon close" type="button" data-close aria-label="${t('Fechar')}">✕</button>
