@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-02',
+    pt: [
+      'Pokédex, Golpes e Habilidades agora ficam juntos na Dex, uma área própria de tela inteira com uma aba para cada. No celular, ela tem um botão na barra de baixo; no computador, um botão “Dex” no topo. O botão Voltar do celular sai da Dex, e o endereço (#dex) pode ir para os favoritos.',
+    ],
+    en: [
+      'Pokédex, Moves and Abilities now live together in the Dex, a full-screen area with one tab for each. On phones it has a button in the bottom bar; on computers, a “Dex” button at the top. The phone’s Back button leaves the Dex, and its address (#dex) can be bookmarked.',
+    ],
+  },
+  {
     date: '2026-11-01',
     pt: [
       'Pokédex mais prática: atalhos embaixo da busca (Não capturados, Aparece no jogo, Lendários, Megas, Regionais, Ainda evolui) e os tipos numa grade colorida em “Filtros” (toque em até dois). Os ícones da lista ficaram maiores.',

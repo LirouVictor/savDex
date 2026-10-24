@@ -76,7 +76,8 @@ export async function demoBytes() {
 function render() {
   const { data, fileName } = state;
   const out = document.getElementById('out');
-  // Quatro blocos (a barra de baixo leva a cada um; no computador, Equipe e PC ficam lado a lado)
+  // Quatro blocos (a barra de baixo leva a cada um; no computador, Equipe e PC ficam lado a lado) e a Dex, que ocupa
+  // a tela no lugar deles (`#dex` no endereço)
   out.innerHTML = `
     <div class="grp" id="grp-summary">
       ${R.trainerWin(data, fileName)}
@@ -91,14 +92,17 @@ function render() {
       ${R.pcWin(data)}
     </div>
     <div class="grp" id="grp-tools">
-      ${R.toolsWin(data.game)}
+      ${R.toolsWin()}
       ${R.builderWin(data, Object.values(PROVIDERS))}
-      ${R.pokedexWin(data, T)}
-      ${R.movesWin(T)}
-      ${R.abilitiesWin()}
       ${R.searchWin(data, T)}
       <div id="teams-slot"></div>
       ${R.exportWin()}
+    </div>
+    <div class="grp" id="grp-dex">
+      ${R.dexHead()}
+      ${R.pokedexWin(data, T)}
+      ${R.movesWin(T)}
+      ${R.abilitiesWin()}
     </div>
     ${R.navBar()}`;
   out.classList.remove('hidden');
@@ -185,18 +189,20 @@ function render() {
   });
 
   // Montar equipe (e a parte com IA dentro dela) e Busca ficam fechados até o usuário abrir; a lista só é montada
-  // quando a Busca abre
-  for (const id of ['builder-win', 'ai-win', 'search-win', 'pokedex-win', 'moves-win', 'abilities-win']) {
+  // quando a Busca abre. Pokédex, Golpes e Habilidades abrem pelas abas da Dex (só uma aberta por vez)
+  for (const id of ['builder-win', 'ai-win', 'search-win', ...R.DEX_TABS]) {
     const det = out.querySelector('#' + id);
+    const dexWin = R.DEX_TABS.includes(id);
     det.addEventListener('toggle', () => {
-      setFoldOpen(id, det.open);
+      if (!dexWin) setFoldOpen(id, det.open);
       if (id === 'search-win' && det.open && !state.searched) runSearch();
       if (id === 'pokedex-win' && det.open) setupPokedex(out);
       if (id === 'moves-win' && det.open) setupMoves(out);
       if (id === 'abilities-win' && det.open) setupAbilities(out);
     });
-    if (foldOpen(id)) det.open = true;
+    if (!dexWin && foldOpen(id)) det.open = true;
   }
+  setupDex(out);
   // Cartões das ferramentas: abrem a janela (fechada, ela some; o título dela fecha) e acompanham o estado
   const cards = [...out.querySelectorAll('[data-tool]')];
   const syncCards = () => cards.forEach(c => c.setAttribute('aria-pressed', String(out.querySelector('#' + c.dataset.tool).open)));
@@ -210,6 +216,88 @@ function render() {
   }
   syncCards();
 }
+
+// Dex: Pokédex, Golpes e Habilidades numa área de tela inteira, no lugar da página do save. O endereço diz qual
+// aba está aberta (`#dex`, `#dex-golpes`, `#dex-habilidades`): o Voltar do Android fecha a Dex e o link pode ser
+// guardado. A aba escolhida fica para a próxima vez.
+const DEX_HASH = { 'pokedex-win': '#dex', 'moves-win': '#dex-golpes', 'abilities-win': '#dex-habilidades' };
+const dexFromHash = () => Object.keys(DEX_HASH).find(id => DEX_HASH[id] === location.hash) || null;
+let dexPushed = false, dexScroll = 0, dexGoTo = null;
+// A rolagem ao sair da Dex é do app (volta onde estava ou vai ao bloco tocado na barra), não do navegador
+try { history.scrollRestoration = 'manual'; } catch { /* sem suporte */ }
+
+/** Abre a Dex na aba (ou na última usada). Entrar cria um passo no histórico; trocar de aba, não. */
+export function openDexArea(tab) {
+  if (!state.data) return;
+  let last = null;
+  try { last = localStorage.getItem('dex-tab'); } catch { /* sem armazenamento */ }
+  const id = tab || dexFromHash() || (R.DEX_TABS.includes(last) ? last : 'pokedex-win');
+  if (dexFromHash()) history.replaceState(null, '', DEX_HASH[id]);
+  else { history.pushState(null, '', DEX_HASH[id]); dexPushed = true; }
+  applyDex();
+}
+
+/** Sai da Dex: volta o passo do histórico que a entrada criou (ou só limpa o endereço). */
+function closeDexArea() {
+  if (!dexFromHash()) return;
+  if (dexPushed) { dexPushed = false; history.back(); return; }
+  history.replaceState(null, '', location.pathname + location.search);
+  applyDex();
+}
+
+/** Mostra a Dex ou a página do save conforme o endereço. */
+function applyDex() {
+  const out = document.getElementById('out');
+  const grp = out && out.querySelector('#grp-dex');
+  if (!grp || !state.data) return;
+  const id = dexFromHash();
+  const was = document.body.classList.contains('dex-mode');
+  if (!id) {
+    if (!was) return;
+    document.body.classList.remove('dex-mode');
+    // O detalhe aberto na Dex é dela: sai junto
+    const dlg = document.getElementById('detail');
+    if (dlg.open) dlg.close();
+    for (const w of R.DEX_TABS) out.querySelector('#' + w).open = false;
+    syncDexBtn(out);
+    const to = dexGoTo && document.getElementById(dexGoTo);
+    dexGoTo = null;
+    if (to) to.scrollIntoView({ block: 'start' }); else window.scrollTo(0, dexScroll);
+    return;
+  }
+  if (!was) { dexScroll = window.scrollY; document.body.classList.add('dex-mode'); }
+  try { localStorage.setItem('dex-tab', id); } catch { /* sem armazenamento */ }
+  for (const w of R.DEX_TABS) {
+    const det = out.querySelector('#' + w);
+    if (det.open !== (w === id)) det.open = w === id;
+  }
+  grp.querySelectorAll('[data-dex-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.dexTab === id)));
+  syncDexBtn(out);
+  window.scrollTo(0, 0);
+}
+
+function syncDexBtn(out) {
+  const on = document.body.classList.contains('dex-mode');
+  const top = document.getElementById('dex-open');
+  if (top) top.setAttribute('aria-pressed', String(on));
+  out.querySelectorAll('.nav [data-go]').forEach(b => b.toggleAttribute('aria-current', on ? b.dataset.go === 'grp-dex' : false));
+}
+
+function setupDex(out) {
+  const grp = out.querySelector('#grp-dex');
+  grp.querySelector('.dex-tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-dex-tab]');
+    if (b) openDexArea(b.dataset.dexTab);
+  });
+  grp.querySelector('[data-dex-back]').addEventListener('click', closeDexArea);
+  const top = document.getElementById('dex-open');
+  if (top) { top.hidden = false; top.onclick = () => (dexFromHash() ? closeDexArea() : openDexArea()); }
+  // Um save novo aberto com a Dex no endereço já abre nela
+  document.body.classList.remove('dex-mode');
+  if (dexFromHash()) applyDex();
+}
+addEventListener('hashchange', () => { if (!dexFromHash()) dexPushed = false; applyDex(); });
+addEventListener('popstate', () => { if (!dexFromHash()) dexPushed = false; applyDex(); });
 
 // Pokédex do jogo: o pacote (lista de espécies, filtros e detalhe) só carrega quando a janela abre
 let pokedexMod = null;
@@ -857,7 +945,7 @@ function openSide(dlg, opener) {
     const w = Math.min(SIDE_W, Math.round(window.innerWidth * 0.48));
     const avail = window.innerWidth - w - 2 * SIDE_GAP - win.getBoundingClientRect().left;
     dlg.style.setProperty('--side-w', `${w}px`);
-    win.style.setProperty('--pdx-avail', `${Math.max(320, avail)}px`);
+    (win.closest('#grp-dex') || win).style.setProperty('--pdx-avail', `${Math.max(320, avail)}px`); // as abas da Dex também
     return avail >= 360;
   };
   if (!layout()) return false;
@@ -924,11 +1012,16 @@ function setupNav(out) {
   const nav = out.querySelector('.nav');
   nav.addEventListener('click', e => {
     const b = e.target.closest('[data-go]');
-    if (b) document.getElementById(b.dataset.go).scrollIntoView({ block: 'start' });
+    if (!b) return;
+    if (b.dataset.go === 'grp-dex') { openDexArea(); return; }
+    // Na Dex, a página do save volta já no bloco escolhido
+    if (dexFromHash()) { dexGoTo = b.dataset.go; closeDexArea(); return; }
+    document.getElementById(b.dataset.go).scrollIntoView({ block: 'start' });
   });
   if (navObserver) navObserver.disconnect();
   if (!('IntersectionObserver' in window)) return;
   navObserver = new IntersectionObserver(entries => {
+    if (document.body.classList.contains('dex-mode')) return;
     for (const e of entries) {
       if (!e.isIntersecting) continue;
       nav.querySelectorAll('[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === e.target.id));

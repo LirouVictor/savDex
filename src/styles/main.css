@@ -1617,3 +1617,31 @@ img.ico { object-view-box: inset(12px 4px 0 4px); }
 .sheet.side .pdx-r .evo-slot { order: -1; }
 .sheet.side .pdx-pane .wild-region:not([hidden]) { display: block; }
 .sheet.side .pdx-pane .wild-region .wild-map { position: relative; top: auto; margin: 8px 0; }
+
+/* Dex: Pokédex, Golpes e Habilidades numa área de tela inteira, no lugar da página do save (`body.dex-mode`, `#dex` no
+   endereço); as abas ficam presas embaixo da barra de cima, com ‹ para voltar */
+#grp-dex { display: none; }
+body.dex-mode #grp-dex { display: grid; gap: 12px; }
+body.dex-mode #out > .grp:not(#grp-dex), body.dex-mode #saved-note { display: none; }
+#grp-dex .tool-win > summary { display: none; }
+.dex-head {
+  position: sticky; top: var(--bar-h, 68px); z-index: 4; display: flex; gap: 8px; align-items: stretch;
+  margin: -12px -16px 0; padding: 8px 16px 6px; background: var(--bg);
+}
+.dex-back { flex: none; margin: 0; font: 700 1.7rem/1 var(--body); }
+.dex-tabs { flex: 1; margin: 0; position: static; }
+.dex-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.dex-tabs svg { flex: none; }
+.nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.nav button { font-size: min(.62rem, 2.25vw); padding-inline: 0; } /* "Ferramentas" cabe em 1/5 da tela */
+.nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#dex-open[hidden] { display: none; }
+#dex-open[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+@media (max-width: 999px) { #dex-open { display: none; } }
+@media (max-width: 480px) { .dex-tabs svg { display: none; } .dex-tabs button { font-size: .62rem; } }
+@media (min-width: 1000px) {
+  #grp-dex { grid-column: 1 / -1; }
+  .dex-head { margin-inline: 0; padding-inline: 0; }
+  /* Com o detalhe da espécie no painel da direita, as abas ficam na largura da lista */
+  #grp-dex:has(.pdx-split) .dex-head { max-width: var(--pdx-avail); }
+}
