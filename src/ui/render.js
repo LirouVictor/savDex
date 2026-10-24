@@ -215,10 +215,10 @@ export function navBar() {
  * Abas da Dex: as dex do jogo (Pokémon, Golpes, Habilidades) e as ferramentas (Montar equipe, Buscar); cada uma abre
  * a janela dela. Sai pela barra de baixo, pelo Voltar do celular ou pelo botão "Dex" do topo (computador).
  */
-export const DEX_TABS = ['pokedex-win', 'moves-win', 'abilities-win', 'builder-win', 'search-win'];
+export const DEX_TABS = ['pokedex-win', 'moves-win', 'abilities-win', 'builder-win'];
 export function dexHead() {
   const tabs = [['pokedex-win', 'dex-ico', 'Pokémon'], ['moves-win', 'bolt', t('Golpes')], ['abilities-win', 'spark', t('Habilidades')],
-    ['builder-win', 'party', t('Montar')], ['search-win', 'box', t('Buscar')]];
+    ['builder-win', 'party', t('Montar')]];
   return `<div class="dex-head">
     <h2 class="sr" id="dex-h">Dex</h2>
     <div class="dex-tabs" role="tablist" aria-labelledby="dex-h">
@@ -633,7 +633,7 @@ export function abilitiesWin() {
 /** Busca na equipe e em todas as caixas do PC (fechada até o usuário abrir; resultados em páginas). */
 export function searchWin(d, T) {
   const typeOpts = T.types.filter(t => t && t !== 'stellar').map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  return `<details class="win win-fold tool-win" id="search-win">
+  return `<details class="win win-fold" id="search-win">
     <summary class="win-title"><h2 id="search-h">${t('Buscar')}</h2><small>${t('equipe + PC')}</small></summary>
     <div class="search-form">
       <label class="sr" for="q">${t('Buscar')}</label>

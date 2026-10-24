@@ -91,6 +91,7 @@ function render() {
     </div>
     <div class="grp" id="grp-pc">
       ${R.pcWin(data)}
+      ${R.searchWin(data, T)}
       ${R.exportWin()}
     </div>
     <div class="grp" id="grp-dex">
@@ -99,7 +100,6 @@ function render() {
       ${R.movesWin(T)}
       ${R.abilitiesWin()}
       ${R.builderWin(data, Object.values(PROVIDERS))}
-      ${R.searchWin(data, T)}
     </div>
     ${R.navBar()}`;
   out.classList.remove('hidden');
@@ -185,9 +185,9 @@ function render() {
     if (btn) openDetail(state.results[+btn.dataset.i], btn);
   });
 
-  // As janelas da Dex abrem pelas abas (só uma aberta por vez); a lista da Busca só é montada quando ela abre. A parte
-  // com IA, dentro do Montar equipe, lembra se ficou aberta
-  for (const id of ['ai-win', ...R.DEX_TABS]) {
+  // As janelas da Dex abrem pelas abas (só uma aberta por vez). A Busca (embaixo do PC) e a parte com IA, dentro do
+  // Montar equipe, lembram se ficaram abertas; a lista da Busca só é montada quando ela abre
+  for (const id of ['ai-win', 'search-win', ...R.DEX_TABS]) {
     const det = out.querySelector('#' + id);
     const dexWin = R.DEX_TABS.includes(id);
     det.addEventListener('toggle', () => {
@@ -202,10 +202,10 @@ function render() {
   setupDex(out);
 }
 
-// Dex: Pokédex, Golpes, Habilidades, Montar equipe e Buscar numa área de tela inteira, no lugar da página do save. O
+// Dex: Pokédex, Golpes, Habilidades e Montar equipe numa área de tela inteira, no lugar da página do save. O
 // endereço diz qual aba está aberta (`#dex`, `#dex-golpes`…): o Voltar do Android fecha a Dex e o link pode ser
 // guardado. A aba escolhida fica para a próxima vez.
-const DEX_HASH = { 'pokedex-win': '#dex', 'moves-win': '#dex-golpes', 'abilities-win': '#dex-habilidades', 'builder-win': '#dex-montar', 'search-win': '#dex-buscar' };
+const DEX_HASH = { 'pokedex-win': '#dex', 'moves-win': '#dex-golpes', 'abilities-win': '#dex-habilidades', 'builder-win': '#dex-montar' };
 const dexFromHash = () => Object.keys(DEX_HASH).find(id => DEX_HASH[id] === location.hash) || null;
 let dexPushed = false, dexScroll = 0, dexGoTo = null;
 // A rolagem ao sair da Dex é do app (volta onde estava ou vai ao bloco tocado na barra), não do navegador
