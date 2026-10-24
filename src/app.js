@@ -359,7 +359,7 @@ async function setupPokedex(out) {
     run();
     active.querySelector('[data-unfilter]')?.focus();
   });
-  setOpen(openWide && window.matchMedia('(min-width: 960px)').matches);
+  setOpen(window.matchMedia('(min-width: 960px)').matches);
   toggle.addEventListener('click', () => setOpen(panel.hidden));
   const run = async () => {
     const v = id => ($('#' + id) ? $('#' + id).value : '');
