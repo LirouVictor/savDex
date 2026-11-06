@@ -134,6 +134,15 @@ suite('saves não suportados', () => {
     ] });
     expect(() => loadSave(bad, T, G)).toThrow(/não batem com o formato/);
   });
+  it('Quetzal com EVs mudados depois dos stats (editor de save): aceito', () => {
+    // Como no save real que dava erro: Meowth Nv. 100, IVs 31 e EVs 255 em tudo, mas os stats salvos
+    // ainda são os dos EVs antigos (o jogo só recalcula ao subir de nível ou sair do PC)
+    const ok = makeSave({ trainer: { name: 'X', tid: 1, sid: 2 }, party: [
+      { pid: 225, species: 52, level: 100, exp: 1059860, ivs: Array(6).fill(31), evs: Array(6).fill(255), stats: [230, 164, 121, 241, 130, 142] },
+    ] });
+    const { data } = loadSave(ok, T, G);
+    expect([data.game.id, data.party[0].species.name, data.party[0].stats.hp]).toEqual(['quetzal', 'Meowth', 230]);
+  });
 });
 
 // Saves reais (não versionados): fixtures/emerald.sav e fixtures/firered.sav
