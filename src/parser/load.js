@@ -70,13 +70,18 @@ const unsupported = () => t('Este save não é de um jogo suportado pelo savDex.
 
 /**
  * Confere se o save com o layout do Quetzal tem dados coerentes: os stats salvos da equipe precisam
- * bater com a fórmula. Outro jogo com o mesmo layout de setores cai aqui e é recusado.
+ * bater com a fórmula (com algum valor de EVs). Outro jogo com o mesmo layout de setores cai aqui e é recusado.
  */
 function checkQuetzal(data) {
   const known = data.party.filter(m => m.species.baseStats && m.nature);
+  // Os stats salvos só são recalculados pelo jogo ao subir de nível ou ao sair do PC: um Pokémon
+  // com os EVs mudados depois (editor de save, itens) fica com os stats antigos. Por isso basta os
+  // stats caberem entre os de EV 0 e EV 255 (com os IVs, o nível e a natureza lidos).
+  const flat = v => ({ hp: v, atk: v, def: v, spe: v, spa: v, spd: v });
   const ok = known.filter(m => {
-    const calc = calcStats(m.species.baseStats, m.ivs, m.evs, m.level, m.nature);
-    return Object.keys(calc).every(k => calc[k] === m.stats[k]);
+    const lo = calcStats(m.species.baseStats, m.ivs, flat(0), m.level, m.nature);
+    const hi = calcStats(m.species.baseStats, m.ivs, flat(255), m.level, m.nature);
+    return Object.keys(lo).every(k => m.stats[k] >= lo[k] && m.stats[k] <= hi[k]);
   });
   const levelsOk = data.party.every(m => m.level >= 1 && m.level <= 100);
   if (!levelsOk || (known.length && ok.length * 2 < known.length)) {
