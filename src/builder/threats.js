@@ -13,6 +13,7 @@
 // sem ela, 90 de poder). O app não sabe os times dos treinadores do jogo nem os golpes de TM.
 import { ABILITY_IMMUNE, ABILITY_HALVE, isLegendary, levelMoves } from './build.js';
 import { WEATHER } from '../ai/strategy.js';
+import { quetzalListed } from '../parser/describe.js';
 
 export const THREAT_BST = 500; // stats base somados: as ameaças fortes (Garchomp 600, Scizor 500…)
 const LEVEL = 50;
@@ -86,7 +87,7 @@ export function gameSpecies(T, game) {
     if (Q) {
       for (const [k, row] of Object.entries(Q.species)) {
         const id = +k;
-        if (id <= 898 || !row || row[11] || SKIP_FORM.test(row[9] || '')) continue;
+        if (!quetzalListed(Q).has(id) || SKIP_FORM.test(row[9] || '')) continue;
         add(id, row[0], row[9], row[1].map(typeName).filter(Boolean), row[2], row[3], row[10] || null);
       }
     }

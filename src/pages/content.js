@@ -6,6 +6,15 @@ export const UPDATED = '2026-10-26';
 /** Novidades, da mais nova para a mais antiga. A data da primeira fica também em latest.js. */
 export const NEWS = [
   {
+    date: '2026-11-06',
+    pt: [
+      'Pokédex do Quetzal: Koraidon, Miraidon, Maushold, Squawkabilly, Tatsugiri e Dudunsparce estavam faltando na lista e agora aparecem.',
+    ],
+    en: [
+      'Quetzal Pokédex: Koraidon, Miraidon, Maushold, Squawkabilly, Tatsugiri and Dudunsparce were missing from the list and now show up.',
+    ],
+  },
+  {
     date: '2026-11-05',
     pt: [
       'O Buscar agora fica dentro do PC: digite ou toque num filtro e a lista de toda a equipe e de todas as caixas aparece no lugar da caixa; "Ver a caixa" volta.',

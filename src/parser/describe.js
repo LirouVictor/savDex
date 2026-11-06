@@ -59,6 +59,30 @@ export function levelFromExp(exp) {
 /**
  * @param {object} T tabelas: { species, moves, items, types, forms, overrides }
  */
+const listedCache = new WeakMap();
+/**
+ * IDs do Quetzal (> 898) que entram nas listas de espécies (Pokédex, ameaças, onde capturar). Ficam de fora as
+ * formas só de aparência (`row[11]`: os dados batem com várias formas da PokeAPI, ex.: Vivillon, Alcremie), menos
+ * a primeira de uma espécie que não tem outra linha: Koraidon e Miraidon (as "builds" da PokeAPI têm os mesmos
+ * stats), Maushold, Squawkabilly, Tatsugiri e Dudunsparce são a própria espécie e sumiam da Pokédex.
+ * @param {object} Q tabelas da ROM do Quetzal (`quetzal.json`)
+ * @returns {Set<number>}
+ */
+export function quetzalListed(Q) {
+  let set = listedCache.get(Q);
+  if (set) return set;
+  set = new Set();
+  const covered = new Set(), first = new Map();
+  for (const [k, row] of Object.entries(Q.species)) {
+    const id = +k;
+    if (id <= 898 || !row) continue;
+    if (!row[11]) { set.add(id); if (row[5]) covered.add(row[5]); } else if (row[5] && !first.has(row[5])) first.set(row[5], id);
+  }
+  for (const [nat, id] of first) if (nat > 898 && !covered.has(nat)) set.add(id);
+  listedCache.set(Q, set);
+  return set;
+}
+
 export function makeResolver(T) {
   const typeName = i => T.types[i] || null;
   const abilityName = i => (i ? T.abilityNames[i] : null);
