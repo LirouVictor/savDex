@@ -35,6 +35,10 @@ suite('Pokédex: espécies de cada jogo', () => {
     expect(n).toContain('Raichu-Alola');
     expect(n).toContain('Browt');
     expect(n.filter(x => x.startsWith('Vivillon'))).toEqual(['Vivillon']);
+    // Espécies > 898 cujas linhas na ROM batem com várias formas da PokeAPI (as "builds" do Koraidon): a primeira entra
+    for (const sp of ['Koraidon', 'Miraidon', 'Maushold', 'Squawkabilly', 'Tatsugiri', 'Dudunsparce'])
+      expect(n.filter(x => x === sp || x.startsWith(sp + '-'))).toEqual([sp]);
+    expect(e.find(x => x.species.name === 'Miraidon').nat).toBe(1008);
     expect(e.find(x => x.species.name === 'Garchomp' && !x.species.form).nat).toBe(445);
   });
 

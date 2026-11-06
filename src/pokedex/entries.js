@@ -3,7 +3,7 @@
 // Quetzal: Dex Nacional até o 898 e as espécies da ROM depois; Unbound: a tabela da ROM; SoulGold: a Pokédex de Johto
 // do hack e as formas dessas espécies; Gen 3: 1–386; DS: 1–493 / 1–649 e as formas, com tipos e stats da época.
 
-import { makeResolver } from '../parser/describe.js';
+import { makeResolver, quetzalListed } from '../parser/describe.js';
 import { unboundSpecies } from '../parser/unbound.js';
 import { soulgoldSpecies } from '../parser/soulgold.js';
 import { gen3Species } from '../parser/gen3.js';
@@ -66,9 +66,10 @@ export function pokedexEntries(T, game) {
     const last = Q ? 898 : T.species.length - 1;
     for (let n = 1; n <= last; n++) if (T.species[n]) add(n, n, R.species(n));
     if (Q) {
+      const listed = quetzalListed(Q);
       for (const [k, row] of Object.entries(Q.species)) {
         const id = +k;
-        if (id <= 898 || !row || row[11]) continue; // row[11]: forma só de aparência
+        if (!listed.has(id)) continue; // sem as formas só de aparência
         add(id, row[5], R.species(id));
       }
     }

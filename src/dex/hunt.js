@@ -9,6 +9,7 @@ import { SPRITE_BASE, iconUrl } from '../ui/sprites.js';
 import { formName } from '../export.js';
 import W from '../data/quetzal-wild.json';
 import { REGIONS, regionName, METHOD, lv, mapHtml } from '../pokedex/wild.js';
+import { quetzalListed } from '../parser/describe.js';
 
 const LAST_ICON = 898;
 const STATIC = 7;
@@ -47,9 +48,10 @@ export function huntPlaces(info, Q) {
   for (const [from, list] of Object.entries(Q.evolutions || {})) for (const e of list) if (e[2] && !prev.has(e[2])) prev.set(e[2], +from);
   const idsOf = new Map();
   for (let id = 1; id <= LAST_ICON; id++) idsOf.set(id, [id]);
+  const listed = quetzalListed(Q);
   for (const [key, row] of Object.entries(Q.species)) {
     const id = +key;
-    if (id > LAST_ICON && row && row[5] && !row[11]) idsOf.get(row[5])?.push(id);
+    if (id > LAST_ICON && row && row[5] && listed.has(id)) idsOf.get(row[5])?.push(id);
   }
   const via = new Set();
   for (const nat of info.missing) {
